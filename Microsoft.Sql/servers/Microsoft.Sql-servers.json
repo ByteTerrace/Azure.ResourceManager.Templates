@@ -23,6 +23,20 @@
             },
             "type": "string"
         },
+        "advancedDataSecurityDisabledAlerts": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of alert names that will be disabled within the advanced data security feature, if enabled."
+            },
+            "type": "array"
+        },
+        "advancedDataSecurityEmailAddresses": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of email addresses that will be notified by the advanced data security feature, if enabled."
+            },
+            "type": "array"
+        },
         "encryptionKeyVaultKeyName": {
             "defaultValue": "",
             "metadata": {
@@ -57,6 +71,13 @@
                 "description": "Specifies the location in which the Azure SQL server resource(s) should be deployed."
             },
             "type": "string"
+        },
+        "isAdvancedDataSecurityEnabled": {
+            "defaultValue": "[greater(length(parameters('advancedDataSecurityEmailAddresses')), 0)]",
+            "metadata": {
+                "description": "Indicates whether the advanced data security features are enabled on the Azure SQL server."
+            },
+            "type": "bool"
         },
         "isPublicNetworkAccessEnabled": {
             "defaultValue": false,
@@ -134,11 +155,25 @@
             "dependsOn": [
                 "[variables('serverResourceId')]"
             ],
-            "name": "[format('{0}/connectionPolicy', variables('serverName'))]",
+            "name": "[format('{0}/default', variables('serverName'))]",
             "properties": {
                 "connectionType": "Default"
             },
             "type": "Microsoft.Sql/servers/connectionPolicies"
+        },
+        {
+            "apiVersion": "2017-03-01-preview",
+            "dependsOn": [
+                "[variables('serverResourceId')]"
+            ],
+            "name": "[format('{0}/default', variables('serverName'))]",
+            "properties": {
+                "disabledAlerts": "[parameters('advancedDataSecurityDisabledAlerts')]",
+                "emailAccountAdmins": true,
+                "emailAddresses": "[parameters('advancedDataSecurityEmailAddresses')]",
+                "state": "[if(parameters('isAdvancedDataSecurityEnabled'), 'Enabled', 'Disabled')]"
+            },
+            "type": "Microsoft.Sql/servers/securityAlertPolicies"
         },
         {
             "apiVersion": "[variables('administratorApiVersion')]",
