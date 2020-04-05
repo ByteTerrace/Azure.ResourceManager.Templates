@@ -47,7 +47,7 @@
         "location": {
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
-                "description": "Specifies the location in which the Azure Storage resources should be deployed."
+                "description": "Specifies the location in which the Azure Storage resource(s) should be deployed."
             },
             "type": "string"
         },

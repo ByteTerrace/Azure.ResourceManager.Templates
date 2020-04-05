@@ -1,0 +1,57 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "addressPrefixes": {
+            "defaultValue": [
+                "10.0.0.0/16"
+            ],
+            "metadata": {
+                "description": "An array of address prefixes, in CIDR notation, that should be reserved for the Azure Virtual Network."
+            },
+            "type": "array"
+        },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Specifies the location in which the Azure Virtual Network resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "subnets": {
+            "defaultValue": [
+                {
+                    "name": "internal",
+                    "properties": {
+                        "addressPrefix": "10.0.0.0/24"
+                    }
+                }
+            ],
+            "metadata": {
+                "description": "An array of subnets that should be created within the Azure Virtual Network."
+            },
+            "type": "array"
+        },
+        "virtualNetworkName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Virtual Network."
+            },
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-11-01",
+            "name": "[parameters('virtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[parameters('addressPrefixes')]"
+                },
+                "subnets": "[parameters('subnets')]"
+            },
+            "tags": {},
+            "type": "Microsoft.Network/virtualNetworks"
+        }
+    ]
+}
