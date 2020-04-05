@@ -25,6 +25,13 @@
                 "description": "Specifies the SKU name of the Azure Key Vault."
             },
             "type": "string"
+        },
+        "tenantId": {
+            "defaultValue": "[subscription().tenantId]",
+            "metadata": {
+                "description": "Specifies the Azure Active Directory tenant GUID that should be used for authenticating requests to theAzure Key Vault."
+            },
+            "type": "string"
         }
     },
     "resources": [
@@ -49,7 +56,8 @@
                 "sku": {
                     "family": "A",
                     "name": "[parameters('skuName')]"
-                }
+                },
+                "tenantId": "[parameters('tenantId')]"
             },
             "tags": {},
             "type": "Microsoft.KeyVault/vaults"
