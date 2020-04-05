@@ -1,0 +1,58 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "keyVaultName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Key Vault."
+            },
+            "type": "string"
+        },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Specifies the location in which the Azure Key Vault resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "skuName": {
+            "allowedValues": [
+                "Premium",
+                "Standard"
+            ],
+            "defaultValue": "Standard",
+            "metadata": {
+                "description": "Specifies the SKU name of the Azure Key Vault."
+            },
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2018-02-14",
+            "location": "[parameters('location')]",
+            "name": "[parameters('keyVaultName')]",
+            "properties": {
+                "accessPolicies": [],
+                "createMode": "default",
+                "enabledForDeployment": false,
+                "enabledForDiskEncryption": false,
+                "enabledForTemplateDeployment": false,
+                "enablePurgeProtection": true,
+                "enableSoftDelete": true,
+                "networkAcls": {
+                    "bypass": "None",
+                    "defaultAction": "Deny",
+                    "ipRules": null,
+                    "virtualNetworkRules": null
+                },
+                "sku": {
+                    "family": "A",
+                    "name": "[parameters('skuName')]"
+                }
+            },
+            "tags": {},
+            "type": "Microsoft.KeyVault/vaults"
+        }
+    ]
+}
