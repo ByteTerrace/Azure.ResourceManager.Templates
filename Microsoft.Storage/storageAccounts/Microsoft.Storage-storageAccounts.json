@@ -165,7 +165,7 @@
             "properties": {
                 "accessPolicies": [
                     {
-                        "objectId": "[reference(variables('storageAccountResourceId'), variables('storageAccountApiVersion'), 'full').identity.principalId]",
+                        "objectId": "[reference(variables('storageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').identity.principalId]",
                         "permissions": {
                             "certificates": [],
                             "keys": [

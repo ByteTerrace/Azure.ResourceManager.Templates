@@ -23,6 +23,34 @@
             },
             "type": "string"
         },
+        "encryptionKeyVaultKeyName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
+        "encryptionKeyVaultKeyVersion": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the version of the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
+        "encryptionKeyVaultName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the key vault that houses the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
+        "encryptionKeyVaultResourceGroupName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the resource group name of the key vault that houses the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
         "location": {
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
@@ -67,6 +95,17 @@
     },
     "variables": {
         "administratorApiVersion": "2019-06-01-preview",
+        "connectionPolicyApiVersion": "2014-04-01",
+        "encryptionProtectorApiVersion": "2015-05-01-preview",
+        "isActiveDirectoryAdministratorEnabled": "[or(not(empty(coalesce(parameters('activeDirectoryAdministratorObjectId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorTenantId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorUserName'), ''))))]",
+        "keyApiVersion": "2015-05-01-preview",
+        "keyVaultAccessPolicyApiVersion": "2018-02-14",
+        "keyVaultAccessPolicyResourceId": "[resourceId('Microsoft.KeyVault/vaults/accessPolicies', variables('keyVaultEncryptionVaultName'), 'add')]",
+        "keyVaultApiVersion": "2018-02-14",
+        "keyVaultEncryptionIsEnabled": "[or(not(empty(coalesce(parameters('encryptionKeyVaultResourceGroupName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))))]",
+        "keyVaultEncryptionKeyName": "[format('{0}_{1}_{2}', variables('keyVaultEncryptionVaultName'), parameters('encryptionKeyVaultKeyName'), parameters('encryptionKeyVaultKeyVersion'))]",
+        "keyVaultEncryptionKeyResourceId": "[resourceId('Microsoft.Sql/servers/keys', variables('serverName'), variables('keyVaultEncryptionKeyName'))]",
+        "keyVaultEncryptionVaultName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), parameters('encryptionKeyVaultName'), 'DummyKeyVault')]",
         "serverApiVersion": "2019-06-01-preview",
         "serverName": "[toLower(parameters('serverName'))]",
         "serverResourceId": "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]"
@@ -90,7 +129,19 @@
             "type": "Microsoft.Sql/servers"
         },
         {
+            "apiVersion": "[variables('connectionPolicyApiVersion')]",
+            "dependsOn": [
+                "[variables('serverResourceId')]"
+            ],
+            "name": "[format('{0}/connectionPolicy', variables('serverName'))]",
+            "properties": {
+                "connectionType": "Default"
+            },
+            "type": "Microsoft.Sql/servers/connectionPolicies"
+        },
+        {
             "apiVersion": "[variables('administratorApiVersion')]",
+            "condition": "[variables('isActiveDirectoryAdministratorEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]"
             ],
@@ -102,6 +153,61 @@
                 "tenantId": "[parameters('activeDirectoryAdministratorTenantId')]"
             },
             "type": "Microsoft.Sql/servers/administrators"
+        },
+        {
+            "apiVersion": "[variables('keyVaultAccessPolicyApiVersion')]",
+            "condition": "[variables('keyVaultEncryptionIsEnabled')]",
+            "dependsOn": [
+                "[variables('serverResourceId')]"
+            ],
+            "name": "[format('{0}/add', variables('keyVaultEncryptionVaultName'))]",
+            "properties": {
+                "accessPolicies": [
+                    {
+                        "objectId": "[reference(variables('serverResourceId'), variables('serverApiVersion'), 'Full').identity.principalId]",
+                        "permissions": {
+                            "certificates": [],
+                            "keys": [
+                                "Get",
+                                "UnwrapKey",
+                                "WrapKey"
+                            ],
+                            "secrets": []
+                        },
+                        "tenantId": "[subscription().tenantId]"
+                    }
+                ]
+            },
+            "type": "Microsoft.KeyVault/vaults/accessPolicies"
+        },
+        {
+            "apiVersion": "[variables('keyApiVersion')]",
+            "condition": "[variables('keyVaultEncryptionIsEnabled')]",
+            "dependsOn": [
+                "[variables('serverResourceId')]",
+                "[variables('keyVaultAccessPolicyResourceId')]"
+            ],
+            "kind": "AzureKeyVault",
+            "name": "[format('{0}/{1}', variables('serverName'), variables('keyVaultEncryptionKeyName'))]",
+            "properties": {
+                "serverKeyType": "AzureKeyVault",
+                "uri": "[format('{0}keys/{1}/{2}', reference(resourceId(parameters('encryptionKeyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults/', parameters('encryptionKeyVaultName')), variables('keyVaultApiVersion'), 'Full').properties.vaultUri, parameters('encryptionKeyVaultKeyName'), parameters('encryptionKeyVaultKeyVersion'))]"
+            },
+            "type": "Microsoft.Sql/servers/keys"
+        },
+        {
+            "apiVersion": "[variables('encryptionProtectorApiVersion')]",
+            "condition": "[variables('keyVaultEncryptionIsEnabled')]",
+            "dependsOn": [
+                "[variables('keyVaultEncryptionKeyResourceId')]"
+            ],
+            "kind": "AzureKeyVault",
+            "name": "[format('{0}/current', variables('serverName'))]",
+            "properties": {
+                "serverKeyName": "[variables('keyVaultEncryptionKeyName')]",
+                "serverKeyType": "AzureKeyVault"
+            },
+            "type": "Microsoft.Sql/servers/encryptionProtector"
         }
     ]
 }
