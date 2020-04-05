@@ -11,7 +11,7 @@
         "location": {
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
-                "description": "Specifies the location in which the Azure Application Configuration store resource(s) should be deployed."
+                "description": "Specifies the location in which the Azure Application Configuration resource(s) should be deployed."
             },
             "type": "string"
         },

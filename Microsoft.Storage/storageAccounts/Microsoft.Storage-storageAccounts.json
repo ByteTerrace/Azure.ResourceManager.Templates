@@ -44,6 +44,13 @@
             },
             "type": "bool"
         },
+        "isLargeFileSharesEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the large file shares feature is enabled on the Azure Storage account."
+            },
+            "type": "bool"
+        },
         "location": {
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
@@ -120,7 +127,7 @@
             "properties": {
                 "accessTier": "[parameters('accessTier')]",
                 "isHnsEnabled": "[parameters('isHierarchicalNamespaceEnabled')]",
-                "largeFileSharesState": "Disabled",
+                "largeFileSharesState": "[if(parameters('isLargeFileSharesEnabled'), 'Enabled', 'Disabled')]",
                 "networkAcls": {
                     "bypass": "None",
                     "defaultAction": "Deny",
