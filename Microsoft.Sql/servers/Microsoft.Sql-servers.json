@@ -103,8 +103,9 @@
         "keyVaultAccessPolicyResourceId": "[resourceId('Microsoft.KeyVault/vaults/accessPolicies', variables('keyVaultEncryptionVaultName'), 'add')]",
         "keyVaultApiVersion": "2018-02-14",
         "keyVaultEncryptionIsEnabled": "[or(not(empty(coalesce(parameters('encryptionKeyVaultResourceGroupName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))))]",
-        "keyVaultEncryptionKeyName": "[format('{0}_{1}_{2}', variables('keyVaultEncryptionVaultName'), parameters('encryptionKeyVaultKeyName'), parameters('encryptionKeyVaultKeyVersion'))]",
+        "keyVaultEncryptionKeyName": "[format('{0}_{1}_{2}', variables('keyVaultEncryptionVaultName'), if(not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))), parameters('encryptionKeyVaultKeyName'), 'DummyKeyName'), if(not(empty(coalesce(parameters('encryptionKeyVaultKeyVersion'), ''))), parameters('encryptionKeyVaultKeyVersion'), 'DummyKeyVersion'))]",
         "keyVaultEncryptionKeyResourceId": "[resourceId('Microsoft.Sql/servers/keys', variables('serverName'), variables('keyVaultEncryptionKeyName'))]",
+        "keyVaultEncryptionResourceGroupName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultResourceGroupName'), ''))), parameters('encryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
         "keyVaultEncryptionVaultName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), parameters('encryptionKeyVaultName'), 'DummyKeyVault')]",
         "serverApiVersion": "2019-06-01-preview",
         "serverName": "[toLower(parameters('serverName'))]",
@@ -191,7 +192,7 @@
             "name": "[format('{0}/{1}', variables('serverName'), variables('keyVaultEncryptionKeyName'))]",
             "properties": {
                 "serverKeyType": "AzureKeyVault",
-                "uri": "[format('{0}keys/{1}/{2}', reference(resourceId(parameters('encryptionKeyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults/', parameters('encryptionKeyVaultName')), variables('keyVaultApiVersion'), 'Full').properties.vaultUri, parameters('encryptionKeyVaultKeyName'), parameters('encryptionKeyVaultKeyVersion'))]"
+                "uri": "[format('{0}keys/{1}/{2}', if(variables('keyVaultEncryptionIsEnabled'), reference(resourceId(variables('keyVaultEncryptionResourceGroupName'), 'Microsoft.KeyVault/vaults/', variables('keyVaultEncryptionVaultName')), variables('keyVaultApiVersion'), 'Full').properties.vaultUri, 'https://dummy.domain/'), parameters('encryptionKeyVaultKeyName'), parameters('encryptionKeyVaultKeyVersion'))]"
             },
             "type": "Microsoft.Sql/servers/keys"
         },
