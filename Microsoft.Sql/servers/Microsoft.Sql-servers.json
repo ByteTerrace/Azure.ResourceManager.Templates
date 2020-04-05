@@ -130,7 +130,7 @@
     },
     "variables": {
         "administratorApiVersion": "2019-06-01-preview",
-        "advancedDataSecurityStorageAccountIsEnabled": "[not(empty(coalesce(parameters('advancedDataSecurityStorageAccountName'), '')))]",
+        "advancedDataSecurityStorageAccountIsEnabled": "[and(parameters('isAdvancedDataSecurityEnabled'), not(empty(coalesce(parameters('advancedDataSecurityStorageAccountName'), ''))))]",
         "advancedDataSecurityStorageAccountName": "[if(not(empty(coalesce(parameters('advancedDataSecurityStorageAccountName'), ''))), parameters('advancedDataSecurityStorageAccountName'), 'DummyStorageAccount')]",
         "advancedDataSecurityStorageAccountResourceGroupName": "[if(not(empty(coalesce(parameters('advancedDataSecurityStorageAccountResourceGroupName'), ''))), parameters('advancedDataSecurityStorageAccountResourceGroupName'), resourceGroup().name)]",
         "connectionPolicyApiVersion": "2014-04-01",
@@ -270,7 +270,7 @@
         },
         {
             "apiVersion": "2018-09-01-preview",
-            "condition": "[and(parameters('isAdvancedDataSecurityEnabled'), not(empty(coalesce(parameters('advancedDataSecurityStorageAccountName'), ''))))]",
+            "condition": "[variables('advancedDataSecurityStorageAccountIsEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
                 "[variables('securityAlertPolicyResourceId')]"
@@ -286,7 +286,7 @@
         },
         {
             "apiVersion": "[variables('vulnerabilityAssessmentApiVersion')]",
-            "condition": "[and(parameters('isAdvancedDataSecurityEnabled'), not(empty(coalesce(parameters('advancedDataSecurityStorageAccountName'), ''))))]",
+            "condition": "[variables('advancedDataSecurityStorageAccountIsEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
                 "[variables('securityAlertPolicyResourceId')]"
@@ -298,7 +298,7 @@
                     "emailSubscriptionAdmins": true,
                     "isEnabled": true
                 },
-                "storageContainerPath": "[if(variables('advancedDataSecurityStorageAccountIsEnabled'), format('{0}vulnerability-assessment', reference(resourceId(variables('advancedDataSecurityStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', variables('advancedDataSecurityStorageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0], 'Full').properties.primaryEndpoints.blob), 'https://dummy.domain/')]"
+                "storageContainerPath": "[if(variables('advancedDataSecurityStorageAccountIsEnabled'), format('{0}vulnerability-assessment', reference(resourceId(variables('advancedDataSecurityStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', variables('advancedDataSecurityStorageAccountName')), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob), json('null'))]"
             },
             "type": "Microsoft.Sql/servers/vulnerabilityAssessments"
         }
