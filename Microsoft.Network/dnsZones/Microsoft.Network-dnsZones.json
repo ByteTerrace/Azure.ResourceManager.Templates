@@ -1,0 +1,33 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "dnsZoneName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure DNS zone."
+            },
+            "type": "string"
+        },
+        "dnsZoneType": {
+            "defaultValue": "Public",
+            "metadata": {
+                "description": "Specifies the type of the Azure DNS zone."
+            },
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2018-05-01",
+            "location": "global",
+            "name": "[parameters('dnsZoneName')]",
+            "properties": {
+                "registrationVirtualNetworks": [],
+                "resolutionVirtualNetworks": [],
+                "zoneType": "[parameters('dnsZoneType')]"
+            },
+            "tags": {},
+            "type": "Microsoft.Network/dnsZones"
+        }
+    ]
+}
