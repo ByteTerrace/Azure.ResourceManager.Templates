@@ -52,20 +52,26 @@
             "type": "string"
         },
         "skuName": {
+            "allowedValues": [
+                "Premium_LRS",
+                "Premium_ZRS",
+                "Standard_GRS",
+                "Standard_GZRS",
+                "Standard_LRS",
+                "Standard_RAGRS",
+                "Standard_RAGZRS",
+                "Standard_ZRS"
+            ],
             "defaultValue": "Standard_LRS",
             "metadata": {
                 "description": "Specifies the SKU name of the Azure Storage account."
             },
             "type": "string"
         },
-        "skuTier": {
-            "defaultValue": "Standard",
-            "metadata": {
-                "description": "Specifies the SKU tier of the Azure Storage account."
-            },
-            "type": "string"
-        },
         "storageAccountKind": {
+            "allowedValues": [
+                "StorageV2"
+            ],
             "defaultValue": "StorageV2",
             "metadata": {
                 "description": "Specifies the kind of the Azure Storage account."
@@ -99,7 +105,8 @@
         "keyVaultAccessPolicyApiVersion": "2018-02-14",
         "keyVaultAccessPolicyResourceId": "[resourceId('Microsoft.KeyVault/vaults/accessPolicies', variables('customerEncryptionKeyVaultName'), 'add')]",
         "storageAccountApiVersion": "2019-06-01",
-        "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+        "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+        "storageAccountSkuTier": "[if(startsWith(parameters('skuName'), 'premium'), 'Premium', 'Standard')]"
     },
     "resources": [
         {
@@ -129,7 +136,7 @@
             },
             "sku": {
                 "name": "[parameters('skuName')]",
-                "tier": "[parameters('skuTier')]"
+                "tier": "[variables('storageAccountSkuTier')]"
             },
             "tags": {},
             "type": "Microsoft.Storage/storageAccounts"

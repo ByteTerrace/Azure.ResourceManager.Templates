@@ -1,0 +1,46 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "configurationStoreName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Application Configuration store."
+            },
+            "type": "string"
+        },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Specifies the location in which the Azure Application Configuration store resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "skuName": {
+            "allowedValues": [
+                "Free",
+                "Standard"
+            ],
+            "defaultValue": "Standard",
+            "metadata": {
+                "description": "Specifies the SKU name of the Azure Application Configuration store."
+            },
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-10-01",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "location": "[parameters('location')]",
+            "name": "[parameters('configurationStoreName')]",
+            "properties": {},
+            "sku": {
+                "name": "[parameters('skuName')]"
+            },
+            "tags": {},
+            "type": "Microsoft.AppConfiguration/configurationStores"
+        }
+    ]
+}
