@@ -37,6 +37,20 @@
             },
             "type": "array"
         },
+        "advancedDataSecurityStorageAccountName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the Azure Storage account that will be utilized by the advanced data security feature, if enabled."
+            },
+            "type": "string"
+        },
+        "advancedDataSecurityStorageAccountResourceGroupName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure Storage account that will be utilized by the advanced data security feature, if enabled."
+            },
+            "type": "string"
+        },
         "encryptionKeyVaultKeyName": {
             "defaultValue": "",
             "metadata": {
@@ -116,6 +130,9 @@
     },
     "variables": {
         "administratorApiVersion": "2019-06-01-preview",
+        "advancedDataSecurityStorageAccountIsEnabled": "[not(empty(coalesce(parameters('advancedDataSecurityStorageAccountName'), '')))]",
+        "advancedDataSecurityStorageAccountName": "[if(not(empty(coalesce(parameters('advancedDataSecurityStorageAccountName'), ''))), parameters('advancedDataSecurityStorageAccountName'), 'DummyStorageAccount')]",
+        "advancedDataSecurityStorageAccountResourceGroupName": "[if(not(empty(coalesce(parameters('advancedDataSecurityStorageAccountResourceGroupName'), ''))), parameters('advancedDataSecurityStorageAccountResourceGroupName'), resourceGroup().name)]",
         "connectionPolicyApiVersion": "2014-04-01",
         "encryptionProtectorApiVersion": "2015-05-01-preview",
         "isActiveDirectoryAdministratorEnabled": "[or(not(empty(coalesce(parameters('activeDirectoryAdministratorObjectId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorTenantId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorUserName'), ''))))]",
@@ -128,9 +145,14 @@
         "keyVaultEncryptionKeyResourceId": "[resourceId('Microsoft.Sql/servers/keys', variables('serverName'), variables('keyVaultEncryptionKeyName'))]",
         "keyVaultEncryptionResourceGroupName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultResourceGroupName'), ''))), parameters('encryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
         "keyVaultEncryptionVaultName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), parameters('encryptionKeyVaultName'), 'DummyKeyVault')]",
+        "securityAlertPolicyResourceId": "[resourceId('Microsoft.Sql/servers/securityAlertPolicies', variables('serverName'), 'default')]",
         "serverApiVersion": "2019-06-01-preview",
         "serverName": "[toLower(parameters('serverName'))]",
-        "serverResourceId": "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]"
+        "serverResourceId": "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]",
+        "storageAccountApiVersion": "2019-06-01",
+        "storageBlobDataContributorRoleAssignmentId": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('advancedDataSecurityStorageAccountName')), variables('storageBlobDataContributorRoleResourceId'), variables('serverResourceId'))]",
+        "storageBlobDataContributorRoleResourceId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+        "vulnerabilityAssessmentApiVersion": "2018-06-01-preview"
     },
     "resources": [
         {
@@ -235,6 +257,7 @@
             "apiVersion": "[variables('encryptionProtectorApiVersion')]",
             "condition": "[variables('keyVaultEncryptionIsEnabled')]",
             "dependsOn": [
+                "[variables('serverResourceId')]",
                 "[variables('keyVaultEncryptionKeyResourceId')]"
             ],
             "kind": "AzureKeyVault",
@@ -244,6 +267,40 @@
                 "serverKeyType": "AzureKeyVault"
             },
             "type": "Microsoft.Sql/servers/encryptionProtector"
+        },
+        {
+            "apiVersion": "2018-09-01-preview",
+            "condition": "[and(parameters('isAdvancedDataSecurityEnabled'), not(empty(coalesce(parameters('advancedDataSecurityStorageAccountName'), ''))))]",
+            "dependsOn": [
+                "[variables('serverResourceId')]",
+                "[variables('securityAlertPolicyResourceId')]"
+            ],
+            "name": "[format('{0}/Microsoft.Authorization/{1}', variables('advancedDataSecurityStorageAccountName'), variables('storageBlobDataContributorRoleAssignmentId'))]",
+            "properties": {
+                "principalId": "[reference(variables('serverResourceId'), variables('serverApiVersion'), 'Full').identity.principalId]",
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[variables('storageBlobDataContributorRoleResourceId')]",
+                "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('advancedDataSecurityStorageAccountName'))]"
+            },
+            "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments"
+        },
+        {
+            "apiVersion": "[variables('vulnerabilityAssessmentApiVersion')]",
+            "condition": "[and(parameters('isAdvancedDataSecurityEnabled'), not(empty(coalesce(parameters('advancedDataSecurityStorageAccountName'), ''))))]",
+            "dependsOn": [
+                "[variables('serverResourceId')]",
+                "[variables('securityAlertPolicyResourceId')]"
+            ],
+            "name": "[format('{0}/default', variables('serverName'))]",
+            "properties": {
+                "recurringScans": {
+                    "emails": "[parameters('advancedDataSecurityEmailAddresses')]",
+                    "emailSubscriptionAdmins": true,
+                    "isEnabled": true
+                },
+                "storageContainerPath": "[if(variables('advancedDataSecurityStorageAccountIsEnabled'), format('{0}vulnerability-assessment', reference(resourceId(variables('advancedDataSecurityStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', variables('advancedDataSecurityStorageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0], 'Full').properties.primaryEndpoints.blob), 'https://dummy.domain/')]"
+            },
+            "type": "Microsoft.Sql/servers/vulnerabilityAssessments"
         }
     ]
 }
