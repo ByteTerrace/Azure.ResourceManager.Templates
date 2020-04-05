@@ -14,6 +14,13 @@
                 "description": "Specifies the type of the Azure DNS zone."
             },
             "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure DNS zone."
+            },
+            "type": "object"
         }
     },
     "resources": [
@@ -26,7 +33,7 @@
                 "resolutionVirtualNetworks": [],
                 "zoneType": "[parameters('dnsZoneType')]"
             },
-            "tags": {},
+            "tags": "[parameters('tags')]",
             "type": "Microsoft.Network/dnsZones"
         }
     ]

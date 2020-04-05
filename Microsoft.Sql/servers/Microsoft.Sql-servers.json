@@ -1,0 +1,107 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "activeDirectoryAdministratorObjectId": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the Active Directory administrator object ID that will be assigned to the Azure SQL server."
+            },
+            "type": "string"
+        },
+        "activeDirectoryAdministratorTenantId": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the Active Directory administrator tenant ID that will be assigned to the Azure SQL server."
+            },
+            "type": "string"
+        },
+        "activeDirectoryAdministratorUserName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the Active Directory administrator user name that will be assigned to the Azure SQL server."
+            },
+            "type": "string"
+        },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Specifies the location in which the Azure SQL server resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "isPublicNetworkAccessEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the public network access is enabled on the Azure SQL server."
+            },
+            "type": "bool"
+        },
+        "serverName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure SQL server."
+            },
+            "type": "string"
+        },
+        "sqlAdministratorUserName": {
+            "defaultValue": "[uniqueString(parameters('serverName'))]",
+            "metadata": {
+                "description": "Specifies the default SQL administrator user name that will be assigned to the Azure SQL server."
+            },
+            "type": "securestring"
+        },
+        "sqlAdministratorUserPassword": {
+            "defaultValue": "[newGuid()]",
+            "metadata": {
+                "description": "Specifies the default SQL administrator user password that will be assigned to the Azure SQL server."
+            },
+            "type": "securestring"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure SQL server."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "administratorApiVersion": "2019-06-01-preview",
+        "serverApiVersion": "2019-06-01-preview",
+        "serverName": "[toLower(parameters('serverName'))]",
+        "serverResourceId": "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('serverApiVersion')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "location": "[parameters('location')]",
+            "name": "[variables('serverName')]",
+            "properties": {
+                "administratorLogin": "[parameters('sqlAdministratorUserName')]",
+                "administratorLoginPassword": "[parameters('sqlAdministratorUserPassword')]",
+                "minimalTlsVersion": "1.2",
+                "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]",
+                "version": "12.0"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Sql/servers"
+        },
+        {
+            "apiVersion": "[variables('administratorApiVersion')]",
+            "dependsOn": [
+                "[variables('serverResourceId')]"
+            ],
+            "name": "[format('{0}/activeDirectory', variables('serverName'))]",
+            "properties": {
+                "administratorType": "ActiveDirectory",
+                "login": "[parameters('activeDirectoryAdministratorUserName')]",
+                "sid": "[parameters('activeDirectoryAdministratorObjectId')]",
+                "tenantId": "[parameters('activeDirectoryAdministratorTenantId')]"
+            },
+            "type": "Microsoft.Sql/servers/administrators"
+        }
+    ]
+}

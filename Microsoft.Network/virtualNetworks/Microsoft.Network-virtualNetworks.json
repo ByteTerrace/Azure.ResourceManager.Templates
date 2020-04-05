@@ -37,6 +37,13 @@
                 "description": "Specifies the name of the Azure Virtual Network."
             },
             "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Virtual Network."
+            },
+            "type": "object"
         }
     },
     "resources": [
@@ -50,7 +57,7 @@
                 },
                 "subnets": "[parameters('subnets')]"
             },
-            "tags": {},
+            "tags": "[parameters('tags')]",
             "type": "Microsoft.Network/virtualNetworks"
         }
     ]

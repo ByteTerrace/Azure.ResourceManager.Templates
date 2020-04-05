@@ -37,6 +37,13 @@
             },
             "type": "object"
         },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Traffic Manager profile."
+            },
+            "type": "object"
+        },
         "trafficManagerName": {
             "metadata": {
                 "description": "Specifies the name of the Azure Traffic Manager profile."
@@ -73,7 +80,7 @@
                 "trafficRoutingMethod": "[parameters('trafficRoutingMethod')]",
                 "trafficViewEnrollmentStatus": "[if(parameters('trafficViewIsEnabled'), 'Enabled', 'Disabled')]"
             },
-            "tags": {},
+            "tags": "[parameters('tags')]",
             "type": "Microsoft.Network/trafficManagerProfiles"
         }
     ]
