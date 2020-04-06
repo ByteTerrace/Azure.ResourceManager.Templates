@@ -21,7 +21,7 @@
         "subnets": {
             "defaultValue": [
                 {
-                    "name": "internal",
+                    "name": "default",
                     "properties": {
                         "addressPrefix": "10.0.0.0/24"
                     }

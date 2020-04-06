@@ -126,6 +126,13 @@
                 "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure SQL server."
             },
             "type": "object"
+        },
+        "virtualNetworkRules": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of virtual network rules that should be assigned to the Azure SQL server."
+            },
+            "type": "array"
         }
     },
     "variables": {
@@ -138,9 +145,9 @@
         "authorizationRoleAssignmentApiVersion": "2018-09-01-preview",
         "connectionPolicyApiVersion": "2014-04-01",
         "dnsAliasApiVersion": "2017-03-01-preview",
+        "dnsAliases": "[if(variables('dnsAliasesIsNotEmpty'), parameters('dnsAliases'), json('[ \"dummyDnsAlias\" ]'))]",
         "dnsAliasesCount": "[length(parameters('dnsAliases'))]",
         "dnsAliasesIsNotEmpty": "[greater(variables('dnsAliasesCount'), 0)]",
-        "dnsAliases": "[if(variables('dnsAliasesIsNotEmpty'), parameters('dnsAliases'), json('[ \"dummyDnsAlias\" ]'))]",
         "encryptionProtectorApiVersion": "2015-05-01-preview",
         "isActiveDirectoryAdministratorEnabled": "[or(not(empty(coalesce(parameters('activeDirectoryAdministratorObjectId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorTenantId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorUserName'), ''))))]",
         "isAdvancedDataSecurityEnabled": "[or(greater(length(parameters('advancedDataSecurityEmailAddresses')), 0), variables('advancedDataSecurityStorageAccountIsEnabled'))]",
@@ -160,6 +167,10 @@
         "serverResourceId": "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]",
         "storageAccountApiVersion": "2019-06-01",
         "storageBlobDataContributorRoleResourceId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+        "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), parameters('virtualNetworkRules'), json('[ { \"ignoreMissingVnetServiceEndpoint\": false, \"ruleName\": \"dummyVirtualNetworkRule\", \"subnetName\": \"dummySubnet\", \"virtualNetworkName\": \"dummyVirtualNetwork\", \"virtualNetworkResourceGroupName\": \"dummyResourceGroup\" }]'))]",
+        "virtualNetworkRuleApiVersion": "2015-05-01-preview",
+        "virtualNetworkRulesCount": "[length(parameters('virtualNetworkRules'))]",
+        "virtualNetworkRulesIsNotEmpty": "[greater(variables('virtualNetworkRulesCount'), 0)]",
         "vulnerabilityAssessmentApiVersion": "2018-06-01-preview"
     },
     "resources": [
@@ -190,6 +201,38 @@
                 "connectionType": "Default"
             },
             "type": "Microsoft.Sql/servers/connectionPolicies"
+        },
+        {
+            "apiVersion": "[variables('dnsAliasApiVersion')]",
+            "condition": "[variables('dnsAliasesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('dnsAliasesCount')]",
+                "mode": "parallel",
+                "name": "dnsAliasCopy"
+            },
+            "dependsOn": [
+                "[variables('serverResourceId')]"
+            ],
+            "name": "[format('{0}/{1}', variables('serverName'), toLower(variables('dnsAliases')[copyIndex()]))]",
+            "type": "Microsoft.Sql/servers/dnsAliases"
+        },
+        {
+            "apiVersion": "[variables('virtualNetworkRuleApiVersion')]",
+            "condition": "[variables('virtualNetworkRulesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('virtualNetworkRulesCount')]",
+                "mode": "parallel",
+                "name": "virtualNetworkRulesCopy"
+            },
+            "dependsOn": [
+                "[variables('serverResourceId')]"
+            ],
+            "name": "[format('{0}/{1}', variables('serverName'), variables('virtualNetworkRules')[copyIndex()].ruleName)]",
+            "properties": {
+                "ignoreMissingVnetServiceEndpoint": "[variables('virtualNetworkRules')[copyIndex()].ignoreMissingVnetServiceEndpoint]",
+                "virtualNetworkSubnetId": "[resourceId(variables('virtualNetworkRules')[copyIndex()].virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkRules')[copyIndex()].virtualNetworkName, variables('virtualNetworkRules')[copyIndex()].subnetName)]"
+            },
+            "type": "Microsoft.Sql/servers/virtualNetworkRules"
         },
         {
             "apiVersion": "[variables('securityAlertPolicyApiVersion')]",
@@ -311,20 +354,6 @@
                 "storageContainerPath": "[format('{0}vulnerability-assessment/', if(variables('advancedDataSecurityStorageAccountIsEnabled'), reference(resourceId(variables('advancedDataSecurityStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', variables('advancedDataSecurityStorageAccountName')), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob, 'https://dummy.domain/'))]"
             },
             "type": "Microsoft.Sql/servers/vulnerabilityAssessments"
-        },
-        {
-            "apiVersion": "[variables('dnsAliasApiVersion')]",
-            "condition": "[variables('dnsAliasesIsNotEmpty')]",
-            "copy": {
-                "count": "[variables('dnsAliasesCount')]",
-                "mode": "parallel",
-                "name": "dnsAliasCopy"
-            },
-            "dependsOn": [
-                "[variables('serverResourceId')]"
-            ],
-            "name": "[format('{0}/{1}', variables('serverName'), toLower(variables('dnsAliases')[copyIndex()]))]",
-            "type": "Microsoft.Sql/servers/dnsAliases"
         }
     ]
 }
