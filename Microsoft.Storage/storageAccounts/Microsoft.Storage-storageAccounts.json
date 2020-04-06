@@ -103,9 +103,7 @@
         "blobContainerApiVersion": "2019-06-01",
         "blobContainerNamesCount": "[length(parameters('blobContainerNames'))]",
         "blobContainerNamesIsNotEmpty": "[greater(variables('blobContainerNamesCount'), 0)]",
-        "blobContainerNames": "[if(variables('blobContainerNamesIsNotEmpty'), parameters('blobContainerNames'), variables('dummyBlobContainerNamesArray'))]",
-        "dummyBlobContainerNamesArray": [ "ARM sucks!" ],
-        "dummyFileShareNamesArray": [ "ARM sucks!" ],
+        "blobContainerNames": "[if(variables('blobContainerNamesIsNotEmpty'), parameters('blobContainerNames'), json('[ \"dummyContainer\" ]'))]",
         "customerEncryptionIsEnabled": "[or(not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))))]",
         "customerEncryptionKeyVaultName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), parameters('encryptionKeyVaultName'), 'DummyKeyVault')]",
         "customerEncryptionKeyVaultProperties": {
@@ -115,7 +113,7 @@
         "fileShareApiVersion": "2019-06-01",
         "fileShareNamesCount": "[length(parameters('fileShareNames'))]",
         "fileShareNamesIsNotEmpty": "[greater(variables('fileShareNamesCount'), 0)]",
-        "fileShareNames": "[if(variables('fileShareNamesIsNotEmpty'), parameters('fileShareNames'), variables('dummyFileShareNamesArray'))]",
+        "fileShareNames": "[if(variables('fileShareNamesIsNotEmpty'), parameters('fileShareNames'), json('[ \"dummyFileShare\" ]'))]",
         "keyVaultAccessPolicyApiVersion": "2018-02-14",
         "keyVaultAccessPolicyResourceId": "[resourceId('Microsoft.KeyVault/vaults/accessPolicies', variables('customerEncryptionKeyVaultName'), 'add')]",
         "storageAccountApiVersion": "2019-06-01",
@@ -201,6 +199,7 @@
             "condition": "[variables('blobContainerNamesIsNotEmpty')]",
             "copy": {
                 "count": "[variables('blobContainerNamesCount')]",
+                "mode": "parallel",
                 "name": "blobContainerCopy"
             },
             "dependsOn": [
@@ -214,6 +213,7 @@
             "condition": "[variables('fileShareNamesIsNotEmpty')]",
             "copy": {
                 "count": "[variables('fileShareNamesCount')]",
+                "mode": "parallel",
                 "name": "fileShareCopy"
             },
             "dependsOn": [

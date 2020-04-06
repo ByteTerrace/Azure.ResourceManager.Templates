@@ -51,6 +51,13 @@
             },
             "type": "string"
         },
+        "dnsAliases": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of dns aliases that should be assigned to the Azure SQL server."
+            },
+            "type": "array"
+        },
         "encryptionKeyVaultKeyName": {
             "defaultValue": "",
             "metadata": {
@@ -130,6 +137,10 @@
         "advancedDataSecurityStorageBlobDataContributorRoleAssignmentUniqueId": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('advancedDataSecurityStorageAccountName')), variables('storageBlobDataContributorRoleResourceId'), variables('serverResourceId'))]",
         "authorizationRoleAssignmentApiVersion": "2018-09-01-preview",
         "connectionPolicyApiVersion": "2014-04-01",
+        "dnsAliasApiVersion": "2017-03-01-preview",
+        "dnsAliasesCount": "[length(parameters('dnsAliases'))]",
+        "dnsAliasesIsNotEmpty": "[greater(variables('dnsAliasesCount'), 0)]",
+        "dnsAliases": "[if(variables('dnsAliasesIsNotEmpty'), parameters('dnsAliases'), json('[ \"dummyDnsAlias\" ]'))]",
         "encryptionProtectorApiVersion": "2015-05-01-preview",
         "isActiveDirectoryAdministratorEnabled": "[or(not(empty(coalesce(parameters('activeDirectoryAdministratorObjectId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorTenantId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorUserName'), ''))))]",
         "isAdvancedDataSecurityEnabled": "[or(greater(length(parameters('advancedDataSecurityEmailAddresses')), 0), variables('advancedDataSecurityStorageAccountIsEnabled'))]",
@@ -168,6 +179,20 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Sql/servers"
+        },
+        {
+            "apiVersion": "[variables('dnsAliasApiVersion')]",
+            "condition": "[variables('dnsAliasesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('dnsAliasesCount')]",
+                "mode": "parallel",
+                "name": "dnsAliasCopy"
+            },
+            "dependsOn": [
+                "[variables('serverResourceId')]"
+            ],
+            "name": "[format('{0}/{1}', variables('serverName'), variables('dnsAliases')[copyIndex()])]",
+            "type": "Microsoft.Sql/servers/dnsAliases"
         },
         {
             "apiVersion": "[variables('connectionPolicyApiVersion')]",
