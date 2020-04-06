@@ -126,8 +126,8 @@
         "advancedDataSecurityStorageAccountIsEnabled": "[or(not(empty(coalesce(parameters('advancedDataSecurityStorageAccountResourceGroupName'), ''))), not(empty(coalesce(parameters('advancedDataSecurityStorageAccountName'), ''))))]",
         "advancedDataSecurityStorageAccountName": "[if(not(empty(coalesce(parameters('advancedDataSecurityStorageAccountName'), ''))), parameters('advancedDataSecurityStorageAccountName'), 'DummyStorageAccount')]",
         "advancedDataSecurityStorageAccountResourceGroupName": "[if(not(empty(coalesce(parameters('advancedDataSecurityStorageAccountResourceGroupName'), ''))), parameters('advancedDataSecurityStorageAccountResourceGroupName'), resourceGroup().name)]",
-        "advancedDataSecurityStorageAccountRoleAssignmentResourceId": "[resourceId('Microsoft.Storage/storageAccounts/providers/roleAssignments', variables('advancedDataSecurityStorageAccountName'), 'Microsoft.Authorization', variables('advancedDataSecurityStorageBlobDataContributorRoleAssignmentId'))]",
-        "advancedDataSecurityStorageBlobDataContributorRoleAssignmentId": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('advancedDataSecurityStorageAccountName')), variables('storageBlobDataContributorRoleResourceId'), variables('serverResourceId'))]",
+        "advancedDataSecurityStorageBlobDataContributorRoleAssignmentResourceId": "[resourceId('Microsoft.Storage/storageAccounts/providers/roleAssignments', variables('advancedDataSecurityStorageAccountName'), 'Microsoft.Authorization', variables('advancedDataSecurityStorageBlobDataContributorRoleAssignmentUniqueId'))]",
+        "advancedDataSecurityStorageBlobDataContributorRoleAssignmentUniqueId": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('advancedDataSecurityStorageAccountName')), variables('storageBlobDataContributorRoleResourceId'), variables('serverResourceId'))]",
         "authorizationRoleAssignmentApiVersion": "2018-09-01-preview",
         "connectionPolicyApiVersion": "2014-04-01",
         "encryptionProtectorApiVersion": "2015-05-01-preview",
@@ -273,7 +273,7 @@
                 "[variables('serverResourceId')]",
                 "[variables('securityAlertPolicyResourceId')]"
             ],
-            "name": "[format('{0}/Microsoft.Authorization/{1}', variables('advancedDataSecurityStorageAccountName'), variables('advancedDataSecurityStorageBlobDataContributorRoleAssignmentId'))]",
+            "name": "[format('{0}/Microsoft.Authorization/{1}', variables('advancedDataSecurityStorageAccountName'), variables('advancedDataSecurityStorageBlobDataContributorRoleAssignmentUniqueId'))]",
             "properties": {
                 "principalId": "[reference(variables('serverResourceId'), variables('serverApiVersion'), 'Full').identity.principalId]",
                 "principalType": "ServicePrincipal",
@@ -288,7 +288,7 @@
             "dependsOn": [
                 "[variables('serverResourceId')]",
                 "[variables('securityAlertPolicyResourceId')]",
-                "[variables('advancedDataSecurityStorageAccountRoleAssignmentResourceId')]"
+                "[variables('advancedDataSecurityStorageBlobDataContributorRoleAssignmentResourceId')]"
             ],
             "name": "[format('{0}/default', variables('serverName'))]",
             "properties": {
