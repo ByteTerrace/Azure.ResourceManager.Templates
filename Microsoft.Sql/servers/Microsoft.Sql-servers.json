@@ -181,20 +181,6 @@
             "type": "Microsoft.Sql/servers"
         },
         {
-            "apiVersion": "[variables('dnsAliasApiVersion')]",
-            "condition": "[variables('dnsAliasesIsNotEmpty')]",
-            "copy": {
-                "count": "[variables('dnsAliasesCount')]",
-                "mode": "parallel",
-                "name": "dnsAliasCopy"
-            },
-            "dependsOn": [
-                "[variables('serverResourceId')]"
-            ],
-            "name": "[format('{0}/{1}', variables('serverName'), variables('dnsAliases')[copyIndex()])]",
-            "type": "Microsoft.Sql/servers/dnsAliases"
-        },
-        {
             "apiVersion": "[variables('connectionPolicyApiVersion')]",
             "dependsOn": [
                 "[variables('serverResourceId')]"
@@ -325,6 +311,20 @@
                 "storageContainerPath": "[format('{0}vulnerability-assessment/', if(variables('advancedDataSecurityStorageAccountIsEnabled'), reference(resourceId(variables('advancedDataSecurityStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', variables('advancedDataSecurityStorageAccountName')), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob, 'https://dummy.domain/'))]"
             },
             "type": "Microsoft.Sql/servers/vulnerabilityAssessments"
+        },
+        {
+            "apiVersion": "[variables('dnsAliasApiVersion')]",
+            "condition": "[variables('dnsAliasesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('dnsAliasesCount')]",
+                "mode": "parallel",
+                "name": "dnsAliasCopy"
+            },
+            "dependsOn": [
+                "[variables('serverResourceId')]"
+            ],
+            "name": "[format('{0}/{1}', variables('serverName'), toLower(variables('dnsAliases')[copyIndex()]))]",
+            "type": "Microsoft.Sql/servers/dnsAliases"
         }
     ]
 }
