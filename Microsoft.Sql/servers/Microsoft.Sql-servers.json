@@ -100,10 +100,17 @@
             },
             "type": "string"
         },
+        "isAzureResourceAccessEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether Azure services and resources are allowed to access the Azure SQL server."
+            },
+            "type": "bool"
+        },
         "isPublicNetworkAccessEnabled": {
             "defaultValue": false,
             "metadata": {
-                "description": "Indicates whether the public network access is enabled on the Azure SQL server."
+                "description": "Indicates whether the public network access feature is enabled on the Azure SQL server."
             },
             "type": "bool"
         },
@@ -226,6 +233,19 @@
             ],
             "name": "[format('{0}/{1}', variables('serverName'), toLower(variables('dnsAliases')[copyIndex()]))]",
             "type": "Microsoft.Sql/servers/dnsAliases"
+        },
+        {
+            "apiVersion": "[variables('firewallRuleApiVersion')]",
+            "condition": "[parameters('isAzureResourceAccessEnabled')]",
+            "dependsOn": [
+                "[variables('serverResourceId')]"
+            ],
+            "name": "[format('{0}/AllowAllWindowsAzureIps', variables('serverName'))]",
+            "properties": {
+                "endIpAddress": "0.0.0.0",
+                "startIpAddress": "0.0.0.0"
+            },
+            "type": "Microsoft.Sql/servers/firewallRules"
         },
         {
             "apiVersion": "[variables('firewallRuleApiVersion')]",
