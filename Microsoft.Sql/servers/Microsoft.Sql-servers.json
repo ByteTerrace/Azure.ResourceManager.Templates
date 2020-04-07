@@ -51,10 +51,29 @@
             },
             "type": "string"
         },
+        "connectionPolicy": {
+            "allowedValues": [
+                "Default",
+                "Proxy",
+                "Redirect"
+            ],
+            "defaultValue": "Default",
+            "metadata": {
+                "description": "Specifies how clients will connect to the Azure SQL server."
+            },
+            "type": "string"
+        },
+        "databases": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of databases that will be created within the Azure SQL server."
+            },
+            "type": "array"
+        },
         "dnsAliases": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of dns aliases that should be assigned to the Azure SQL server."
+                "description": "An array of dns aliases that will be assigned to the Azure SQL server."
             },
             "type": "array"
         },
@@ -89,14 +108,14 @@
         "firewallRules": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of firewall rules that should be assigned to the Azure SQL server."
+                "description": "An array of firewall rules that will be assigned to the Azure SQL server."
             },
             "type": "array"
         },
         "location": {
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
-                "description": "Specifies the location in which the Azure SQL server resource(s) should be deployed."
+                "description": "Specifies the location in which the Azure SQL server resource(s) will be deployed."
             },
             "type": "string"
         },
@@ -117,6 +136,16 @@
         "serverName": {
             "metadata": {
                 "description": "Specifies the name of the Azure SQL server."
+            },
+            "type": "string"
+        },
+        "serverVersion": {
+            "allowedValues": [
+                "12.0"
+            ],
+            "defaultValue": "12.0",
+            "metadata": {
+                "description": "Specifies the version of the Azure SQL server."
             },
             "type": "string"
         },
@@ -144,7 +173,7 @@
         "virtualNetworkRules": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of virtual network rules that should be assigned to the Azure SQL server."
+                "description": "An array of virtual network rules that will be assigned to the Azure SQL server."
             },
             "type": "array"
         }
@@ -158,6 +187,10 @@
         "advancedDataSecurityStorageBlobDataContributorRoleAssignmentUniqueId": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('advancedDataSecurityStorageAccountName')), variables('storageBlobDataContributorRoleResourceId'), variables('serverResourceId'))]",
         "authorizationRoleAssignmentApiVersion": "2018-09-01-preview",
         "connectionPolicyApiVersion": "2014-04-01",
+        "databasesApiVersion": "2019-06-01-preview",
+        "databases": "[if(variables('databasesIsNotEmpty'), parameters('databases'), json('[ { \"databaseName\": \"DummyDatabase\", \"sku\": { \"capacity\": 5, \"name\": \"Basic\", \"tier\": \"Basic\" } } ]'))]",
+        "databasesCount": "[length(parameters('databases'))]",
+        "databasesIsNotEmpty": "[greater(variables('databasesCount'), 0)]",
         "dnsAliasApiVersion": "2017-03-01-preview",
         "dnsAliases": "[if(variables('dnsAliasesIsNotEmpty'), parameters('dnsAliases'), json('[ \"dummyDnsAlias\" ]'))]",
         "dnsAliasesCount": "[length(parameters('dnsAliases'))]",
@@ -186,10 +219,11 @@
         "storageAccountApiVersion": "2019-06-01",
         "storageBlobDataContributorRoleResourceId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
         "virtualNetworkRuleApiVersion": "2015-05-01-preview",
-        "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), parameters('virtualNetworkRules'), json('[ { \"ignoreMissingVnetServiceEndpoint\": false, \"ruleName\": \"dummyVirtualNetworkRule\", \"subnetName\": \"dummySubnet\", \"virtualNetworkName\": \"dummyVirtualNetwork\", \"virtualNetworkResourceGroupName\": \"dummyResourceGroup\" }]'))]",
+        "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), parameters('virtualNetworkRules'), json('[ { \"ignoreMissingVnetServiceEndpoint\": false, \"ruleName\": \"dummyVirtualNetworkRule\", \"subnetName\": \"dummySubnet\", \"virtualNetworkName\": \"dummyVirtualNetwork\", \"virtualNetworkResourceGroupName\": \"dummyResourceGroup\" } ]'))]",
         "virtualNetworkRulesCount": "[length(parameters('virtualNetworkRules'))]",
         "virtualNetworkRulesIsNotEmpty": "[greater(variables('virtualNetworkRulesCount'), 0)]",
-        "vulnerabilityAssessmentApiVersion": "2018-06-01-preview"
+        "vulnerabilityAssessmentApiVersion": "2018-06-01-preview",
+        "vulnerabilityAssessmentResourceId": "[resourceId('Microsoft.Sql/servers/vulnerabilityAssessments', variables('serverName'), 'default')]"
     },
     "resources": [
         {
@@ -204,7 +238,7 @@
                 "administratorLoginPassword": "[parameters('sqlAdministratorUserPassword')]",
                 "minimalTlsVersion": "1.2",
                 "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]",
-                "version": "12.0"
+                "version": "[parameters('serverVersion')]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Sql/servers"
@@ -216,7 +250,7 @@
             ],
             "name": "[format('{0}/default', variables('serverName'))]",
             "properties": {
-                "connectionType": "Default"
+                "connectionType": "[parameters('connectionPolicy')]"
             },
             "type": "Microsoft.Sql/servers/connectionPolicies"
         },
@@ -403,6 +437,36 @@
                 "storageContainerPath": "[format('{0}vulnerability-assessment/', if(variables('advancedDataSecurityStorageAccountIsEnabled'), reference(resourceId(variables('advancedDataSecurityStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', variables('advancedDataSecurityStorageAccountName')), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob, 'https://dummy.domain/'))]"
             },
             "type": "Microsoft.Sql/servers/vulnerabilityAssessments"
+        },
+        {
+            "apiVersion": "[variables('databasesApiVersion')]",
+            "condition": "[variables('databasesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('databasesCount')]",
+                "mode": "parallel",
+                "name": "databasesCopy"
+            },
+            "dependsOn": [
+                "[variables('serverResourceId')]",
+                "[variables('securityAlertPolicyResourceId')]",
+                "[variables('advancedDataSecurityStorageBlobDataContributorRoleAssignmentResourceId')]",
+                "[variables('vulnerabilityAssessmentResourceId')]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/{1}', variables('serverName'), variables('databases')[copyIndex()].databaseName)]",
+            "properties": {
+                "autoPauseDelay": -1,
+                "catalogCollation": "DATABASE_DEFAULT",
+                "collation": "SQL_Latin1_General_CP1_CI_AS",
+                "createMode": "Default",
+                "licenseType": "BasePrice"
+            },
+            "sku": {
+                "capacity": "[variables('databases')[copyIndex()].sku.capacity]",
+                "name": "[variables('databases')[copyIndex()].sku.name]",
+                "tier": "[variables('databases')[copyIndex()].sku.tier]"
+            },
+            "type": "Microsoft.Sql/servers/databases"
         }
     ]
 }
