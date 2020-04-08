@@ -234,13 +234,14 @@
         "isAuditEnabled": "[variables('auditStorageAccountIsEnabled')]",
         "keyApiVersion": "2015-05-01-preview",
         "keyVaultAccessPolicyApiVersion": "2018-02-14",
-        "keyVaultAccessPolicyResourceId": "[resourceId('Microsoft.KeyVault/vaults/accessPolicies', variables('keyVaultEncryptionVaultName'), 'add')]",
+        "keyVaultAccessPolicyResourceId": "[resourceId(variables('keyVaultEncryptionResourceGroupName'), 'Microsoft.KeyVault/vaults/accessPolicies', variables('keyVaultEncryptionVaultName'), 'add')]",
         "keyVaultApiVersion": "2018-02-14",
         "keyVaultEncryptionIsEnabled": "[or(not(empty(coalesce(parameters('encryptionKeyVaultResourceGroupName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))))]",
         "keyVaultEncryptionKeyName": "[format('{0}_{1}_{2}', variables('keyVaultEncryptionVaultName'), if(not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))), parameters('encryptionKeyVaultKeyName'), 'DummyKeyName'), if(not(empty(coalesce(parameters('encryptionKeyVaultKeyVersion'), ''))), parameters('encryptionKeyVaultKeyVersion'), 'DummyKeyVersion'))]",
         "keyVaultEncryptionKeyResourceId": "[resourceId('Microsoft.Sql/servers/keys', variables('serverName'), variables('keyVaultEncryptionKeyName'))]",
         "keyVaultEncryptionResourceGroupName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultResourceGroupName'), ''))), parameters('encryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
         "keyVaultEncryptionVaultName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), parameters('encryptionKeyVaultName'), 'DummyKeyVault')]",
+        "keyVaultEncryptionVaultResourceId": "[resourceId(variables('keyVaultEncryptionResourceGroupName'), 'Microsoft.KeyVault/vaults/', variables('keyVaultEncryptionVaultName'))]",
         "securityAlertPolicyApiVersion": "2017-03-01-preview",
         "securityAlertPolicyResourceId": "[resourceId('Microsoft.Sql/servers/securityAlertPolicies', variables('serverName'), 'default')]",
         "serverApiVersion": "2019-06-01-preview",
@@ -399,7 +400,7 @@
             "name": "[format('{0}/{1}', variables('serverName'), variables('keyVaultEncryptionKeyName'))]",
             "properties": {
                 "serverKeyType": "AzureKeyVault",
-                "uri": "[format('{0}keys/{1}/{2}', if(variables('keyVaultEncryptionIsEnabled'), reference(resourceId(variables('keyVaultEncryptionResourceGroupName'), 'Microsoft.KeyVault/vaults/', variables('keyVaultEncryptionVaultName')), variables('keyVaultApiVersion'), 'Full').properties.vaultUri, 'https://dummy.domain/'), parameters('encryptionKeyVaultKeyName'), parameters('encryptionKeyVaultKeyVersion'))]"
+                "uri": "[format('{0}keys/{1}/{2}', if(variables('keyVaultEncryptionIsEnabled'), reference(variables('keyVaultEncryptionVaultResourceId'), variables('keyVaultApiVersion'), 'Full').properties.vaultUri, 'https://dummy.domain/'), parameters('encryptionKeyVaultKeyName'), parameters('encryptionKeyVaultKeyVersion'))]"
             },
             "type": "Microsoft.Sql/servers/keys"
         },
@@ -446,7 +447,7 @@
                 "queueDelayMs": 1000,
                 "retentionDays": 365,
                 "state": "[if(variables('isAuditEnabled'), 'Enabled', 'Disabled')]",
-                "storageEndpoint": "[if(variables('auditStorageAccountIsEnabled'), reference(resourceId(variables('auditStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', variables('auditStorageAccountName')), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob, json('null'))]"
+                "storageEndpoint": "[if(variables('auditStorageAccountIsEnabled'), reference(variables('auditStorageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob, json('null'))]"
             },
             "type": "Microsoft.Sql/servers/auditingSettings"
         },
@@ -496,7 +497,7 @@
                     "emailSubscriptionAdmins": true,
                     "isEnabled": "[variables('advancedDataSecurityStorageAccountIsEnabled')]"
                 },
-                "storageContainerPath": "[format('{0}vulnerability-assessment/', if(variables('advancedDataSecurityStorageAccountIsEnabled'), reference(resourceId(variables('advancedDataSecurityStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', variables('advancedDataSecurityStorageAccountName')), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob, json('null')))]"
+                "storageContainerPath": "[format('{0}vulnerability-assessment/', if(variables('advancedDataSecurityStorageAccountIsEnabled'), reference(variables('advancedDataSecurityStorageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob, json('null')))]"
             },
             "type": "Microsoft.Sql/servers/vulnerabilityAssessments"
         },
