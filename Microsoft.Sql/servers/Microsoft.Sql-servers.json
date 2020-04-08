@@ -477,7 +477,7 @@
                 "principalId": "[reference(variables('serverResourceId'), variables('serverApiVersion'), 'Full').identity.principalId]",
                 "principalType": "ServicePrincipal",
                 "roleDefinitionId": "[variables('storageBlobDataContributorRoleResourceId')]",
-                "scope": "[variables('advancedDataSecurityStorageBlobDataContributorRoleAssignmentResourceId')]"
+                "scope": "[variables('advancedDataSecurityStorageAccountResourceId')]"
             },
             "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments"
         },
