@@ -44,6 +44,13 @@
             },
             "type": "array"
         },
+        "auditRetentionInDays": {
+            "defaultValue": 0,
+            "metadata": {
+                "description": "Specifies the number of days worth of audit logs that the audit feature will retain."
+            },
+            "type": "int"
+        },
         "auditStorageAccountName": {
             "defaultValue": "",
             "metadata": {
@@ -209,7 +216,7 @@
         "auditStorageBlobDataContributorRoleAssignmentUniqueId": "[guid(variables('auditStorageAccountResourceId'), variables('storageBlobDataContributorRoleResourceId'), variables('serverResourceId'))]",
         "authorizationRoleAssignmentApiVersion": "2018-09-01-preview",
         "connectionPolicyApiVersion": "2014-04-01",
-        "customerEncryptionKeyDeploymentName": "",
+        "customerEncryptionKeyDeploymentName": "[uniqueString(variables('serverName'), 'keyVaultAccessPolicyAssignment')]",
         "customerEncryptionKeyName": "[format('{0}_{1}_{2}', variables('customerEncryptionKeyVaultName'), if(not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))), parameters('encryptionKeyVaultKeyName'), 'DummyKeyName'), if(not(empty(coalesce(parameters('encryptionKeyVaultKeyVersion'), ''))), parameters('encryptionKeyVaultKeyVersion'), 'DummyKeyVersion'))]",
         "customerEncryptionKeyResourceId": "[resourceId('Microsoft.Sql/servers/keys', variables('serverName'), variables('customerEncryptionKeyName'))]",
         "customerEncryptionKeyVaultName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), parameters('encryptionKeyVaultName'), 'DummyKeyVault')]",
@@ -477,9 +484,6 @@
             "name": "[format('{0}/default', variables('serverName'))]",
             "properties": {
                 "auditActionsAndGroups": "[if(greater(length(parameters('auditActionsAndGroupNames')), 0), parameters('auditActionsAndGroupNames'), json('null'))]",
-                "isAzureMonitorTargetEnabled": false,
-                "queueDelayMs": 1000,
-                "retentionDays": 365,
                 "state": "[if(variables('isAuditEnabled'), 'Enabled', 'Disabled')]",
                 "storageEndpoint": "[if(variables('isAuditStorageAccountEnabled'), reference(variables('auditStorageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob, json('null'))]"
             },
@@ -495,7 +499,7 @@
                 "disabledAlerts": "[parameters('advancedDataSecurityDisabledAlerts')]",
                 "emailAccountAdmins": true,
                 "emailAddresses": "[parameters('advancedDataSecurityEmailAddresses')]",
-                "retentionDays": 0,
+                "retentionDays": "[parameters('auditRetentionInDays')]",
                 "state": "[if(variables('isAdvancedDataSecurityEnabled'), 'Enabled', 'Disabled')]"
             },
             "type": "Microsoft.Sql/servers/securityAlertPolicies"
