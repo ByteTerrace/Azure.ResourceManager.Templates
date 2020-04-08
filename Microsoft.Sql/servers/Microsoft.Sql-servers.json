@@ -26,28 +26,28 @@
         "advancedDataSecurityDisabledAlerts": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of alert names that will be disabled within the advanced data security feature, if enabled."
+                "description": "An array of alert names that will be disabled within the advanced data security feature."
             },
             "type": "array"
         },
         "advancedDataSecurityEmailAddresses": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of email addresses that will be notified by the advanced data security feature, if enabled."
+                "description": "An array of email addresses that will be notified by the advanced data security feature."
             },
             "type": "array"
         },
         "advancedDataSecurityStorageAccountName": {
             "defaultValue": "",
             "metadata": {
-                "description": "Specifies the name of the Azure Storage account that will be utilized by the advanced data security feature, if enabled."
+                "description": "Specifies the name of the Azure Storage account that will be utilized by the advanced data security feature."
             },
             "type": "string"
         },
         "advancedDataSecurityStorageAccountResourceGroupName": {
             "defaultValue": "",
             "metadata": {
-                "description": "Specifies the resource group name of the Azure Storage account that will be utilized by the advanced data security feature, if enabled."
+                "description": "Specifies the resource group name of the Azure Storage account that will be utilized by the advanced data security feature."
             },
             "type": "string"
         },
