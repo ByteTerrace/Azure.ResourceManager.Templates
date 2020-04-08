@@ -462,9 +462,7 @@
                 "licenseType": "BasePrice"
             },
             "sku": {
-                "capacity": "[variables('databases')[copyIndex()].sku.capacity]",
-                "name": "[variables('databases')[copyIndex()].sku.name]",
-                "tier": "[variables('databases')[copyIndex()].sku.tier]"
+                "name": "[variables('databases')[copyIndex()].skuName]"
             },
             "type": "Microsoft.Sql/servers/databases"
         }
