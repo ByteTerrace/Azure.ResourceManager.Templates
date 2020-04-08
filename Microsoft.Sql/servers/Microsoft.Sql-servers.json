@@ -233,6 +233,7 @@
         "isAuditEnabled": "[variables('isAuditStorageAccountEnabled')]",
         "isAuditStorageAccountEnabled": "[or(not(empty(coalesce(parameters('auditStorageAccountResourceGroupName'), ''))), not(empty(coalesce(parameters('auditStorageAccountName'), ''))))]",
         "isKeyVaultEncryptionEnabled": "[or(not(empty(coalesce(parameters('encryptionKeyVaultResourceGroupName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))))]",
+        "isStorageBlobDataContributorRoleAssignmentUnique": "[not(equals(variables('advancedDataSecurityStorageBlobDataContributorRoleAssignmentUniqueId'), variables('auditStorageBlobDataContributorRoleAssignmentUniqueId')))]",
         "keyApiVersion": "2015-05-01-preview",
         "keyVaultAccessPolicyApiVersion": "2018-02-14",
         "keyVaultAccessPolicyResourceId": "[resourceId(variables('keyVaultEncryptionResourceGroupName'), 'Microsoft.KeyVault/vaults/accessPolicies', variables('keyVaultEncryptionVaultName'), 'add')]",
@@ -248,7 +249,6 @@
         "serverName": "[toLower(parameters('serverName'))]",
         "serverResourceId": "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]",
         "storageAccountApiVersion": "2019-06-01",
-        "storageBlobDataContributorRoleAssignmentIsUnique": "[not(equals(variables('advancedDataSecurityStorageBlobDataContributorRoleAssignmentUniqueId'), variables('auditStorageBlobDataContributorRoleAssignmentUniqueId')))]",
         "storageBlobDataContributorRoleResourceId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
         "virtualNetworkRuleApiVersion": "2015-05-01-preview",
         "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), parameters('virtualNetworkRules'), json('[ { \"ignoreMissingVnetServiceEndpoint\": false, \"ruleName\": \"dummyVirtualNetworkRule\", \"subnetName\": \"dummySubnet\", \"virtualNetworkName\": \"dummyVirtualNetwork\", \"virtualNetworkResourceGroupName\": \"dummyResourceGroup\" } ]'))]",
@@ -469,12 +469,12 @@
         },
         {
             "apiVersion": "[variables('authorizationRoleAssignmentApiVersion')]",
-            "condition": "[and(variables('isAdvancedDataSecurityStorageAccountEnabled'), variables('storageBlobDataContributorRoleAssignmentIsUnique'))]",
+            "condition": "[and(variables('isAdvancedDataSecurityStorageAccountEnabled'), variables('isStorageBlobDataContributorRoleAssignmentUnique'))]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
                 "[variables('securityAlertPolicyResourceId')]"
             ],
-            "name": "[format('{0}/Microsoft.Authorization/{1}{2}', variables('advancedDataSecurityStorageAccountName'), variables('advancedDataSecurityStorageBlobDataContributorRoleAssignmentUniqueId'), if(variables('storageBlobDataContributorRoleAssignmentIsUnique'), '', 'AdvancedDataSecurity'))]",
+            "name": "[format('{0}/Microsoft.Authorization/{1}{2}', variables('advancedDataSecurityStorageAccountName'), variables('advancedDataSecurityStorageBlobDataContributorRoleAssignmentUniqueId'), if(variables('isStorageBlobDataContributorRoleAssignmentUnique'), '', 'AdvancedDataSecurity'))]",
             "properties": {
                 "principalId": "[reference(variables('serverResourceId'), variables('serverApiVersion'), 'Full').identity.principalId]",
                 "principalType": "ServicePrincipal",
