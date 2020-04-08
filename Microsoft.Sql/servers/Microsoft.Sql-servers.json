@@ -188,7 +188,7 @@
         "authorizationRoleAssignmentApiVersion": "2018-09-01-preview",
         "connectionPolicyApiVersion": "2014-04-01",
         "databasesApiVersion": "2019-06-01-preview",
-        "databases": "[if(variables('databasesIsNotEmpty'), parameters('databases'), json('[ { \"databaseName\": \"DummyDatabase\", \"sku\": { \"capacity\": 5, \"name\": \"Basic\", \"tier\": \"Basic\" } } ]'))]",
+        "databases": "[if(variables('databasesIsNotEmpty'), parameters('databases'), json('[ { \"databaseName\": \"DummyDatabase\", \"skuName\": \"Basic\" } ]'))]",
         "databasesCount": "[length(parameters('databases'))]",
         "databasesIsNotEmpty": "[greater(variables('databasesCount'), 0)]",
         "dnsAliasApiVersion": "2017-03-01-preview",
