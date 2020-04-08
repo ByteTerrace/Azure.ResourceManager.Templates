@@ -209,6 +209,12 @@
         "auditStorageBlobDataContributorRoleAssignmentUniqueId": "[guid(variables('auditStorageAccountResourceId'), variables('storageBlobDataContributorRoleResourceId'), variables('serverResourceId'))]",
         "authorizationRoleAssignmentApiVersion": "2018-09-01-preview",
         "connectionPolicyApiVersion": "2014-04-01",
+        "customerEncryptionKeyDeploymentName": "",
+        "customerEncryptionKeyName": "[format('{0}_{1}_{2}', variables('customerEncryptionKeyVaultName'), if(not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))), parameters('encryptionKeyVaultKeyName'), 'DummyKeyName'), if(not(empty(coalesce(parameters('encryptionKeyVaultKeyVersion'), ''))), parameters('encryptionKeyVaultKeyVersion'), 'DummyKeyVersion'))]",
+        "customerEncryptionKeyResourceId": "[resourceId('Microsoft.Sql/servers/keys', variables('serverName'), variables('customerEncryptionKeyName'))]",
+        "customerEncryptionKeyVaultName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), parameters('encryptionKeyVaultName'), 'DummyKeyVault')]",
+        "customerEncryptionKeyVaultResourceGroupName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultResourceGroupName'), ''))), parameters('encryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
+        "customerEncryptionKeyVaultResourceId": "[resourceId(variables('customerEncryptionKeyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults/', variables('customerEncryptionKeyVaultName'))]",
         "databasesApiVersion": "2019-06-01-preview",
         "databases": "[if(variables('databasesIsNotEmpty'), parameters('databases'), json('[ { \"databaseName\": \"DummyDatabase\", \"isAzureHybridBenefitEnabled\": false, \"skuName\": \"Basic\" } ]'))]",
         "databasesCount": "[length(parameters('databases'))]",
@@ -228,17 +234,11 @@
         "isAdvancedDataSecurityStorageAccountEnabled": "[or(not(empty(coalesce(parameters('vulnerabilityAssessmentStorageAccountResourceGroupName'), ''))), not(empty(coalesce(parameters('vulnerabilityAssessmentStorageAccountName'), ''))))]",
         "isAuditEnabled": "[variables('isAuditStorageAccountEnabled')]",
         "isAuditStorageAccountEnabled": "[or(not(empty(coalesce(parameters('auditStorageAccountResourceGroupName'), ''))), not(empty(coalesce(parameters('auditStorageAccountName'), ''))))]",
-        "isKeyVaultEncryptionEnabled": "[or(not(empty(coalesce(parameters('encryptionKeyVaultResourceGroupName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))))]",
+        "isCustomerEncryptionKeyEnabled": "[or(not(empty(coalesce(parameters('encryptionKeyVaultResourceGroupName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))))]",
         "isStorageBlobDataContributorRoleAssignmentUnique": "[not(equals(variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentUniqueId'), variables('auditStorageBlobDataContributorRoleAssignmentUniqueId')))]",
         "keyApiVersion": "2015-05-01-preview",
         "keyVaultAccessPolicyApiVersion": "2018-02-14",
-        "keyVaultAccessPolicyResourceId": "[resourceId(variables('keyVaultEncryptionResourceGroupName'), 'Microsoft.KeyVault/vaults/accessPolicies', variables('keyVaultEncryptionVaultName'), 'add')]",
         "keyVaultApiVersion": "2018-02-14",
-        "keyVaultEncryptionKeyName": "[format('{0}_{1}_{2}', variables('keyVaultEncryptionVaultName'), if(not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))), parameters('encryptionKeyVaultKeyName'), 'DummyKeyName'), if(not(empty(coalesce(parameters('encryptionKeyVaultKeyVersion'), ''))), parameters('encryptionKeyVaultKeyVersion'), 'DummyKeyVersion'))]",
-        "keyVaultEncryptionKeyResourceId": "[resourceId('Microsoft.Sql/servers/keys', variables('serverName'), variables('keyVaultEncryptionKeyName'))]",
-        "keyVaultEncryptionResourceGroupName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultResourceGroupName'), ''))), parameters('encryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
-        "keyVaultEncryptionVaultName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), parameters('encryptionKeyVaultName'), 'DummyKeyVault')]",
-        "keyVaultEncryptionVaultResourceId": "[resourceId(variables('keyVaultEncryptionResourceGroupName'), 'Microsoft.KeyVault/vaults/', variables('keyVaultEncryptionVaultName'))]",
         "securityAlertPolicyApiVersion": "2017-03-01-preview",
         "securityAlertPolicyResourceId": "[resourceId('Microsoft.Sql/servers/securityAlertPolicies', variables('serverName'), 'default')]",
         "serverApiVersion": "2019-06-01-preview",
@@ -366,57 +366,73 @@
             "type": "Microsoft.Sql/servers/administrators"
         },
         {
-            "apiVersion": "[variables('keyVaultAccessPolicyApiVersion')]",
-            "condition": "[variables('isKeyVaultEncryptionEnabled')]",
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[variables('isCustomerEncryptionKeyEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]"
             ],
-            "name": "[format('{0}/add', variables('keyVaultEncryptionVaultName'))]",
+            "name": "[variables('customerEncryptionKeyDeploymentName')]",
             "properties": {
-                "accessPolicies": [
-                    {
-                        "objectId": "[reference(variables('serverResourceId'), variables('serverApiVersion'), 'Full').identity.principalId]",
-                        "permissions": {
-                            "certificates": [],
-                            "keys": [
-                                "Get",
-                                "UnwrapKey",
-                                "WrapKey"
-                            ],
-                            "secrets": []
-                        },
-                        "tenantId": "[subscription().tenantId]"
-                    }
-                ]
+                "mode": "Incremental",
+                "parameters": {},
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                        {
+                            "apiVersion": "[variables('keyVaultAccessPolicyApiVersion')]",
+                            "name": "[format('{0}/add', variables('customerEncryptionKeyVaultName'))]",
+                            "properties": {
+                                "accessPolicies": [
+                                    {
+                                        "objectId": "[reference(variables('serverResourceId'), variables('serverApiVersion'), 'Full').identity.principalId]",
+                                        "permissions": {
+                                            "certificates": [],
+                                            "keys": [
+                                                "Get",
+                                                "UnwrapKey",
+                                                "WrapKey"
+                                            ],
+                                            "secrets": []
+                                        },
+                                        "tenantId": "[subscription().tenantId]"
+                                    }
+                                ]
+                            },
+                            "type": "Microsoft.KeyVault/vaults/accessPolicies"
+                        }
+                    ]
+                }
             },
-            "type": "Microsoft.KeyVault/vaults/accessPolicies"
+            "resourceGroup": "[variables('customerEncryptionKeyVaultResourceGroupName')]",
+            "type": "Microsoft.Resources/deployments"
         },
         {
             "apiVersion": "[variables('keyApiVersion')]",
-            "condition": "[variables('isKeyVaultEncryptionEnabled')]",
+            "condition": "[variables('isCustomerEncryptionKeyEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
-                "[variables('keyVaultAccessPolicyResourceId')]"
+                "[variables('customerEncryptionKeyDeploymentName')]"
             ],
             "kind": "AzureKeyVault",
-            "name": "[format('{0}/{1}', variables('serverName'), variables('keyVaultEncryptionKeyName'))]",
+            "name": "[format('{0}/{1}', variables('serverName'), variables('customerEncryptionKeyName'))]",
             "properties": {
                 "serverKeyType": "AzureKeyVault",
-                "uri": "[format('{0}keys/{1}/{2}', if(variables('isKeyVaultEncryptionEnabled'), reference(variables('keyVaultEncryptionVaultResourceId'), variables('keyVaultApiVersion'), 'Full').properties.vaultUri, 'https://dummy.domain/'), parameters('encryptionKeyVaultKeyName'), parameters('encryptionKeyVaultKeyVersion'))]"
+                "uri": "[format('{0}keys/{1}/{2}', if(variables('isCustomerEncryptionKeyEnabled'), reference(variables('customerEncryptionKeyVaultResourceId'), variables('keyVaultApiVersion'), 'Full').properties.vaultUri, 'https://dummy.domain/'), parameters('encryptionKeyVaultKeyName'), parameters('encryptionKeyVaultKeyVersion'))]"
             },
             "type": "Microsoft.Sql/servers/keys"
         },
         {
             "apiVersion": "[variables('encryptionProtectorApiVersion')]",
-            "condition": "[variables('isKeyVaultEncryptionEnabled')]",
+            "condition": "[variables('isCustomerEncryptionKeyEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
-                "[variables('keyVaultEncryptionKeyResourceId')]"
+                "[variables('customerEncryptionKeyResourceId')]"
             ],
             "kind": "AzureKeyVault",
             "name": "[format('{0}/current', variables('serverName'))]",
             "properties": {
-                "serverKeyName": "[variables('keyVaultEncryptionKeyName')]",
+                "serverKeyName": "[variables('customerEncryptionKeyName')]",
                 "serverKeyType": "AzureKeyVault"
             },
             "type": "Microsoft.Sql/servers/encryptionProtector"
