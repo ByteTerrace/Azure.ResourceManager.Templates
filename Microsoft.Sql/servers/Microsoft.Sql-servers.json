@@ -201,14 +201,12 @@
     },
     "variables": {
         "administratorApiVersion": "2019-06-01-preview",
-        "advancedDataSecurityStorageAccountIsEnabled": "[or(not(empty(coalesce(parameters('advancedDataSecurityStorageAccountResourceGroupName'), ''))), not(empty(coalesce(parameters('advancedDataSecurityStorageAccountName'), ''))))]",
         "advancedDataSecurityStorageAccountName": "[if(not(empty(coalesce(parameters('advancedDataSecurityStorageAccountName'), ''))), parameters('advancedDataSecurityStorageAccountName'), 'DummyStorageAccountForAds')]",
         "advancedDataSecurityStorageAccountResourceGroupName": "[if(not(empty(coalesce(parameters('advancedDataSecurityStorageAccountResourceGroupName'), ''))), parameters('advancedDataSecurityStorageAccountResourceGroupName'), resourceGroup().name)]",
         "advancedDataSecurityStorageAccountResourceId": "[resourceId(variables('advancedDataSecurityStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('advancedDataSecurityStorageAccountName'))]",
         "advancedDataSecurityStorageBlobDataContributorRoleAssignmentResourceId": "[resourceId(variables('advancedDataSecurityStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts/providers/roleAssignments', variables('advancedDataSecurityStorageAccountName'), 'Microsoft.Authorization', variables('advancedDataSecurityStorageBlobDataContributorRoleAssignmentUniqueId'))]",
         "advancedDataSecurityStorageBlobDataContributorRoleAssignmentUniqueId": "[guid(variables('advancedDataSecurityStorageAccountResourceId'), variables('storageBlobDataContributorRoleResourceId'), variables('serverResourceId'))]",
         "auditApiVersion": "2017-03-01-preview",
-        "auditStorageAccountIsEnabled": "[or(not(empty(coalesce(parameters('auditStorageAccountResourceGroupName'), ''))), not(empty(coalesce(parameters('auditStorageAccountName'), ''))))]",
         "auditStorageAccountName": "[if(not(empty(coalesce(parameters('auditStorageAccountName'), ''))), parameters('auditStorageAccountName'), 'DummyStorageAccountForAudit')]",
         "auditStorageAccountResourceGroupName": "[if(not(empty(coalesce(parameters('auditStorageAccountResourceGroupName'), ''))), parameters('auditStorageAccountResourceGroupName'), resourceGroup().name)]",
         "auditStorageAccountResourceId": "[resourceId(variables('auditStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('auditStorageAccountName'))]",
@@ -230,13 +228,15 @@
         "firewallRulesCount": "[length(parameters('firewallRules'))]",
         "firewallRulesIsNotEmpty": "[greater(variables('firewallRulesCount'), 0)]",
         "isActiveDirectoryAdministratorEnabled": "[or(not(empty(coalesce(parameters('activeDirectoryAdministratorObjectId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorTenantId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorUserName'), ''))))]",
-        "isAdvancedDataSecurityEnabled": "[or(greater(length(parameters('advancedDataSecurityEmailAddresses')), 0), variables('advancedDataSecurityStorageAccountIsEnabled'))]",
-        "isAuditEnabled": "[variables('auditStorageAccountIsEnabled')]",
+        "isAdvancedDataSecurityEnabled": "[or(greater(length(parameters('advancedDataSecurityEmailAddresses')), 0), variables('isAdvancedDataSecurityStorageAccountEnabled'))]",
+        "isAdvancedDataSecurityStorageAccountEnabled": "[or(not(empty(coalesce(parameters('advancedDataSecurityStorageAccountResourceGroupName'), ''))), not(empty(coalesce(parameters('advancedDataSecurityStorageAccountName'), ''))))]",
+        "isAuditEnabled": "[variables('isAuditStorageAccountEnabled')]",
+        "isAuditStorageAccountEnabled": "[or(not(empty(coalesce(parameters('auditStorageAccountResourceGroupName'), ''))), not(empty(coalesce(parameters('auditStorageAccountName'), ''))))]",
+        "isKeyVaultEncryptionEnabled": "[or(not(empty(coalesce(parameters('encryptionKeyVaultResourceGroupName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))))]",
         "keyApiVersion": "2015-05-01-preview",
         "keyVaultAccessPolicyApiVersion": "2018-02-14",
         "keyVaultAccessPolicyResourceId": "[resourceId(variables('keyVaultEncryptionResourceGroupName'), 'Microsoft.KeyVault/vaults/accessPolicies', variables('keyVaultEncryptionVaultName'), 'add')]",
         "keyVaultApiVersion": "2018-02-14",
-        "keyVaultEncryptionIsEnabled": "[or(not(empty(coalesce(parameters('encryptionKeyVaultResourceGroupName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))))]",
         "keyVaultEncryptionKeyName": "[format('{0}_{1}_{2}', variables('keyVaultEncryptionVaultName'), if(not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))), parameters('encryptionKeyVaultKeyName'), 'DummyKeyName'), if(not(empty(coalesce(parameters('encryptionKeyVaultKeyVersion'), ''))), parameters('encryptionKeyVaultKeyVersion'), 'DummyKeyVersion'))]",
         "keyVaultEncryptionKeyResourceId": "[resourceId('Microsoft.Sql/servers/keys', variables('serverName'), variables('keyVaultEncryptionKeyName'))]",
         "keyVaultEncryptionResourceGroupName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultResourceGroupName'), ''))), parameters('encryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
@@ -248,6 +248,7 @@
         "serverName": "[toLower(parameters('serverName'))]",
         "serverResourceId": "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]",
         "storageAccountApiVersion": "2019-06-01",
+        "storageBlobDataContributorRoleAssignmentIsUnique": "[not(equals(variables('advancedDataSecurityStorageBlobDataContributorRoleAssignmentUniqueId'), variables('auditStorageBlobDataContributorRoleAssignmentUniqueId')))]",
         "storageBlobDataContributorRoleResourceId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
         "virtualNetworkRuleApiVersion": "2015-05-01-preview",
         "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), parameters('virtualNetworkRules'), json('[ { \"ignoreMissingVnetServiceEndpoint\": false, \"ruleName\": \"dummyVirtualNetworkRule\", \"subnetName\": \"dummySubnet\", \"virtualNetworkName\": \"dummyVirtualNetwork\", \"virtualNetworkResourceGroupName\": \"dummyResourceGroup\" } ]'))]",
@@ -365,7 +366,7 @@
         },
         {
             "apiVersion": "[variables('keyVaultAccessPolicyApiVersion')]",
-            "condition": "[variables('keyVaultEncryptionIsEnabled')]",
+            "condition": "[variables('isKeyVaultEncryptionEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]"
             ],
@@ -391,7 +392,7 @@
         },
         {
             "apiVersion": "[variables('keyApiVersion')]",
-            "condition": "[variables('keyVaultEncryptionIsEnabled')]",
+            "condition": "[variables('isKeyVaultEncryptionEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
                 "[variables('keyVaultAccessPolicyResourceId')]"
@@ -400,13 +401,13 @@
             "name": "[format('{0}/{1}', variables('serverName'), variables('keyVaultEncryptionKeyName'))]",
             "properties": {
                 "serverKeyType": "AzureKeyVault",
-                "uri": "[format('{0}keys/{1}/{2}', if(variables('keyVaultEncryptionIsEnabled'), reference(variables('keyVaultEncryptionVaultResourceId'), variables('keyVaultApiVersion'), 'Full').properties.vaultUri, 'https://dummy.domain/'), parameters('encryptionKeyVaultKeyName'), parameters('encryptionKeyVaultKeyVersion'))]"
+                "uri": "[format('{0}keys/{1}/{2}', if(variables('isKeyVaultEncryptionEnabled'), reference(variables('keyVaultEncryptionVaultResourceId'), variables('keyVaultApiVersion'), 'Full').properties.vaultUri, 'https://dummy.domain/'), parameters('encryptionKeyVaultKeyName'), parameters('encryptionKeyVaultKeyVersion'))]"
             },
             "type": "Microsoft.Sql/servers/keys"
         },
         {
             "apiVersion": "[variables('encryptionProtectorApiVersion')]",
-            "condition": "[variables('keyVaultEncryptionIsEnabled')]",
+            "condition": "[variables('isKeyVaultEncryptionEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
                 "[variables('keyVaultEncryptionKeyResourceId')]"
@@ -421,7 +422,7 @@
         },
         {
             "apiVersion": "[variables('authorizationRoleAssignmentApiVersion')]",
-            "condition": "[variables('auditStorageAccountIsEnabled')]",
+            "condition": "[variables('isAuditStorageAccountEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]"
             ],
@@ -447,7 +448,7 @@
                 "queueDelayMs": 1000,
                 "retentionDays": 365,
                 "state": "[if(variables('isAuditEnabled'), 'Enabled', 'Disabled')]",
-                "storageEndpoint": "[if(variables('auditStorageAccountIsEnabled'), reference(variables('auditStorageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob, json('null'))]"
+                "storageEndpoint": "[if(variables('isAuditStorageAccountEnabled'), reference(variables('auditStorageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob, json('null'))]"
             },
             "type": "Microsoft.Sql/servers/auditingSettings"
         },
@@ -468,12 +469,12 @@
         },
         {
             "apiVersion": "[variables('authorizationRoleAssignmentApiVersion')]",
-            "condition": "[variables('advancedDataSecurityStorageAccountIsEnabled')]",
+            "condition": "[and(variables('isAdvancedDataSecurityStorageAccountEnabled'), variables('storageBlobDataContributorRoleAssignmentIsUnique'))]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
                 "[variables('securityAlertPolicyResourceId')]"
             ],
-            "name": "[format('{0}/Microsoft.Authorization/{1}', variables('advancedDataSecurityStorageAccountName'), variables('advancedDataSecurityStorageBlobDataContributorRoleAssignmentUniqueId'))]",
+            "name": "[format('{0}/Microsoft.Authorization/{1}{2}', variables('advancedDataSecurityStorageAccountName'), variables('advancedDataSecurityStorageBlobDataContributorRoleAssignmentUniqueId'), if(variables('storageBlobDataContributorRoleAssignmentIsUnique'), '', 'AdvancedDataSecurity'))]",
             "properties": {
                 "principalId": "[reference(variables('serverResourceId'), variables('serverApiVersion'), 'Full').identity.principalId]",
                 "principalType": "ServicePrincipal",
@@ -495,9 +496,9 @@
                 "recurringScans": {
                     "emails": "[parameters('advancedDataSecurityEmailAddresses')]",
                     "emailSubscriptionAdmins": true,
-                    "isEnabled": "[variables('advancedDataSecurityStorageAccountIsEnabled')]"
+                    "isEnabled": "[variables('isAdvancedDataSecurityStorageAccountEnabled')]"
                 },
-                "storageContainerPath": "[format('{0}vulnerability-assessment/', if(variables('advancedDataSecurityStorageAccountIsEnabled'), reference(variables('advancedDataSecurityStorageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob, json('null')))]"
+                "storageContainerPath": "[format('{0}vulnerability-assessment/', if(variables('isAdvancedDataSecurityStorageAccountEnabled'), reference(variables('advancedDataSecurityStorageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob, json('null')))]"
             },
             "type": "Microsoft.Sql/servers/vulnerabilityAssessments"
         },
