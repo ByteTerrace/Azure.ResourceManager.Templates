@@ -501,7 +501,7 @@
                     "resources": [
                         {
                             "apiVersion": "[variables('authorizationRoleAssignmentApiVersion')]",
-                            "name": "[format('{0}/Microsoft.Authorization/{1}{2}', variables('advancedDataSecurityStorageAccountName'), variables('advancedDataSecurityStorageBlobDataContributorRoleAssignmentUniqueId'), if(variables('isStorageBlobDataContributorRoleAssignmentUnique'), '', 'AdvancedDataSecurity'))]",
+                            "name": "[format('{0}/Microsoft.Authorization/{1}', variables('advancedDataSecurityStorageAccountName'), variables('advancedDataSecurityStorageBlobDataContributorRoleAssignmentUniqueId'))]",
                             "properties": {
                                 "principalId": "[reference(variables('serverResourceId'), variables('serverApiVersion'), 'Full').identity.principalId]",
                                 "principalType": "ServicePrincipal",
