@@ -237,12 +237,12 @@
         "firewallRulesCount": "[length(parameters('firewallRules'))]",
         "firewallRulesIsNotEmpty": "[greater(variables('firewallRulesCount'), 0)]",
         "isActiveDirectoryAdministratorEnabled": "[or(not(empty(coalesce(parameters('activeDirectoryAdministratorObjectId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorTenantId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorUserName'), ''))))]",
-        "isAdvancedDataSecurityEnabled": "[or(greater(length(parameters('advancedDataSecurityEmailAddresses')), 0), variables('isAdvancedDataSecurityStorageAccountEnabled'))]",
-        "isAdvancedDataSecurityStorageAccountEnabled": "[or(not(empty(coalesce(parameters('vulnerabilityAssessmentStorageAccountResourceGroupName'), ''))), not(empty(coalesce(parameters('vulnerabilityAssessmentStorageAccountName'), ''))))]",
+        "isAdvancedDataSecurityEnabled": "[or(greater(length(parameters('advancedDataSecurityEmailAddresses')), 0), variables('isVulnerabilityAssessmentStorageAccountEnabled'))]",
         "isAuditEnabled": "[variables('isAuditStorageAccountEnabled')]",
         "isAuditStorageAccountEnabled": "[or(not(empty(coalesce(parameters('auditStorageAccountResourceGroupName'), ''))), not(empty(coalesce(parameters('auditStorageAccountName'), ''))))]",
         "isCustomerEncryptionKeyEnabled": "[or(not(empty(coalesce(parameters('encryptionKeyVaultResourceGroupName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))))]",
         "isStorageBlobDataContributorRoleAssignmentUnique": "[not(equals(variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentUniqueId'), variables('auditStorageBlobDataContributorRoleAssignmentUniqueId')))]",
+        "isVulnerabilityAssessmentStorageAccountEnabled": "[or(not(empty(coalesce(parameters('vulnerabilityAssessmentStorageAccountResourceGroupName'), ''))), not(empty(coalesce(parameters('vulnerabilityAssessmentStorageAccountName'), ''))))]",
         "keyApiVersion": "2015-05-01-preview",
         "keyVaultAccessPolicyApiVersion": "2018-02-14",
         "keyVaultApiVersion": "2018-02-14",
@@ -506,7 +506,7 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[and(variables('isAdvancedDataSecurityStorageAccountEnabled'), variables('isStorageBlobDataContributorRoleAssignmentUnique'))]",
+            "condition": "[and(variables('isVulnerabilityAssessmentStorageAccountEnabled'), variables('isStorageBlobDataContributorRoleAssignmentUnique'))]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
                 "[variables('securityAlertPolicyResourceId')]"
@@ -550,9 +550,9 @@
                 "recurringScans": {
                     "emails": "[parameters('advancedDataSecurityEmailAddresses')]",
                     "emailSubscriptionAdmins": true,
-                    "isEnabled": "[variables('isAdvancedDataSecurityStorageAccountEnabled')]"
+                    "isEnabled": "[variables('isVulnerabilityAssessmentStorageAccountEnabled')]"
                 },
-                "storageContainerPath": "[format('{0}vulnerability-assessment/', if(variables('isAdvancedDataSecurityStorageAccountEnabled'), reference(variables('vulnerabilityAssessmentStorageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob, json('null')))]"
+                "storageContainerPath": "[format('{0}vulnerability-assessment/', if(variables('isVulnerabilityAssessmentStorageAccountEnabled'), reference(variables('vulnerabilityAssessmentStorageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob, json('null')))]"
             },
             "type": "Microsoft.Sql/servers/vulnerabilityAssessments"
         },
