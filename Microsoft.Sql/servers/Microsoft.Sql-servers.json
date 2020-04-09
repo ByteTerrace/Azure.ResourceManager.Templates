@@ -352,8 +352,8 @@
             ],
             "name": "[format('{0}/{1}', variables('serverName'), variables('virtualNetworkRules')[copyIndex()].ruleName)]",
             "properties": {
-                "ignoreMissingVnetServiceEndpoint": "[union(variables('virtualNetworkRules')[copyIndex()], json('{ \"ignoreMissingVnetServiceEndpoint\": false }')).ignoreMissingVnetServiceEndpoint]",
-                "virtualNetworkSubnetId": "[resourceId(union(variables('virtualNetworkRules')[copyIndex()], json(format('{{ \"virtualNetworkResourceGroupName\": \"{0}\" }}', resourceGroup().name))).virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkRules')[copyIndex()].virtualNetworkName, variables('virtualNetworkRules')[copyIndex()].subnetName)]"
+                "ignoreMissingVnetServiceEndpoint": "[union(json('{ \"ignoreMissingVnetServiceEndpoint\": false }'), variables('virtualNetworkRules')[copyIndex()]).ignoreMissingVnetServiceEndpoint]",
+                "virtualNetworkSubnetId": "[resourceId(union(json(format('{{ \"virtualNetworkResourceGroupName\": \"{0}\" }}', resourceGroup().name)), variables('virtualNetworkRules')[copyIndex()]).virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkRules')[copyIndex()].virtualNetworkName, variables('virtualNetworkRules')[copyIndex()].subnetName)]"
             },
             "type": "Microsoft.Sql/servers/virtualNetworkRules"
         },
@@ -574,13 +574,13 @@
             "location": "[parameters('location')]",
             "name": "[format('{0}/{1}', variables('serverName'), variables('databases')[copyIndex()].databaseName)]",
             "properties": {
-                "catalogCollation": "[union(variables('databases')[copyIndex()], json('{ \"catalogCollation\": \"DATABASE_DEFAULT\" }')).catalogCollation]",
-                "collation": "[union(variables('databases')[copyIndex()], json('{ \"collation\": \"SQL_Latin1_General_CP1_CI_AS\" }')).collation]",
+                "catalogCollation": "[union(json('{ \"catalogCollation\": \"DATABASE_DEFAULT\" }'), variables('databases')[copyIndex()]).catalogCollation]",
+                "collation": "[union(json('{ \"collation\": \"SQL_Latin1_General_CP1_CI_AS\" }'), variables('databases')[copyIndex()]).collation]",
                 "createMode": "Default",
-                "licenseType": "[if(union(variables('databases')[copyIndex()], json('{ \"isAzureHybridBenefitEnabled\": false }')).isAzureHybridBenefitEnabled, 'BasePrice', 'LicenseIncluded')]"
+                "licenseType": "[if(union(json('{ \"isAzureHybridBenefitEnabled\": false }'), variables('databases')[copyIndex()]).isAzureHybridBenefitEnabled, 'BasePrice', 'LicenseIncluded')]"
             },
             "sku": {
-                "name": "[union(variables('databases')[copyIndex()], json('{ \"skuName\": \"Basic\" }')).skuName]"
+                "name": "[union(json('{ \"skuName\": \"Basic\" }'), variables('databases')[copyIndex()]).skuName]"
             },
             "type": "Microsoft.Sql/servers/databases"
         }
