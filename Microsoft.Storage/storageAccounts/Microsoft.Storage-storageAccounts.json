@@ -117,7 +117,8 @@
         "keyVaultAccessPolicyApiVersion": "2018-02-14",
         "keyVaultAccessPolicyResourceId": "[resourceId('Microsoft.KeyVault/vaults/accessPolicies', variables('customerEncryptionKeyVaultName'), 'add')]",
         "storageAccountApiVersion": "2019-06-01",
-        "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+        "storageAccountName": "[toLower(parameters('storageAccountName'))]",
+        "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "storageAccountSkuTier": "[if(startsWith(parameters('skuName'), 'premium'), 'Premium', 'Standard')]"
     },
     "resources": [
@@ -128,7 +129,7 @@
             },
             "kind": "[parameters('storageAccountKind')]",
             "location": "[parameters('location')]",
-            "name": "[parameters('storageAccountName')]",
+            "name": "[variables('storageAccountName')]",
             "properties": {
                 "accessTier": "[parameters('accessTier')]",
                 "isHnsEnabled": "[parameters('isHierarchicalNamespaceEnabled')]",
@@ -186,7 +187,7 @@
                 "[variables('storageAccountResourceId')]",
                 "[variables('keyVaultAccessPolicyResourceId')]"
             ],
-            "name": "[format('{0}/default-encryption-scope', parameters('storageAccountName'))]",
+            "name": "[format('{0}/default-encryption-scope', variables('storageAccountName'))]",
             "properties": {
                 "keyVaultProperties": "[variables('customerEncryptionKeyVaultProperties')]",
                 "source": "Microsoft.KeyVault",
@@ -205,7 +206,7 @@
             "dependsOn": [
                 "[variables('storageAccountResourceId')]"
             ],
-            "name": "[format('{0}/default/{1}', parameters('storageAccountName'), variables('blobContainerNames')[copyIndex()])]",
+            "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('blobContainerNames')[copyIndex()])]",
             "type": "Microsoft.Storage/storageAccounts/blobServices/containers"
         },
         {
@@ -219,7 +220,7 @@
             "dependsOn": [
                 "[variables('storageAccountResourceId')]"
             ],
-            "name": "[format('{0}/default/{1}', parameters('storageAccountName'), variables('fileShareNames')[copyIndex()])]",
+            "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('fileShareNames')[copyIndex()])]",
             "type": "Microsoft.Storage/storageAccounts/fileServices/shares"
         }
     ]
