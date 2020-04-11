@@ -19,7 +19,7 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "serverName": {
+                    "storageAccountName": {
                         "value": "[parameters('applicationName')]"
                     }
                 },
