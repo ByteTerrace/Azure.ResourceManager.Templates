@@ -9,6 +9,7 @@
     },
     "variables": {
         "deploymentApiVersion": "2019-10-01",
+        "deploymentNameForAppConfiguration": "[format('{0}-AppConfiguration', parameters('applicationName'))]",
         "deploymentNameForMsSqlServer": "[format('{0}-MsSqlServer', parameters('applicationName'))]",
         "deploymentNameForStorageAccount": "[format('{0}-StorageAccount', parameters('applicationName'))]",
         "templateUriForMicrosoftAppConfiguration": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.AppConfiguration%2FconfigurationStores%2FMicrosoft.AppConfiguration-configurationStores.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
@@ -18,7 +19,7 @@
     "resources": [
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "name": "[variables('deploymentNameForStorageAccount')]",
+            "name": "[variables('deploymentNameForAppConfiguration')]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
@@ -35,12 +36,12 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "name": "[format('{0}storage', variables('deploymentNameForStorageAccount'))]",
+            "name": "[variables('deploymentNameForStorageAccount')]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
                     "storageAccountName": {
-                        "value": "[parameters('applicationName')]"
+                        "value": "[format('{0}storage', parameters('applicationName'))]"
                     }
                 },
                 "templateLink": {
