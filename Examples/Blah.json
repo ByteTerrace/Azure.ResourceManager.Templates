@@ -1,19 +1,46 @@
 {
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "parameters": {},
+    "parameters": {
+        "applicationName": {
+            "defaultValue": "BlahTest0124",
+            "type": "string"
+        }
+    },
     "variables": {
-        "deploymentApiVersion": "2019-10-01"
+        "deploymentApiVersion": "2019-10-01",
+        "deploymentNameForMsSqlServer": "[format('{0}-MsSqlServer', parameters('applicationName'))]",
+        "deploymentNameForStorageAccount": "[format('{0}-StorageAccount', parameters('applicationName'))]"
     },
     "resources": [
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "name": "AppConfiguration",
+            "name": "[variables('deploymentNameForStorageAccount')]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
                     "serverName": {
-                        "value": "BlahTest0124"
+                        "value": "[parameters('applicationName')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Storage%2FstorageAccounts%2FMicrosoft.Storage-storageAccounts.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "dependsOn": {
+                "[variables('deploymentNameForStorageAccount')]"
+            },
+            "name": "[variables('deploymentNameForMsSqlServer')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "serverName": {
+                        "value": "[parameters('applicationName')]"
                     }
                 },
                 "templateLink": {
