@@ -32,9 +32,9 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "dependsOn": {
+            "dependsOn": [
                 "[variables('deploymentNameForStorageAccount')]"
-            },
+            ],
             "name": "[variables('deploymentNameForMsSqlServer')]",
             "properties": {
                 "mode": "Incremental",
