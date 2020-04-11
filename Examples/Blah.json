@@ -1,0 +1,27 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {},
+    "variables": {
+        "deploymentApiVersion": "2019-10-01"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "name": "AppConfiguration",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "serverName": {
+                        "value": "BlahTest0124"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Sql%2Fservers%2FMicrosoft.Sql-servers.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        }
+    ]
+}
