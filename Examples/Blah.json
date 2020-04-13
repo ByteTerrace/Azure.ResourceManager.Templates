@@ -12,9 +12,11 @@
         "deploymentNameForAppConfiguration": "[format('{0}-AppConfiguration', parameters('applicationName'))]",
         "deploymentNameForMsSqlServer": "[format('{0}-MsSqlServer', parameters('applicationName'))]",
         "deploymentNameForStorageAccount": "[format('{0}-StorageAccount', parameters('applicationName'))]",
+        "deploymentNameForWebAppServerFarm": "[format('{0}-WebAppServerFarm', parameters('applicationName'))]",
         "templateUriForMicrosoftAppConfiguration": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.AppConfiguration%2FconfigurationStores%2FMicrosoft.AppConfiguration-configurationStores.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
         "templateUriForMicrosoftSqlServers": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Sql%2Fservers%2FMicrosoft.Sql-servers.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
-        "templateUriForMicrosoftStorageAccounts": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Storage%2FstorageAccounts%2FMicrosoft.Storage-storageAccounts.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true"
+        "templateUriForMicrosoftStorageAccounts": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Storage%2FstorageAccounts%2FMicrosoft.Storage-storageAccounts.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
+        "templateUriForMicrosoftWebAppServerFarms": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Web%2Fserverfarms%2FMicrosoft.Web-serverfarms.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true"
     },
     "resources": [
         {
@@ -67,6 +69,33 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "uri": "[variables('templateUriForMicrosoftSqlServers')]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "dependsOn": [
+                "[variables('deploymentNameForStorageAccount')]"
+            ],
+            "name": "[variables('deploymentNameForWebAppServerFarm')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "serverFarmName": {
+                        "value": "[format('{0}-ASP', parameters('applicationName'))]"
+                    },
+                    "sites": {
+                        "value": [
+                            {
+                                "siteName": "[parameters('applicationName')]"
+                            }
+                        ]
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUriForMicrosoftWebAppServerFarms')]"
                 }
             },
             "type": "Microsoft.Resources/deployments"
