@@ -9,10 +9,10 @@
     },
     "variables": {
         "deploymentApiVersion": "2019-10-01",
-        "deploymentNameForAppConfiguration": "[format('{0}-AppConfiguration', parameters('applicationName'))]",
-        "deploymentNameForMsSqlServer": "[format('{0}-MsSqlServer', parameters('applicationName'))]",
-        "deploymentNameForStorageAccount": "[format('{0}-StorageAccount', parameters('applicationName'))]",
-        "deploymentNameForWebAppServerFarm": "[format('{0}-WebAppServerFarm', parameters('applicationName'))]",
+        "deploymentNameForMicrosoftAppConfiguration": "[format('{0}-AppConfiguration', parameters('applicationName'))]",
+        "deploymentNameForMicrosoftSqlServer": "[format('{0}-MsSqlServer', parameters('applicationName'))]",
+        "deploymentNameForMicrosoftStorageAccount": "[format('{0}-StorageAccount', parameters('applicationName'))]",
+        "deploymentNameForMicrosoftWebAppServerFarm": "[format('{0}-WebAppServerFarm', parameters('applicationName'))]",
         "templateUriForMicrosoftAppConfiguration": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.AppConfiguration%2FconfigurationStores%2FMicrosoft.AppConfiguration-configurationStores.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
         "templateUriForMicrosoftSqlServers": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Sql%2Fservers%2FMicrosoft.Sql-servers.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
         "templateUriForMicrosoftStorageAccounts": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Storage%2FstorageAccounts%2FMicrosoft.Storage-storageAccounts.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
@@ -21,7 +21,7 @@
     "resources": [
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "name": "[variables('deploymentNameForAppConfiguration')]",
+            "name": "[variables('deploymentNameForMicrosoftAppConfiguration')]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
@@ -38,7 +38,7 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "name": "[variables('deploymentNameForStorageAccount')]",
+            "name": "[variables('deploymentNameForMicrosoftStorageAccount')]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
@@ -56,9 +56,9 @@
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
             "dependsOn": [
-                "[variables('deploymentNameForStorageAccount')]"
+                "[variables('deploymentNameForMicrosoftStorageAccount')]"
             ],
-            "name": "[variables('deploymentNameForMsSqlServer')]",
+            "name": "[variables('deploymentNameForMicrosoftSqlServer')]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
@@ -83,9 +83,9 @@
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
             "dependsOn": [
-                "[variables('deploymentNameForStorageAccount')]"
+                "[variables('deploymentNameForMicrosoftStorageAccount')]"
             ],
-            "name": "[variables('deploymentNameForWebAppServerFarm')]",
+            "name": "[variables('deploymentNameForMicrosoftWebAppServerFarm')]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
