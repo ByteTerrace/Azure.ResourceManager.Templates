@@ -1,0 +1,96 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "kind": {
+            "allowedValues": [
+                "app",
+                "functionApp"
+            ],
+            "defaultValue": "app",
+            "metadata": {
+                "description": "Specifies the kind of Azure Web site."
+            },
+            "type": "string"
+        },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Specifies the location in which the Azure Web site resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "operatingSystemName": {
+            "allowedValues": [
+                "Linux",
+                "Windows"
+            ],
+            "defaultValue": "Linux",
+            "metadata": {
+                "description": "Specifies the name of operating system that the Azure Web site will run within."
+            },
+            "type": "string"
+        },
+        "servicePlanName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Web app service plan that the Azure Web site will be deployed within."
+            },
+            "type": "string"
+        },
+        "servicePlanResourceGroupName": {
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure Web app service plan that the Azure Web site will be deployed within."
+            },
+            "type": "string"
+        },
+        "siteName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Web site."
+            },
+            "type": "string"
+        },
+        "stack": {
+            "defaultValue": "dotnetcore",
+            "metadata": {
+                "description": "Specifies the name of the stack that Azure Web site will be run on top of."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Web site."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "isLinuxOperatingSystem": "[equals(toLower(parameters('operatingSystemName')), 'linux')]",
+        "servicePlanResourceGroupName": "[if(not(empty(coalesce(parameters('servicePlanResourceGroupName'), ''))), parameters('servicePlanResourceGroupName'), resourceGroup().name)]",
+        "siteApiVersion": "2019-08-01"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('siteApiVersion')]",
+            "kind": "[format('{0}{1}', parameters('kind'), if(variables('isLinuxOperatingSystem'), ',linux', ''))]",
+            "location": "[parameters('location')]",
+            "name": "[parameters('siteName')]",
+            "properties": {
+                "serverFarmId": "[resourceId(variables('servicePlanResourceGroupName'), 'Microsoft.Web/serverfarms', parameters('servicePlanName'))]",
+                "siteConfig": {
+                    "httpsOnly": true,
+                    "http20Enabled": true,
+                    "linuxFxVersion": "[if(variables('isLinuxOperatingSystem'), 'DOTNETCORE|LTS', json('null'))]",
+                    "metadata": [
+                        {
+                            "name": "CURRENT_STACK",
+                            "value": "[parameters('stack')]"
+                        }
+                    ]
+                }
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Web/sites"
+        }
+    ]
+}

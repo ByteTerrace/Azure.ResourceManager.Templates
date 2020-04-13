@@ -5,7 +5,7 @@
         "location": {
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
-                "description": "Specifies the location in which the Azure App Service plan resource(s) should be deployed."
+                "description": "Specifies the location in which the Azure Web app service plan resource(s) should be deployed."
             },
             "type": "string"
         },
@@ -16,27 +16,27 @@
             ],
             "defaultValue": "Linux",
             "metadata": {
-                "description": "Specifies the name of operating system that the Azure App Service plan will run on."
+                "description": "Specifies the name of operating system that the Azure Web app service plan will run within."
             },
             "type": "string"
         },
         "serviceEnvironmentName": {
             "defaultValue": "",
             "metadata": {
-                "description": "Specifies the name of the environment that the Azure App Service plan will be hosted within."
+                "description": "Specifies the name of the environment that the Azure Web app service plan will be hosted within."
             },
             "type": "string"
         },
         "serviceEnvironmentResourceGroupName": {
             "defaultValue": "",
             "metadata": {
-                "description": "Specifies the resource group name of the environment that the Azure App Service plan will be hosted within."
+                "description": "Specifies the resource group name of the environment that the Azure Web app service plan will be hosted within."
             },
             "type": "string"
         },
         "servicePlanName": {
             "metadata": {
-                "description": "Specifies the name of the Azure App Service plan."
+                "description": "Specifies the name of the Azure Web app service plan."
             },
             "type": "string"
         },
@@ -55,7 +55,7 @@
                 }
             ],
             "metadata": {
-                "description": "An array of sites that will be created within the Azure App Service plan."
+                "description": "An array of sites that will be created within the Azure Web app service plan."
             },
             "type": "array"
         },
@@ -82,14 +82,14 @@
             ],
             "defaultValue": "F1",
             "metadata": {
-                "description": "Specifies the SKU name of the Azure App Service plan."
+                "description": "Specifies the SKU name of the Azure Web app service plan."
             },
             "type": "string"
         },
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure App Service plan."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Web app service plan."
             },
             "type": "object"
         }
