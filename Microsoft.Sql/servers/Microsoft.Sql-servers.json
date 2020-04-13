@@ -232,7 +232,6 @@
         "customerEncryptionKeyVaultResourceId": "[resourceId(variables('customerEncryptionKeyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults/', variables('customerEncryptionKeyVaultName'))]",
         "databases": "[if(variables('databasesIsNotEmpty'), parameters('databases'), json('[ { \"databaseName\": \"DummyDatabase\", \"isAzureHybridBenefitEnabled\": false, \"skuName\": \"Basic\" } ]'))]",
         "databasesCount": "[length(parameters('databases'))]",
-        "databasesDeploymentName": "[uniqueString(variables('serverName'), 'databaseResourceManagement')]",
         "databasesIsNotEmpty": "[greater(variables('databasesCount'), 0)]",
         "databasesTemplateUri": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Sql%2Fdatabases%2FMicrosoft.Sql-databases.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
         "deploymentApiVersion": "2019-10-01",
@@ -580,7 +579,7 @@
                 "[variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentDeploymentName')]",
                 "[variables('vulnerabilityAssessmentResourceId')]"
             ],
-            "name": "[variables('databasesDeploymentName')]",
+            "name": "[format('{0}-{1}', variables('serverName'), variables('databases')[copyIndex()].databaseName)]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
