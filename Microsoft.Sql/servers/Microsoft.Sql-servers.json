@@ -233,7 +233,9 @@
         "databasesApiVersion": "2019-06-01-preview",
         "databases": "[if(variables('databasesIsNotEmpty'), parameters('databases'), json('[ { \"databaseName\": \"DummyDatabase\", \"isAzureHybridBenefitEnabled\": false, \"skuName\": \"Basic\" } ]'))]",
         "databasesCount": "[length(parameters('databases'))]",
+        "databasesDeploymentName": "[uniqueString(variables('serverName'), 'databaseResourceManagement')]",
         "databasesIsNotEmpty": "[greater(variables('databasesCount'), 0)]",
+        "databasesTemplateUri": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Sql%2Fdatabases%2FMicrosoft.Sql-databases.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
         "deploymentApiVersion": "2019-10-01",
         "dnsAliasApiVersion": "2017-03-01-preview",
         "dnsAliases": "[if(variables('dnsAliasesIsNotEmpty'), parameters('dnsAliases'), json('[ \"dummyDnsAlias\" ]'))]",
@@ -261,7 +263,6 @@
         "serverResourceId": "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]",
         "storageAccountApiVersion": "2019-06-01",
         "storageBlobDataContributorRoleResourceId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
-        "templateUriForMicrosoftSqlDatabases": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Sql%2Fdatabases%2FMicrosoft.Sql-databases.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
         "virtualNetworkRuleApiVersion": "2015-05-01-preview",
         "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), parameters('virtualNetworkRules'), json('[ { \"ignoreMissingVnetServiceEndpoint\": false, \"ruleName\": \"dummyVirtualNetworkRule\", \"subnetName\": \"dummySubnet\", \"virtualNetworkName\": \"dummyVirtualNetwork\", \"virtualNetworkResourceGroupName\": \"dummyResourceGroup\" } ]'))]",
         "virtualNetworkRulesCount": "[length(parameters('virtualNetworkRules'))]",
@@ -566,35 +567,6 @@
             "type": "Microsoft.Sql/servers/vulnerabilityAssessments"
         },
         {
-            "apiVersion": "[variables('databasesApiVersion')]",
-            "condition": "[variables('databasesIsNotEmpty')]",
-            "copy": {
-                "count": "[variables('databasesCount')]",
-                "mode": "parallel",
-                "name": "databasesCopy"
-            },
-            "dependsOn": [
-                "[variables('serverResourceId')]",
-                "[variables('securityAlertPolicyResourceId')]",
-                "[variables('auditStorageBlobDataContributorRoleAssignmentDeploymentName')]",
-                "[variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentDeploymentName')]",
-                "[variables('vulnerabilityAssessmentResourceId')]"
-            ],
-            "location": "[parameters('location')]",
-            "name": "[format('{0}/{1}', variables('serverName'), variables('databases')[copyIndex()].databaseName)]",
-            "properties": {
-                "catalogCollation": "[union(json('{ \"catalogCollation\": \"DATABASE_DEFAULT\" }'), variables('databases')[copyIndex()]).catalogCollation]",
-                "collation": "[union(json('{ \"collation\": \"SQL_Latin1_General_CP1_CI_AS\" }'), variables('databases')[copyIndex()]).collation]",
-                "createMode": "Default",
-                "licenseType": "[if(union(json('{ \"isAzureHybridBenefitEnabled\": false }'), variables('databases')[copyIndex()]).isAzureHybridBenefitEnabled, 'BasePrice', 'LicenseIncluded')]"
-            },
-            "sku": {
-                "name": "[union(json('{ \"skuName\": \"Basic\" }'), variables('databases')[copyIndex()]).skuName]"
-            },
-            "type": "Microsoft.Sql/servers/databases"
-        },
-
-        {
             "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[variables('databasesIsNotEmpty')]",
             "copy": {
@@ -609,20 +581,38 @@
                 "[variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentDeploymentName')]",
                 "[variables('vulnerabilityAssessmentResourceId')]"
             ],
-            "name": "[format('{0}/{1}', variables('serverName'), variables('databases')[copyIndex()].databaseName)]",
+            "name": "[variables('databasesDeploymentName')]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "catalogCollation": {
+                        "value": "[union(json('{ \"catalogCollation\": \"DATABASE_DEFAULT\" }'), variables('databases')[copyIndex()].catalogCollation)]"
+                    },
                     "databaseName": {
                         "value": "[variables('databases')[copyIndex()].databaseName]"
                     },
+                    "defaultCollation": {
+                        "value": "[union(json('{ \"defaultCollation\": \"SQL_Latin1_General_CP1_CI_AS\" }'), variables('databases')[copyIndex()].defaultCollation)]"
+                    },
+                    "isAzureHybridBenefitEnabled": {
+                        "value": "[union(json('{ \"isAzureHybridBenefitEnabled\": false }'), variables('databases')[copyIndex()].isAzureHybridBenefitEnabled)]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
                     "serverName": {
                         "value": "[variables('serverName')]"
+                    },
+                    "skuName": {
+                        "value": "[union(json('{ \"skuName\": \"Basic\" }'), variables('databases')[copyIndex()].skuName)]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
                     }
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUriForMicrosoftSqlDatabases')]"
+                    "uri": "[variables('databasesTemplateUri')]"
                 }
             },
             "type": "Microsoft.Resources/deployments"

@@ -9,16 +9,16 @@
             },
             "type": "string"
         },
+        "databaseName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure SQL database."
+            },
+            "type": "string"
+        },
         "defaultCollation": {
             "defaultValue": "SQL_Latin1_General_CP1_CI_AS",
             "metadata": {
                 "description": "Specifies the default collation name that will be used by the Azure SQL database."
-            },
-            "type": "string"
-        },
-        "databaseName": {
-            "metadata": {
-                "description": "Specifies the name of the Azure SQL database."
             },
             "type": "string"
         },
