@@ -46,7 +46,7 @@
                     "isAlwaysOnEnabled": false,
                     "isClientAffinityEnabled": false,
                     "isHttpsOnlyEnabled": true,
-                    "functionStorageAccountConnectionString": "byteterracestorage",
+                    "functionStorageAccountConnectionString": "byteterraceexample",
                     "kind": "functionApp",
                     "minimumTlsVersion": "1.2",
                     "siteName": "ByteTerrace-Example",

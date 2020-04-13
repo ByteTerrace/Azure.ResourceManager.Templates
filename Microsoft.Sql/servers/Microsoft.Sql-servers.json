@@ -78,7 +78,15 @@
             "type": "string"
         },
         "databases": {
-            "defaultValue": [],
+            "defaultValue": [
+                {
+                    "catalogCollation": "DATABASE_DEFAULT",
+                    "collation": "SQL_Latin1_General_CP1_CI_AS",
+                    "databaseName": "ByteTerrace-Example",
+                    "isAzureHybridBenefitEnabled": false,
+                    "skuName": "Basic"
+                }
+            ],
             "metadata": {
                 "description": "An array of databases that will be created within the Azure SQL server."
             },
