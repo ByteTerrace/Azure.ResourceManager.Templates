@@ -172,7 +172,7 @@
             "type": "string"
         },
         "sqlAdministratorUserName": {
-            "defaultValue": "[uniqueString(parameters('serverName'))]",
+            "defaultValue": "[uniqueString(toLower(parameters('serverName')))]",
             "metadata": {
                 "description": "Specifies the default SQL administrator user name that will be assigned to the Azure SQL server."
             },
@@ -586,16 +586,16 @@
                 "mode": "Incremental",
                 "parameters": {
                     "catalogCollation": {
-                        "value": "[union(json('{ \"catalogCollation\": \"DATABASE_DEFAULT\" }'), variables('databases')[copyIndex()].catalogCollation)]"
+                        "value": "[union(json('{ \"catalogCollation\": \"DATABASE_DEFAULT\" }'), variables('databases')[copyIndex()]).catalogCollation]"
                     },
                     "databaseName": {
                         "value": "[variables('databases')[copyIndex()].databaseName]"
                     },
                     "defaultCollation": {
-                        "value": "[union(json('{ \"defaultCollation\": \"SQL_Latin1_General_CP1_CI_AS\" }'), variables('databases')[copyIndex()].defaultCollation)]"
+                        "value": "[union(json('{ \"defaultCollation\": \"SQL_Latin1_General_CP1_CI_AS\" }'), variables('databases')[copyIndex()]).defaultCollation]"
                     },
                     "isAzureHybridBenefitEnabled": {
-                        "value": "[union(json('{ \"isAzureHybridBenefitEnabled\": false }'), variables('databases')[copyIndex()].isAzureHybridBenefitEnabled)]"
+                        "value": "[union(json('{ \"isAzureHybridBenefitEnabled\": false }'), variables('databases')[copyIndex()]).isAzureHybridBenefitEnabled]"
                     },
                     "location": {
                         "value": "[parameters('location')]"
@@ -604,7 +604,7 @@
                         "value": "[variables('serverName')]"
                     },
                     "skuName": {
-                        "value": "[union(json('{ \"skuName\": \"Basic\" }'), variables('databases')[copyIndex()].skuName)]"
+                        "value": "[union(json('{ \"skuName\": \"Basic\" }'), variables('databases')[copyIndex()]).skuName]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
