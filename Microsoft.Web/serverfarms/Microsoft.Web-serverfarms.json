@@ -193,7 +193,7 @@
                 "serverFarmId": "[variables('serverFarmResourceId')]",
                 "siteConfig": {
                     "alwaysOn": "[union(json('{ \"isAlwaysOnEnabled\": false }'), variables('sites')[copyIndex()]).isAlwaysOnEnabled]",
-                    "appSettings": "[if(equals('functionapp', toLower(ByteTerrace.getSiteKind(variables('sites')[copyIndex()]))), ByteTerrace.createFunctionAppSettingsObject(variables('sites')[copyIndex()]), json('null'))]",
+                    "appSettings": "[if(equals('functionapp', toLower(ByteTerrace.getSiteKind(variables('sites')[copyIndex()]))), ByteTerrace.createFunctionAppSettingsObject(variables('sites')[copyIndex()]), json('[]'))]",
                     "clientAffinityEnabled": "[union(json('{ \"isClientAffinityEnabled\": false }'), variables('sites')[copyIndex()]).isClientAffinityEnabled]",
                     "httpsOnly": "[union(json('{ \"isHttpsOnlyEnabled\": true }'), variables('sites')[copyIndex()]).isHttpsOnlyEnabled]",
                     "http20Enabled": true,
