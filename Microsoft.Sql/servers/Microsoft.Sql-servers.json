@@ -579,7 +579,7 @@
                 "[variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentDeploymentName')]",
                 "[variables('vulnerabilityAssessmentResourceId')]"
             ],
-            "name": "[format('{0}-{1}', variables('serverName'), variables('databases')[copyIndex()].databaseName)]",
+            "name": "[format('{0}-Database-{1}', variables('serverName'), copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
