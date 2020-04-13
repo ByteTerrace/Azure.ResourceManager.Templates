@@ -40,6 +40,26 @@
             },
             "type": "string"
         },
+        "sites": {
+            "defaultValue": [
+                {
+                    "isAlwaysOnEnabled": false,
+                    "isClientAffinityEnabled": false,
+                    "isHttpsOnlyEnabled": true,
+                    "functionStorageAccountConnectionString": "byteterracestorage",
+                    "kind": "functionApp",
+                    "minimumTlsVersion": "1.2",
+                    "siteName": "ByteTerrace-Example",
+                    "stack": "dotnetcore",
+                    "use32BitWorkerProcess": true,
+                    "webSocketsEnabled": true
+                }
+            ],
+            "metadata": {
+                "description": "An array of sites that will be created within the Azure App Service plan."
+            },
+            "type": "array"
+        },
         "skuName": {
             "allowedValues": [
                 "B1",
@@ -75,6 +95,50 @@
             "type": "object"
         }
     },
+    "functions": [
+        {
+            "members": {
+                "createFunctionAppSettingsObject": {
+                    "parameters": [
+                        {
+                            "name": "appSettings",
+                            "type": "object"
+                        }
+                    ],
+                    "output": {
+                        "type": "array",
+                        "value": [
+                            {
+                                "name": "AzureWebJobsStorage",
+                                "value": "[union(json('{ \"functionStorageAccountConnectionString\": null }'), parameters('appSettings')).functionStorageAccountConnectionString]"
+                            },
+                            {
+                                "name": "FUNCTIONS_EXTENSION_VERSION",
+                                "value": "[union(json('{ \"functionVersion\": \"~3\" }'), parameters('appSettings')).functionVersion]"
+                            },
+                            {
+                                "name": "FUNCTIONS_WORKER_RUNTIME",
+                                "value": "[union(json('{ \"functionRuntime\": \"dotnet\" }'), parameters('appSettings')).functionRuntime]"
+                            }
+                        ]
+                    }
+                },
+                "getSiteKind": {
+                    "parameters": [
+                        {
+                            "name": "appSettings",
+                            "type": "object"
+                        }
+                    ],
+                    "output": {
+                        "type": "string",
+                        "value": "[union(json('{ \"kind\": \"app\" }'), parameters('appSettings')).kind]"
+                    }
+                }
+            },
+            "namespace": "ByteTerrace"
+        }
+    ],
     "variables": {
         "hostingEnvironmentProfile": {
             "id": "[variables('serviceEnvironmentResourceId')]"
@@ -82,14 +146,19 @@
         "isHostingEnvironmentEnabled": "[or(not(empty(coalesce(parameters('serviceEnvironmentResourceGroupName'), ''))), not(empty(coalesce(parameters('serviceEnvironmentName'), ''))))]",
         "isLinuxOperatingSystem": "[equals(toLower(parameters('operatingSystemName')), 'linux')]",
         "serverFarmApiVersion": "2019-08-01",
+        "serverFarmResourceId": "[resourceId('Microsoft.Web/serverfarms/', parameters('servicePlanName'))]",
         "serviceEnvironmentName": "[if(not(empty(coalesce(parameters('serviceEnvironmentName'), ''))), parameters('serviceEnvironmentName'), 'DummyServiceEnvironment')]",
         "serviceEnvironmentResourceGroupName": "[if(not(empty(coalesce(parameters('serviceEnvironmentResourceGroupName'), ''))), parameters('serviceEnvironmentResourceGroupName'), resourceGroup().name)]",
-        "serviceEnvironmentResourceId": "[resourceId(variables('serviceEnvironmentResourceGroupName'), 'Microsoft.Web/hostingEnvironments/', variables('serviceEnvironmentName'))]"
+        "serviceEnvironmentResourceId": "[resourceId(variables('serviceEnvironmentResourceGroupName'), 'Microsoft.Web/hostingEnvironments/', variables('serviceEnvironmentName'))]",
+        "siteApiVersion": "2019-08-01",
+        "sites": "[if(variables('sitesIsNotEmpty'), parameters('sites'), json('[ { \"siteName\": \"DummySite\" } ]'))]",
+        "sitesCount": "[length(parameters('sites'))]",
+        "sitesIsNotEmpty": "[greater(variables('sitesCount'), 0)]"
     },
     "resources": [
         {
             "apiVersion": "[variables('serverFarmApiVersion')]",
-            "kind": "[if(variables('isLinuxOperatingSystem'), 'linux', 'app')]",
+            "kind": "[if(variables('isLinuxOperatingSystem'), 'linux', '')]",
             "location": "[parameters('location')]",
             "name": "[parameters('servicePlanName')]",
             "properties": {
@@ -103,7 +172,45 @@
             "sku": {
                 "name": "[parameters('skuName')]"
             },
+            "tags": "[parameters('tags')]",
             "type": "Microsoft.Web/serverfarms"
+        },
+        {
+            "apiVersion": "[variables('siteApiVersion')]",
+            "condition": "[variables('sitesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('sitesCount')]",
+                "mode": "parallel",
+                "name": "sitesCopy"
+            },
+            "dependsOn": [
+                "[variables('serverFarmResourceId')]"
+            ],
+            "kind": "[format('{0}{1}', ByteTerrace.getSiteKind(variables('sites')[copyIndex()]), if(variables('isLinuxOperatingSystem'), ',linux', ''))]",
+            "location": "[parameters('location')]",
+            "name": "[variables('sites')[copyIndex()].siteName]",
+            "properties": {
+                "serverFarmId": "[variables('serverFarmResourceId')]",
+                "siteConfig": {
+                    "alwaysOn": "[union(json('{ \"isAlwaysOnEnabled\": false }'), variables('sites')[copyIndex()]).isAlwaysOnEnabled]",
+                    "appSettings": "[if(equals('functionapp', toLower(ByteTerrace.getSiteKind(variables('sites')[copyIndex()]))), ByteTerrace.createFunctionAppSettingsObject(variables('sites')[copyIndex()]), json('null'))]",
+                    "clientAffinityEnabled": "[union(json('{ \"isClientAffinityEnabled\": false }'), variables('sites')[copyIndex()]).isClientAffinityEnabled]",
+                    "httpsOnly": "[union(json('{ \"isHttpsOnlyEnabled\": true }'), variables('sites')[copyIndex()]).isHttpsOnlyEnabled]",
+                    "http20Enabled": true,
+                    "linuxFxVersion": "[if(variables('isLinuxOperatingSystem'), union(json('{ \"linuxFxVersion\": \"DOTNETCORE|LTS\" }'), variables('sites')[copyIndex()]).linuxFxVersion, json('null'))]",
+                    "metadata": [
+                        {
+                            "name": "CURRENT_STACK",
+                            "value": "[union(json('{ \"stack\": \"dotnetcore\" }'), variables('sites')[copyIndex()]).stack]"
+                        }
+                    ],
+                    "minTlsVersion": "[union(json('{ \"minimumTlsVersion\": \"1.2\" }'), variables('sites')[copyIndex()]).minimumTlsVersion]",
+                    "use32BitWorkerProcess": "[union(json('{ \"use32BitWorkerProcess\": true }'), variables('sites')[copyIndex()]).use32BitWorkerProcess]",
+                    "webSocketsEnabled": "[union(json('{ \"webSocketsEnabled\": true }'), variables('sites')[copyIndex()]).webSocketsEnabled]"
+                }
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Web/sites"
         }
     ]
 }
