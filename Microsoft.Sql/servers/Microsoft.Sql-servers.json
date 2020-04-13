@@ -258,7 +258,7 @@
         "securityAlertPolicyResourceId": "[resourceId('Microsoft.Sql/servers/securityAlertPolicies', variables('serverName'), 'default')]",
         "serverApiVersion": "2019-06-01-preview",
         "serverName": "[toLower(parameters('serverName'))]",
-        "serverResourceId": "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]",
+        "serverResourceId": "[resourceId('Microsoft.Sql/servers', variables('serverName'))]",
         "storageAccountApiVersion": "2019-06-01",
         "storageBlobDataContributorRoleResourceId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
         "virtualNetworkRuleApiVersion": "2015-05-01-preview",
