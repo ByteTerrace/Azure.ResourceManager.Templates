@@ -46,7 +46,6 @@
                     "isAlwaysOnEnabled": false,
                     "isClientAffinityEnabled": false,
                     "isHttpsOnlyEnabled": true,
-                    "functionStorageAccountConnectionString": "byteterraceexample",
                     "kind": "functionApp",
                     "minimumTlsVersion": "1.2",
                     "siteName": "ByteTerrace-Example",
@@ -108,10 +107,6 @@
                     "output": {
                         "type": "array",
                         "value": [
-                            {
-                                "name": "AzureWebJobsStorage",
-                                "value": "[union(json('{ \"functionStorageAccountConnectionString\": null }'), parameters('appSettings')).functionStorageAccountConnectionString]"
-                            },
                             {
                                 "name": "FUNCTIONS_EXTENSION_VERSION",
                                 "value": "[union(json('{ \"functionVersion\": \"~3\" }'), parameters('appSettings')).functionVersion]"
