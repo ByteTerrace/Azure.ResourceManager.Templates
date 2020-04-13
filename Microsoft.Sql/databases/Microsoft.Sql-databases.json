@@ -1,0 +1,82 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "catalogCollation": {
+            "defaultValue": "DATABASE_DEFAULT",
+            "metadata": {
+                "description": "Specifies the catalog collation name that will be used by the Azure SQL database."
+            },
+            "type": "string"
+        },
+        "defaultCollation": {
+            "defaultValue": "SQL_Latin1_General_CP1_CI_AS",
+            "metadata": {
+                "description": "Specifies the default collation name that will be used by the Azure SQL database."
+            },
+            "type": "string"
+        },
+        "databaseName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure SQL database."
+            },
+            "type": "string"
+        },
+        "isAzureHybridBenefitEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the hybrid user benefit feature is enabled on the Azure SQL database."
+            },
+            "type": "bool"
+        },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Specifies the location in which the Azure SQL database resource(s) will be deployed."
+            },
+            "type": "string"
+        },
+        "serverName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure SQL server that the Azure SQL database will be deployed within."
+            },
+            "type": "string"
+        },
+        "skuName": {
+            "defaultValue": "Basic",
+            "metadata": {
+                "description": "Specifies the SKU name of the Azure SQL database."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure SQL database."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "databasesApiVersion": "2019-06-01-preview",
+        "serverName": "[toLower(parameters('serverName'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('databasesApiVersion')]",
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/{1}', variables('serverName'), parameters('databaseName'))]",
+            "properties": {
+                "catalogCollation": "[parameters('catalogCollation')]",
+                "collation": "[parameters('defaultCollation')]",
+                "createMode": "Default",
+                "licenseType": "[if(parameters('isAzureHybridBenefitEnabled'), 'BasePrice', 'LicenseIncluded')]"
+            },
+            "sku": {
+                "name": "[parameters('skuName')]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Sql/servers/databases"
+        }
+    ]
+}

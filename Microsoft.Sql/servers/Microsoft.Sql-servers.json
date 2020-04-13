@@ -261,6 +261,7 @@
         "serverResourceId": "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]",
         "storageAccountApiVersion": "2019-06-01",
         "storageBlobDataContributorRoleResourceId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+        "templateUriForMicrosoftSqlDatabases": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Sql%2Fdatabases%2FMicrosoft.Sql-databases.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
         "virtualNetworkRuleApiVersion": "2015-05-01-preview",
         "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), parameters('virtualNetworkRules'), json('[ { \"ignoreMissingVnetServiceEndpoint\": false, \"ruleName\": \"dummyVirtualNetworkRule\", \"subnetName\": \"dummySubnet\", \"virtualNetworkName\": \"dummyVirtualNetwork\", \"virtualNetworkResourceGroupName\": \"dummyResourceGroup\" } ]'))]",
         "virtualNetworkRulesCount": "[length(parameters('virtualNetworkRules'))]",
@@ -591,6 +592,40 @@
                 "name": "[union(json('{ \"skuName\": \"Basic\" }'), variables('databases')[copyIndex()]).skuName]"
             },
             "type": "Microsoft.Sql/servers/databases"
+        },
+
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[variables('databasesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('databasesCount')]",
+                "mode": "parallel",
+                "name": "databasesCopy"
+            },
+            "dependsOn": [
+                "[variables('serverResourceId')]",
+                "[variables('securityAlertPolicyResourceId')]",
+                "[variables('auditStorageBlobDataContributorRoleAssignmentDeploymentName')]",
+                "[variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentDeploymentName')]",
+                "[variables('vulnerabilityAssessmentResourceId')]"
+            ],
+            "name": "[format('{0}/{1}', variables('serverName'), variables('databases')[copyIndex()].databaseName)]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "databaseName": {
+                        "value": "[variables('databases')[copyIndex()].databaseName]"
+                    },
+                    "serverName": {
+                        "value": "[variables('serverName')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUriForMicrosoftSqlDatabases')]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
         }
     ]
 }
