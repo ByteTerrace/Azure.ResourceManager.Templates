@@ -82,7 +82,7 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "serverFarmName": {
+                    "servicePlanName": {
                         "value": "[format('{0}-ASP', parameters('applicationName'))]"
                     },
                     "sites": {
