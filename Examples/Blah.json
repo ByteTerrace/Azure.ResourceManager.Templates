@@ -62,6 +62,13 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "databases": {
+                        "value": [
+                            {
+                                "databaseName": "[parameters('applicationName')]"
+                            }
+                        ]
+                    },
                     "serverName": {
                         "value": "[parameters('applicationName')]"
                     }
