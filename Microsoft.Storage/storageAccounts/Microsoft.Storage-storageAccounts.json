@@ -130,7 +130,7 @@
                 "count": "[length(parameters('firewallRules'))]",
                 "input": {
                     "action": "Allow",
-                    "value": "[parameters('firewallRules')[copyIndex('firewallRules')])]"
+                    "value": "[parameters('firewallRules')[copyIndex('firewallRules')]]"
                 },
                 "name": "firewallRules"
             },
