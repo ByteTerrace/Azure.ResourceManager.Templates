@@ -151,13 +151,13 @@
                         "value": "[union(json('{ \"is32BitModeEnabled\": false }'), variables('sites')[copyIndex()]).is32BitModeEnabled]"
                     },
                     "kind": {
-                        "value": "[union(json('{ \"functionVersion\": \"app\" }'), variables('sites')[copyIndex()]).kind]"
+                        "value": "[union(json('{ \"kind\": \"app\" }'), variables('sites')[copyIndex()]).kind]"
                     },
                     "location": {
                         "value": "[parameters('location')]"
                     },
                     "operatingSystemName": {
-                        "value": "[union(json('{ \"functionVersion\": \"Linux\" }'), variables('sites')[copyIndex()]).operatingSystemName]"
+                        "value": "[union(json('{ \"operatingSystemName\": \"Linux\" }'), variables('sites')[copyIndex()]).operatingSystemName]"
                     },
                     "servicePlanName": {
                         "value": "[parameters('servicePlanName')]"
@@ -166,7 +166,7 @@
                         "value": "[variables('sites')[copyIndex()].siteName]"
                     },
                     "stack": {
-                        "value": "[union(json('{ \"functionVersion\": \"dotnetcore\" }'), variables('sites')[copyIndex()]).stack]"
+                        "value": "[union(json('{ \"stack\": \"dotnetcore\" }'), variables('sites')[copyIndex()]).stack]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
