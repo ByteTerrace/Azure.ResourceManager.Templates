@@ -30,20 +30,22 @@
                 "mode": "Incremental",
                 "parameters": {
                     "subnets": {
-                        "value": {
-                            "name": "default",
-                            "properties": {
-                                "addressPrefix": "10.0.0.0/24"
-                            },
-                            "serviceEndpoints": [
-                                {
-                                    "locations": [
-                                        "[resourceGroup().location]"
-                                    ],
-                                    "service": "Microsoft.Sql"
-                                }
-                            ]
-                        }
+                        "value": [
+                            {
+                                "name": "default",
+                                "properties": {
+                                    "addressPrefix": "10.0.0.0/24"
+                                },
+                                "serviceEndpoints": [
+                                    {
+                                        "locations": [
+                                            "[resourceGroup().location]"
+                                        ],
+                                        "service": "Microsoft.Sql"
+                                    }
+                                ]
+                            }
+                        ]
                     },
                     "virtualNetworkName": {
                         "value": "[format('{0}-VirtualNetwork', parameters('applicationName'))]"
