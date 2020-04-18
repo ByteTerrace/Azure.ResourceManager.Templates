@@ -137,6 +137,7 @@
                     "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
                     "appsettings": "[if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]'))]",
                     "clientAffinityEnabled": "[parameters('isClientAffinityEnabled')]",
+                    "ftpsState": "FtpsOnly",
                     "httpsOnly": true,
                     "http20Enabled": true,
                     "linuxFxVersion": "[if(variables('isLinuxOperatingSystem'), 'DOTNETCORE|LTS', json('null'))]",
