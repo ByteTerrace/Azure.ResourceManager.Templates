@@ -41,19 +41,7 @@
             "type": "string"
         },
         "sites": {
-            "defaultValue": [
-                {
-                    "isAlwaysOnEnabled": false,
-                    "isClientAffinityEnabled": false,
-                    "isHttpsOnlyEnabled": true,
-                    "kind": "functionApp",
-                    "minimumTlsVersion": "1.2",
-                    "siteName": "ByteTerrace-Example",
-                    "stack": "dotnetcore",
-                    "use32BitWorkerProcess": true,
-                    "webSocketsEnabled": true
-                }
-            ],
+            "defaultValue": [],
             "metadata": {
                 "description": "An array of sites that will be created within the Azure Web app service plan."
             },
