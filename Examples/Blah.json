@@ -10,10 +10,12 @@
     "variables": {
         "deploymentApiVersion": "2019-10-01",
         "deploymentNameForMicrosoftAppConfiguration": "[format('{0}-AppConfiguration', parameters('applicationName'))]",
+        "deploymentNameForMicrosoftKeyVault": "[format('{0}-KeyVault', parameters('applicationName'))]",
         "deploymentNameForMicrosoftSqlServer": "[format('{0}-MsSqlServer', parameters('applicationName'))]",
         "deploymentNameForMicrosoftStorageAccount": "[format('{0}-StorageAccount', parameters('applicationName'))]",
         "deploymentNameForMicrosoftWebAppServerFarm": "[format('{0}-WebAppServerFarm', parameters('applicationName'))]",
         "templateUriForMicrosoftAppConfiguration": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.AppConfiguration%2FconfigurationStores%2FMicrosoft.AppConfiguration-configurationStores.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
+        "templateUriForKeyVault": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.KeyVault%2Fvaults%2FMicrosoft.KeyVault-vaults.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
         "templateUriForMicrosoftSqlServers": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Sql%2Fservers%2FMicrosoft.Sql-servers.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
         "templateUriForMicrosoftStorageAccounts": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Storage%2FstorageAccounts%2FMicrosoft.Storage-storageAccounts.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
         "templateUriForMicrosoftWebAppServerFarms": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Web%2Fserverfarms%2FMicrosoft.Web-serverfarms.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true"
@@ -38,6 +40,23 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "name": "[variables('deploymentNameForMicrosoftKeyVault')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "vaultName": {
+                        "value": "[format('{0}-KeyVault', parameters('applicationName'))]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUriForKeyVault')]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
             "name": "[variables('deploymentNameForMicrosoftStorageAccount')]",
             "properties": {
                 "mode": "Incremental",
@@ -56,12 +75,16 @@
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
             "dependsOn": [
+                "[variables('deploymentNameForMicrosoftKeyVault')]",
                 "[variables('deploymentNameForMicrosoftStorageAccount')]"
             ],
             "name": "[variables('deploymentNameForMicrosoftSqlServer')]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "auditStorageAccountName": {
+                        "value": "[format('{0}storage', parameters('applicationName'))]"
+                    },
                     "databases": {
                         "value": [
                             {
@@ -71,6 +94,9 @@
                     },
                     "serverName": {
                         "value": "[parameters('applicationName')]"
+                    },
+                    "vulnerabilityAssessmentStorageAccountName": {
+                        "value": "[format('{0}storage', parameters('applicationName'))]"
                     }
                 },
                 "templateLink": {
