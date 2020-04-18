@@ -104,6 +104,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "isAllowTrustedMicrosoftServicesEnabled": {
+                        "value": true
+                    },
                     "storageAccountName": {
                         "value": "[format('{0}storage', parameters('applicationName'))]"
                     },

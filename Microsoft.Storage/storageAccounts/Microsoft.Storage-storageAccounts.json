@@ -37,6 +37,13 @@
             },
             "type": "array"
         },
+        "isAllowTrustedMicrosoftServicesEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether trusted Microsoft services are allowed to access the Azure Storage account."
+            },
+            "type": "bool"
+        },
         "isHierarchicalNamespaceEnabled": {
             "defaultValue": false,
             "metadata": {
@@ -153,7 +160,7 @@
                 "isHnsEnabled": "[parameters('isHierarchicalNamespaceEnabled')]",
                 "largeFileSharesState": "[if(parameters('isLargeFileSharesEnabled'), 'Enabled', 'Disabled')]",
                 "networkAcls": {
-                    "bypass": "AzureServices",
+                    "bypass": "[if(parameters('isAllowTrustedMicrosoftServicesEnabled'), 'AzureServices', 'None')]",
                     "defaultAction": "Deny",
                     "ipRules": null,
                     "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), variables('virtualNetworkRules'), json('null'))]"
