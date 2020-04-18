@@ -19,14 +19,6 @@
             "type": "string"
         },
         "subnets": {
-            "defaultValue": [
-                {
-                    "name": "default",
-                    "properties": {
-                        "addressPrefix": "10.0.0.0/24"
-                    }
-                }
-            ],
             "metadata": {
                 "description": "An array of subnets that should be created within the Azure Virtual Network."
             },
