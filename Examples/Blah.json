@@ -34,16 +34,16 @@
                             {
                                 "name": "default",
                                 "properties": {
-                                    "addressPrefix": "10.0.0.0/24"
-                                },
-                                "serviceEndpoints": [
-                                    {
-                                        "locations": [
-                                            "[resourceGroup().location]"
-                                        ],
-                                        "service": "Microsoft.Sql"
-                                    }
-                                ]
+                                    "addressPrefix": "10.0.0.0/24",
+                                    "serviceEndpoints": [
+                                        {
+                                            "locations": [
+                                                "[resourceGroup().location]"
+                                            ],
+                                            "service": "Microsoft.Sql"
+                                        }
+                                    ]
+                                }
                             }
                         ]
                     },
