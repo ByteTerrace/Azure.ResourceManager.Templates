@@ -78,6 +78,7 @@
             "type": "string"
         },
         "servicePlanResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
             "metadata": {
                 "description": "Specifies the resource group name of the Azure Web app service plan that the Azure Web site will be deployed within."
             },
