@@ -153,7 +153,7 @@
                 "isHnsEnabled": "[parameters('isHierarchicalNamespaceEnabled')]",
                 "largeFileSharesState": "[if(parameters('isLargeFileSharesEnabled'), 'Enabled', 'Disabled')]",
                 "networkAcls": {
-                    "bypass": "None",
+                    "bypass": "AzureServices",
                     "defaultAction": "Deny",
                     "ipRules": null,
                     "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), variables('virtualNetworkRules'), json('null'))]"
