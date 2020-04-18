@@ -97,6 +97,13 @@
                 "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Storage account."
             },
             "type": "object"
+        },
+        "virtualNetworkRules": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of virtual network rules that will be assigned to the Azure Storage account."
+            },
+            "type": "array"
         }
     },
     "variables": {
@@ -104,6 +111,16 @@
         "blobContainerNames": "[if(variables('blobContainerNamesIsNotEmpty'), parameters('blobContainerNames'), json('[ \"dummyContainer\" ]'))]",
         "blobContainerNamesCount": "[length(parameters('blobContainerNames'))]",
         "blobContainerNamesIsNotEmpty": "[greater(variables('blobContainerNamesCount'), 0)]",
+        "copy": [
+            {
+                "count": "[length(parameters('virtualNetworkRules'))]",
+                "input": {
+                    "action": "Allow",
+                    "id": "[resourceId(union(json(format('{{ \"virtualNetworkResourceGroupName\": \"{0}\" }}', resourceGroup().name)), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).virtualNetworkResourceGroupName, 'Microsoft/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
+                },
+                "name": "virtualNetworkRules"
+            }
+        ],
         "customerEncryptionIsEnabled": "[or(not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))))]",
         "customerEncryptionKeyVaultName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), parameters('encryptionKeyVaultName'), 'DummyKeyVault')]",
         "customerEncryptionKeyVaultProperties": {
@@ -119,7 +136,8 @@
         "storageAccountApiVersion": "2019-06-01",
         "storageAccountName": "[toLower(parameters('storageAccountName'))]",
         "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-        "storageAccountSkuTier": "[if(startsWith(parameters('skuName'), 'premium'), 'Premium', 'Standard')]"
+        "storageAccountSkuTier": "[if(startsWith(parameters('skuName'), 'premium'), 'Premium', 'Standard')]",
+        "virtualNetworkRulesIsNotEmpty": "[greater(length(parameters('virtualNetworkRules')), 0)]"
     },
     "resources": [
         {
@@ -138,7 +156,7 @@
                     "bypass": "None",
                     "defaultAction": "Deny",
                     "ipRules": null,
-                    "virtualNetworkRules": null
+                    "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), variables('virtualNetworkRules'), json('null'))]"
                 },
                 "routingPreference": {
                     "publishInternetEndpoints": false,
