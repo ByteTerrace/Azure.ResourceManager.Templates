@@ -95,6 +95,8 @@
                     "sites": {
                         "value": [
                             {
+                                "isAlwaysOnEnabled": false,
+                                "is32BitModeEnabled": true,
                                 "siteName": "[parameters('applicationName')]"
                             }
                         ]

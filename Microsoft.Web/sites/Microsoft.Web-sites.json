@@ -120,7 +120,7 @@
                 "value": "dotnet"
             }
         ],
-        "isFunctionApp": "[equals('functionApp', parameters('kind'))]",
+        "isFunctionApp": "[equals('functionapp', toLower(parameters('kind')))]",
         "isLinuxOperatingSystem": "[equals('linux', toLower(parameters('operatingSystemName')))]",
         "servicePlanResourceGroupName": "[if(not(empty(coalesce(parameters('servicePlanResourceGroupName'), ''))), parameters('servicePlanResourceGroupName'), resourceGroup().name)]",
         "siteApiVersion": "2019-08-01"
