@@ -104,6 +104,11 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "firewallRules": {
+                        "value": [
+                            "97.99.215.35"
+                        ]
+                    },
                     "isAllowTrustedMicrosoftServicesEnabled": {
                         "value": true
                     },
@@ -144,6 +149,15 @@
                         "value": [
                             {
                                 "databaseName": "[parameters('applicationName')]"
+                            }
+                        ]
+                    },
+                    "firewallRules": {
+                        "value": [
+                            {
+                                "endIpAddress": "97.99.215.35",
+                                "ruleName": "Temp",
+                                "startIpAddress": "97.99.215.35"
                             }
                         ]
                     },
