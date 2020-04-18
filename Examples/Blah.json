@@ -44,7 +44,7 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "vaultName": {
+                    "keyVaultName": {
                         "value": "[format('{0}-KeyVault', parameters('applicationName'))]"
                     }
                 },
