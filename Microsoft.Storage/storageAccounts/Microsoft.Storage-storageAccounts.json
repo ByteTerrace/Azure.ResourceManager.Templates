@@ -116,7 +116,7 @@
                 "count": "[length(parameters('virtualNetworkRules'))]",
                 "input": {
                     "action": "Allow",
-                    "id": "[resourceId(union(json(format('{{ \"virtualNetworkResourceGroupName\": \"{0}\" }}', resourceGroup().name)), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).virtualNetworkResourceGroupName, 'Microsoft/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
+                    "id": "[resourceId(union(json(format('{{ \"virtualNetworkResourceGroupName\": \"{0}\" }}', resourceGroup().name)), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
                 },
                 "name": "virtualNetworkRules"
             }

@@ -37,10 +37,10 @@
                                     "addressPrefix": "10.0.0.0/24",
                                     "serviceEndpoints": [
                                         {
-                                            "locations": [
-                                                "[resourceGroup().location]"
-                                            ],
                                             "service": "Microsoft.Sql"
+                                        },
+                                        {
+                                            "service": "Microsoft.Storage"
                                         }
                                     ]
                                 }
@@ -106,6 +106,14 @@
                 "parameters": {
                     "storageAccountName": {
                         "value": "[format('{0}storage', parameters('applicationName'))]"
+                    },
+                    "virtualNetworkRules": {
+                        "value": [
+                            {
+                                "virtualNetworkName": "[format('{0}-VirtualNetwork', parameters('applicationName'))]",
+                                "subnetName": "default"
+                            }
+                        ]
                     }
                 },
                 "templateLink": {
