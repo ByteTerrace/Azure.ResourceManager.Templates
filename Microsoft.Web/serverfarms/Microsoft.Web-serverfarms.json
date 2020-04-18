@@ -157,7 +157,7 @@
                         "value": "[parameters('location')]"
                     },
                     "operatingSystemName": {
-                        "value": "[union(json('{ \"operatingSystemName\": \"Linux\" }'), variables('sites')[copyIndex()]).operatingSystemName]"
+                        "value": "[parameters('operatingSystemName')]"
                     },
                     "servicePlanName": {
                         "value": "[parameters('servicePlanName')]"

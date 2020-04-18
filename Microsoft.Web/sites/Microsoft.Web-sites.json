@@ -140,7 +140,7 @@
                     "ftpsState": "FtpsOnly",
                     "httpsOnly": true,
                     "http20Enabled": true,
-                    "linuxFxVersion": "DOTNETCORE|LTS",
+                    "linuxFxVersion": "[if(variables('isLinuxOperatingSystem'), 'DOTNETCORE|LTS', json('null'))]",
                     "metadata": [
                         {
                             "name": "CURRENT_STACK",
