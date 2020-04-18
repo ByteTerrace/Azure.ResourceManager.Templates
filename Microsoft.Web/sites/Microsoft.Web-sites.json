@@ -2,6 +2,46 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "functionVersion": {
+            "allowedValues": [
+                "~1",
+                "~2",
+                "~3"
+            ],
+            "defaultValue": "~3",
+            "metadata": {
+                "description": "Specifies the version of the function extensions that will be used with the Azure Web site."
+            },
+            "type": "string"
+        },
+        "isAlwaysOnEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the always on feature is enabled on the Azure Web site."
+            },
+            "type": "bool"
+        },
+        "isClientAffinityEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the client affinity feature is enabled on the Azure Web site."
+            },
+            "type": "bool"
+        },
+        "isWebSocketsEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the web sockets feature is enabled on the Azure Web site."
+            },
+            "type": "bool"
+        },
+        "is32BitModeEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the 32-bit worker feature is enabled on the Azure Web site."
+            },
+            "type": "bool"
+        },
         "kind": {
             "allowedValues": [
                 "app",
@@ -50,6 +90,9 @@
             "type": "string"
         },
         "stack": {
+            "allowedValues": [
+                "dotnetcore"
+            ],
             "defaultValue": "dotnetcore",
             "metadata": {
                 "description": "Specifies the name of the stack that Azure Web site will be run on top of."
@@ -63,9 +106,21 @@
             },
             "type": "object"
         }
+
     },
     "variables": {
-        "isLinuxOperatingSystem": "[equals(toLower(parameters('operatingSystemName')), 'linux')]",
+        "functionAppSettings": [
+            {
+                "name": "FUNCTIONS_EXTENSION_VERSION",
+                "value": "[parameters('functionVersion')]"
+            },
+            {
+                "name": "FUNCTIONS_WORKER_RUNTIME",
+                "value": "dotnet"
+            }
+        ],
+        "isFunctionApp": "[equals('functionApp', parameters('kind'))]",
+        "isLinuxOperatingSystem": "[equals('linux', toLower(parameters('operatingSystemName')))]",
         "servicePlanResourceGroupName": "[if(not(empty(coalesce(parameters('servicePlanResourceGroupName'), ''))), parameters('servicePlanResourceGroupName'), resourceGroup().name)]",
         "siteApiVersion": "2019-08-01"
     },
@@ -78,6 +133,9 @@
             "properties": {
                 "serverFarmId": "[resourceId(variables('servicePlanResourceGroupName'), 'Microsoft.Web/serverfarms', parameters('servicePlanName'))]",
                 "siteConfig": {
+                    "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
+                    "appsettings": "[if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]'))]",
+                    "clientAffinityEnabled": "[parameters('isClientAffinityEnabled')]",
                     "httpsOnly": true,
                     "http20Enabled": true,
                     "linuxFxVersion": "[if(variables('isLinuxOperatingSystem'), 'DOTNETCORE|LTS', json('null'))]",
@@ -86,7 +144,10 @@
                             "name": "CURRENT_STACK",
                             "value": "[parameters('stack')]"
                         }
-                    ]
+                    ],
+                    "minTlsVersion": "1.2",
+                    "use32BitWorkerProcess": "[parameters('is32BitModeEnabled')]",
+                    "webSocketsEnabled": "[parameters('isWebSocketsEnabled')]"
                 }
             },
             "tags": "[parameters('tags')]",
