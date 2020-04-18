@@ -3,7 +3,10 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "applicationName": {
-            "defaultValue": "BlahTest0124",
+            "defaultValue": "DeleteMePlz",
+            "type": "string"
+        },
+        "clientIpAddress": {
             "type": "string"
         }
     },
@@ -106,7 +109,7 @@
                 "parameters": {
                     "firewallRules": {
                         "value": [
-                            "97.99.215.35"
+                            "[parameters('clientIpAddress')]"
                         ]
                     },
                     "isAllowTrustedMicrosoftServicesEnabled": {
@@ -155,9 +158,9 @@
                     "firewallRules": {
                         "value": [
                             {
-                                "endIpAddress": "97.99.215.35",
+                                "endIpAddress": "[parameters('clientIpAddress')]",
                                 "ruleName": "Temp",
-                                "startIpAddress": "97.99.215.35"
+                                "startIpAddress": "[parameters('clientIpAddress')]"
                             }
                         ]
                     },
