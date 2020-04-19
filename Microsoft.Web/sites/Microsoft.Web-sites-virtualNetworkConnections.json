@@ -28,6 +28,7 @@
             "type": "string"
         },
         "virtualNetworkResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
             "metadata": {
                 "description": "Specifies the resource group name of the Azure Virtual Network that will be integrated with the Azure Web site."
             },
