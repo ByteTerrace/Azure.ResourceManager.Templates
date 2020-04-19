@@ -157,7 +157,7 @@
                         }
                     }
                 ],
-                "storageAccountId": "[variables('auditStorageAccountResourceId')]"
+                "storageAccountId": "[if(variables('isAuditEnabled'), variables('auditStorageAccountResourceId'), json('null'))]"
             },
             "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings"
         }
