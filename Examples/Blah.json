@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "applicationName": {
-            "defaultValue": "DeleteMePlz",
+            "defaultValue": "KittExample",
             "type": "string"
         },
         "clientIpAddress": {

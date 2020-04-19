@@ -38,9 +38,11 @@
             "type": "bool"
         },
         "keyVaultName": {
+            "maxLength": 24,
             "metadata": {
                 "description": "Specifies the name of the Azure Key Vault."
             },
+            "minLength": 3,
             "type": "string"
         },
         "location": {

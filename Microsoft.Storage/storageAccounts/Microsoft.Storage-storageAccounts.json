@@ -100,9 +100,11 @@
             "type": "string"
         },
         "storageAccountName": {
+            "maxLength": 24,
             "metadata": {
                 "description": "Specifies the name of the Azure Storage account."
             },
+            "minLength": 3,
             "type": "string"
         },
         "tags": {

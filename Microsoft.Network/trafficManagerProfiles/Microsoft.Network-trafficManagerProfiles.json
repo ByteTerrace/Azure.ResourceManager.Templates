@@ -10,7 +10,7 @@
             "type": "int"
         },
         "dnsRelativeName": {
-            "defaultValue": "[parameters('trafficManagerName')]",
+            "defaultValue": "[parameters('trafficManagerProfileName')]",
             "metadata": {
                 "description": "Specifies the relative DNS name provided by the Azure Traffic Manager profile."
             },
@@ -44,10 +44,12 @@
             },
             "type": "object"
         },
-        "trafficManagerName": {
+        "trafficManagerProfileName": {
+            "maxLength": 63,
             "metadata": {
                 "description": "Specifies the name of the Azure Traffic Manager profile."
             },
+            "minLength": 1,
             "type": "string"
         },
         "trafficRoutingMethod": {
@@ -69,7 +71,7 @@
         {
             "apiVersion": "2018-04-01",
             "location": "global",
-            "name": "[parameters('trafficManagerName')]",
+            "name": "[parameters('trafficManagerProfileName')]",
             "properties": {
                 "dnsConfig": {
                     "relativeName": "[parameters('dnsRelativeName')]",

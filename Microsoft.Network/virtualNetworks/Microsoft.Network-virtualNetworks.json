@@ -25,9 +25,11 @@
             "type": "array"
         },
         "virtualNetworkName": {
+            "maxLength": 64,
             "metadata": {
                 "description": "Specifies the name of the Azure Virtual Network."
             },
+            "minLength": 2,
             "type": "string"
         },
         "tags": {

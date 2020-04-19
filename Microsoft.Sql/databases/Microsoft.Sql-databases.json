@@ -10,9 +10,11 @@
             "type": "string"
         },
         "databaseName": {
+            "maxLength": 128,
             "metadata": {
                 "description": "Specifies the name of the Azure SQL database."
             },
+            "minLength": 1,
             "type": "string"
         },
         "defaultCollation": {

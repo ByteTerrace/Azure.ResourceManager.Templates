@@ -35,9 +35,11 @@
             "type": "string"
         },
         "servicePlanName": {
+            "maxLength": 40,
             "metadata": {
                 "description": "Specifies the name of the Azure Web app service plan."
             },
+            "minLength": 1,
             "type": "string"
         },
         "sites": {

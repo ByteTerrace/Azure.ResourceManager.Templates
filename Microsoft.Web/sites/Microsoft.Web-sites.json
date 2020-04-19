@@ -85,9 +85,11 @@
             "type": "string"
         },
         "siteName": {
+            "maxLength": 60,
             "metadata": {
                 "description": "Specifies the name of the Azure Web site."
             },
+            "minLength": 2,
             "type": "string"
         },
         "stack": {
