@@ -149,7 +149,8 @@
         "servicePlanResourceGroupName": "[if(not(empty(coalesce(parameters('servicePlanResourceGroupName'), ''))), parameters('servicePlanResourceGroupName'), resourceGroup().name)]",
         "siteResourceId": "[resourceId('Microsoft.Web/sites', parameters('siteName'))]",
         "sitesApiVersion": "2019-08-01",
-        "virtualNetworkConnectionsTemplateUri": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Web%2Fsites%2FMicrosoft.Web-sites-virtualNetworkConnections.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true"
+        "sitesConfigApiVersion": "2019-08-01",
+        "virtualNetworkResourceGroupName": "[if(not(empty(coalesce(parameters('virtualNetworkResourceGroupName'), ''))), parameters('virtualNetworkResourceGroupName'), resourceGroup().name)]"
     },
     "resources": [
         {
@@ -182,27 +183,19 @@
             "type": "Microsoft.Web/sites"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('sitesConfigApiVersion')]",
             "condition": "[variables('isVirtualNetworkIntegrationEnabled')]",
             "dependsOn": [
                 "[variables('siteResourceId')]"
             ],
-            "name": "[format('{0}-virtualNetwork', deployment().name)]",
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/virtualNetwork', parameters('siteName'))]",
             "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "location": "[parameters('location')]",
-                    "siteName": "[parameters('siteName')]",
-                    "subnetName": "[parameters('subnetName')]",
-                    "virtualNetworkName": "[parameters('virtualNetworkName')]",
-                    "virtualNetworkResourceGroupName": "[parameters('virtualNetworkResourceGroupName')]"
-                },
-                "templateLink": {
-                    "contentVersion": "1.0.0.0",
-                    "uri": "[variables('virtualNetworkConnectionsTemplateUri')]"
-                }
+                "subnetResourceId": "[resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
+                "swiftSupported": true
             },
-            "type": "Microsoft.Resources/deployments"
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Web/sites/config"
         }
     ]
 }
