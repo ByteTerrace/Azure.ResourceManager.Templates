@@ -14,3 +14,7 @@
 | **Template Name** | **Deploy Button** |
 |-----------|:-----------:|
 | Blah | [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fdev.azure.com%2FByteTerrace%2FAzure%2F_apis%2Fgit%2Frepositories%2FAzure.ResourceManager.Templates%2FItems%3Fpath%3D%252FExamples%252FBlah.json%26recursionLevel%3D0%26versionDescriptor.version%3Dmaster%26versionDescriptor.versionOptions%3D0%26versionDescriptor.versionType%3D0%26includeContent%3Dtrue%26resolveLfs%3Dtrue) |
+
+----
+[Azure Resource Naming Rules](https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules)
+[Azure Resource Manager Template Reference](https://docs.microsoft.com/en-us/azure/templates/)
