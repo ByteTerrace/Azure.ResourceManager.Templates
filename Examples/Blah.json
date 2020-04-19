@@ -38,6 +38,14 @@
                                 "name": "default",
                                 "properties": {
                                     "addressPrefix": "10.0.0.0/24",
+                                    "delegations": [
+                                        {
+                                            "name": "delegation",
+                                            "properties": {
+                                                "serviceName": "Microsoft.Web/serverfarms"
+                                            }
+                                        }
+                                    ],
                                     "serviceEndpoints": [
                                         {
                                             "service": "Microsoft.KeyVault"
