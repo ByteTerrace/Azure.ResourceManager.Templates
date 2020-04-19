@@ -193,15 +193,14 @@
         },
         {
             "apiVersion": "[variables('sitesConfigApiVersion')]",
-            "condition": "[variables('isVirtualNetworkIntegrationEnabled')]",
             "dependsOn": [
                 "[variables('siteResourceId')]"
             ],
             "location": "[parameters('location')]",
             "name": "[format('{0}/virtualNetwork', parameters('siteName'))]",
             "properties": {
-                "subnetResourceId": "[resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
-                "swiftSupported": true
+                "subnetResourceId": "[if(variables('isVirtualNetworkIntegrationEnabled'), resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName')), json('null'))]",
+                "swiftSupported": "[variables('isVirtualNetworkIntegrationEnabled')]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Web/sites/config"
