@@ -146,6 +146,15 @@
         "isFunctionApp": "[equals('functionapp', toLower(parameters('kind')))]",
         "isLinuxOperatingSystem": "[equals('linux', toLower(parameters('operatingSystemName')))]",
         "isVirtualNetworkIntegrationEnabled": "[or(not(empty(coalesce(parameters('virtualNetworkResourceGroupName')))), not(empty(coalesce(parameters('virtualNetworkName')))), not(empty(coalesce(parameters('subnetName')))))]",
+        "ipSecurityRestrictions": [
+            {
+                "action": "Allow",
+                "priority": 1,
+                "name": "default",
+                "tag": "Default",
+                "vnetSubnetResourceId": "[resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+            }
+        ],
         "servicePlanResourceGroupName": "[if(not(empty(coalesce(parameters('servicePlanResourceGroupName'), ''))), parameters('servicePlanResourceGroupName'), resourceGroup().name)]",
         "siteResourceId": "[resourceId('Microsoft.Web/sites', parameters('siteName'))]",
         "sitesApiVersion": "2019-08-01",
@@ -193,6 +202,19 @@
             "properties": {
                 "subnetResourceId": "[resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
                 "swiftSupported": true
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Web/sites/config"
+        },
+        {
+            "apiVersion": "[variables('sitesConfigApiVersion')]",
+            "dependsOn": [
+                "[variables('siteResourceId')]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/web', parameters('siteName'))]",
+            "properties": {
+                "ipSecurityRestrictions": "[if(variables('isVirtualNetworkIntegrationEnabled'), variables('ipSecurityRestrictions'), json('null'))]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Web/sites/config"
