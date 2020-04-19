@@ -228,9 +228,7 @@
                                 "skuName": "S1",
                                 "siteName": "[parameters('applicationName')]",
                                 "subnetName": "default",
-                                "virtualNetworkName": {
-                                    "value": "[format('{0}-VirtualNetwork', parameters('applicationName'))]"
-                                }
+                                "virtualNetworkName": "[format('{0}-VirtualNetwork', parameters('applicationName'))]"
                             }
                         ]
                     }
