@@ -225,6 +225,7 @@
                     "sites": {
                         "value": [
                             {
+                                "isAlwaysOnEnabled": false,
                                 "skuName": "S1",
                                 "siteName": "[parameters('applicationName')]",
                                 "subnetName": "default",
