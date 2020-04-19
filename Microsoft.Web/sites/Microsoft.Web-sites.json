@@ -102,16 +102,37 @@
             },
             "type": "string"
         },
+        "subnetName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the subnet that will be integrated with the Azure Web site."
+            },
+            "type": "string"
+        },
         "tags": {
             "defaultValue": {},
             "metadata": {
                 "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Web site."
             },
             "type": "object"
+        },
+        "virtualNetworkName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the Azure Virtual Network that will be integrated with the Azure Web site."
+            },
+            "type": "string"
+        },
+        "virtualNetworkResourceGroupName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure Virtual Network that will be integrated with the Azure Web site."
+            },
+            "type": "string"
         }
-
     },
     "variables": {
+        "deploymentApiVersion": "2019-10-01",
         "functionAppSettings": [
             {
                 "name": "FUNCTIONS_EXTENSION_VERSION",
@@ -124,12 +145,15 @@
         ],
         "isFunctionApp": "[equals('functionapp', toLower(parameters('kind')))]",
         "isLinuxOperatingSystem": "[equals('linux', toLower(parameters('operatingSystemName')))]",
+        "isVirtualNetworkIntegrationEnabled": "[or(not(empty(coalesce(parameters('virtualNetworkResourceGroupName')))), not(empty(coalesce(parameters('virtualNetworkName')))), not(empty(coalesce(parameters('subnetName')))))]",
         "servicePlanResourceGroupName": "[if(not(empty(coalesce(parameters('servicePlanResourceGroupName'), ''))), parameters('servicePlanResourceGroupName'), resourceGroup().name)]",
-        "siteApiVersion": "2019-08-01"
+        "siteResourceId": "[resourceId('Microsoft.Web/sites', parameters('siteName'))]",
+        "sitesApiVersion": "2019-08-01",
+        "virtualNetworkConnectionsTemplateUri": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Web%2Fsites%2FMicrosoft.Web-sites-virtualNetworkConnections.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true"
     },
     "resources": [
         {
-            "apiVersion": "[variables('siteApiVersion')]",
+            "apiVersion": "[variables('sitesApiVersion')]",
             "kind": "[format('{0}{1}', parameters('kind'), if(variables('isLinuxOperatingSystem'), ',linux', ''))]",
             "location": "[parameters('location')]",
             "name": "[parameters('siteName')]",
@@ -156,6 +180,29 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Web/sites"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[variables('isVirtualNetworkIntegrationEnabled')]",
+            "dependsOn": [
+                "[variables('siteResourceId')]"
+            ],
+            "name": "[format('{0}-virtualNetwork', deployment().name)]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "location": "[parameters('location')]",
+                    "siteName": "[parameters('siteName')]",
+                    "subnetName": "[parameters('subnetName')]",
+                    "virtualNetworkName": "[parameters('virtualNetworkName')]",
+                    "virtualNetworkResourceGroupName": "[parameters('virtualNetworkResourceGroupName')]"
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('virtualNetworkConnectionsTemplateUri')]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
         }
     ]
 }

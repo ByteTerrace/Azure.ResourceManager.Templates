@@ -19,5 +19,5 @@
 Useful Links
 
 ----
-- [Azure Resource Naming Rules](https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules)
+- [Azure Resource Naming Rules](https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules/)
 - [Azure Resource Manager Template Reference](https://docs.microsoft.com/en-us/azure/templates/)
