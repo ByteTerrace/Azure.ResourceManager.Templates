@@ -47,72 +47,68 @@
         ],
         "customDomainNamesCount": "[length(parameters('customDomainNames'))]",
         "customDomainNamesIsNotEmpty": "[greater(variables('customDomainNamesCount'), 0)]",
-        "defaultBackendPoolResourceId": "[resourceId('Microsoft.Network/frontdoors/BackendPools', parameters('frontDoorName'), 'defaultPool')]",
-        "defaultBackendPools": [
-            {
-                "name": "defaultPool",
-                "properties": {
-                    "backends": [
-                        {
-                            "address": "[variables('defaultDomainName')]",
-                            "backendHostHeader": "[variables('defaultDomainName')]",
-                            "enabledState": "Enabled",
-                            "httpPort": 80,
-                            "httpsPort": 443,
-                            "priority": 1,
-                            "weight": 50
-                        }
-                    ],
-                    "healthProbeSettings": {
-                        "id": "[variables('healthProbeSettingsResourceId')]"
-                    },
-                    "loadBalancingSettings": {
-                        "id": "[variables('loadBalancingSettingsResourceId')]"
-                    },
-                    "resourceState": "Enabled"
-                }
-            }
-        ],
-        "defaultDomainName": "[format('{0}.azurewebsites.net', parameters('frontDoorName'))]",
-        "defaultFrontendEndpoints": [
-            {
-                "name": "[variables('defaultFrontendName')]",
-                "properties": {
-                    "hostName": "[format('{0}.azurefd.net', parameters('frontDoorName'))]",
-                    "resourceState": "Enabled",
-                    "sessionAffinityEnabledState": "Disabled",
-                    "sessionAffinityTtlSeconds": 0
-                }
-            }
-        ],
-        "defaultFrontendEndpointResourceId": "[resourceId('Microsoft.Network/frontdoors/FrontendEndpoints', parameters('frontDoorName'), variables('defaultFrontendName'))]",
-        "defaultFrontendName": "[format('{0}-azurefd-net', parameters('frontDoorName'))]",
-        "defaultRoutingRules": [
-            {
-                "name": "defaultForwardingRoute",
-                "properties": {
-                    "acceptedProtocols": [
-                        "Https"
-                    ],
-                    "enabledState": "Enabled",
-                    "frontendEndpoints": [
-                        {
-                            "id": "[variables('defaultFrontendEndpointResourceId')]"
-                        }
-                    ],
-                    "patternsToMatch": [
-                        "/*"
-                    ],
-                    "routeConfiguration": {
-                        "backendPool": {
-                            "id": "[variables('defaultBackendPoolResourceId')]"
-                        },
-                        "forwardingProtocol": "HttpsOnly",
-                        "@odata.type": "#Microsoft.Azure.FrontDoor.Models.FrontdoorForwardingConfiguration"
+        "defaultBackendPoolName": "defaultPool",
+        "defaultBackendPoolResourceId": "[resourceId('Microsoft.Network/frontdoors/BackendPools', parameters('frontDoorName'), variables('defaultBackendPoolName'))]",
+        "defaultBackendPoolValue": {
+            "name": "[variables('defaultBackendPoolName')]",
+            "properties": {
+                "backends": [
+                    {
+                        "address": "[variables('defaultDomainName')]",
+                        "backendHostHeader": "[variables('defaultDomainName')]",
+                        "enabledState": "Enabled",
+                        "httpPort": 80,
+                        "httpsPort": 443,
+                        "priority": 1,
+                        "weight": 50
                     }
+                ],
+                "healthProbeSettings": {
+                    "id": "[variables('healthProbeSettingsResourceId')]"
+                },
+                "loadBalancingSettings": {
+                    "id": "[variables('loadBalancingSettingsResourceId')]"
+                },
+                "resourceState": "Enabled"
+            }
+        },
+        "defaultDomainName": "[format('{0}.azurewebsites.net', parameters('frontDoorName'))]",
+        "defaultFrontendEndpointName": "[format('{0}-azurefd-net', parameters('frontDoorName'))]",
+        "defaultFrontendEndpointResourceId": "[resourceId('Microsoft.Network/frontdoors/FrontendEndpoints', parameters('frontDoorName'), variables('defaultFrontendEndpointName'))]",
+        "defaultFrontendEndpointValue": {
+            "name": "[variables('defaultFrontendEndpointName')]",
+            "properties": {
+                "hostName": "[format('{0}.azurefd.net', parameters('frontDoorName'))]",
+                "resourceState": "Enabled",
+                "sessionAffinityEnabledState": "Disabled",
+                "sessionAffinityTtlSeconds": 0
+            }
+        },
+        "defaultRoutingRuleName": "defaultForwardingRoute",
+        "defaultRoutingRuleValue": {
+            "name": "[variables('defaultRoutingRuleName')]",
+            "properties": {
+                "acceptedProtocols": [
+                    "Https"
+                ],
+                "enabledState": "Enabled",
+                "frontendEndpoints": [
+                    {
+                        "id": "[variables('defaultFrontendEndpointResourceId')]"
+                    }
+                ],
+                "patternsToMatch": [
+                    "/*"
+                ],
+                "routeConfiguration": {
+                    "backendPool": {
+                        "id": "[variables('defaultBackendPoolResourceId')]"
+                    },
+                    "forwardingProtocol": "HttpsOnly",
+                    "@odata.type": "#Microsoft.Azure.FrontDoor.Models.FrontdoorForwardingConfiguration"
                 }
             }
-        ],
+        },
         "healthProbeSettingsName": "[format('healthProbeSettings-{0}', parameters('frontDoorName'))]",
         "healthProbeSettingsResourceId": "[resourceId('Microsoft.Network/frontdoors/healthProbeSettings', parameters('frontDoorName'), variables('healthProbeSettingsName'))]",
         "loadBalancingSettingsName": "[format('loadBalancingSettings-{0}', parameters('frontDoorName'))]",
@@ -124,8 +120,8 @@
             "location": "global",
             "name": "[parameters('frontDoorName')]",
             "properties": {
-                "backendPools": "[concat(variables('defaultBackendPools'), if(variables('backendPoolsIsNotEmpty'), parameters('backendPools'), json('[]')))]",
-                "frontendEndpoints": "[concat(variables('defaultFrontendEndpoints'), if(variables('customDomainNamesIsNotEmpty'), variables('customFrontendEndpoints'), json('[]')))]",
+                "backendPools": "[concat(createArray(variables('defaultBackendPoolValue')), if(variables('backendPoolsIsNotEmpty'), parameters('backendPools'), json('[]')))]",
+                "frontendEndpoints": "[concat(createArray(variables('defaultFrontendEndpointValue')), if(variables('customDomainNamesIsNotEmpty'), variables('customFrontendEndpoints'), json('[]')))]",
                 "healthProbeSettings": [
                     {
                         "name": "[variables('healthProbeSettingsName')]",
@@ -145,7 +141,7 @@
                         }
                     }
                 ],
-                "routingRules": "[concat(variables('defaultRoutingRules'), json('[]'))]"
+                "routingRules": "[concat(createArray(variables('defaultRoutingRuleValue')), json('[]'))]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Network/frontdoors"
