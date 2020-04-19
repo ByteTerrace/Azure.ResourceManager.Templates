@@ -141,6 +141,7 @@
         },
         {
             "apiVersion": "[variables('diagnosticsSettingsApiVersion')]",
+            "condition": "[variables('isAuditEnabled')]",
             "dependsOn": [
                 "[variables('keyVaultResourceId')]"
             ],
@@ -150,14 +151,14 @@
                 "logs": [
                     {
                         "category": "AuditEvent",
-                        "enabled": "[variables('isAuditEnabled')]",
+                        "enabled": true,
                         "retentionPolicy": {
                             "days": 365,
                             "enabled": true
                         }
                     }
                 ],
-                "storageAccountId": "[if(variables('isAuditEnabled'), variables('auditStorageAccountResourceId'), json('null'))]"
+                "storageAccountId": "[variables('auditStorageAccountResourceId')]"
             },
             "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings"
         }
