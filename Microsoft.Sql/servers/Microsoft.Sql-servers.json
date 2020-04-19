@@ -208,6 +208,7 @@
     },
     "variables": {
         "administratorApiVersion": "2019-06-01-preview",
+        "administratorResourceId": "[resourceId('Microsoft.Sql/servers/administrators', variables('serverName'), 'activeDirectory')]",
         "auditApiVersion": "2017-03-01-preview",
         "auditStorageAccountName": "[toLower(if(not(empty(coalesce(parameters('auditStorageAccountName'), ''))), parameters('auditStorageAccountName'), 'DummyStorageAccountForAudit'))]",
         "auditStorageAccountResourceGroupName": "[if(not(empty(coalesce(parameters('auditStorageAccountResourceGroupName'), ''))), parameters('auditStorageAccountResourceGroupName'), resourceGroup().name)]",
@@ -506,23 +507,10 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('auditApiVersion')]",
-            "dependsOn": [
-                "[variables('serverResourceId')]",
-                "[variables('auditStorageBlobDataContributorRoleAssignmentResourceId')]"
-            ],
-            "name": "[format('{0}/default', variables('serverName'))]",
-            "properties": {
-                "auditActionsAndGroups": "[if(greater(length(parameters('auditActionsAndGroupNames')), 0), parameters('auditActionsAndGroupNames'), json('null'))]",
-                "state": "[if(variables('isAuditEnabled'), 'Enabled', 'Disabled')]",
-                "storageEndpoint": "[if(variables('isAuditStorageAccountEnabled'), reference(variables('auditStorageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob, json('null'))]"
-            },
-            "type": "Microsoft.Sql/servers/auditingSettings"
-        },
-        {
             "apiVersion": "[variables('securityAlertPolicyApiVersion')]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
+                "[variables('administratorResourceId')]",
                 "[variables('auditStorageBlobDataContributorRoleAssignmentResourceId')]"
             ],
             "name": "[format('{0}/default', variables('serverName'))]",
@@ -536,10 +524,27 @@
             "type": "Microsoft.Sql/servers/securityAlertPolicies"
         },
         {
+            "apiVersion": "[variables('auditApiVersion')]",
+            "dependsOn": [
+                "[variables('serverResourceId')]",
+                "[variables('administratorResourceId')]",
+                "[variables('securityAlertPolicyResourceId')]",
+                "[variables('auditStorageBlobDataContributorRoleAssignmentResourceId')]"
+            ],
+            "name": "[format('{0}/default', variables('serverName'))]",
+            "properties": {
+                "auditActionsAndGroups": "[if(greater(length(parameters('auditActionsAndGroupNames')), 0), parameters('auditActionsAndGroupNames'), json('null'))]",
+                "state": "[if(variables('isAuditEnabled'), 'Enabled', 'Disabled')]",
+                "storageEndpoint": "[if(variables('isAuditStorageAccountEnabled'), reference(variables('auditStorageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob, json('null'))]"
+            },
+            "type": "Microsoft.Sql/servers/auditingSettings"
+        },
+        {
             "apiVersion": "[variables('vulnerabilityAssessmentApiVersion')]",
             "condition": "[variables('isAdvancedDataSecurityEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
+                "[variables('administratorResourceId')]",
                 "[variables('securityAlertPolicyResourceId')]",
                 "[variables('auditStorageBlobDataContributorRoleAssignmentResourceId')]",
                 "[variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentResourceId')]"
