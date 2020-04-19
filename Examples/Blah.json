@@ -227,7 +227,11 @@
                             {
                                 "isAlwaysOnEnabled": false,
                                 "is32BitModeEnabled": true,
-                                "siteName": "[parameters('applicationName')]"
+                                "siteName": "[parameters('applicationName')]",
+                                "subnetName": "default",
+                                "virtualNetworkName": {
+                                    "value": "[format('{0}-VirtualNetwork', parameters('applicationName'))]"
+                                }
                             }
                         ]
                     }
