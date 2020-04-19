@@ -146,7 +146,7 @@
                 "[variables('keyVaultResourceId')]"
             ],
             "location": "[parameters('location')]",
-            "name": "[format('{0}/Microsoft.Insights/service', parameters('keyVaultName'))]",
+            "name": "[format('{0}/Microsoft.Insights/audit', parameters('keyVaultName'))]",
             "properties": {
                 "logs": [
                     {
