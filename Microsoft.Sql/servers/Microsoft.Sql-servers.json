@@ -376,7 +376,8 @@
             "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[variables('isCustomerEncryptionKeyEnabled')]",
             "dependsOn": [
-                "[variables('serverResourceId')]"
+                "[variables('serverResourceId')]",
+                "[variables('administratorResourceId')]"
             ],
             "name": "[variables('customerEncryptionKeyAccessPolicyDeploymentName')]",
             "properties": {
@@ -419,6 +420,7 @@
             "condition": "[variables('isCustomerEncryptionKeyEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
+                "[variables('administratorResourceId')]",
                 "[variables('customerEncryptionKeyAccessPolicyResourceId')]"
             ],
             "kind": "AzureKeyVault",
@@ -434,6 +436,7 @@
             "condition": "[variables('isCustomerEncryptionKeyEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
+                "[variables('administratorResourceId')]",
                 "[variables('customerEncryptionKeyResourceId')]"
             ],
             "kind": "AzureKeyVault",
@@ -448,7 +451,8 @@
             "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[variables('isAuditStorageAccountEnabled')]",
             "dependsOn": [
-                "[variables('serverResourceId')]"
+                "[variables('serverResourceId')]",
+                "[variables('administratorResourceId')]"
             ],
             "name": "[variables('auditStorageBlobDataContributorRoleAssignmentDeploymentName')]",
             "properties": {
@@ -479,7 +483,8 @@
             "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[and(variables('isVulnerabilityAssessmentStorageAccountEnabled'), variables('isStorageBlobDataContributorRoleAssignmentUnique'))]",
             "dependsOn": [
-                "[variables('serverResourceId')]"
+                "[variables('serverResourceId')]",
+                "[variables('administratorResourceId')]"
             ],
             "name": "[variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentDeploymentName')]",
             "properties": {
@@ -570,6 +575,7 @@
             },
             "dependsOn": [
                 "[variables('serverResourceId')]",
+                "[variables('administratorResourceId')]",
                 "[variables('securityAlertPolicyResourceId')]",
                 "[variables('auditStorageBlobDataContributorRoleAssignmentResourceId')]",
                 "[variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentResourceId')]",
