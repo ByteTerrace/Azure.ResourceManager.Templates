@@ -86,40 +86,6 @@
             "dependsOn": [
                 "[variables('deploymentNameForMicrosoftVirtualNetwork')]"
             ],
-            "name": "[variables('deploymentNameForMicrosoftKeyVault')]",
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "firewallRules": {
-                        "value": [
-                            "[parameters('clientIpAddress')]"
-                        ]
-                    },
-                    "keyVaultName": {
-                        "value": "[format('{0}-KeyVault', parameters('applicationName'))]"
-                    },
-                    "virtualNetworkRules": {
-                        "value": [
-                            {
-                                "virtualNetworkName": "[format('{0}-VirtualNetwork', parameters('applicationName'))]",
-                                "subnetName": "default"
-                            }
-                        ]
-                    }
-                },
-                "templateLink": {
-                    "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUriForKeyVault')]"
-                }
-            },
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('deploymentApiVersion')]",
-            "dependsOn": [
-                "[variables('deploymentNameForMicrosoftKeyVault')]",
-                "[variables('deploymentNameForMicrosoftVirtualNetwork')]"
-            ],
             "name": "[variables('deploymentNameForMicrosoftStorageAccount')]",
             "properties": {
                 "mode": "Incremental",
@@ -147,6 +113,40 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "uri": "[variables('templateUriForMicrosoftStorageAccount')]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "dependsOn": [
+                "[variables('deploymentNameForMicrosoftStorageAccount')]",
+                "[variables('deploymentNameForMicrosoftVirtualNetwork')]"
+            ],
+            "name": "[variables('deploymentNameForMicrosoftKeyVault')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "firewallRules": {
+                        "value": [
+                            "[parameters('clientIpAddress')]"
+                        ]
+                    },
+                    "keyVaultName": {
+                        "value": "[format('{0}-KeyVault', parameters('applicationName'))]"
+                    },
+                    "virtualNetworkRules": {
+                        "value": [
+                            {
+                                "virtualNetworkName": "[format('{0}-VirtualNetwork', parameters('applicationName'))]",
+                                "subnetName": "default"
+                            }
+                        ]
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUriForKeyVault')]"
                 }
             },
             "type": "Microsoft.Resources/deployments"
