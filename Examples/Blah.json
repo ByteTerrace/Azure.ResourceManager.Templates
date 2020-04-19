@@ -117,6 +117,7 @@
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
             "dependsOn": [
+                "[variables('deploymentNameForMicrosoftKeyVault')]",
                 "[variables('deploymentNameForMicrosoftVirtualNetwork')]"
             ],
             "name": "[variables('deploymentNameForMicrosoftStorageAccount')]",
