@@ -122,7 +122,7 @@
                 "enabledForDeployment": false,
                 "enabledForDiskEncryption": false,
                 "enabledForTemplateDeployment": false,
-                "enablePurgeProtection": false,
+                "enablePurgeProtection": true,
                 "enableSoftDelete": true,
                 "networkAcls": {
                     "bypass": "[if(parameters('isAllowTrustedMicrosoftServicesEnabled'), 'AzureServices', 'None')]",
