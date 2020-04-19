@@ -200,7 +200,7 @@
             "name": "[format('{0}/virtualNetwork', parameters('siteName'))]",
             "properties": {
                 "subnetResourceId": "[if(variables('isVirtualNetworkIntegrationEnabled'), resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName')), json('null'))]",
-                "swiftSupported": "[variables('isVirtualNetworkIntegrationEnabled')]"
+                "swiftSupported": true
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Web/sites/config"
@@ -213,7 +213,7 @@
             "location": "[parameters('location')]",
             "name": "[format('{0}/web', parameters('siteName'))]",
             "properties": {
-                "ipSecurityRestrictions": "[if(variables('isVirtualNetworkIntegrationEnabled'), variables('ipSecurityRestrictions'), json('null'))]"
+                "ipSecurityRestrictions": "[if(variables('isVirtualNetworkIntegrationEnabled'), variables('ipSecurityRestrictions'), json('[]'))]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Web/sites/config"
