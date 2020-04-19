@@ -225,13 +225,16 @@
                     "sites": {
                         "value": [
                             {
-                                "isAlwaysOnEnabled": false,
-                                "skuName": "S1",
+                                "isAlwaysOnEnabled": true,
+                                "is32BitModeEnabled": false,
                                 "siteName": "[parameters('applicationName')]",
                                 "subnetName": "default",
                                 "virtualNetworkName": "[format('{0}-VirtualNetwork', parameters('applicationName'))]"
                             }
                         ]
+                    },
+                    "skuName": {
+                        "value": "S1"
                     }
                 },
                 "templateLink": {
