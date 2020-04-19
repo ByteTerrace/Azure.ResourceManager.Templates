@@ -89,7 +89,7 @@
             "location": "[parameters('location')]",
             "name": "[parameters('keyVaultName')]",
             "properties": {
-                "accessPolicies": null,
+                "accessPolicies": "[json('null')]",
                 "createMode": "default",
                 "enabledForDeployment": false,
                 "enabledForDiskEncryption": false,
