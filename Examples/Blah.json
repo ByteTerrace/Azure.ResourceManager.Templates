@@ -225,8 +225,7 @@
                     "sites": {
                         "value": [
                             {
-                                "isAlwaysOnEnabled": false,
-                                "is32BitModeEnabled": true,
+                                "skuName": "S1",
                                 "siteName": "[parameters('applicationName')]",
                                 "subnetName": "default",
                                 "virtualNetworkName": {

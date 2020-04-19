@@ -187,9 +187,6 @@
             "dependsOn": [
                 "[variables('siteResourceId')]"
             ],
-            "expressionEvaluationOptions": {
-                "scope": "inner"
-            },
             "name": "[format('{0}-virtualNetwork', deployment().name)]",
             "properties": {
                 "mode": "Incremental",
