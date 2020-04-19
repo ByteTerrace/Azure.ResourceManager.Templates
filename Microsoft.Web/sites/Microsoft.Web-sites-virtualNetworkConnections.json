@@ -35,7 +35,8 @@
         }
     },
     "variables": {
-        "virtualNetworkConnectionsApiVersion": "2019-08-01"
+        "virtualNetworkConnectionsApiVersion": "2019-08-01",
+        "virtualNetworkResourceGroupName": "[if(not(empty(coalesce(parameters('virtualNetworkResourceGroupName'), ''))), parameters('virtualNetworkResourceGroupName'), resourceGroup().name)]"
     },
     "resources": [
         {
@@ -44,7 +45,7 @@
             "name": "[format('{0}/default', parameters('siteName'))]",
             "properties": {
                 "isSwift": true,
-                "vnetResourceId": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+                "vnetResourceId": "[resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
             },
             "type": "Microsoft.Web/sites/virtualNetworkConnections"
         }
