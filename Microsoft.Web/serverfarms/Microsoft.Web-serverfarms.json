@@ -170,8 +170,17 @@
                     "stack": {
                         "value": "[union(json('{ \"stack\": \"dotnetcore\" }'), variables('sites')[copyIndex()]).stack]"
                     },
+                    "subnetName": {
+                        "value": "[union(json('{ \"subnetName\": \"\" }'), variables('sites')[copyIndex()]).subnetName]"
+                    },
                     "tags": {
                         "value": "[parameters('tags')]"
+                    },
+                    "virtualNetworkName": {
+                        "value": "[union(json('{ \"virtualNetworkName\": \"\" }'), variables('sites')[copyIndex()]).virtualNetworkName]"
+                    },
+                    "virtualNetworkResourceGroupName": {
+                        "value": "[union(json('{ \"virtualNetworkResourceGroupName\": \"\" }'), variables('sites')[copyIndex()]).virtualNetworkResourceGroupName]"
                     }
                 },
                 "templateLink": {
