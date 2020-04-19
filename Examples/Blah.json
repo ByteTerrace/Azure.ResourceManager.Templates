@@ -132,6 +132,9 @@
                             "[parameters('clientIpAddress')]"
                         ]
                     },
+                    "isAllowTrustedMicrosoftServicesEnabled": {
+                        "value": true
+                    },
                     "keyVaultName": {
                         "value": "[format('{0}-KeyVault', parameters('applicationName'))]"
                     },
