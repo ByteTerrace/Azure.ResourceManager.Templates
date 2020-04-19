@@ -87,8 +87,21 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "firewallRules": {
+                        "value": [
+                            "[parameters('clientIpAddress')]"
+                        ]
+                    },
                     "keyVaultName": {
                         "value": "[format('{0}-KeyVault', parameters('applicationName'))]"
+                    },
+                    "virtualNetworkRules": {
+                        "value": [
+                            {
+                                "virtualNetworkName": "[format('{0}-VirtualNetwork', parameters('applicationName'))]",
+                                "subnetName": "default"
+                            }
+                        ]
                     }
                 },
                 "templateLink": {

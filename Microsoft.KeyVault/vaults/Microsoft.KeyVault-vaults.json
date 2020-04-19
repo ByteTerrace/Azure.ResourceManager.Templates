@@ -2,6 +2,20 @@
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "firewallRules": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of firewall rules that will be assigned to the Azure Key Vault."
+            },
+            "type": "array"
+        },
+        "isAllowTrustedMicrosoftServicesEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether trusted Microsoft services are allowed to access the Azure Key Vault."
+            },
+            "type": "bool"
+        },
         "keyVaultName": {
             "metadata": {
                 "description": "Specifies the name of the Azure Key Vault."
@@ -39,7 +53,32 @@
                 "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Key Vault."
             },
             "type": "object"
+        },
+        "virtualNetworkRules": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of virtual network rules that will be assigned to the Azure Key Vault."
+            },
+            "type": "array"
         }
+    },
+    "variables": {
+        "copy": [
+            {
+                "count": "[length(parameters('firewallRules'))]",
+                "input": {
+                    "value": "[parameters('firewallRules')[copyIndex('firewallRules')]]"
+                },
+                "name": "firewallRules"
+            },
+            {
+                "count": "[length(parameters('virtualNetworkRules'))]",
+                "input": {
+                    "id": "[resourceId(union(json(format('{{ \"virtualNetworkResourceGroupName\": \"{0}\" }}', resourceGroup().name)), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
+                },
+                "name": "virtualNetworkRules"
+            }
+        ]
     },
     "resources": [
         {
@@ -55,10 +94,10 @@
                 "enablePurgeProtection": true,
                 "enableSoftDelete": true,
                 "networkAcls": {
-                    "bypass": "None",
+                    "bypass": "[if(parameters('isAllowTrustedMicrosoftServicesEnabled'), 'AzureServices', 'None')]",
                     "defaultAction": "Deny",
-                    "ipRules": null,
-                    "virtualNetworkRules": null
+                    "ipRules": "[if(variables('firewallRulesIsNotEmpty'), variables('firewallRules'), json('null'))]",
+                    "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), variables('virtualNetworkRules'), json('null'))]"
                 },
                 "sku": {
                     "family": "A",
