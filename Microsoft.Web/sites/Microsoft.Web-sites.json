@@ -159,7 +159,12 @@
         "siteResourceId": "[resourceId('Microsoft.Web/sites', parameters('siteName'))]",
         "sitesApiVersion": "2019-08-01",
         "sitesConfigApiVersion": "2019-08-01",
-        "virtualNetworkResourceGroupName": "[if(not(empty(coalesce(parameters('virtualNetworkResourceGroupName'), ''))), parameters('virtualNetworkResourceGroupName'), resourceGroup().name)]"
+        "virtualNetworkProperties": {
+            "subnetResourceId": "[variables('virtualNetworkResourceId')]",
+            "swiftSupported": true
+        },
+        "virtualNetworkResourceGroupName": "[if(not(empty(coalesce(parameters('virtualNetworkResourceGroupName'), ''))), parameters('virtualNetworkResourceGroupName'), resourceGroup().name)]",
+        "virtualNetworkResourceId": "[resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
     },
     "resources": [
         {
@@ -198,10 +203,7 @@
             ],
             "location": "[parameters('location')]",
             "name": "[format('{0}/virtualNetwork', parameters('siteName'))]",
-            "properties": {
-                "subnetResourceId": "[if(variables('isVirtualNetworkIntegrationEnabled'), resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName')), json('null'))]",
-                "swiftSupported": true
-            },
+            "properties": "[if(variables('isVirtualNetworkIntegrationEnabled'), variables('virtualNetworkProperties'), json('null'))]",
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Web/sites/config"
         },
