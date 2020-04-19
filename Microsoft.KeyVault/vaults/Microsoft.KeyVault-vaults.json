@@ -2,6 +2,27 @@
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "accessPolicies": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of access policies that will be assigned to the Azure Key Vault."
+            },
+            "type": "array"
+        },
+        "auditStorageAccountName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the Azure Storage account that will be utilized by the audit feature."
+            },
+            "type": "string"
+        },
+        "auditStorageAccountResourceGroupName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure Storage account that will be utilized by the audit feature."
+            },
+            "type": "string"
+        },
         "firewallRules": {
             "defaultValue": [],
             "metadata": {
@@ -63,6 +84,9 @@
         }
     },
     "variables": {
+        "auditStorageAccountName": "[toLower(if(not(empty(coalesce(parameters('auditStorageAccountName'), ''))), parameters('auditStorageAccountName'), 'DummyStorageAccountForAudit'))]",
+        "auditStorageAccountResourceGroupName": "[if(not(empty(coalesce(parameters('auditStorageAccountResourceGroupName'), ''))), parameters('auditStorageAccountResourceGroupName'), resourceGroup().name)]",
+        "auditStorageAccountResourceId": "[resourceId(variables('auditStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', variables('auditStorageAccountName'))]",
         "copy": [
             {
                 "count": "[length(parameters('firewallRules'))]",
@@ -79,8 +103,12 @@
                 "name": "virtualNetworkRules"
             }
         ],
+        "diagnosticsSettingsApiVersion": "2017-05-01-preview",
         "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
+        "isAuditEnabled": "[variables('isAuditStorageAccountEnabled')]",
+        "isAuditStorageAccountEnabled": "[or(not(empty(coalesce(parameters('auditStorageAccountResourceGroupName'), ''))), not(empty(coalesce(parameters('auditStorageAccountName'), ''))))]",
         "keyVaultApiVersion": "2018-02-14",
+        "keyVaultResourceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
         "virtualNetworkRulesIsNotEmpty": "[greater(length(parameters('virtualNetworkRules')), 0)]"
     },
     "resources": [
@@ -89,12 +117,12 @@
             "location": "[parameters('location')]",
             "name": "[parameters('keyVaultName')]",
             "properties": {
-                "accessPolicies": "[json('null')]",
+                "accessPolicies": "[parameters('accessPolicies')]",
                 "createMode": "default",
                 "enabledForDeployment": false,
                 "enabledForDiskEncryption": false,
                 "enabledForTemplateDeployment": false,
-                "enablePurgeProtection": true,
+                "enablePurgeProtection": false,
                 "enableSoftDelete": true,
                 "networkAcls": {
                     "bypass": "[if(parameters('isAllowTrustedMicrosoftServicesEnabled'), 'AzureServices', 'None')]",
@@ -110,6 +138,28 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.KeyVault/vaults"
+        },
+        {
+            "apiVersion": "[variables('diagnosticsSettingsApiVersion')]",
+            "dependsOn": [
+                "[variables('keyVaultResourceId')]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/Microsoft.Insights/service', parameters('keyVaultName'))]",
+            "properties": {
+                "logs": [
+                    {
+                        "category": "AuditEvent",
+                        "enabled": "[variables('isAuditEnabled')]",
+                        "retentionPolicy": {
+                            "days": 365,
+                            "enabled": true
+                        }
+                    }
+                ],
+                "storageAccountId": "[variables('auditStorageAccountResourceId')]"
+            },
+            "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings"
         }
     ]
 }
