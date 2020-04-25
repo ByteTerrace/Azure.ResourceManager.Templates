@@ -282,6 +282,14 @@
                                 "isAlwaysOnEnabled": true,
                                 "is32BitModeEnabled": false,
                                 "siteName": "[format('{0}-Portal', parameters('applicationName'))]",
+                                "slots": [
+                                    {
+                                        "slotName": "development"
+                                    },
+                                    {
+                                        "slotName": "staging"
+                                    }
+                                ],
                                 "subnetName": "default",
                                 "virtualNetworkName": "[variables('virtualNetworkSettings').virtualNetworkName]"
                             }
