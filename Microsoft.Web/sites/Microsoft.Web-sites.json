@@ -94,7 +94,9 @@
         },
         "slots": {
             "defaultValue": [],
-            "description": "An array of slots that will be associated with the Azure Web site.",
+            "metadata": {
+                "description": "An array of slots that will be associated with the Azure Web site."
+            },
             "type": "array"
         },
         "stack": {
