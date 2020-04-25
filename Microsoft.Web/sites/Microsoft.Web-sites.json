@@ -170,7 +170,7 @@
         "siteResourceId": "[resourceId('Microsoft.Web/sites', parameters('siteName'))]",
         "sitesApiVersion": "2019-08-01",
         "sitesConfigApiVersion": "2019-08-01",
-        "slots": "[if(variables('slots'), parameters('slots'), json('[ { \"slotName\": \"DummySlot\" } ]'))]",
+        "slots": "[if(variables('slotsIsNotEmpty'), parameters('slots'), json('[ { \"slotName\": \"DummySlot\" } ]'))]",
         "slotsApiVersion": "2019-08-01",
         "slotsIsNotEmpty": "[greater(length(parameters('slots')), 0)]",
         "virtualNetworkResourceGroupName": "[if(not(empty(coalesce(parameters('virtualNetworkResourceGroupName'), ''))), parameters('virtualNetworkResourceGroupName'), resourceGroup().name)]",
