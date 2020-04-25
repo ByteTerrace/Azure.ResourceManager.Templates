@@ -22,7 +22,7 @@
             "type": "bool"
         },
         "isClientAffinityEnabled": {
-            "defaultValue": true,
+            "defaultValue": false,
             "metadata": {
                 "description": "Indicates whether the client affinity feature is enabled on the Azure Web site."
             },
@@ -92,6 +92,11 @@
             "minLength": 2,
             "type": "string"
         },
+        "slots": {
+            "defaultValue": [],
+            "description": "An array of slots that will be associated with the Azure Web site.",
+            "type": "array"
+        },
         "stack": {
             "allowedValues": [
                 "dotnetcore"
@@ -143,9 +148,6 @@
                 "value": "dotnet"
             }
         ],
-        "isFunctionApp": "[equals('functionapp', toLower(parameters('kind')))]",
-        "isLinuxOperatingSystem": "[equals('linux', toLower(parameters('operatingSystemName')))]",
-        "isVirtualNetworkIntegrationEnabled": "[or(not(empty(coalesce(parameters('virtualNetworkResourceGroupName')))), not(empty(coalesce(parameters('virtualNetworkName')))), not(empty(coalesce(parameters('subnetName')))))]",
         "ipSecurityRestrictions": [
             {
                 "action": "Allow",
@@ -155,21 +157,31 @@
                 "vnetSubnetResourceId": "[resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
             }
         ],
+        "isFunctionApp": "[equals('functionapp', toLower(parameters('kind')))]",
+        "isLinuxOperatingSystem": "[equals('linux', toLower(parameters('operatingSystemName')))]",
+        "isVirtualNetworkIntegrationEnabled": "[or(not(empty(coalesce(parameters('virtualNetworkResourceGroupName')))), not(empty(coalesce(parameters('virtualNetworkName')))), not(empty(coalesce(parameters('subnetName')))))]",
         "servicePlanResourceGroupName": "[if(not(empty(coalesce(parameters('servicePlanResourceGroupName'), ''))), parameters('servicePlanResourceGroupName'), resourceGroup().name)]",
+        "servicePlanResourceId": "[resourceId(variables('servicePlanResourceGroupName'), 'Microsoft.Web/serverfarms', parameters('servicePlanName'))]",
+        "siteKind": "[format('{0}{1}', parameters('kind'), if(variables('isLinuxOperatingSystem'), ',linux', ''))]",
+        "siteConfigForVirtualNetworkResourceId": "[resourceId('Microsoft.Web/sites/config', parameters('siteName'), 'virtualNetwork')]",
+        "siteConfigForWebResourceId": "[resourceId('Microsoft.Web/sites/config', parameters('siteName'), 'virtualNetwork')]",
         "siteResourceId": "[resourceId('Microsoft.Web/sites', parameters('siteName'))]",
         "sitesApiVersion": "2019-08-01",
         "sitesConfigApiVersion": "2019-08-01",
+        "slots": "[if(variables('slots'), parameters('slots'), json('[ { \"slotName\": \"DummySlot\" } ]'))]",
+        "slotsApiVersion": "2019-08-01",
+        "slotsIsNotEmpty": "[greater(length(parameters('slots')), 0)]",
         "virtualNetworkResourceGroupName": "[if(not(empty(coalesce(parameters('virtualNetworkResourceGroupName'), ''))), parameters('virtualNetworkResourceGroupName'), resourceGroup().name)]",
         "virtualNetworkResourceId": "[resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
     },
     "resources": [
         {
             "apiVersion": "[variables('sitesApiVersion')]",
-            "kind": "[format('{0}{1}', parameters('kind'), if(variables('isLinuxOperatingSystem'), ',linux', ''))]",
+            "kind": "[variables('siteKind')]",
             "location": "[parameters('location')]",
             "name": "[parameters('siteName')]",
             "properties": {
-                "serverFarmId": "[resourceId(variables('servicePlanResourceGroupName'), 'Microsoft.Web/serverfarms', parameters('servicePlanName'))]",
+                "serverFarmId": "[variables('servicePlanResourceId')]",
                 "siteConfig": {
                     "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
                     "appsettings": "[if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]'))]",
@@ -198,13 +210,11 @@
             "dependsOn": [
                 "[variables('siteResourceId')]"
             ],
-            "location": "[parameters('location')]",
             "name": "[format('{0}/virtualNetwork', parameters('siteName'))]",
             "properties": {
                 "subnetResourceId": "[variables('virtualNetworkResourceId')]",
                 "swiftSupported": true
             },
-            "tags": "[parameters('tags')]",
             "type": "Microsoft.Web/sites/config"
         },
         {
@@ -212,15 +222,42 @@
             "dependsOn": [
                 "[variables('siteResourceId')]"
             ],
-            "location": "[parameters('location')]",
             "name": "[format('{0}/web', parameters('siteName'))]",
             "properties": {
                 "ipSecurityRestrictions": "[if(variables('isVirtualNetworkIntegrationEnabled'), variables('ipSecurityRestrictions'), json('[]'))]",
                 "scmIpSecurityRestrictions": null,
                 "scmIpSecurityRestrictionsUseMain": true
             },
-            "tags": "[parameters('tags')]",
             "type": "Microsoft.Web/sites/config"
+        },
+        {
+            "apiVersion": "[variables('slotsApiVersion')]",
+            "condition": "[variables('slotsIsNotEmpty')]",
+            "copy": {
+                "count": "[length(variables('slots'))]",
+                "mode": "parallel",
+                "name": "slotsCopy"
+            },
+            "dependsOn": [
+                "[variables('siteResourceId')]",
+                "[variables('siteConfigForVirtualNetworkResourceId')]",
+                "[variables('siteConfigForWebResourceId')]"
+            ],
+            "kind": "[variables('siteKind')]",
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/{1}', parameters('siteName'), variables('slots')[copyIndex()].slotName)]",
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "cloningInfo": {
+                    "cloneCustomHostNames": false,
+                    "cloneSourceControl": false,
+                    "configureLoadBalancing": false,
+                    "overwrite": false,
+                    "sourceWebAppId": "[variables('siteResourceId')]"
+                },
+                "serverFarmId": "[variables('servicePlanResourceId')]"
+            },
+            "type": "Microsoft.Web/sites/slots"
         }
     ]
 }
