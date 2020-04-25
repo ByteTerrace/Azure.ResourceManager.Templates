@@ -1,12 +1,47 @@
 {
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "functions": [
+        {
+            "namespace": "byteterrace",
+            "members": {
+                "templateUri": {
+                    "parameters": [
+                        {
+                            "name": "baseUri",
+                            "type": "string"
+                        },
+                        {
+                            "name": "path",
+                            "type": "string"
+                        },
+                        {
+                            "name": "queryString",
+                            "type": "string"
+                        }
+                    ],
+                    "output": {
+                        "type": "string",
+                        "value": "[uri(parameters('baseUri'), format('Items?path={0}{1}', uriComponent(parameters('path')), parameters('queryString')))]"
+                    }
+                }
+            }
+        }
+    ],
     "parameters": {
         "applicationName": {
             "defaultValue": "KittExample",
             "type": "string"
         },
         "clientIpAddress": {
+            "type": "string"
+        },
+        "templateBaseUri": {
+            "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/",
+            "type": "string"
+        },
+        "templateQueryString": {
+            "defaultValue": "&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
             "type": "string"
         }
     },
@@ -18,12 +53,48 @@
         "deploymentNameForMicrosoftStorageAccount": "[format('{0}-StorageAccount', deployment().name)]",
         "deploymentNameForMicrosoftVirtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]",
         "deploymentNameForMicrosoftWebAppServerFarm": "[format('{0}-WebAppServerFarm', deployment().name)]",
-        "templateUriForMicrosoftAppConfiguration": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.AppConfiguration%2FconfigurationStores%2FMicrosoft.AppConfiguration-configurationStores.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
-        "templateUriForKeyVault": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.KeyVault%2Fvaults%2FMicrosoft.KeyVault-vaults.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
-        "templateUriForMicrosoftSqlServer": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Sql%2Fservers%2FMicrosoft.Sql-servers.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
-        "templateUriForMicrosoftStorageAccount": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Storage%2FstorageAccounts%2FMicrosoft.Storage-storageAccounts.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
-        "templateUriForMicrosoftVirtualNetwork": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Network%2FvirtualNetworks%2FMicrosoft.Network-virtualNetworks.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
-        "templateUriForMicrosoftWebAppServerFarm": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Web%2Fserverfarms%2FMicrosoft.Web-serverfarms.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true"
+        "templateUriForMicrosoftAppConfiguration": "[byteterrace.templateUri(parameters('templateBaseUri'), '/Microsoft.AppConfiguration/configurationStores/Microsoft.AppConfiguration-configurationStores.json', parameters('templateQueryString'))]",
+        "templateUriForMicrosoftKeyVault": "[byteterrace.templateUri(parameters('templateBaseUri'), '/Microsoft.KeyVault/vaults/Microsoft.KeyVault-vaults.json', parameters('templateQueryString'))]",
+        "templateUriForMicrosoftSqlServer": "[byteterrace.templateUri(parameters('templateBaseUri'), '/Microsoft.Sql/servers/Microsoft.Sql-servers.json', parameters('templateQueryString'))]",
+        "templateUriForMicrosoftStorageAccount": "[byteterrace.templateUri(parameters('templateBaseUri'), '/Microsoft.Storage/storageAccounts/Microsoft.Storage-storageAccounts.json', parameters('templateQueryString'))]",
+        "templateUriForMicrosoftVirtualNetwork": "[byteterrace.templateUri(parameters('templateBaseUri'), '/Microsoft.Network/virtualNetworks/Microsoft.Network-virtualNetworks.json', parameters('templateQueryString'))]",
+        "templateUriForMicrosoftWebAppServerFarm": "[byteterrace.templateUri(parameters('templateBaseUri'), '/Microsoft.Web/serverfarms/Microsoft.Web-serverfarms.json', parameters('templateQueryString'))]",
+        "sqlServerSettings": {
+            "serverName": "[format('{0}-Sql', parameters('applicationName'))]"
+        },
+        "virtualNetworkSettings": {
+            "subnets": [
+                {
+                    "name": "default",
+                    "properties": {
+                        "addressPrefix": "10.0.0.0/24",
+                        "delegations": [
+                            {
+                                "name": "delegation",
+                                "properties": {
+                                    "serviceName": "Microsoft.Web/serverfarms"
+                                }
+                            }
+                        ],
+                        "serviceEndpoints": [
+                            {
+                                "service": "Microsoft.KeyVault"
+                            },
+                            {
+                                "service": "Microsoft.Sql"
+                            },
+                            {
+                                "service": "Microsoft.Storage"
+                            },
+                            {
+                                "service": "Microsoft.Web"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "virtualNetworkName": "[format('{0}-Vnet', parameters('applicationName'))]"
+        }
     },
     "resources": [
         {
@@ -33,39 +104,10 @@
                 "mode": "Incremental",
                 "parameters": {
                     "subnets": {
-                        "value": [
-                            {
-                                "name": "default",
-                                "properties": {
-                                    "addressPrefix": "10.0.0.0/24",
-                                    "delegations": [
-                                        {
-                                            "name": "delegation",
-                                            "properties": {
-                                                "serviceName": "Microsoft.Web/serverfarms"
-                                            }
-                                        }
-                                    ],
-                                    "serviceEndpoints": [
-                                        {
-                                            "service": "Microsoft.KeyVault"
-                                        },
-                                        {
-                                            "service": "Microsoft.Sql"
-                                        },
-                                        {
-                                            "service": "Microsoft.Storage"
-                                        },
-                                        {
-                                            "service": "Microsoft.Web"
-                                        }
-                                    ]
-                                }
-                            }
-                        ]
+                        "value": "[variables('virtualNetworkSettings').subnets]"
                     },
                     "virtualNetworkName": {
-                        "value": "[format('{0}-VirtualNetwork', parameters('applicationName'))]"
+                        "value": "[variables('virtualNetworkSettings').virtualNetworkName]"
                     }
                 },
                 "templateLink": {
@@ -115,8 +157,8 @@
                     "virtualNetworkRules": {
                         "value": [
                             {
-                                "virtualNetworkName": "[format('{0}-VirtualNetwork', parameters('applicationName'))]",
-                                "subnetName": "default"
+                                "subnetName": "default",
+                                "virtualNetworkName": "[variables('virtualNetworkSettings').virtualNetworkName]"
                             }
                         ]
                     }
@@ -155,15 +197,15 @@
                     "virtualNetworkRules": {
                         "value": [
                             {
-                                "virtualNetworkName": "[format('{0}-VirtualNetwork', parameters('applicationName'))]",
-                                "subnetName": "default"
+                                "subnetName": "default",
+                                "virtualNetworkName": "[variables('virtualNetworkSettings').virtualNetworkName]"
                             }
                         ]
                     }
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUriForKeyVault')]"
+                    "uri": "[variables('templateUriForMicrosoftKeyVault')]"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -199,14 +241,14 @@
                         ]
                     },
                     "serverName": {
-                        "value": "[parameters('applicationName')]"
+                        "value": "[variables('sqlServerSettings').serverName]"
                     },
                     "virtualNetworkRules": {
                         "value": [
                             {
                                 "ruleName": "Temp",
-                                "virtualNetworkName": "[format('{0}-VirtualNetwork', parameters('applicationName'))]",
-                                "subnetName": "default"
+                                "subnetName": "default",
+                                "virtualNetworkName": "[variables('virtualNetworkSettings').virtualNetworkName]"
                             }
                         ]
                     },
@@ -232,16 +274,16 @@
                 "mode": "Incremental",
                 "parameters": {
                     "servicePlanName": {
-                        "value": "[format('{0}-ASP', parameters('applicationName'))]"
+                        "value": "[format('{0}-Portal-ASP', parameters('applicationName'))]"
                     },
                     "sites": {
                         "value": [
                             {
                                 "isAlwaysOnEnabled": true,
                                 "is32BitModeEnabled": false,
-                                "siteName": "[parameters('applicationName')]",
+                                "siteName": "[format('{0}-Portal', parameters('applicationName'))]",
                                 "subnetName": "default",
-                                "virtualNetworkName": "[format('{0}-VirtualNetwork', parameters('applicationName'))]"
+                                "virtualNetworkName": "[variables('virtualNetworkSettings').virtualNetworkName]"
                             }
                         ]
                     },
