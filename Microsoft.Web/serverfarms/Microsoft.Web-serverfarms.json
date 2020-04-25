@@ -168,7 +168,7 @@
                         "value": "[variables('sites')[copyIndex()].siteName]"
                     },
                     "slots": {
-                        "value": "[union(json('[]'), variables('sites')[copyIndex()]).slots]"
+                        "value": "[union(json('{ \"slots\": [] }'), variables('sites')[copyIndex()]).slots]"
                     },
                     "stack": {
                         "value": "[union(json('{ \"stack\": \"dotnetcore\" }'), variables('sites')[copyIndex()]).stack]"
