@@ -291,7 +291,7 @@
                                         "value": "1"
                                     },
                                     {
-                                        "isSlotSetting": false,
+                                        "isSlotSetting": true,
                                         "name": "C",
                                         "value": "2"
                                     }
@@ -301,10 +301,19 @@
                                 "siteName": "[format('{0}-Portal', parameters('applicationName'))]",
                                 "slots": [
                                     {
+                                        "applicationSettings": [
+                                            {
+                                                "name": "A",
+                                                "value": "9001"
+                                            },
+                                            {
+                                                "name": "C",
+                                                "value": "1337"
+                                            }
+                                        ],
                                         "slotName": "development"
                                     },
                                     {
-                                        "slotName": "staging",
                                         "applicationSettings": [
                                             {
                                                 "name": "A",
@@ -318,20 +327,8 @@
                                                 "name": "C",
                                                 "value": "C"
                                             }
-                                        ]
-                                    },
-                                    {
-                                        "applicationSettings": [
-                                            {
-                                                "name": "A",
-                                                "value": "9001"
-                                            },
-                                            {
-                                                "name": "C",
-                                                "value": "1337"
-                                            }
                                         ],
-                                        "slotName": "deleteme"
+                                        "slotName": "staging"
                                     }
                                 ],
                                 "subnetName": "default",

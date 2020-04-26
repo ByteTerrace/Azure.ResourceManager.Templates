@@ -1,0 +1,261 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "applicationSettings": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of application settings that will be associated with the Azure Web site slot."
+            },
+            "type": "array"
+        },
+        "functionVersion": {
+            "allowedValues": [
+                "~1",
+                "~2",
+                "~3"
+            ],
+            "defaultValue": "~3",
+            "metadata": {
+                "description": "Specifies the version of the function extensions that will be used with the Azure Web site slot."
+            },
+            "type": "string"
+        },
+        "healthCheckPath": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the path that will be pinged by the Azure web site slot health check feature."
+            },
+            "type": "string"
+        },
+        "isAlwaysOnEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the always on feature is enabled on the Azure Web site slot."
+            },
+            "type": "bool"
+        },
+        "isClientAffinityEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the client affinity feature is enabled on the Azure Web site slot."
+            },
+            "type": "bool"
+        },
+        "isWebSocketsEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the web sockets feature is enabled on the Azure Web site slot."
+            },
+            "type": "bool"
+        },
+        "is32BitModeEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the 32-bit worker feature is enabled on the Azure Web site slot."
+            },
+            "type": "bool"
+        },
+        "kind": {
+            "allowedValues": [
+                "app",
+                "functionApp"
+            ],
+            "defaultValue": "app",
+            "metadata": {
+                "description": "Specifies the kind of Azure Web site slot."
+            },
+            "type": "string"
+        },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Specifies the location in which the Azure Web site slot resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "operatingSystemName": {
+            "allowedValues": [
+                "Linux",
+                "Windows"
+            ],
+            "defaultValue": "Linux",
+            "metadata": {
+                "description": "Specifies the name of operating system that the Azure Web site slot will run within."
+            },
+            "type": "string"
+        },
+        "servicePlanName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Web app service plan that the Azure Web site slot will be deployed within."
+            },
+            "type": "string"
+        },
+        "servicePlanResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure Web app service plan that the Azure Web site slot will be deployed within."
+            },
+            "type": "string"
+        },
+        "siteName": {
+            "maxLength": 60,
+            "metadata": {
+                "description": "Specifies the name of the Azure Web site."
+            },
+            "minLength": 2,
+            "type": "string"
+        },
+        "slotName": {
+            "maxLength": 60,
+            "metadata": {
+                "description": "Specifies the name of the Azure Web site slot."
+            },
+            "minLength": 2,
+            "type": "string"
+        },
+        "stack": {
+            "allowedValues": [
+                "dotnetcore"
+            ],
+            "defaultValue": "dotnetcore",
+            "metadata": {
+                "description": "Specifies the name of the stack that Azure Web site slot will be run on top of."
+            },
+            "type": "string"
+        },
+        "subnetName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the subnet that will be integrated with the Azure Web site slot."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Web site slot."
+            },
+            "type": "object"
+        },
+        "virtualNetworkName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the Azure Virtual Network that will be integrated with the Azure Web site slot."
+            },
+            "type": "string"
+        },
+        "virtualNetworkResourceGroupName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure Virtual Network that will be integrated with the Azure Web site slot."
+            },
+            "type": "string"
+        }
+    },
+    "variables": {
+        "copy": [
+            {
+                "count": "[length(parameters('applicationSettings'))]",
+                "input": {
+                    "name": "[parameters('applicationSettings')[copyIndex('applicationSettings')].name]",
+                    "value": "[parameters('applicationSettings')[copyIndex('applicationSettings')].value]"
+                },
+                "name": "applicationSettings"
+            }
+        ],
+        "deploymentApiVersion": "2019-10-01",
+        "functionAppSettings": [
+            {
+                "name": "FUNCTIONS_EXTENSION_VERSION",
+                "value": "[parameters('functionVersion')]"
+            },
+            {
+                "name": "FUNCTIONS_WORKER_RUNTIME",
+                "value": "dotnet"
+            }
+        ],
+        "ipSecurityRestrictions": [
+            {
+                "action": "Allow",
+                "priority": 1,
+                "name": "default",
+                "tag": "Default",
+                "vnetSubnetResourceId": "[variables('virtualNetworkResourceId')]"
+            }
+        ],
+        "isFunctionApp": "[equals('functionapp', toLower(parameters('kind')))]",
+        "isHealthCheckEnabled": "[not(empty(coalesce(parameters('healthCheckPath'), '')))]",
+        "isLinuxOperatingSystem": "[equals('linux', toLower(parameters('operatingSystemName')))]",
+        "isVirtualNetworkIntegrationEnabled": "[or(not(empty(coalesce(parameters('virtualNetworkResourceGroupName')))), not(empty(coalesce(parameters('virtualNetworkName')))), not(empty(coalesce(parameters('subnetName')))))]",
+        "servicePlanResourceGroupName": "[if(not(empty(coalesce(parameters('servicePlanResourceGroupName'), ''))), parameters('servicePlanResourceGroupName'), resourceGroup().name)]",
+        "servicePlanResourceId": "[resourceId(variables('servicePlanResourceGroupName'), 'Microsoft.Web/serverfarms', parameters('servicePlanName'))]",
+        "siteConfigForRootProperties": {
+            "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
+            "appsettings": "[concat(variables('applicationSettings'), if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]')))]",
+            "clientAffinityEnabled": "[parameters('isClientAffinityEnabled')]",
+            "ftpsState": "FtpsOnly",
+            "healthCheckPath": "[if(variables('isHealthCheckEnabled'), parameters('healthCheckPath'), '')]",
+            "httpsOnly": true,
+            "http20Enabled": true,
+            "linuxFxVersion": "[if(variables('isLinuxOperatingSystem'), 'DOTNETCORE|LTS', json('null'))]",
+            "metadata": [
+                {
+                    "name": "CURRENT_STACK",
+                    "value": "[parameters('stack')]"
+                }
+            ],
+            "minTlsVersion": "1.2",
+            "use32BitWorkerProcess": "[parameters('is32BitModeEnabled')]",
+            "webSocketsEnabled": "[parameters('isWebSocketsEnabled')]"
+        },
+        "siteConfigForVirtualNetworkProperties": {
+            "subnetResourceId": "[variables('virtualNetworkResourceId')]",
+            "swiftSupported": true
+        },
+        "siteConfigForWebProperties": {
+            "ipSecurityRestrictions": "[if(variables('isVirtualNetworkIntegrationEnabled'), variables('ipSecurityRestrictions'), json('[]'))]",
+            "scmIpSecurityRestrictions": null,
+            "scmIpSecurityRestrictionsUseMain": true
+        },
+        "siteKind": "[format('{0}{1}', parameters('kind'), if(variables('isLinuxOperatingSystem'), ',linux', ''))]",
+        "sitesConfigApiVersion": "2019-08-01",
+        "siteSlotResourceId": "[resourceId('Microsoft.Web/sites/slots', parameters('siteName'), parameters('slotName'))]",
+        "slotsApiVersion": "2019-08-01",
+        "virtualNetworkResourceGroupName": "[if(not(empty(coalesce(parameters('virtualNetworkResourceGroupName'), ''))), parameters('virtualNetworkResourceGroupName'), resourceGroup().name)]",
+        "virtualNetworkResourceId": "[resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('slotsApiVersion')]",
+            "kind": "[variables('siteKind')]",
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/{1}', parameters('siteName'), parameters('slotName'))]",
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "serverFarmId": "[variables('servicePlanResourceId')]",
+                "siteConfig": "[union(variables('siteConfigForRootProperties'), json(format('{{ \"appsettings\": {0} }}', union(json('{ \"applicationSettings\": [] }'), variables('slots')[copyIndex()]).applicationSettings)))]"
+            },
+            "type": "Microsoft.Web/sites/slots"
+        },
+        {
+            "apiVersion": "[variables('sitesConfigApiVersion')]",
+            "condition": "[variables('isVirtualNetworkIntegrationEnabled')]",
+            "dependsOn": [
+                "[variables('siteResourceId')]"
+            ],
+            "name": "[format('{0}/{1}/virtualNetwork', parameters('siteName'), parameters('slotName'))]",
+            "properties": "[variables('siteConfigForVirtualNetworkProperties')]",
+            "type": "Microsoft.Web/sites/slots/config"
+        },
+        {
+            "apiVersion": "[variables('sitesConfigApiVersion')]",
+            "dependsOn": [
+                "[variables('siteResourceId')]"
+            ],
+            "name": "[format('{0}/{1}/web', parameters('siteName'), parameters('slotName'))]",
+            "properties": "[variables('siteConfigForWebProperties')]",
+            "type": "Microsoft.Web/sites/slots/config"
+        }
+    ]
+}

@@ -232,6 +232,7 @@
         "slots": "[if(variables('slotsIsNotEmpty'), parameters('slots'), json('[ { \"slotName\": \"DummySlot\" } ]'))]",
         "slotsApiVersion": "2019-08-01",
         "slotsIsNotEmpty": "[greater(length(parameters('slots')), 0)]",
+        "slotsTemplateUri": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Web%2Fsites%2FMicrosoft.Web-sites-slots.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
         "virtualNetworkResourceGroupName": "[if(not(empty(coalesce(parameters('virtualNetworkResourceGroupName'), ''))), parameters('virtualNetworkResourceGroupName'), resourceGroup().name)]",
         "virtualNetworkResourceId": "[resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
     },
@@ -279,7 +280,7 @@
             "type": "Microsoft.Web/sites/config"
         },
         {
-            "apiVersion": "[variables('slotsApiVersion')]",
+            "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[variables('slotsIsNotEmpty')]",
             "copy": {
                 "count": "[length(variables('slots'))]",
@@ -291,30 +292,68 @@
                 "[variables('siteConfigForVirtualNetworkResourceId')]",
                 "[variables('siteConfigForWebResourceId')]"
             ],
-            "kind": "[variables('siteKind')]",
-            "location": "[parameters('location')]",
-            "name": "[format('{0}/{1}', parameters('siteName'), variables('slots')[copyIndex()].slotName)]",
-            "tags": "[parameters('tags')]",
+            "name": "[format('{0}-sites-{1}-{2}', deployment().name, parameters('siteName'), variables('slots')[copyIndex()]).slotName)]",
             "properties": {
-                "resources": [
-                    {
-                        "apiVersion": "[variables('sitesConfigApiVersion')]",
-                        "condition": "[variables('isVirtualNetworkIntegrationEnabled')]",
-                        "name": "[format('{0}/{1}/virtualNetwork', parameters('siteName'), variables('slots')[copyIndex()].slotName)]",
-                        "properties": "[variables('siteConfigForVirtualNetworkProperties')]",
-                        "type": "Microsoft.Web/sites/config"
+                "mode": "Incremental",
+                "parameters": {
+                    "applicationSettings": {
+                        "value": "[union(json('{ \"applicationSettings\": [] }'), variables('slots')[copyIndex()]).applicationSettings]"
                     },
-                    {
-                        "apiVersion": "[variables('sitesConfigApiVersion')]",
-                        "name": "[format('{0}/{1}/web', parameters('siteName'), variables('slots')[copyIndex()].slotName)]",
-                        "properties": "[variables('siteConfigForWebProperties')]",
-                        "type": "Microsoft.Web/sites/slots/config"
+                    "functionVersion": {
+                        "value": "[union(json('{ \"functionVersion\": \"~3\" }'), variables('slots')[copyIndex()]).functionVersion]"
+                    },
+                    "isAlwaysOnEnabled": {
+                        "value": "[union(json('{ \"isAlwaysOnEnabled\": true }'), variables('slots')[copyIndex()]).isAlwaysOnEnabled]"
+                    },
+                    "isClientAffinityEnabled": {
+                        "value": "[union(json('{ \"isClientAffinityEnabled\": false }'), variables('slots')[copyIndex()]).isClientAffinityEnabled]"
+                    },
+                    "isWebSocketsEnabled": {
+                        "value": "[union(json('{ \"isWebSocketsEnabled\": true }'), variables('slots')[copyIndex()]).isWebSocketsEnabled]"
+                    },
+                    "is32BitModeEnabled": {
+                        "value": "[union(json('{ \"is32BitModeEnabled\": false }'), variables('slots')[copyIndex()]).is32BitModeEnabled]"
+                    },
+                    "kind": {
+                        "value": "[union(json('{ \"kind\": \"app\" }'), variables('slots')[copyIndex()]).kind]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "operatingSystemName": {
+                        "value": "[parameters('operatingSystemName')]"
+                    },
+                    "servicePlanName": {
+                        "value": "[parameters('servicePlanName')]"
+                    },
+                    "siteName": {
+                        "value": "[variables('slots')[copyIndex()].siteName]"
+                    },
+                    "slotName": {
+                        "value": "[variables('slots')[copyIndex()]).slotName]"
+                    },
+                    "stack": {
+                        "value": "[union(json('{ \"stack\": \"dotnetcore\" }'), variables('slots')[copyIndex()]).stack]"
+                    },
+                    "subnetName": {
+                        "value": "[union(json('{ \"subnetName\": \"\" }'), variables('slots')[copyIndex()]).subnetName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "virtualNetworkName": {
+                        "value": "[union(json('{ \"virtualNetworkName\": \"\" }'), variables('slots')[copyIndex()]).virtualNetworkName]"
+                    },
+                    "virtualNetworkResourceGroupName": {
+                        "value": "[union(json('{ \"virtualNetworkResourceGroupName\": \"\" }'), variables('slots')[copyIndex()]).virtualNetworkResourceGroupName]"
                     }
-                ],
-                "serverFarmId": "[variables('servicePlanResourceId')]",
-                "siteConfig": "[union(variables('siteConfigForRootProperties'), json(format('{{ \"appsettings\": {0} }}', union(json('{ \"applicationSettings\": [] }'), variables('slots')[copyIndex()]).applicationSettings)))]"
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('slotsTemplateUri')]"
+                }
             },
-            "type": "Microsoft.Web/sites/slots"
+            "type": "Microsoft.Resources/deployments"
         }
     ]
 }
