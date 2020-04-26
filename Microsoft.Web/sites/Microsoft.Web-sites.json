@@ -327,7 +327,7 @@
                         "value": "[parameters('servicePlanName')]"
                     },
                     "siteName": {
-                        "value": "[variables('slots')[copyIndex()].siteName]"
+                        "value": "[parameters('siteName')]"
                     },
                     "slotName": {
                         "value": "[variables('slots')[copyIndex()].slotName]"
