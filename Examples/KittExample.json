@@ -305,7 +305,7 @@
                                         "name": "E",
                                         "value": "4"
                                     }
-                                ]
+                                ],
                                 "isAlwaysOnEnabled": true,
                                 "is32BitModeEnabled": false,
                                 "siteName": "[format('{0}-Portal', parameters('applicationName'))]",
