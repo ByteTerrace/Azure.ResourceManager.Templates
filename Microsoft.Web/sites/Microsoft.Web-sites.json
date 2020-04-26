@@ -292,7 +292,7 @@
                 "[variables('siteConfigForVirtualNetworkResourceId')]",
                 "[variables('siteConfigForWebResourceId')]"
             ],
-            "name": "[variables('slots')[copyIndex()].slotName]",
+            "name": "[format('{0}-{1}', parameters('siteName'), variables('slots')[copyIndex()].slotName)]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
