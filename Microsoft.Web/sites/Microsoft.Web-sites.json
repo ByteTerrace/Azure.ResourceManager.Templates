@@ -284,7 +284,7 @@
         },
         {
             "apiVersion": "[variables('slotsApiVersion')]",
-            "condition": "[variables('slotsIsNotEmpty')]",
+            "condition": false,
             "copy": {
                 "count": "[length(variables('slots'))]",
                 "mode": "parallel",
