@@ -138,33 +138,7 @@
                 "mode": "Incremental",
                 "parameters": {
                     "applicationSettings": {
-                        "value": [
-                            {
-                                "isSlotSetting": true,
-                                "name": "A",
-                                "value": "0"
-                            },
-                            {
-                                "isSlotSetting": false,
-                                "name": "B",
-                                "value": "1"
-                            },
-                            {
-                                "isSlotSetting": false,
-                                "name": "C",
-                                "value": "2"
-                            },
-                            {
-                                "isSlotSetting": true,
-                                "name": "D",
-                                "value": "3"
-                            },
-                            {
-                                "isSlotSetting": false,
-                                "name": "E",
-                                "value": "4"
-                            }
-                        ]
+                        "value": "[union(json('{ \"applicationSettings\": [] }'), variables('sites')[copyIndex()]).applicationSettings]"
                     },
                     "functionVersion": {
                         "value": "[union(json('{ \"functionVersion\": \"~3\" }'), variables('sites')[copyIndex()]).functionVersion]"

@@ -279,6 +279,33 @@
                     "sites": {
                         "value": [
                             {
+                                "applicationSettings": [
+                                    {
+                                        "isSlotSetting": true,
+                                        "name": "A",
+                                        "value": "0"
+                                    },
+                                    {
+                                        "isSlotSetting": false,
+                                        "name": "B",
+                                        "value": "1"
+                                    },
+                                    {
+                                        "isSlotSetting": false,
+                                        "name": "C",
+                                        "value": "2"
+                                    },
+                                    {
+                                        "isSlotSetting": true,
+                                        "name": "D",
+                                        "value": "3"
+                                    },
+                                    {
+                                        "isSlotSetting": false,
+                                        "name": "E",
+                                        "value": "4"
+                                    }
+                                ]
                                 "isAlwaysOnEnabled": true,
                                 "is32BitModeEnabled": false,
                                 "siteName": "[format('{0}-Portal', parameters('applicationName'))]",
