@@ -297,7 +297,7 @@
                     "cloneCustomHostNames": false,
                     "cloneSourceControl": false,
                     "configureLoadBalancing": false,
-                    "overwrite": true,
+                    "overwrite": false,
                     "sourceWebAppId": "[variables('siteResourceId')]"
                 },
                 "serverFarmId": "[variables('servicePlanResourceId')]"
