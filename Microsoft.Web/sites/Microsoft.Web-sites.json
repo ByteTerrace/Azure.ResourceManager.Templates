@@ -317,7 +317,7 @@
                 ],
                 "serverFarmId": "[variables('servicePlanResourceId')]",
                 "siteConfig": {
-                    "appsettings": "[union(union(json('{ \"applicationSettings\": [] }'), variables('slots')[copyIndex()]).applicationSettings, variables('applicationSettings'), if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]')))]"
+                    "appsettings": "[union(if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]')), union(json('{ \"applicationSettings\": [] }'), variables('slots')[copyIndex()]).applicationSettings)]"
                 }
             },
             "type": "Microsoft.Web/sites/slots"
