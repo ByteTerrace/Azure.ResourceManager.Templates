@@ -187,7 +187,7 @@
             },
             {
                 "count": "[length(parameters('connectionStrings'))]",
-                "input": "[if(parameters('connectionStrings')[copyIndex('connectionStringsTemp')].isSlotSetting, parameters('connectionStrings')[copyIndex('connectionStringsTemp')].name, '')]",
+                "input": "[if(parameters('connectionStrings')[copyIndex('connectionStringsSlotNamesTemp')].isSlotSetting, parameters('connectionStrings')[copyIndex('connectionStringsSlotNamesTemp')].name, '')]",
                 "name": "connectionStringsSlotNamesTemp"
             }
         ],
