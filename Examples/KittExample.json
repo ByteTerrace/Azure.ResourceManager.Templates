@@ -304,7 +304,21 @@
                                         "slotName": "development"
                                     },
                                     {
-                                        "slotName": "staging"
+                                        "slotName": "staging",
+                                        "applicationSettings": [
+                                            {
+                                                "name": "A",
+                                                "value": "A"
+                                            },
+                                            {
+                                                "name": "B",
+                                                "value": "B"
+                                            },
+                                            {
+                                                "name": "C",
+                                                "value": "C"
+                                            }
+                                        ]
                                     },
                                     {
                                         "applicationSettings": [
@@ -314,7 +328,7 @@
                                             },
                                             {
                                                 "name": "C",
-                                                "value": "3"
+                                                "value": "1337"
                                             }
                                         ],
                                         "slotName": "deleteme"

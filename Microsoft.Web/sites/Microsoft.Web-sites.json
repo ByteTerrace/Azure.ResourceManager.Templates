@@ -196,7 +196,16 @@
         "servicePlanResourceGroupName": "[if(not(empty(coalesce(parameters('servicePlanResourceGroupName'), ''))), parameters('servicePlanResourceGroupName'), resourceGroup().name)]",
         "servicePlanResourceId": "[resourceId(variables('servicePlanResourceGroupName'), 'Microsoft.Web/serverfarms', parameters('servicePlanName'))]",
         "siteKind": "[format('{0}{1}', parameters('kind'), if(variables('isLinuxOperatingSystem'), ',linux', ''))]",
+        "siteConfigForVirtualNetworkProperties": {
+            "subnetResourceId": "[variables('virtualNetworkResourceId')]",
+            "swiftSupported": true
+        },
         "siteConfigForVirtualNetworkResourceId": "[resourceId('Microsoft.Web/sites/config', parameters('siteName'), 'virtualNetwork')]",
+        "siteConfigForWebProperties": {
+            "ipSecurityRestrictions": "[if(variables('isVirtualNetworkIntegrationEnabled'), variables('ipSecurityRestrictions'), json('[]'))]",
+            "scmIpSecurityRestrictions": null,
+            "scmIpSecurityRestrictionsUseMain": true
+        },
         "siteConfigForWebResourceId": "[resourceId('Microsoft.Web/sites/config', parameters('siteName'), 'virtualNetwork')]",
         "siteResourceId": "[resourceId('Microsoft.Web/sites', parameters('siteName'))]",
         "sitesApiVersion": "2019-08-01",
@@ -256,10 +265,7 @@
                 "[variables('siteResourceId')]"
             ],
             "name": "[format('{0}/virtualNetwork', parameters('siteName'))]",
-            "properties": {
-                "subnetResourceId": "[variables('virtualNetworkResourceId')]",
-                "swiftSupported": true
-            },
+            "properties": "[variables('siteConfigForVirtualNetworkProperties')]",
             "type": "Microsoft.Web/sites/config"
         },
         {
@@ -268,11 +274,7 @@
                 "[variables('siteResourceId')]"
             ],
             "name": "[format('{0}/web', parameters('siteName'))]",
-            "properties": {
-                "ipSecurityRestrictions": "[if(variables('isVirtualNetworkIntegrationEnabled'), variables('ipSecurityRestrictions'), json('[]'))]",
-                "scmIpSecurityRestrictions": null,
-                "scmIpSecurityRestrictionsUseMain": true
-            },
+            "properties": "[variables('siteConfigForWebProperties')]",
             "type": "Microsoft.Web/sites/config"
         },
         {
@@ -298,26 +300,19 @@
                         "apiVersion": "[variables('sitesConfigApiVersion')]",
                         "condition": "[variables('isVirtualNetworkIntegrationEnabled')]",
                         "name": "[format('{0}/{1}/virtualNetwork', parameters('siteName'), variables('slots')[copyIndex()].slotName)]",
-                        "properties": {
-                            "subnetResourceId": "[variables('virtualNetworkResourceId')]",
-                            "swiftSupported": true
-                        },
+                        "properties": "[variables('siteConfigForVirtualNetworkProperties')]",
                         "type": "Microsoft.Web/sites/config"
                     },
                     {
                         "apiVersion": "[variables('sitesConfigApiVersion')]",
                         "name": "[format('{0}/{1}/web', parameters('siteName'), variables('slots')[copyIndex()].slotName)]",
-                        "properties": {
-                            "ipSecurityRestrictions": "[if(variables('isVirtualNetworkIntegrationEnabled'), variables('ipSecurityRestrictions'), json('[]'))]",
-                            "scmIpSecurityRestrictions": null,
-                            "scmIpSecurityRestrictionsUseMain": true
-                        },
+                        "properties": "[variables('siteConfigForWebProperties')]",
                         "type": "Microsoft.Web/sites/slots/config"
                     }
                 ],
                 "serverFarmId": "[variables('servicePlanResourceId')]",
                 "siteConfig": {
-                    "appsettings": "[union(if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]')), union(json('{ \"applicationSettings\": [] }'), variables('slots')[copyIndex()]).applicationSettings)]"
+                    "appsettings": "[concat(if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]')), union(json('{ \"applicationSettings\": [] }'), variables('slots')[copyIndex()]).applicationSettings)]"
                 }
             },
             "type": "Microsoft.Web/sites/slots"
