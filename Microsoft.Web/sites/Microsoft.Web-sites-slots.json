@@ -196,7 +196,7 @@
                     "input": {
                         "connectionString": "[parameters('connectionStrings')[copyIndex('connectionStrings')].value]",
                         "name": "[parameters('connectionStrings')[copyIndex('connectionStrings')].name]",
-                        "type": "[parameters('connectionStrings')[copyIndex('applicationSettings')].type]"
+                        "type": "[parameters('connectionStrings')[copyIndex('connectionStrings')].type]"
                     },
                     "name": "connectionStrings"
                 }
