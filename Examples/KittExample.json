@@ -312,6 +312,9 @@
                                                 "value": "1337"
                                             }
                                         ],
+                                        "isClientAffinityEnabled": true,
+                                        "isWebSocketsEnabled": false,
+                                        "is32BitModeEnabled": true,
                                         "slotName": "development"
                                     },
                                     {
