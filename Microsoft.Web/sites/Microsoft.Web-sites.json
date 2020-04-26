@@ -288,9 +288,7 @@
                 "name": "slotsCopy"
             },
             "dependsOn": [
-                "[variables('siteResourceId')]",
-                "[variables('siteConfigForVirtualNetworkResourceId')]",
-                "[variables('siteConfigForWebResourceId')]"
+                "[variables('siteResourceId')]"
             ],
             "name": "[format('{0}-slot_{1}', deployment().name, copyIndex())]",
             "properties": {
