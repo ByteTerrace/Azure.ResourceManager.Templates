@@ -137,6 +137,20 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "applicationSettings": {
+                        "value": [
+                            {
+                                "isSlotSetting": true,
+                                "name": "A",
+                                "value": "1"
+                            },
+                            {
+                                "isSlotSetting": false,
+                                "name": "B",
+                                "value": "2"
+                            }
+                        ]
+                    },
                     "functionVersion": {
                         "value": "[union(json('{ \"functionVersion\": \"~3\" }'), variables('sites')[copyIndex()]).functionVersion]"
                     },
