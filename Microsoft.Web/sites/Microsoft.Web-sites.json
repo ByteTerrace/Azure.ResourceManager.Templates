@@ -153,7 +153,7 @@
         }
     },
     "variables": {
-        "applicationSettingsSlotNames": "[union(variables('applicationSettingsSlotNamesTemp'), json('[\"\"]'))]",
+        "applicationSettingsSlotNames": "[union(json('[\"\"]'), variables('applicationSettingsSlotNamesTemp'))]",
         "copy": [
             {
                 "count": "[length(parameters('applicationSettings'))]",
@@ -245,7 +245,7 @@
             ],
             "name": "[format('{0}/slotConfigNames', parameters('siteName'))]",
             "properties": {
-                "appSettingNames": "[take(variables('applicationSettingsSlotNames'), sub(length(variables('applicationSettingsSlotNames')), 1))]"
+                "appSettingNames": "[skip(variables('applicationSettingsSlotNames'), 1)]"
             },
             "type": "Microsoft.Web/sites/config"
         },
