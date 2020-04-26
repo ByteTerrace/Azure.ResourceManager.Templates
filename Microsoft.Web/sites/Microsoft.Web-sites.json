@@ -2,6 +2,13 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "applicationSettings": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of application settings that will be associated with the Azure Web site."
+            },
+            "type": "array"
+        },
         "functionVersion": {
             "allowedValues": [
                 "~1",
@@ -11,6 +18,13 @@
             "defaultValue": "~3",
             "metadata": {
                 "description": "Specifies the version of the function extensions that will be used with the Azure Web site."
+            },
+            "type": "string"
+        },
+        "healthCheckPath": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the path that will be pinged by the Azure web site health check feature."
             },
             "type": "string"
         },
@@ -139,6 +153,27 @@
         }
     },
     "variables": {
+        "copy": [
+            {
+                "count": "[length(parameters('applicationSettings'))]",
+                "input": {
+                    "action": "Allow",
+                    "value": {
+                        "name": "[parameters('applicationSettings')[copyIndex('applicationSettingSlotNames')].name]",
+                        "value": "[parameters('applicationSettings')[copyIndex('applicationSettingSlotNames')].value]"
+                    }
+                },
+                "name": "applicationSettings"
+            },
+            {
+                "count": "[length(parameters('applicationSettings'))]",
+                "input": {
+                    "action": "Allow",
+                    "value": "[if(parameters('applicationSettings')[copyIndex('applicationSettingSlotNames')].isSlotSetting, parameters('applicationSettings')[copyIndex('applicationSettingSlotNames')].name, '')]"
+                },
+                "name": "applicationSettingsSlotNames"
+            }
+        ],
         "deploymentApiVersion": "2019-10-01",
         "functionAppSettings": [
             {
@@ -156,10 +191,11 @@
                 "priority": 1,
                 "name": "default",
                 "tag": "Default",
-                "vnetSubnetResourceId": "[resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+                "vnetSubnetResourceId": "[variables('virtualNetworkResourceId')]"
             }
         ],
         "isFunctionApp": "[equals('functionapp', toLower(parameters('kind')))]",
+        "isHealthCheckEnabled": "[not(empty(coalesce(parameters('healthCheckPath'), '')))]",
         "isLinuxOperatingSystem": "[equals('linux', toLower(parameters('operatingSystemName')))]",
         "isVirtualNetworkIntegrationEnabled": "[or(not(empty(coalesce(parameters('virtualNetworkResourceGroupName')))), not(empty(coalesce(parameters('virtualNetworkName')))), not(empty(coalesce(parameters('subnetName')))))]",
         "servicePlanResourceGroupName": "[if(not(empty(coalesce(parameters('servicePlanResourceGroupName'), ''))), parameters('servicePlanResourceGroupName'), resourceGroup().name)]",
@@ -189,6 +225,7 @@
                     "appsettings": "[if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]'))]",
                     "clientAffinityEnabled": "[parameters('isClientAffinityEnabled')]",
                     "ftpsState": "FtpsOnly",
+                    "healthCheckPath": "[if(variables('isHealthCheckEnabled'), parameters('healthCheckPath'), '')]",
                     "httpsOnly": true,
                     "http20Enabled": true,
                     "linuxFxVersion": "[if(variables('isLinuxOperatingSystem'), 'DOTNETCORE|LTS', json('null'))]",
@@ -205,6 +242,18 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Web/sites"
+        },
+        {
+            "apiVersion": "[variables('sitesConfigApiVersion')]",
+            "dependsOn": [
+                "[variables('siteResourceId')]"
+            ],
+            "name": "[format('{0}/slotConfigNames', parameters('siteName'))]",
+            "properties": {
+                "appSettingNames": "[variables('applicationSettingsSlotNames')]",
+                "connectionStringNames": []
+            },
+            "type": "Microsoft.Web/sites/config"
         },
         {
             "apiVersion": "[variables('sitesConfigApiVersion')]",
@@ -226,6 +275,8 @@
             ],
             "name": "[format('{0}/web', parameters('siteName'))]",
             "properties": {
+                "appSettings": "[variables('applicationSettings')]",
+                "connectionStrings": [],
                 "ipSecurityRestrictions": "[if(variables('isVirtualNetworkIntegrationEnabled'), variables('ipSecurityRestrictions'), json('[]'))]",
                 "scmIpSecurityRestrictions": null,
                 "scmIpSecurityRestrictionsUseMain": true
@@ -254,7 +305,7 @@
                     "cloneCustomHostNames": false,
                     "cloneSourceControl": false,
                     "configureLoadBalancing": false,
-                    "overwrite": false,
+                    "overwrite": true,
                     "sourceWebAppId": "[variables('siteResourceId')]"
                 },
                 "serverFarmId": "[variables('servicePlanResourceId')]"
