@@ -274,76 +274,17 @@
                 "mode": "Incremental",
                 "parameters": {
                     "servicePlanName": {
-                        "value": "[format('{0}-Portal-ASP-New', parameters('applicationName'))]"
+                        "value": "[format('{0}-Portal-ASP', parameters('applicationName'))]"
                     },
                     "sites": {
                         "value": [
                             {
-                                "applicationSettings": [
-                                    {
-                                        "isSlotSetting": true,
-                                        "name": "A",
-                                        "value": "0"
-                                    },
-                                    {
-                                        "isSlotSetting": false,
-                                        "name": "B",
-                                        "value": "1"
-                                    },
-                                    {
-                                        "isSlotSetting": true,
-                                        "name": "C",
-                                        "value": "2"
-                                    }
-                                ],
-                                "isAlwaysOnEnabled": true,
+                                "isAlwaysOnEnabled": false,
                                 "isClientAffinityEnabled": false,
-                                "is32BitModeEnabled": false,
-                                "siteName": "[format('{0}-Portal', parameters('applicationName'))]",
-                                "slots": [
-                                    {
-                                        "applicationSettings": [
-                                            {
-                                                "name": "A",
-                                                "value": "9001"
-                                            },
-                                            {
-                                                "name": "C",
-                                                "value": "1337"
-                                            }
-                                        ],
-                                        "isClientAffinityEnabled": true,
-                                        "isWebSocketsEnabled": false,
-                                        "is32BitModeEnabled": true,
-                                        "slotName": "development"
-                                    },
-                                    {
-                                        "applicationSettings": [
-                                            {
-                                                "name": "A",
-                                                "value": "A"
-                                            },
-                                            {
-                                                "name": "B",
-                                                "value": "B"
-                                            },
-                                            {
-                                                "name": "C",
-                                                "value": "C"
-                                            }
-                                        ],
-                                        "isClientAffinityEnabled": false,
-                                        "servicePlanName": "[format('{0}-Portal-ASP', parameters('applicationName'))]",
-                                        "slotName": "staging",
-                                        "subnetName": "default",
-                                        "virtualNetworkName": "[variables('virtualNetworkSettings').virtualNetworkName]"
-                                    }
-                                ]
+                                "is32BitModeEnabled": true,
+                                "siteName": "[format('{0}-Portal', parameters('applicationName'))]"
                             }
                         ]
-                    },
-                    "skuName": {
-                        "value": "S1"
                     }
                 },
                 "templateLink": {
