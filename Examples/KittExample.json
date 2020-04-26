@@ -274,7 +274,7 @@
                 "mode": "Incremental",
                 "parameters": {
                     "servicePlanName": {
-                        "value": "[format('{0}-Portal-ASP', parameters('applicationName'))]"
+                        "value": "[format('{0}-Portal-ASP-New', parameters('applicationName'))]"
                     },
                     "sites": {
                         "value": [
@@ -315,6 +315,7 @@
                                         "isClientAffinityEnabled": true,
                                         "isWebSocketsEnabled": false,
                                         "is32BitModeEnabled": true,
+                                        "servicePlanName": "[format('{0}-Portal-ASP', parameters('applicationName'))]",
                                         "slotName": "development"
                                     },
                                     {

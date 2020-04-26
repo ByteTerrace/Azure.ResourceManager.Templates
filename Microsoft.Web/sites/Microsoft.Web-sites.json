@@ -322,7 +322,10 @@
                         "value": "[parameters('operatingSystemName')]"
                     },
                     "servicePlanName": {
-                        "value": "[parameters('servicePlanName')]"
+                        "value": "[union(json(format('{{ \"servicePlanName\": \"{0}\" }}', parameters('servicePlanName'))), variables('slots')[copyIndex()]).servicePlanName]"
+                    },
+                    "servicePlanResourceGroupName": {
+                        "value": "[union(json(format('{{ \"servicePlanResourceGroupName\": \"{0}\" }}', resourceGroup().name)), variables('slots')[copyIndex()]).servicePlanResourceGroupName]"
                     },
                     "siteName": {
                         "value": "[parameters('siteName')]"
