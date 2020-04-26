@@ -280,7 +280,7 @@
             "condition": "[variables('slotsIsNotEmpty')]",
             "copy": {
                 "count": "[length(variables('slots'))]",
-                "mode": "parallel",
+                "mode": "serial",
                 "name": "slotsCopy"
             },
             "dependsOn": [
