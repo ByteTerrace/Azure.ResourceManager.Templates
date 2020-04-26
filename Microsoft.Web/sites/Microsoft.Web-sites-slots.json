@@ -204,11 +204,11 @@
             "name": "[format('{0}/{1}', parameters('siteName'), parameters('slotName'))]",
             "tags": "[parameters('tags')]",
             "properties": {
+                "clientAffinityEnabled": "[parameters('isClientAffinityEnabled')]",
                 "serverFarmId": "[variables('servicePlanResourceId')]",
                 "siteConfig": {
                     "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
                     "appsettings": "[concat(parameters('applicationSettings'), if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]')))]",
-                    "clientAffinityEnabled": "[parameters('isClientAffinityEnabled')]",
                     "ftpsState": "FtpsOnly",
                     "healthCheckPath": "[if(variables('isHealthCheckEnabled'), parameters('healthCheckPath'), '')]",
                     "httpsOnly": true,
