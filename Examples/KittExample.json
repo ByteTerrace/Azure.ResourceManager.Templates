@@ -297,6 +297,7 @@
                                     }
                                 ],
                                 "isAlwaysOnEnabled": true,
+                                "isClientAffinityEnabled": false,
                                 "is32BitModeEnabled": false,
                                 "siteName": "[format('{0}-Portal', parameters('applicationName'))]",
                                 "slots": [
@@ -328,6 +329,7 @@
                                                 "value": "C"
                                             }
                                         ],
+                                        "isClientAffinityEnabled": false,
                                         "slotName": "staging",
                                         "subnetName": "default",
                                         "virtualNetworkName": "[variables('virtualNetworkSettings').virtualNetworkName]"
