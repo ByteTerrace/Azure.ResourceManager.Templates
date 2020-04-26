@@ -169,7 +169,7 @@
                 "count": "[length(parameters('applicationSettings'))]",
                 "input": {
                     "action": "Allow",
-                    "value": "[if(parameters('applicationSettings')[copyIndex('applicationSettingSlotNames')].isSlotSetting, parameters('applicationSettings')[copyIndex('applicationSettingSlotNames')].name, '')]"
+                    "value": "[if(parameters('applicationSettings')[copyIndex('applicationSettingsSlotNames')].isSlotSetting, parameters('applicationSettings')[copyIndex('applicationSettingsSlotNames')].name, '')]"
                 },
                 "name": "applicationSettingsSlotNames"
             }
@@ -250,7 +250,7 @@
             ],
             "name": "[format('{0}/slotConfigNames', parameters('siteName'))]",
             "properties": {
-                "appSettingNames": "[variables('applicationSettingsSlotNames')]",
+                "appSettingNames": "[union(variables('applicationSettingsSlotNames'))]",
                 "connectionStringNames": []
             },
             "type": "Microsoft.Web/sites/config"
