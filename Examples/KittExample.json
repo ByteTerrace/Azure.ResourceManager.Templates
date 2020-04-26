@@ -294,7 +294,7 @@
                                         "connectionStrings": [
                                             {
                                                 "name": "A",
-                                                "type": "Sql",
+                                                "type": "MySql",
                                                 "value": "A"
                                             }
                                         ],

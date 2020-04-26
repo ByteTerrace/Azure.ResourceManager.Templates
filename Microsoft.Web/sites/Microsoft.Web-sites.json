@@ -179,8 +179,9 @@
             {
                 "count": "[length(parameters('connectionStrings'))]",
                 "input": {
+                    "connectionString": "[parameters('connectionStrings')[copyIndex('connectionStrings')].value]",
                     "name": "[parameters('connectionStrings')[copyIndex('connectionStrings')].name]",
-                    "value": "[parameters('connectionStrings')[copyIndex('connectionStrings')].value]"
+                    "type": "[parameters('connectionStrings')[copyIndex('applicationSettings')].type]"
                 },
                 "name": "connectionStrings"
             },

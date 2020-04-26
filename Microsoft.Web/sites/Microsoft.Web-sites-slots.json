@@ -190,7 +190,17 @@
         "siteConfigForRoot": {
             "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
             "appsettings": "[concat(parameters('applicationSettings'), if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]')))]",
-            "connectionStrings": "[parameters('connectionStrings')]",
+            "copy": [
+                {
+                    "count": "[length(parameters('connectionStrings'))]",
+                    "input": {
+                        "connectionString": "[parameters('connectionStrings')[copyIndex('connectionStrings')].value]",
+                        "name": "[parameters('connectionStrings')[copyIndex('connectionStrings')].name]",
+                        "type": "[parameters('connectionStrings')[copyIndex('applicationSettings')].type]"
+                    },
+                    "name": "connectionStrings"
+                }
+            ],
             "ftpsState": "FtpsOnly",
             "healthCheckPath": "[if(variables('isHealthCheckEnabled'), parameters('healthCheckPath'), '')]",
             "httpsOnly": true,
