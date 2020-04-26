@@ -328,7 +328,9 @@
                                                 "value": "C"
                                             }
                                         ],
-                                        "slotName": "staging"
+                                        "slotName": "staging",
+                                        "subnetName": "default",
+                                        "virtualNetworkName": "[variables('virtualNetworkSettings').virtualNetworkName]"
                                     }
                                 ],
                                 "subnetName": "default",
