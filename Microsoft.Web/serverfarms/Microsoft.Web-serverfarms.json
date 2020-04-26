@@ -142,12 +142,27 @@
                             {
                                 "isSlotSetting": true,
                                 "name": "A",
-                                "value": "1"
+                                "value": "0"
                             },
                             {
                                 "isSlotSetting": false,
                                 "name": "B",
+                                "value": "1"
+                            },
+                            {
+                                "isSlotSetting": false,
+                                "name": "C",
                                 "value": "2"
+                            },
+                            {
+                                "isSlotSetting": true,
+                                "name": "D",
+                                "value": "3"
+                            },
+                            {
+                                "isSlotSetting": false,
+                                "name": "E",
+                                "value": "4"
                             }
                         ]
                     },

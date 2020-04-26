@@ -217,7 +217,7 @@
                 "serverFarmId": "[variables('servicePlanResourceId')]",
                 "siteConfig": {
                     "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
-                    "appsettings": "[if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]'))]",
+                    "appsettings": "[concat(variables('applicationSettings'), if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]')))]",
                     "clientAffinityEnabled": "[parameters('isClientAffinityEnabled')]",
                     "ftpsState": "FtpsOnly",
                     "healthCheckPath": "[if(variables('isHealthCheckEnabled'), parameters('healthCheckPath'), '')]",
