@@ -304,7 +304,9 @@
                             }
                         ]
                     },
-                    "skuName": "S1"
+                    "skuName": {
+                        "value": "S1"
+                    }
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
