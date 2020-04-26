@@ -157,20 +157,14 @@
             {
                 "count": "[length(parameters('applicationSettings'))]",
                 "input": {
-                    "action": "Allow",
-                    "value": {
-                        "name": "[parameters('applicationSettings')[copyIndex('applicationSettings')].name]",
-                        "value": "[parameters('applicationSettings')[copyIndex('applicationSettings')].value]"
-                    }
+                    "name": "[parameters('applicationSettings')[copyIndex('applicationSettings')].name]",
+                    "value": "[parameters('applicationSettings')[copyIndex('applicationSettings')].value]"
                 },
                 "name": "applicationSettings"
             },
             {
                 "count": "[length(parameters('applicationSettings'))]",
-                "input": {
-                    "action": "Allow",
-                    "value": "[if(parameters('applicationSettings')[copyIndex('applicationSettingsSlotNames')].isSlotSetting, parameters('applicationSettings')[copyIndex('applicationSettingsSlotNames')].name, '')]"
-                },
+                "input": "[if(parameters('applicationSettings')[copyIndex('applicationSettingsSlotNames')].isSlotSetting, parameters('applicationSettings')[copyIndex('applicationSettingsSlotNames')].name, '')]",
                 "name": "applicationSettingsSlotNames"
             }
         ],
@@ -250,9 +244,7 @@
             ],
             "name": "[format('{0}/slotConfigNames', parameters('siteName'))]",
             "properties": {
-                "appSettingNames": [
-                    "STICK_THIS"
-                ]
+                "appSettingNames": "[variables('applicationSettingsSlotNames')]"
             },
             "type": "Microsoft.Web/sites/config"
         },
@@ -276,6 +268,7 @@
             ],
             "name": "[format('{0}/web', parameters('siteName'))]",
             "properties": {
+                "appSettings": "[variables('applicationSettings')]",
                 "ipSecurityRestrictions": "[if(variables('isVirtualNetworkIntegrationEnabled'), variables('ipSecurityRestrictions'), json('[]'))]",
                 "scmIpSecurityRestrictions": null,
                 "scmIpSecurityRestrictionsUseMain": true
