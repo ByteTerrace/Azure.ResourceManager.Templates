@@ -250,8 +250,7 @@
             ],
             "name": "[format('{0}/slotConfigNames', parameters('siteName'))]",
             "properties": {
-                "appSettingNames": "[union(variables('applicationSettingsSlotNames'))]",
-                "connectionStringNames": []
+                "appSettingNames": "[union(variables('applicationSettingsSlotNames'), json('[]'))]"
             },
             "type": "Microsoft.Web/sites/config"
         },
@@ -276,7 +275,6 @@
             "name": "[format('{0}/web', parameters('siteName'))]",
             "properties": {
                 "appSettings": "[variables('applicationSettings')]",
-                "connectionStrings": [],
                 "ipSecurityRestrictions": "[if(variables('isVirtualNetworkIntegrationEnabled'), variables('ipSecurityRestrictions'), json('[]'))]",
                 "scmIpSecurityRestrictions": null,
                 "scmIpSecurityRestrictionsUseMain": true
