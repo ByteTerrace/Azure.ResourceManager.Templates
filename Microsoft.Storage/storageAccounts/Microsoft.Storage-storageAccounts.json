@@ -127,24 +127,6 @@
         "blobContainerNames": "[if(variables('blobContainerNamesIsNotEmpty'), parameters('blobContainerNames'), json('[ \"dummyContainer\" ]'))]",
         "blobContainerNamesCount": "[length(parameters('blobContainerNames'))]",
         "blobContainerNamesIsNotEmpty": "[greater(variables('blobContainerNamesCount'), 0)]",
-        "copy": [
-            {
-                "count": "[length(parameters('firewallRules'))]",
-                "input": {
-                    "action": "Allow",
-                    "value": "[parameters('firewallRules')[copyIndex('firewallRules')]]"
-                },
-                "name": "firewallRules"
-            },
-            {
-                "count": "[length(parameters('virtualNetworkRules'))]",
-                "input": {
-                    "action": "Allow",
-                    "id": "[resourceId(union(json(format('{{ \"virtualNetworkResourceGroupName\": \"{0}\" }}', resourceGroup().name)), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
-                },
-                "name": "virtualNetworkRules"
-            }
-        ],
         "customerEncryptionIsEnabled": "[or(not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))))]",
         "customerEncryptionKeyVaultName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), parameters('encryptionKeyVaultName'), 'DummyKeyVault')]",
         "customerEncryptionKeyVaultProperties": {
@@ -179,9 +161,25 @@
                 "largeFileSharesState": "[if(parameters('isLargeFileSharesEnabled'), 'Enabled', 'Disabled')]",
                 "networkAcls": {
                     "bypass": "[if(parameters('isAllowTrustedMicrosoftServicesEnabled'), 'AzureServices', 'None')]",
-                    "defaultAction": "Deny",
-                    "ipRules": "[if(variables('firewallRulesIsNotEmpty'), variables('firewallRules'), json('null'))]",
-                    "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), variables('virtualNetworkRules'), json('null'))]"
+                    "copy": [
+                        {
+                            "count": "[length(parameters('firewallRules'))]",
+                            "input": {
+                                "action": "Allow",
+                                "value": "[parameters('firewallRules')[copyIndex('ipRules')]]"
+                            },
+                            "name": "ipRules"
+                        },
+                        {
+                            "count": "[length(parameters('virtualNetworkRules'))]",
+                            "input": {
+                                "action": "Allow",
+                                "id": "[resourceId(union(json(format('{{ \"virtualNetworkResourceGroupName\": \"{0}\" }}', resourceGroup().name)), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
+                            },
+                            "name": "virtualNetworkRules"
+                        }
+                    ],
+                    "defaultAction": "Deny"
                 },
                 "routingPreference": {
                     "publishInternetEndpoints": false,

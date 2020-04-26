@@ -317,16 +317,7 @@
                 ],
                 "serverFarmId": "[variables('servicePlanResourceId')]",
                 "siteConfig": {
-                    "copy": [
-                        {
-                            "count": "[length(parameters('applicationSettings'))]",
-                            "input": {
-                                "name": "[parameters('applicationSettings')[copyIndex('appsettings')].name]",
-                                "value": "[parameters('applicationSettings')[copyIndex('appsettings')].value]"
-                            },
-                            "name": "appsettings"
-                        }
-                    ]
+                    "appsettings": "[union(if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]')), union(json('{ \"applicationSettings\": [] }'), variables('slots')[copyIndex()]).applicationSettings)]"
                 }
             },
             "type": "Microsoft.Web/sites/slots"
