@@ -294,16 +294,6 @@
                                         "isSlotSetting": false,
                                         "name": "C",
                                         "value": "2"
-                                    },
-                                    {
-                                        "isSlotSetting": true,
-                                        "name": "D",
-                                        "value": "3"
-                                    },
-                                    {
-                                        "isSlotSetting": false,
-                                        "name": "E",
-                                        "value": "4"
                                     }
                                 ],
                                 "isAlwaysOnEnabled": true,
@@ -315,6 +305,9 @@
                                     },
                                     {
                                         "slotName": "staging"
+                                    },
+                                    {
+                                        "slotName": "deleteme"
                                     }
                                 ],
                                 "subnetName": "default",
