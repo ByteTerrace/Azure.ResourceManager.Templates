@@ -280,7 +280,7 @@
             "condition": "[variables('slotsIsNotEmpty')]",
             "copy": {
                 "count": "[length(variables('slots'))]",
-                "mode": "serial",
+                "mode": "parallel",
                 "name": "slotsCopy"
             },
             "dependsOn": [
@@ -293,9 +293,31 @@
             "name": "[format('{0}/{1}', parameters('siteName'), variables('slots')[copyIndex()].slotName)]",
             "tags": "[parameters('tags')]",
             "properties": {
+                "resources": [
+                    {
+                        "apiVersion": "[variables('sitesConfigApiVersion')]",
+                        "condition": "[variables('isVirtualNetworkIntegrationEnabled')]",
+                        "name": "[format('{0}/{1}/virtualNetwork', parameters('siteName'), variables('slots')[copyIndex()].slotName)]",
+                        "properties": {
+                            "subnetResourceId": "[variables('virtualNetworkResourceId')]",
+                            "swiftSupported": true
+                        },
+                        "type": "Microsoft.Web/sites/config"
+                    },
+                    {
+                        "apiVersion": "[variables('sitesConfigApiVersion')]",
+                        "name": "[format('{0}/{1}/web', parameters('siteName'), variables('slots')[copyIndex()].slotName)]",
+                        "properties": {
+                            "ipSecurityRestrictions": "[if(variables('isVirtualNetworkIntegrationEnabled'), variables('ipSecurityRestrictions'), json('[]'))]",
+                            "scmIpSecurityRestrictions": null,
+                            "scmIpSecurityRestrictionsUseMain": true
+                        },
+                        "type": "Microsoft.Web/sites/slots/config"
+                    }
+                ],
                 "serverFarmId": "[variables('servicePlanResourceId')]",
                 "siteConfig": {
-                    "appsettings": "[concat(variables('applicationSettings'), if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]')))]"
+                    "appsettings": "[union(union(json('{ \"applicationSettings\": [] }'), variables('slots')[copyIndex()]).applicationSettings, variables('applicationSettings'), if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]')))]"
                 }
             },
             "type": "Microsoft.Web/sites/slots"

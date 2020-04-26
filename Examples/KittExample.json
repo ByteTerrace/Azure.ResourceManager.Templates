@@ -307,6 +307,16 @@
                                         "slotName": "staging"
                                     },
                                     {
+                                        "applicationSettings": [
+                                            {
+                                                "name": "A",
+                                                "value": "9001"
+                                            },
+                                            {
+                                                "name": "C",
+                                                "value": "3"
+                                            }
+                                        ],
                                         "slotName": "deleteme"
                                     }
                                 ],
