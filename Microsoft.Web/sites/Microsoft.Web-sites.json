@@ -195,6 +195,24 @@
         "isVirtualNetworkIntegrationEnabled": "[or(not(empty(coalesce(parameters('virtualNetworkResourceGroupName')))), not(empty(coalesce(parameters('virtualNetworkName')))), not(empty(coalesce(parameters('subnetName')))))]",
         "servicePlanResourceGroupName": "[if(not(empty(coalesce(parameters('servicePlanResourceGroupName'), ''))), parameters('servicePlanResourceGroupName'), resourceGroup().name)]",
         "servicePlanResourceId": "[resourceId(variables('servicePlanResourceGroupName'), 'Microsoft.Web/serverfarms', parameters('servicePlanName'))]",
+        "siteConfigForRoot": {
+            "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
+            "appsettings": "[concat(variables('applicationSettings'), if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]')))]",
+            "ftpsState": "FtpsOnly",
+            "healthCheckPath": "[if(variables('isHealthCheckEnabled'), parameters('healthCheckPath'), '')]",
+            "httpsOnly": true,
+            "http20Enabled": true,
+            "linuxFxVersion": "[if(variables('isLinuxOperatingSystem'), 'DOTNETCORE|LTS', json('null'))]",
+            "metadata": [
+                {
+                    "name": "CURRENT_STACK",
+                    "value": "[parameters('stack')]"
+                }
+            ],
+            "minTlsVersion": "1.2",
+            "use32BitWorkerProcess": "[parameters('is32BitModeEnabled')]",
+            "webSocketsEnabled": "[parameters('isWebSocketsEnabled')]"
+        },
         "siteConfigForVirtualNetworkProperties": {
             "subnetResourceId": "[variables('virtualNetworkResourceId')]",
             "swiftSupported": true
@@ -226,24 +244,7 @@
             "properties": {
                 "clientAffinityEnabled": "[parameters('isClientAffinityEnabled')]",
                 "serverFarmId": "[variables('servicePlanResourceId')]",
-                "siteConfig": {
-                    "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
-                    "appsettings": "[concat(variables('applicationSettings'), if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]')))]",
-                    "ftpsState": "FtpsOnly",
-                    "healthCheckPath": "[if(variables('isHealthCheckEnabled'), parameters('healthCheckPath'), '')]",
-                    "httpsOnly": true,
-                    "http20Enabled": true,
-                    "linuxFxVersion": "[if(variables('isLinuxOperatingSystem'), 'DOTNETCORE|LTS', json('null'))]",
-                    "metadata": [
-                        {
-                            "name": "CURRENT_STACK",
-                            "value": "[parameters('stack')]"
-                        }
-                    ],
-                    "minTlsVersion": "1.2",
-                    "use32BitWorkerProcess": "[parameters('is32BitModeEnabled')]",
-                    "webSocketsEnabled": "[parameters('isWebSocketsEnabled')]"
-                }
+                "siteConfig": "[variables('siteConfigForRoot')]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Web/sites"
