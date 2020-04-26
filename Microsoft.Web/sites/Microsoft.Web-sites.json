@@ -153,6 +153,7 @@
         }
     },
     "variables": {
+        "applicationSettingsSlotNames": "[union(variables('applicationSettingsSlotNamesTemp'), json('[\"\"]')]",
         "copy": [
             {
                 "count": "[length(parameters('applicationSettings'))]",
@@ -164,8 +165,8 @@
             },
             {
                 "count": "[length(parameters('applicationSettings'))]",
-                "input": "[if(parameters('applicationSettings')[copyIndex('applicationSettingsSlotNames')].isSlotSetting, parameters('applicationSettings')[copyIndex('applicationSettingsSlotNames')].name, '')]",
-                "name": "applicationSettingsSlotNames"
+                "input": "[if(parameters('applicationSettings')[copyIndex('applicationSettingsSlotNamesTemp')].isSlotSetting, parameters('applicationSettings')[copyIndex('applicationSettingsSlotNamesTemp')].name, '')]",
+                "name": "applicationSettingsSlotNamesTemp"
             }
         ],
         "deploymentApiVersion": "2019-10-01",
@@ -244,7 +245,7 @@
             ],
             "name": "[format('{0}/slotConfigNames', parameters('siteName'))]",
             "properties": {
-                "appSettingNames": "[variables('applicationSettingsSlotNames')]"
+                "appSettingNames": "[take(variables('applicationSettingsSlotNames'), sub(length(variables('applicationSettingsSlotNames')), 1))]"
             },
             "type": "Microsoft.Web/sites/config"
         },
@@ -268,7 +269,6 @@
             ],
             "name": "[format('{0}/web', parameters('siteName'))]",
             "properties": {
-                "appSettings": "[variables('applicationSettings')]",
                 "ipSecurityRestrictions": "[if(variables('isVirtualNetworkIntegrationEnabled'), variables('ipSecurityRestrictions'), json('[]'))]",
                 "scmIpSecurityRestrictions": null,
                 "scmIpSecurityRestrictionsUseMain": true
