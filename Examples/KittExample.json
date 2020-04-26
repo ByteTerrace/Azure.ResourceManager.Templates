@@ -298,7 +298,7 @@
                                                 "value": "A"
                                             }
                                         ],
-                                        "name": "development"
+                                        "slotName": "development"
                                     }
                                 ]
                             }
