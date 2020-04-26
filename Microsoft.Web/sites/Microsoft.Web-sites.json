@@ -159,8 +159,8 @@
                 "input": {
                     "action": "Allow",
                     "value": {
-                        "name": "[parameters('applicationSettings')[copyIndex('applicationSettingSlotNames')].name]",
-                        "value": "[parameters('applicationSettings')[copyIndex('applicationSettingSlotNames')].value]"
+                        "name": "[parameters('applicationSettings')[copyIndex('applicationSettings')].name]",
+                        "value": "[parameters('applicationSettings')[copyIndex('applicationSettings')].value]"
                     }
                 },
                 "name": "applicationSettings"
