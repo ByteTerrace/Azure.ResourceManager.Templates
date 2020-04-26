@@ -140,6 +140,9 @@
                     "applicationSettings": {
                         "value": "[union(json('{ \"applicationSettings\": [] }'), variables('sites')[copyIndex()]).applicationSettings]"
                     },
+                    "connectionStrings": {
+                        "value": "[union(json('{ \"connectionStrings\": [] }'), variables('sites')[copyIndex()]).connectionStrings]"
+                    },
                     "functionVersion": {
                         "value": "[union(json('{ \"functionVersion\": \"~3\" }'), variables('sites')[copyIndex()]).functionVersion]"
                     },

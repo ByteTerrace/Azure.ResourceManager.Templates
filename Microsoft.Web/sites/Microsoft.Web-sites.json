@@ -9,6 +9,13 @@
             },
             "type": "array"
         },
+        "connectionStrings": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of connecion strings that will be associated with the Azure Web site."
+            },
+            "type": "array"
+        },
         "functionVersion": {
             "allowedValues": [
                 "~1",
@@ -154,6 +161,7 @@
     },
     "variables": {
         "applicationSettingsSlotNames": "[union(json('[\"\"]'), variables('applicationSettingsSlotNamesTemp'))]",
+        "connectionStringsSlotNames": "[union(json('[\"\"]'), variables('connectionStringsSlotNamesTemp'))]",
         "copy": [
             {
                 "count": "[length(parameters('applicationSettings'))]",
@@ -167,6 +175,19 @@
                 "count": "[length(parameters('applicationSettings'))]",
                 "input": "[if(parameters('applicationSettings')[copyIndex('applicationSettingsSlotNamesTemp')].isSlotSetting, parameters('applicationSettings')[copyIndex('applicationSettingsSlotNamesTemp')].name, '')]",
                 "name": "applicationSettingsSlotNamesTemp"
+            },
+            {
+                "count": "[length(parameters('connectionStrings'))]",
+                "input": {
+                    "name": "[parameters('connectionStrings')[copyIndex('connectionStrings')].name]",
+                    "value": "[parameters('connectionStrings')[copyIndex('connectionStrings')].value]"
+                },
+                "name": "connectionStrings"
+            },
+            {
+                "count": "[length(parameters('connectionStrings'))]",
+                "input": "[if(parameters('connectionStrings')[copyIndex('connectionStringsTemp')].isSlotSetting, parameters('connectionStrings')[copyIndex('connectionStringsTemp')].name, '')]",
+                "name": "connectionStringsSlotNamesTemp"
             }
         ],
         "deploymentApiVersion": "2019-10-01",
@@ -198,6 +219,7 @@
         "siteConfigForRoot": {
             "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
             "appsettings": "[concat(variables('applicationSettings'), if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]')))]",
+            "connectionStrings": "[variables('connectionStrings')]",
             "ftpsState": "FtpsOnly",
             "healthCheckPath": "[if(variables('isHealthCheckEnabled'), parameters('healthCheckPath'), '')]",
             "httpsOnly": true,
@@ -256,7 +278,8 @@
             ],
             "name": "[format('{0}/slotConfigNames', parameters('siteName'))]",
             "properties": {
-                "appSettingNames": "[skip(variables('applicationSettingsSlotNames'), 1)]"
+                "appSettingNames": "[skip(variables('applicationSettingsSlotNames'), 1)]",
+                "connectionStringNames": "[skip(variables('connectionStringsSlotNames'), 1)]"
             },
             "type": "Microsoft.Web/sites/config"
         },
@@ -296,6 +319,9 @@
                 "parameters": {
                     "applicationSettings": {
                         "value": "[union(json('{ \"applicationSettings\": [] }'), variables('slots')[copyIndex()]).applicationSettings]"
+                    },
+                    "connectionStrings": {
+                        "value": "[union(json('{ \"connectionStrings\": [] }'), variables('slots')[copyIndex()]).connectionStrings]"
                     },
                     "functionVersion": {
                         "value": "[union(json('{ \"functionVersion\": \"~3\" }'), variables('slots')[copyIndex()]).functionVersion]"

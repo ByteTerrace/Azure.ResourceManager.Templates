@@ -282,10 +282,29 @@
                                 "isAlwaysOnEnabled": false,
                                 "isClientAffinityEnabled": false,
                                 "is32BitModeEnabled": true,
-                                "siteName": "[format('{0}-Portal', parameters('applicationName'))]"
+                                "siteName": "[format('{0}-Portal', parameters('applicationName'))]",
+                                "slots": [
+                                    {
+                                        "applicationSettings": [
+                                            {
+                                                "name": "A",
+                                                "value": "A"
+                                            }
+                                        ],
+                                        "connectionStrings": [
+                                            {
+                                                "name": "A",
+                                                "type": "Sql",
+                                                "value": "A"
+                                            }
+                                        ],
+                                        "name": "development"
+                                    }
+                                ]
                             }
                         ]
-                    }
+                    },
+                    "skuName": "S1"
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",

@@ -9,6 +9,13 @@
             },
             "type": "array"
         },
+        "connectionStrings": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of connecion strings that will be associated with the Azure Web site."
+            },
+            "type": "array"
+        },
         "functionVersion": {
             "allowedValues": [
                 "~1",
@@ -183,6 +190,7 @@
         "siteConfigForRoot": {
             "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
             "appsettings": "[concat(parameters('applicationSettings'), if(variables('isFunctionApp'), variables('functionAppSettings'), json('[]')))]",
+            "connectionStrings": "[parameters('connectionStrings')]",
             "ftpsState": "FtpsOnly",
             "healthCheckPath": "[if(variables('isHealthCheckEnabled'), parameters('healthCheckPath'), '')]",
             "httpsOnly": true,
