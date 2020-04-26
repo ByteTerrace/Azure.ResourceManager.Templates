@@ -292,7 +292,7 @@
                 "[variables('siteConfigForVirtualNetworkResourceId')]",
                 "[variables('siteConfigForWebResourceId')]"
             ],
-            "name": "[format('{0}-sites-{1}-{2}', deployment().name, parameters('siteName'), variables('slots')[copyIndex()]).slotName)]",
+            "name": "[format('{0}-sites-{1}-{2}', deployment().name, parameters('siteName'), variables('slots')[copyIndex()].slotName)]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
@@ -330,7 +330,7 @@
                         "value": "[variables('slots')[copyIndex()].siteName]"
                     },
                     "slotName": {
-                        "value": "[variables('slots')[copyIndex()]).slotName]"
+                        "value": "[variables('slots')[copyIndex()].slotName]"
                     },
                     "stack": {
                         "value": "[union(json('{ \"stack\": \"dotnetcore\" }'), variables('slots')[copyIndex()]).stack]"
