@@ -220,7 +220,7 @@
         },
         "siteKind": "[format('{0}{1}', parameters('kind'), if(variables('isLinuxOperatingSystem'), ',linux', ''))]",
         "sitesConfigApiVersion": "2019-08-01",
-        "siteSlotResourceId": "[resourceId('Microsoft.Web/sites/slots', parameters('siteName'), parameters('slotName'))]",
+        "slotResourceId": "[resourceId('Microsoft.Web/sites/slots', parameters('siteName'), parameters('slotName'))]",
         "slotsApiVersion": "2019-08-01",
         "virtualNetworkResourceGroupName": "[if(not(empty(coalesce(parameters('virtualNetworkResourceGroupName'), ''))), parameters('virtualNetworkResourceGroupName'), resourceGroup().name)]",
         "virtualNetworkResourceId": "[resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
@@ -242,7 +242,7 @@
             "apiVersion": "[variables('sitesConfigApiVersion')]",
             "condition": "[variables('isVirtualNetworkIntegrationEnabled')]",
             "dependsOn": [
-                "[variables('siteResourceId')]"
+                "[variables('slotResourceId')]"
             ],
             "name": "[format('{0}/{1}/virtualNetwork', parameters('siteName'), parameters('slotName'))]",
             "properties": "[variables('siteConfigForVirtualNetworkProperties')]",
@@ -251,7 +251,7 @@
         {
             "apiVersion": "[variables('sitesConfigApiVersion')]",
             "dependsOn": [
-                "[variables('siteResourceId')]"
+                "[variables('slotResourceId')]"
             ],
             "name": "[format('{0}/{1}/web', parameters('siteName'), parameters('slotName'))]",
             "properties": "[variables('siteConfigForWebProperties')]",
