@@ -315,7 +315,6 @@
                                         "isClientAffinityEnabled": true,
                                         "isWebSocketsEnabled": false,
                                         "is32BitModeEnabled": true,
-                                        "servicePlanName": "[format('{0}-Portal-ASP', parameters('applicationName'))]",
                                         "slotName": "development"
                                     },
                                     {
@@ -334,13 +333,12 @@
                                             }
                                         ],
                                         "isClientAffinityEnabled": false,
+                                        "servicePlanName": "[format('{0}-Portal-ASP', parameters('applicationName'))]",
                                         "slotName": "staging",
                                         "subnetName": "default",
                                         "virtualNetworkName": "[variables('virtualNetworkSettings').virtualNetworkName]"
                                     }
-                                ],
-                                "subnetName": "default",
-                                "virtualNetworkName": "[variables('virtualNetworkSettings').virtualNetworkName]"
+                                ]
                             }
                         ]
                     },
