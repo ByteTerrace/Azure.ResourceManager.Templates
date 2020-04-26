@@ -293,13 +293,18 @@
             "name": "[format('{0}/{1}', parameters('siteName'), variables('slots')[copyIndex()].slotName)]",
             "tags": "[parameters('tags')]",
             "properties": {
-                "cloningInfo": {
-                    "cloneCustomHostNames": false,
-                    "cloneSourceControl": false,
-                    "configureLoadBalancing": false,
-                    "overwrite": false,
-                    "sourceWebAppId": "[variables('siteResourceId')]"
-                },
+                "resources": [
+                    {
+                        "apiVersion": "[variables('sitesConfigApiVersion')]",
+                        "name": "[format('{0}/{1}/web', parameters('siteName'), variables('slots')[copyIndex()].slotName)]",
+                        "properties": {
+                            "ipSecurityRestrictions": "[if(variables('isVirtualNetworkIntegrationEnabled'), variables('ipSecurityRestrictions'), json('[]'))]",
+                            "scmIpSecurityRestrictions": null,
+                            "scmIpSecurityRestrictionsUseMain": true
+                        },
+                        "type": "Microsoft.Web/sites/slots/config"
+                    }
+                ],
                 "serverFarmId": "[variables('servicePlanResourceId')]"
             },
             "type": "Microsoft.Web/sites/slots"
