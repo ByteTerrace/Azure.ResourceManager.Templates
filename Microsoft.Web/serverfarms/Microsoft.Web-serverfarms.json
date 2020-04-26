@@ -133,7 +133,7 @@
             "dependsOn": [
                 "[variables('serverFarmResourceId')]"
             ],
-            "name": "[format('{0}-{1}', deployment().name, variables('sites')[copyIndex()].siteName)]",
+            "name": "[format('{0}-site_{1}', deployment().name, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {

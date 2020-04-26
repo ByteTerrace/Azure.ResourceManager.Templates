@@ -107,7 +107,7 @@
             "type": "string"
         },
         "slotName": {
-            "maxLength": 60,
+            "maxLength": 59,
             "metadata": {
                 "description": "Specifies the name of the Azure Web site slot."
             },
