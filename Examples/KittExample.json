@@ -1,33 +1,6 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "functions": [
-        {
-            "namespace": "byteterrace",
-            "members": {
-                "templateUri": {
-                    "parameters": [
-                        {
-                            "name": "baseUri",
-                            "type": "string"
-                        },
-                        {
-                            "name": "path",
-                            "type": "string"
-                        },
-                        {
-                            "name": "queryString",
-                            "type": "string"
-                        }
-                    ],
-                    "output": {
-                        "type": "string",
-                        "value": "[uri(parameters('baseUri'), format('Items?path={0}{1}', uriComponent(parameters('path')), parameters('queryString')))]"
-                    }
-                }
-            }
-        }
-    ],
     "parameters": {
         "applicationName": {
             "defaultValue": "KittExample",
@@ -53,12 +26,12 @@
         "deploymentNameForMicrosoftStorageAccount": "[format('{0}-StorageAccount', deployment().name)]",
         "deploymentNameForMicrosoftVirtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]",
         "deploymentNameForMicrosoftWebAppServerFarm": "[format('{0}-WebAppServerFarm', deployment().name)]",
-        "templateUriForMicrosoftAppConfiguration": "[byteterrace.templateUri(parameters('templateBaseUri'), '/Microsoft.AppConfiguration/configurationStores/Microsoft.AppConfiguration-configurationStores.json', parameters('templateQueryString'))]",
-        "templateUriForMicrosoftKeyVault": "[byteterrace.templateUri(parameters('templateBaseUri'), '/Microsoft.KeyVault/vaults/Microsoft.KeyVault-vaults.json', parameters('templateQueryString'))]",
-        "templateUriForMicrosoftSqlServer": "[byteterrace.templateUri(parameters('templateBaseUri'), '/Microsoft.Sql/servers/Microsoft.Sql-servers.json', parameters('templateQueryString'))]",
-        "templateUriForMicrosoftStorageAccount": "[byteterrace.templateUri(parameters('templateBaseUri'), '/Microsoft.Storage/storageAccounts/Microsoft.Storage-storageAccounts.json', parameters('templateQueryString'))]",
-        "templateUriForMicrosoftVirtualNetwork": "[byteterrace.templateUri(parameters('templateBaseUri'), '/Microsoft.Network/virtualNetworks/Microsoft.Network-virtualNetworks.json', parameters('templateQueryString'))]",
-        "templateUriForMicrosoftWebAppServerFarm": "[byteterrace.templateUri(parameters('templateBaseUri'), '/Microsoft.Web/serverfarms/Microsoft.Web-serverfarms.json', parameters('templateQueryString'))]",
+        "templateUriForMicrosoftAppConfiguration": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.AppConfiguration/configurationStores/Microsoft.AppConfiguration-configurationStores.json'), parameters('templateQueryString')))]",
+        "templateUriForMicrosoftKeyVault": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults/Microsoft.KeyVault-vaults.json'), parameters('templateQueryString')))]",
+        "templateUriForMicrosoftSqlServer": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Sql/servers/Microsoft.Sql-servers.json'), parameters('templateQueryString')))]",
+        "templateUriForMicrosoftStorageAccount": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Storage/storageAccounts/Microsoft.Storage-storageAccounts.json'), parameters('templateQueryString')))]",
+        "templateUriForMicrosoftVirtualNetwork": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/virtualNetworks/Microsoft.Network-virtualNetworks.json'), parameters('templateQueryString')))]",
+        "templateUriForMicrosoftWebAppServerFarm": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Web/serverfarms/Microsoft.Web-serverfarms.json'), parameters('templateQueryString')))]",
         "sqlServerSettings": {
             "serverName": "[format('{0}-Sql', parameters('applicationName'))]"
         },
