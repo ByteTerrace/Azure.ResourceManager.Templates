@@ -28,7 +28,7 @@
     "resources": [
         {
             "apiVersion": "[variables('authorizationRoleAssignmentsApiVersion')]",
-            "name": "[guid(parameters('principalId'), parameters('roleDefinitionId'))]",
+            "name": "[guid(subscription().subscriptionId, parameters('principalId'), parameters('roleDefinitionId'))]",
             "properties": {
                 "canDelegate": false,
                 "principalId": "[parameters('principalId')]",
