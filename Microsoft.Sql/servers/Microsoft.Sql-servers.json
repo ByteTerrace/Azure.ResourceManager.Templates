@@ -231,6 +231,7 @@
         "databasesIsNotEmpty": "[greater(length(parameters('databases')), 0)]",
         "databasesTemplateUri": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Sql%2Fdatabases%2FMicrosoft.Sql-databases.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
         "deploymentApiVersion": "2019-10-01",
+        "deploymentManagerStepsApiVersion": "2018-09-01-preview",
         "dnsAliasApiVersion": "2017-03-01-preview",
         "dnsAliases": "[if(variables('dnsAliasesIsNotEmpty'), parameters('dnsAliases'), json('[ \"dummyDnsAlias\" ]'))]",
         "dnsAliasesIsNotEmpty": "[greater(length(parameters('dnsAliases')), 0)]",
@@ -265,7 +266,8 @@
         "vulnerabilityAssessmentStorageAccountResourceId": "[resourceId(variables('vulnerabilityAssessmentStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', variables('vulnerabilityAssessmentStorageAccountName'))]",
         "vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentDeploymentName": "[format('{0}-{1}', deployment().name, uniqueString('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignment'))]",
         "vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentResourceId": "[resourceId('Microsoft.Resources/deployments', variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentDeploymentName'))]",
-        "vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentUniqueId": "[guid(variables('vulnerabilityAssessmentStorageAccountResourceId'), variables('storageBlobDataContributorRoleResourceId'), variables('serverResourceId'))]"
+        "vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentUniqueId": "[guid(variables('vulnerabilityAssessmentStorageAccountResourceId'), variables('storageBlobDataContributorRoleResourceId'), variables('serverResourceId'))]",
+        "waitForIdentityAllocationResourceId": "[resourceId('Microsoft.DeploymentManager/steps', 'waitForIdentityAllocation')]"
     },
     "resources": [
         {
@@ -375,11 +377,29 @@
             "type": "Microsoft.Sql/servers/administrators"
         },
         {
+            "apiVersion":"[variables('deploymentManagerStepsApiVersion')]",
+            "condition": "[variables('isAuditStorageAccountEnabled')]",
+            "dependsOn": [
+                "[variables('serverResourceId')]",
+                "[variables('administratorResourceId')]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "waitForIdentityAllocation",
+            "properties": {
+                "attributes": {
+                    "duration": "PT1M"
+                },
+                "stepType": "wait"
+            },
+            "type": "Microsoft.DeploymentManager/steps"
+        },
+        {
             "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[variables('isCustomerEncryptionKeyEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
-                "[variables('administratorResourceId')]"
+                "[variables('administratorResourceId')]",
+                "[variables('waitForIdentityAllocationResourceId')]"
             ],
             "name": "[variables('customerEncryptionKeyAccessPolicyDeploymentName')]",
             "properties": {
@@ -423,7 +443,8 @@
             "dependsOn": [
                 "[variables('serverResourceId')]",
                 "[variables('administratorResourceId')]",
-                "[variables('customerEncryptionKeyAccessPolicyResourceId')]"
+                "[variables('customerEncryptionKeyAccessPolicyResourceId')]",
+                "[variables('waitForIdentityAllocationResourceId')]"
             ],
             "kind": "AzureKeyVault",
             "name": "[format('{0}/{1}', variables('serverName'), variables('customerEncryptionKeyName'))]",
@@ -439,6 +460,7 @@
             "dependsOn": [
                 "[variables('serverResourceId')]",
                 "[variables('administratorResourceId')]",
+                "[variables('waitForIdentityAllocationResourceId')]",
                 "[variables('customerEncryptionKeyResourceId')]"
             ],
             "kind": "AzureKeyVault",
@@ -454,7 +476,8 @@
             "condition": "[variables('isAuditStorageAccountEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
-                "[variables('administratorResourceId')]"
+                "[variables('administratorResourceId')]",
+                "[variables('waitForIdentityAllocationResourceId')]"
             ],
             "name": "[variables('auditStorageBlobDataContributorRoleAssignmentDeploymentName')]",
             "properties": {
@@ -486,7 +509,8 @@
             "condition": "[and(variables('isVulnerabilityAssessmentStorageAccountEnabled'), variables('isStorageBlobDataContributorRoleAssignmentUnique'))]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
-                "[variables('administratorResourceId')]"
+                "[variables('administratorResourceId')]",
+                "[variables('waitForIdentityAllocationResourceId')]"
             ],
             "name": "[variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentDeploymentName')]",
             "properties": {
@@ -518,6 +542,7 @@
             "dependsOn": [
                 "[variables('serverResourceId')]",
                 "[variables('administratorResourceId')]",
+                "[variables('waitForIdentityAllocationResourceId')]",
                 "[variables('auditStorageBlobDataContributorRoleAssignmentResourceId')]"
             ],
             "name": "[format('{0}/default', variables('serverName'))]",
@@ -535,6 +560,7 @@
             "dependsOn": [
                 "[variables('serverResourceId')]",
                 "[variables('administratorResourceId')]",
+                "[variables('waitForIdentityAllocationResourceId')]",
                 "[variables('securityAlertPolicyResourceId')]",
                 "[variables('auditStorageBlobDataContributorRoleAssignmentResourceId')]"
             ],
@@ -552,6 +578,7 @@
             "dependsOn": [
                 "[variables('serverResourceId')]",
                 "[variables('administratorResourceId')]",
+                "[variables('waitForIdentityAllocationResourceId')]",
                 "[variables('securityAlertPolicyResourceId')]",
                 "[variables('auditStorageBlobDataContributorRoleAssignmentResourceId')]",
                 "[variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentResourceId')]"
@@ -578,6 +605,7 @@
             "dependsOn": [
                 "[variables('serverResourceId')]",
                 "[variables('administratorResourceId')]",
+                "[variables('waitForIdentityAllocationResourceId')]",
                 "[variables('securityAlertPolicyResourceId')]",
                 "[variables('auditStorageBlobDataContributorRoleAssignmentResourceId')]",
                 "[variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentResourceId')]",
