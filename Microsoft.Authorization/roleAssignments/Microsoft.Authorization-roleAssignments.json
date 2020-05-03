@@ -23,7 +23,7 @@
         }
     },
     "variables": {
-        "authorizationRoleAssignmentsApiVersion":"[providers('Microsoft.Authorization', 'roleAssignments').apiVersions[0]]"
+        "authorizationRoleAssignmentsApiVersion":"2018-09-01-preview"
     },
     "resources": [
         {

@@ -26,8 +26,7 @@
         }
     },
     "variables": {
-        "managedIdentityResourceId": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]",
-        "managedIdentityUserAssignedIdentitiesApiVersion": "[providers('Microsoft.ManagedIdentity', 'userAssignedIdentities').apiVersions[0]]"
+        "managedIdentityUserAssignedIdentitiesApiVersion": "2018-11-30"
     },
     "resources": [
         {
@@ -42,7 +41,7 @@
     "outputs": {
         "principalId": {
             "type": "string",
-            "value": "[reference(variables('managedIdentityResourceId'), variables('managedIdentityUserAssignedIdentitiesApiVersion'), 'Full').properties.principalId]"
+            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), variables('managedIdentityUserAssignedIdentitiesApiVersion'), 'Full').properties.principalId]"
         }
     }
 }
