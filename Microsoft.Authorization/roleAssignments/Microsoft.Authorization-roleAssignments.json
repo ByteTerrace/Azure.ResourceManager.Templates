@@ -15,11 +15,11 @@
             },
             "type": "string"
         },
-        "roleDefinitionId": {
+        "roleDefinitionIds": {
             "metadata": {
-                "description": "Specifies the role definition id that will be assigned to the principal."
+                "description": "Specifies the role definition ids that will be assigned to the principal."
             },
-            "type": "string"
+            "type": "array"
         }
     },
     "variables": {
@@ -28,12 +28,17 @@
     "resources": [
         {
             "apiVersion": "[variables('authorizationRoleAssignmentsApiVersion')]",
-            "name": "[guid(parameters('principalId'), parameters('roleDefinitionId'))]",
+            "copy": {
+                "count": "[length(parameters('roleDefinitionIds'))]",
+                "mode": "parallel",
+                "name": "roleAssignmentsCopy"
+            },
+            "name": "[guid(parameters('principalId'), parameters('roleDefinitionIds')[copyIndex()])]",
             "properties": {
                 "canDelegate": false,
                 "principalId": "[parameters('principalId')]",
                 "principalType": "[parameters('principalType')]",
-                "roleDefinitionId": "[parameters('roleDefinitionId')]"
+                "roleDefinitionId": "[parameters('roleDefinitionIds')[copyIndex()]]"
             },
             "type": "Microsoft.Authorization/roleAssignments"
         }
