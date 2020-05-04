@@ -25,10 +25,12 @@
             "type": "object"
         }
     },
-    "variables": {},
+    "variables": {
+        "resourcesResourceGroupsApiVersion":"2019-10-01"
+    },
     "resources": [
         {
-            "apiVersion": "2019-10-01",
+            "apiVersion": "[variables('resourcesResourceGroupsApiVersion')]",
             "location": "[parameters('location')]",
             "name": "[parameters('resourceGroupName')]",
             "properties": {},
