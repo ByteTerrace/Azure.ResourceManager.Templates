@@ -137,14 +137,11 @@
         "fileShareNames": "[if(variables('fileShareNamesIsNotEmpty'), parameters('fileShareNames'), json('[ \"dummyFileShare\" ]'))]",
         "fileShareNamesCount": "[length(parameters('fileShareNames'))]",
         "fileShareNamesIsNotEmpty": "[greater(variables('fileShareNamesCount'), 0)]",
-        "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
         "keyVaultAccessPolicyApiVersion": "2018-02-14",
         "keyVaultAccessPolicyResourceId": "[resourceId('Microsoft.KeyVault/vaults/accessPolicies', variables('customerEncryptionKeyVaultName'), 'add')]",
         "storageAccountApiVersion": "2019-06-01",
         "storageAccountName": "[toLower(parameters('storageAccountName'))]",
-        "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-        "storageAccountSkuTier": "[if(startsWith(parameters('skuName'), 'premium'), 'Premium', 'Standard')]",
-        "virtualNetworkRulesIsNotEmpty": "[greater(length(parameters('virtualNetworkRules')), 0)]"
+        "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
     },
     "resources": [
         {
@@ -189,8 +186,7 @@
                 "supportsHttpsTrafficOnly": true
             },
             "sku": {
-                "name": "[parameters('skuName')]",
-                "tier": "[variables('storageAccountSkuTier')]"
+                "name": "[parameters('skuName')]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Storage/storageAccounts"
