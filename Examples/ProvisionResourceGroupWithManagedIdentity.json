@@ -1,0 +1,121 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "defaultValue": "[deployment().location]",
+            "metadata": {
+                "description": "Specifies the location in which the Azure resource(s) will be deployed."
+            },
+            "type": "string"
+        },
+        "managedIdentityName": {
+            "metadata": {
+                "description": "Specifies the name of the managed identity that will be used to deploy the Azure resource(s)."
+            },
+            "type": "string"
+        },
+        "resourceGroupName": {
+            "metadata": {
+                "description": "Specifies the name of the the Azure resource group in which the Azure resource(s) will be deployed."
+            },
+            "type": "string"
+        }
+    },
+    "variables": {
+        "managedIdentityDeploymentName": "[format('{0}-managedIdentity', deployment().name)]",
+        "resourceGroupContributorRoleResourceId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "resourceGroupDeploymentName": "[format('{0}-resourceGroup', deployment().name)]",
+        "resourceGroupRoleAssignments": [
+            "[variables('resourceGroupContributorRoleResourceId')]",
+            "[variables('resourceGroupUserAccessAdministratorRoleResourceId')]"
+        ],
+        "resourceGroupUserAccessAdministratorRoleResourceId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '18d7d88d-d35e-4fb5-a5c3-7773c20a72d9')]",
+        "resourcesDeploymentsApiVersion":"[providers('Microsoft.Resources', 'deployments').apiVersions[0]]",
+        "templateBaseUri": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/",
+        "templateQueryString": "&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
+        "templateUriForMicrosoftAuthorizationRoleAssignments": "[uri(variables('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Authorization/roleAssignments/Microsoft.Authorization-roleAssignments.json'), variables('templateQueryString')))]",
+        "templateUriForMicrosoftManagedIdentityUserAssignedIdentities": "[uri(variables('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.ManagedIdentity/userAssignedIdentities/Microsoft.ManagedIdentity-userAssignedIdentities.json'), variables('templateQueryString')))]",
+        "templateUriForMicrosoftResourcesResourceGroups": "[uri(variables('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Resources/resourceGroups/Microsoft.Resources-resourceGroups.json'), variables('templateQueryString')))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('resourcesDeploymentsApiVersion')]",
+            "location": "[parameters('location')]",
+            "name": "[variables('resourceGroupDeploymentName')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "resourceGroupName": {
+                        "value": "[parameters('resourceGroupName')]"
+                    },
+                    "tags": {
+                        "value": {}
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUriForMicrosoftResourcesResourceGroups')]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('resourcesDeploymentsApiVersion')]",
+            "dependsOn": [
+                "[variables('resourceGroupDeploymentName')]"
+            ],
+            "name": "[variables('managedIdentityDeploymentName')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "managedIdentityName": {
+                        "value": "[parameters('managedIdentityName')]"
+                    },
+                    "tags": {
+                        "value": {}
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUriForMicrosoftManagedIdentityUserAssignedIdentities')]"
+                }
+            },
+            "resourceGroup": "[parameters('resourceGroupName')]",
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('resourcesDeploymentsApiVersion')]",
+            "copy": {
+                "count": "[length(variables('resourceGroupRoleAssignments'))]",
+                "mode": "parallel",
+                "name": "resourceGroupRoleAssignmentsCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceGroupDeploymentName')]",
+                "[variables('managedIdentityDeploymentName')]"
+            ],
+            "name": "[format('{0}-{1}', deployment().name, uniqueString(variables('resourceGroupRoleAssignments')[copyIndex()]))]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "principalId": {
+                        "value": "[reference(variables('managedIdentityDeploymentName')).outputs.principalId.value]"
+                    },
+                    "principalType": {
+                        "value": "ServicePrincipal"
+                    },
+                    "roleDefinitionId": {
+                        "value": "[variables('resourceGroupRoleAssignments')[copyIndex()]]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUriForMicrosoftAuthorizationRoleAssignments')]"
+                }
+            },
+            "resourceGroup": "[parameters('resourceGroupName')]",
+            "type": "Microsoft.Resources/deployments"
+        }
+    ]
+}
