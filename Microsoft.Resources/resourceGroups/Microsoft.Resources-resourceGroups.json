@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "location": {
-            "defaultValue": "South Central US",
+            "defaultValue": "[deployment().location]",
             "metadata": {
                 "description": "Specifies the location in which the Azure resource(s) will be deployed."
             },
