@@ -16,19 +16,12 @@
             },
             "type": "array"
         },
-        "encryptionKeyVaultKeyName": {
-            "defaultValue": "",
+        "encryptionScopes": {
+            "defaultValue": [],
             "metadata": {
-                "description": "Specifies the name of the customer-managed data encryption key."
+                "description": "An array of encryption scopes that should be assigned the Azure Storage account."
             },
-            "type": "string"
-        },
-        "encryptionKeyVaultName": {
-            "defaultValue": "",
-            "metadata": {
-                "description": "Specifies the name of the key vault that houses the customer-managed data encryption key."
-            },
-            "type": "string"
+            "type": "array"
         },
         "fileShareNames": {
             "defaultValue": [],
@@ -127,18 +120,15 @@
         "blobContainerNames": "[if(variables('blobContainerNamesIsNotEmpty'), parameters('blobContainerNames'), json('[ \"dummyContainer\" ]'))]",
         "blobContainerNamesCount": "[length(parameters('blobContainerNames'))]",
         "blobContainerNamesIsNotEmpty": "[greater(variables('blobContainerNamesCount'), 0)]",
-        "customerEncryptionIsEnabled": "[or(not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))))]",
-        "customerEncryptionKeyVaultName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), parameters('encryptionKeyVaultName'), 'DummyKeyVault')]",
-        "customerEncryptionKeyVaultProperties": {
-            "keyUri": "[format('https://{0}.vault.azure.net/keys/{1}', parameters('encryptionKeyVaultName'), parameters('encryptionKeyVaultKeyName'))]"
-        },
         "encryptionScopeVersion": "2019-06-01",
+        "encryptionScopes": "[if(variables('encryptionScopesIsNotEmpty'), parameters('encryptionScopes'), json('[ { \"keyVaultName\": \"dummyKeyVault\" } ]'))]",
+        "encryptionScopesCount": "[length(parameters('encryptionScopes'))]",
+        "encryptionScopesIsNotEmpty": "[greater(variables('encryptionScopesCount'), 0)]",
         "fileShareApiVersion": "2019-06-01",
         "fileShareNames": "[if(variables('fileShareNamesIsNotEmpty'), parameters('fileShareNames'), json('[ \"dummyFileShare\" ]'))]",
         "fileShareNamesCount": "[length(parameters('fileShareNames'))]",
         "fileShareNamesIsNotEmpty": "[greater(variables('fileShareNamesCount'), 0)]",
-        "keyVaultAccessPolicyApiVersion": "2018-02-14",
-        "keyVaultAccessPolicyResourceId": "[resourceId('Microsoft.KeyVault/vaults/accessPolicies', variables('customerEncryptionKeyVaultName'), 'add')]",
+        "keyVaultApiVersion": "2019-09-01",
         "storageAccountApiVersion": "2019-06-01",
         "storageAccountName": "[toLower(parameters('storageAccountName'))]",
         "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
@@ -171,17 +161,12 @@
                             "count": "[length(parameters('virtualNetworkRules'))]",
                             "input": {
                                 "action": "Allow",
-                                "id": "[resourceId(union(json(format('{{ \"virtualNetworkResourceGroupName\": \"{0}\" }}', resourceGroup().name)), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
+                                "id": "[resourceId(union(json(format('{{ \"subscriptionId\": \"{0}\" }}', subscription().subscriptionId)), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subscriptionId, union(json(format('{{ \"resourceGroupName\": \"{0}\" }}', resourceGroup().name)), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
                             },
                             "name": "virtualNetworkRules"
                         }
                     ],
                     "defaultAction": "Deny"
-                },
-                "routingPreference": {
-                    "publishInternetEndpoints": false,
-                    "publishMicrosoftEndpoints": false,
-                    "routingChoice": "MicrosoftRouting"
                 },
                 "supportsHttpsTrafficOnly": true
             },
@@ -192,41 +177,21 @@
             "type": "Microsoft.Storage/storageAccounts"
         },
         {
-            "apiVersion": "[variables('keyVaultAccessPolicyApiVersion')]",
-            "condition": "[variables('customerEncryptionIsEnabled')]",
+            "apiVersion": "[variables('encryptionScopeVersion')]",
+            "condition": "[variables('encryptionScopesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('encryptionScopesCount')]",
+                "mode": "parallel",
+                "name": "encryptionScopesCopy"
+            },
             "dependsOn": [
                 "[variables('storageAccountResourceId')]"
             ],
-            "name": "[format('{0}/add', variables('customerEncryptionKeyVaultName'))]",
+            "name": "[format('{0}/{1}', variables('storageAccountName'), union(json(format('{{ \"encryptionScopeName\": \"encryptionScope{0}\"}}', copyIndex())), variables('encryptionScopes')[copyIndex()]).encryptionScopeName)]",
             "properties": {
-                "accessPolicies": [
-                    {
-                        "objectId": "[reference(variables('storageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').identity.principalId]",
-                        "permissions": {
-                            "certificates": [],
-                            "keys": [
-                                "Get",
-                                "UnwrapKey",
-                                "WrapKey"
-                            ],
-                            "secrets": []
-                        },
-                        "tenantId": "[subscription().tenantId]"
-                    }
-                ]
-            },
-            "type": "Microsoft.KeyVault/vaults/accessPolicies"
-        },
-        {
-            "apiVersion": "[variables('encryptionScopeVersion')]",
-            "condition": "[variables('customerEncryptionIsEnabled')]",
-            "dependsOn": [
-                "[variables('storageAccountResourceId')]",
-                "[variables('keyVaultAccessPolicyResourceId')]"
-            ],
-            "name": "[format('{0}/default-encryption-scope', variables('storageAccountName'))]",
-            "properties": {
-                "keyVaultProperties": "[variables('customerEncryptionKeyVaultProperties')]",
+                "keyVaultProperties": {
+                    "keyUri": "[if(variables('encryptionScopesIsNotEmpty'), format('{0}keys/{1}', reference(resourceId(union(json(format('{{ \"subscriptionId\": \"{0}\" }}', subscription().subscriptionId)), variables('encryptionScopes')[copyIndex()]).subscriptionId, variables('encryptionScopes')[copyIndex()].resourceGroupName, 'Microsoft.KeyVault/vaults', variables('encryptionScopes')[copyIndex()].keyVaultName), variables('keyVaultApiVersion')).vaultUri, variables('encryptionScopes')[copyIndex()].keyName), json('null'))]"
+                },
                 "source": "Microsoft.KeyVault",
                 "state": "Enabled"
             },
