@@ -16,6 +16,34 @@
             },
             "type": "array"
         },
+        "customerManagedEncryptionKeyName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
+        "customerManagedEncryptionKeyVaultName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the key vault that houses the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
+        "customerManagedEncryptionKeyVaultResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the key vault that houses the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
+        "customerManagedEncryptionKeyVersion": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the version of the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
         "encryptionScopes": {
             "defaultValue": [],
             "metadata": {
@@ -60,10 +88,16 @@
         },
         "linkedTemplateBaseUri": {
             "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/",
+            "metadata": {
+                "description": "Specifies the base uri of external linked templates used by this template."
+            },
             "type": "string"
         },
         "linkedTemplateQueryString": {
             "defaultValue": "&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
+            "metadata": {
+                "description": "Specifies the query string that will be appended to the uri of external linked templates used by this template."
+            },
             "type": "string"
         },
         "location": {
@@ -128,8 +162,12 @@
         "blobContainerNames": "[if(variables('blobContainerNamesIsNotEmpty'), parameters('blobContainerNames'), json('[ \"dummyContainer\" ]'))]",
         "blobContainerNamesCount": "[length(parameters('blobContainerNames'))]",
         "blobContainerNamesIsNotEmpty": "[greater(variables('blobContainerNamesCount'), 0)]",
-        "customerManagedKeyAccessPolicyDeploymentName": "[format('{0}-{1}-Cmk-AccessPolicy', deployment().name, variables('storageAccountName'))]",
-        "customerManagedKeyAccessPolicyDeploymentResourceId": "[resourceId('Microsoft.Resources/deployments', variables('customerManagedKeyAccessPolicyDeploymentName'))]",
+        "customerManagedEncryptionAccessPolicyDeploymentName": "[format('{0}-{1}-Cmk-AccessPolicy', deployment().name, variables('storageAccountName'))]",
+        "customerManagedEncryptionAccessPolicyDeploymentResourceId": "[resourceId('Microsoft.Resources/deployments', variables('customerManagedEncryptionAccessPolicyDeploymentName'))]",
+        "customerManagedEncryptionIsEnabled": "[and(variables('customerManagedEncryptionKeyNameIsNotNullOrEmpty'), variables('customerManagedEncryptionKeyVaultNameIsNotNullOrEmpty'))]",
+        "customerManagedEncryptionKeyNameIsNotNullOrEmpty": "[not(empty(coalesce(parameters('customerManagedEncryptionKeyName'), '')))]",
+        "customerManagedEncryptionKeyVaultNameIsNotNullOrEmpty": "[not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), '')))]",
+        "customerManagedEncryptionKeyVersionNameIsNotNullOrEmpty": "[not(empty(coalesce(parameters('customerManagedEncryptionKeyVersion'), '')))]",
         "deploymentApiVersion": "2019-10-01",
         "encryptionScopeVersion": "2019-06-01",
         "encryptionScopes": "[if(variables('encryptionScopesIsNotEmpty'), parameters('encryptionScopes'), json('[ { \"keyVaultName\": \"dummyKeyVault\" } ]'))]",
@@ -190,15 +228,19 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[variables('customerManagedEncryptionIsEnabled')]",
             "dependsOn": [
                 "[variables('storageAccountResourceId')]"
             ],
-            "name": "[variables('customerManagedKeyAccessPolicyDeploymentName')]",
+            "name": "[variables('customerManagedEncryptionAccessPolicyDeploymentName')]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "actionType": {
+                        "value": "add"
+                    },
                     "keyVaultName": {
-                        "value": "KittExample-Keyvault"
+                        "value": "[parameters('customerManagedEncryptionKeyVaultName')]"
                     },
                     "objectId": {
                         "value": "[reference(variables('storageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').identity.principalId]"
@@ -222,9 +264,9 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": false,
+            "condition": "[variables('customerManagedEncryptionIsEnabled')]",
             "dependsOn": [
-                "[variables('customerManagedKeyAccessPolicyDeploymentResourceId')]",
+                "[variables('customerManagedEncryptionAccessPolicyDeploymentResourceId')]",
                 "[variables('storageAccountResourceId')]"
             ],
             "name": "[format('{0}-{1}-Cmk-Properties', deployment().name, variables('storageAccountName'))]",
@@ -243,8 +285,9 @@
                             "properties": {
                                 "encryption": {
                                     "keyvaultproperties": {
-                                        "keyname": "CmkTest0124",
-                                        "keyvaulturi": "https://kittexample-keyvault.vault.azure.net"
+                                        "keyname": "[parameters('customerManagedEncryptionKeyName')]",
+                                        "keyvaulturi": "[if(variables('customerManagedEncryptionIsEnabled'), reference(resourceId(subscription().subscriptionId, parameters('customerManagedEncryptionKeyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('customerManagedEncryptionKeyVaultName')), variables('keyVaultApiVersion')).vaultUri, json('null'))]",
+                                        "keyversion": "[if(variables('customerManagedEncryptionKeyVersionNameIsNotNullOrEmpty'), parameters('customerManagedEncryptionKeyVersion'), json('null'))]"
                                     },
                                     "services": {
                                         "blob": {
@@ -318,11 +361,5 @@
             "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('fileShareNames')[copyIndex()])]",
             "type": "Microsoft.Storage/storageAccounts/fileServices/shares"
         }
-    ],
-    "outputs": {
-        "abc": {
-            "type": "string",
-            "value": "[reference(variables('storageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').identity.principalId]"
-        }
-    }
+    ]
 }
