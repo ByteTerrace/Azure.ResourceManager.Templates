@@ -16,6 +16,13 @@
             },
             "type": "array"
         },
+        "blobSoftDeleteRetentionPeriodInDays": {
+            "defaultValue": 7,
+            "metadata": {
+                "description": "Specifies the amount of days to retain a soft-deleted blob; assuming the feature is enabled."
+            },
+            "type": "int"
+        },
         "customerManagedEncryptionKeyName": {
             "defaultValue": "",
             "metadata": {
@@ -65,6 +72,13 @@
             },
             "type": "array"
         },
+        "fileShareSoftDeleteRetentionPeriodInDays": {
+            "defaultValue": 7,
+            "metadata": {
+                "description": "Specifies the amount of days to retain a soft-deleted file; assuming the feature is enabled."
+            },
+            "type": "int"
+        },
         "firewallRules": {
             "defaultValue": [],
             "metadata": {
@@ -90,6 +104,20 @@
             "defaultValue": false,
             "metadata": {
                 "description": "Indicates whether the large file shares feature is enabled on the Azure Storage account."
+            },
+            "type": "bool"
+        },
+        "isSoftDeletionEnabledForBlobs": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the soft deletion feature is enabled for blobs in the Azure Storage account."
+            },
+            "type": "bool"
+        },
+        "isSoftDeletionEnabledForFileShares": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the soft deletion feature is enabled for file shares in the Azure Storage account."
             },
             "type": "bool"
         },
@@ -169,6 +197,7 @@
         "blobContainerNames": "[if(variables('blobContainerNamesIsNotEmpty'), parameters('blobContainerNames'), json('[ \"dummyContainer\" ]'))]",
         "blobContainerNamesCount": "[length(parameters('blobContainerNames'))]",
         "blobContainerNamesIsNotEmpty": "[greater(variables('blobContainerNamesCount'), 0)]",
+        "blobServicesApiVersion": "2019-06-01",
         "customerManagedEncryptionAccessPolicyDeploymentName": "[format('{0}-{1}-CmeAccessPolicy', deployment().name, variables('storageAccountName'))]",
         "customerManagedEncryptionAccessPolicyDeploymentResourceId": "[resourceId(variables('customerManagedEncryptionKeyVaultSubscriptionId'), variables('customerManagedEncryptionKeyVaultResourceGroupName'), 'Microsoft.Resources/deployments', variables('customerManagedEncryptionAccessPolicyDeploymentName'))]",
         "customerManagedEncryptionPropertiesDeploymentName": "[format('{0}-{1}-CmeProperties', deployment().name, variables('storageAccountName'))]",
@@ -184,9 +213,10 @@
         "customerManagedEncryptionKeyVersionNameIsNotNullOrEmpty": "[not(empty(coalesce(parameters('customerManagedEncryptionKeyVersion'), '')))]",
         "deploymentApiVersion": "2019-10-01",
         "encryptionScopeVersion": "2019-06-01",
-        "encryptionScopes": "[if(variables('encryptionScopesIsNotEmpty'), parameters('encryptionScopes'), json('[ { \"keyVaultName\": \"dummyKeyVault\" } ]'))]",
+        "encryptionScopes": "[if(variables('encryptionScopesIsNotEmpty'), parameters('encryptionScopes'), json('[ { \"encryptionScopeName\": \"dummyEncryptionScope\", \"keyVaultName\": \"dummyKeyVault\" } ]'))]",
         "encryptionScopesCount": "[length(parameters('encryptionScopes'))]",
         "encryptionScopesIsNotEmpty": "[greater(variables('encryptionScopesCount'), 0)]",
+        "fileServicesApiVersion": "2019-06-01",
         "fileShareApiVersion": "2019-06-01",
         "fileShareNames": "[if(variables('fileShareNamesIsNotEmpty'), parameters('fileShareNames'), json('[ \"dummyFileShare\" ]'))]",
         "fileShareNamesCount": "[length(parameters('fileShareNames'))]",
@@ -340,15 +370,46 @@
                 "[variables('customerManagedEncryptionPropertiesDeploymentResourceId')]",
                 "[variables('storageAccountResourceId')]"
             ],
-            "name": "[format('{0}/{1}', variables('storageAccountName'), union(json(format('{{ \"encryptionScopeName\": \"encryptionScope{0}\"}}', copyIndex())), variables('encryptionScopes')[copyIndex()]).encryptionScopeName)]",
+            "name": "[format('{0}/{1}', variables('storageAccountName'), variables('encryptionScopes')[copyIndex()].encryptionScopeName)]",
             "properties": {
                 "keyVaultProperties": {
-                    "keyUri": "[if(variables('encryptionScopesIsNotEmpty'), format('{0}keys/{1}', reference(resourceId(union(json(format('{{ \"subscriptionId\": \"{0}\" }}', subscription().subscriptionId)), variables('encryptionScopes')[copyIndex()]).subscriptionId, variables('encryptionScopes')[copyIndex()].resourceGroupName, 'Microsoft.KeyVault/vaults', variables('encryptionScopes')[copyIndex()].keyVaultName), variables('keyVaultApiVersion')).vaultUri, variables('encryptionScopes')[copyIndex()].keyName), json('null'))]"
+                    "keyUri": "[if(variables('encryptionScopesIsNotEmpty'), format('{0}keys/{1}{2}', reference(resourceId(union(json(format('{{ \"subscriptionId\": \"{0}\" }}', subscription().subscriptionId)), variables('encryptionScopes')[copyIndex()]).subscriptionId, union(json(format('{{ \"resourceGroupName\": \"{0}\"}}', resourceGroup().name)), variables('encryptionScopes')[copyIndex()]).resourceGroupName, 'Microsoft.KeyVault/vaults', variables('encryptionScopes')[copyIndex()].keyVaultName), variables('keyVaultApiVersion')).vaultUri, variables('encryptionScopes')[copyIndex()].keyName, if(not(empty(union(json('{ \"keyVersion\": \"\"}'), variables('encryptionScopes')[copyIndex()]).keyVersion)), format('/{0}', variables('encryptionScopes')[copyIndex()].keyVersion), '')), json('null'))]"
                 },
                 "source": "Microsoft.KeyVault",
                 "state": "Enabled"
             },
             "type": "Microsoft.Storage/storageAccounts/encryptionScopes"
+        },
+        {
+            "apiVersion": "[variables('blobServicesApiVersion')]",
+            "dependsOn": [
+                "[variables('customerManagedEncryptionPropertiesDeploymentResourceId')]",
+                "[variables('storageAccountResourceId')]"
+            ],
+            "name": "[format('{0}/default', variables('storageAccountName'))]",
+            "properties": {
+                "deleteRetentionPolicy": {
+                    "days": "[parameters('blobSoftDeleteRetentionPeriodInDays')]",
+                    "enabled": "[parameters('isSoftDeletionEnabledForBlobs')]"
+                },
+                "isVersioningEnabled": false
+            },
+            "type": "Microsoft.Storage/storageAccounts/blobServices"
+        },
+        {
+            "apiVersion": "[variables('fileServicesApiVersion')]",
+            "dependsOn": [
+                "[variables('customerManagedEncryptionPropertiesDeploymentResourceId')]",
+                "[variables('storageAccountResourceId')]"
+            ],
+            "name": "[format('{0}/default', variables('storageAccountName'))]",
+            "properties": {
+                "shareDeleteRetentionPolicy": {
+                    "days": "[parameters('fileShareSoftDeleteRetentionPeriodInDays')]",
+                    "enabled": "[parameters('isSoftDeletionEnabledForFileShares')]"
+                }
+            },
+            "type": "Microsoft.Storage/storageAccounts/fileServices"
         },
         {
             "apiVersion": "[variables('blobContainerApiVersion')]",
