@@ -162,8 +162,10 @@
         "blobContainerNames": "[if(variables('blobContainerNamesIsNotEmpty'), parameters('blobContainerNames'), json('[ \"dummyContainer\" ]'))]",
         "blobContainerNamesCount": "[length(parameters('blobContainerNames'))]",
         "blobContainerNamesIsNotEmpty": "[greater(variables('blobContainerNamesCount'), 0)]",
-        "customerManagedEncryptionAccessPolicyDeploymentName": "[format('{0}-{1}-Cmk-AccessPolicy', deployment().name, variables('storageAccountName'))]",
+        "customerManagedEncryptionAccessPolicyDeploymentName": "[format('{0}-{1}-CmeAccessPolicy', deployment().name, variables('storageAccountName'))]",
         "customerManagedEncryptionAccessPolicyDeploymentResourceId": "[resourceId('Microsoft.Resources/deployments', variables('customerManagedEncryptionAccessPolicyDeploymentName'))]",
+        "customerManagedEncryptionPropertiesDeploymentName": "[format('{0}-{1}-CmeProperties', deployment().name, variables('storageAccountName'))]",
+        "customerManagedEncryptionPropertiesDeploymentResourceId": "[resourceId('Microsoft.Resources/deployments', variables('customerManagedEncryptionPropertiesDeploymentName'))]",
         "customerManagedEncryptionIsEnabled": "[and(variables('customerManagedEncryptionKeyNameIsNotNullOrEmpty'), variables('customerManagedEncryptionKeyVaultNameIsNotNullOrEmpty'))]",
         "customerManagedEncryptionKeyNameIsNotNullOrEmpty": "[not(empty(coalesce(parameters('customerManagedEncryptionKeyName'), '')))]",
         "customerManagedEncryptionKeyVaultNameIsNotNullOrEmpty": "[not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), '')))]",
@@ -269,7 +271,7 @@
                 "[variables('customerManagedEncryptionAccessPolicyDeploymentResourceId')]",
                 "[variables('storageAccountResourceId')]"
             ],
-            "name": "[format('{0}-{1}-Cmk-Properties', deployment().name, variables('storageAccountName'))]",
+            "name": "[variables('customerManagedEncryptionPropertiesDeploymentName')]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {},
@@ -321,6 +323,7 @@
                 "name": "encryptionScopesCopy"
             },
             "dependsOn": [
+                "[variables('customerManagedEncryptionPropertiesDeploymentResourceId')]",
                 "[variables('storageAccountResourceId')]"
             ],
             "name": "[format('{0}/{1}', variables('storageAccountName'), union(json(format('{{ \"encryptionScopeName\": \"encryptionScope{0}\"}}', copyIndex())), variables('encryptionScopes')[copyIndex()]).encryptionScopeName)]",
@@ -342,6 +345,7 @@
                 "name": "blobContainerCopy"
             },
             "dependsOn": [
+                "[variables('customerManagedEncryptionPropertiesDeploymentResourceId')]",
                 "[variables('storageAccountResourceId')]"
             ],
             "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('blobContainerNames')[copyIndex()])]",
@@ -356,6 +360,7 @@
                 "name": "fileShareCopy"
             },
             "dependsOn": [
+                "[variables('customerManagedEncryptionPropertiesDeploymentResourceId')]",
                 "[variables('storageAccountResourceId')]"
             ],
             "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('fileShareNames')[copyIndex()])]",
