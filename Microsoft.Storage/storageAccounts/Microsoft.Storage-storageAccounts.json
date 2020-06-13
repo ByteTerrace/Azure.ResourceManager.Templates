@@ -12,7 +12,7 @@
         "blobContainerNames": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of blob container names that should be deployed within the Azure Storage account."
+                "description": "An array of blob container names that will be deployed within the Azure Storage account."
             },
             "type": "array"
         },
@@ -61,14 +61,14 @@
         "encryptionScopes": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of encryption scopes that should be assigned the Azure Storage account."
+                "description": "An array of encryption scopes that will be assigned the Azure Storage account."
             },
             "type": "array"
         },
         "fileShareNames": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of file share names that should be deployed within the Azure Storage account."
+                "description": "An array of file share names that will be deployed within the Azure Storage account."
             },
             "type": "array"
         },
@@ -138,7 +138,7 @@
         "location": {
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
-                "description": "Specifies the location in which the Azure Storage resource(s) should be deployed."
+                "description": "Specifies the location in which the Azure Storage resource(s) will be deployed."
             },
             "type": "string"
         },

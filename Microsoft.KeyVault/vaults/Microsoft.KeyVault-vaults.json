@@ -90,7 +90,7 @@
         "location": {
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
-                "description": "Specifies the location in which the Azure Key Vault resource(s) should be deployed."
+                "description": "Specifies the location in which the Azure Key Vault resource(s) will be deployed."
             },
             "type": "string"
         },
@@ -108,7 +108,7 @@
         "tenantId": {
             "defaultValue": "[subscription().tenantId]",
             "metadata": {
-                "description": "Specifies the Azure Active Directory tenant GUID that should be used for authenticating requests to the Azure Key Vault."
+                "description": "Specifies the Azure Active Directory tenant GUID that will be used for authenticating requests to the Azure Key Vault."
             },
             "type": "string"
         },
