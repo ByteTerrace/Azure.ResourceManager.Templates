@@ -58,6 +58,14 @@
             },
             "type": "bool"
         },
+        "linkedTemplateBaseUri": {
+            "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/",
+            "type": "string"
+        },
+        "linkedTemplateQueryString": {
+            "defaultValue": "&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
+            "type": "string"
+        },
         "location": {
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
@@ -120,6 +128,9 @@
         "blobContainerNames": "[if(variables('blobContainerNamesIsNotEmpty'), parameters('blobContainerNames'), json('[ \"dummyContainer\" ]'))]",
         "blobContainerNamesCount": "[length(parameters('blobContainerNames'))]",
         "blobContainerNamesIsNotEmpty": "[greater(variables('blobContainerNamesCount'), 0)]",
+        "customerManagedKeyAccessPolicyDeploymentName": "[format('{0}-{1}-Cmk-AccessPolicy', deployment().name, variables('storageAccountName'))]",
+        "customerManagedKeyAccessPolicyDeploymentResourceId": "[resourceId('Microsoft.Resources/deployments', variables('customerManagedKeyAccessPolicyDeploymentName'))]",
+        "deploymentApiVersion": "2019-10-01",
         "encryptionScopeVersion": "2019-06-01",
         "encryptionScopes": "[if(variables('encryptionScopesIsNotEmpty'), parameters('encryptionScopes'), json('[ { \"keyVaultName\": \"dummyKeyVault\" } ]'))]",
         "encryptionScopesCount": "[length(parameters('encryptionScopes'))]",
@@ -131,7 +142,8 @@
         "keyVaultApiVersion": "2019-09-01",
         "storageAccountApiVersion": "2019-06-01",
         "storageAccountName": "[toLower(parameters('storageAccountName'))]",
-        "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+        "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "templateUriForMicrosoftKeyVaultAccessPolicies": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults/Microsoft.KeyVault-vaults-accessPolicies.json'), parameters('linkedTemplateQueryString')))]"
     },
     "resources": [
         {
@@ -175,6 +187,87 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Storage/storageAccounts"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "dependsOn": [
+                "[variables('storageAccountResourceId')]"
+            ],
+            "name": "[variables('customerManagedKeyAccessPolicyDeploymentName')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "keyVaultName": {
+                        "value": "KittExample-Keyvault"
+                    },
+                    "objectId": {
+                        "value": "[reference(variables('storageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').identity.principalId]"
+                    },
+                    "permissions": {
+                        "value": {
+                            "keys": [
+                                "get",
+                                "unwrapKey",
+                                "wrapkey"
+                            ]
+                        }
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUriForMicrosoftKeyVaultAccessPolicies')]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": false,
+            "dependsOn": [
+                "[variables('customerManagedKeyAccessPolicyDeploymentResourceId')]",
+                "[variables('storageAccountResourceId')]"
+            ],
+            "name": "[format('{0}-{1}-Cmk-Properties', deployment().name, variables('storageAccountName'))]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {},
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                        {
+                            "apiVersion": "[variables('storageAccountApiVersion')]",
+                            "kind": "[parameters('storageAccountKind')]",
+                            "location": "[parameters('location')]",
+                            "name": "[variables('storageAccountName')]",
+                            "properties": {
+                                "encryption": {
+                                    "keyvaultproperties": {
+                                        "keyname": "CmkTest0124",
+                                        "keyvaulturi": "https://kittexample-keyvault.vault.azure.net"
+                                    },
+                                    "services": {
+                                        "blob": {
+                                            "enabled": true,
+                                            "keyType": "Account"
+                                        },
+                                        "file": {
+                                            "enabled": true,
+                                            "keyType": "Account"
+                                        }
+                                    },
+                                    "keySource": "Microsoft.Keyvault"
+                                }
+                            },
+                            "sku": {
+                                "name": "[parameters('skuName')]"
+                            },
+                            "type": "Microsoft.Storage/storageAccounts"
+                        }
+                    ]
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
         },
         {
             "apiVersion": "[variables('encryptionScopeVersion')]",
@@ -225,5 +318,11 @@
             "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('fileShareNames')[copyIndex()])]",
             "type": "Microsoft.Storage/storageAccounts/fileServices/shares"
         }
-    ]
+    ],
+    "outputs": {
+        "abc": {
+            "type": "string",
+            "value": "[reference(variables('storageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').identity.principalId]"
+        }
+    }
 }
