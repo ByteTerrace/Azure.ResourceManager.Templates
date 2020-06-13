@@ -31,9 +31,16 @@
             "type": "string"
         },
         "customerManagedEncryptionKeyVaultResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
+            "defaultValue": "",
             "metadata": {
                 "description": "Specifies the resource group name of the key vault that houses the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
+        "customerManagedEncryptionKeyVaultSubscriptionId": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the subscrioption id of the key vault that houses the customer-managed data encryption key."
             },
             "type": "string"
         },
@@ -163,12 +170,17 @@
         "blobContainerNamesCount": "[length(parameters('blobContainerNames'))]",
         "blobContainerNamesIsNotEmpty": "[greater(variables('blobContainerNamesCount'), 0)]",
         "customerManagedEncryptionAccessPolicyDeploymentName": "[format('{0}-{1}-CmeAccessPolicy', deployment().name, variables('storageAccountName'))]",
-        "customerManagedEncryptionAccessPolicyDeploymentResourceId": "[resourceId('Microsoft.Resources/deployments', variables('customerManagedEncryptionAccessPolicyDeploymentName'))]",
+        "customerManagedEncryptionAccessPolicyDeploymentResourceId": "[resourceId(variables('customerManagedEncryptionKeyVaultSubscriptionId'), variables('customerManagedEncryptionKeyVaultResourceGroupName'), 'Microsoft.Resources/deployments', variables('customerManagedEncryptionAccessPolicyDeploymentName'))]",
         "customerManagedEncryptionPropertiesDeploymentName": "[format('{0}-{1}-CmeProperties', deployment().name, variables('storageAccountName'))]",
         "customerManagedEncryptionPropertiesDeploymentResourceId": "[resourceId('Microsoft.Resources/deployments', variables('customerManagedEncryptionPropertiesDeploymentName'))]",
         "customerManagedEncryptionIsEnabled": "[and(variables('customerManagedEncryptionKeyNameIsNotNullOrEmpty'), variables('customerManagedEncryptionKeyVaultNameIsNotNullOrEmpty'))]",
         "customerManagedEncryptionKeyNameIsNotNullOrEmpty": "[not(empty(coalesce(parameters('customerManagedEncryptionKeyName'), '')))]",
         "customerManagedEncryptionKeyVaultNameIsNotNullOrEmpty": "[not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), '')))]",
+        "customerManagedEncryptionKeyVaultResourceGroupName": "[if(variables('customerManagedEncryptionKeyVaultResourceGroupNameIsNotNullOrEmpty'), parameters('customerManagedEncryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
+        "customerManagedEncryptionKeyVaultResourceGroupNameIsNotNullOrEmpty": "[not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultResourceGroupName'), '')))]",
+        "customerManagedEncryptionKeyVaultResourceId": "[resourceId(variables('customerManagedEncryptionKeyVaultSubscriptionId'), variables('customerManagedEncryptionKeyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('customerManagedEncryptionKeyVaultName'))]",
+        "customerManagedEncryptionKeyVaultSubscriptionId": "[if(variables('customerManagedEncryptionKeyVaultSubscriptionIdIsNotNullOrEmpty'), parameters('customerManagedEncryptionKeyVaultSubscriptionId'), subscription().subscriptionId)]",
+        "customerManagedEncryptionKeyVaultSubscriptionIdIsNotNullOrEmpty": "[not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultSubscriptionId'), '')))]",
         "customerManagedEncryptionKeyVersionNameIsNotNullOrEmpty": "[not(empty(coalesce(parameters('customerManagedEncryptionKeyVersion'), '')))]",
         "deploymentApiVersion": "2019-10-01",
         "encryptionScopeVersion": "2019-06-01",
@@ -262,6 +274,8 @@
                     "uri": "[variables('templateUriForMicrosoftKeyVaultAccessPolicies')]"
                 }
             },
+            "resourceGroup": "[variables('customerManagedEncryptionKeyVaultResourceGroupName')]",
+            "subscriptionId": "[variables('customerManagedEncryptionKeyVaultSubscriptionId')]",
             "type": "Microsoft.Resources/deployments"
         },
         {
@@ -288,7 +302,7 @@
                                 "encryption": {
                                     "keyvaultproperties": {
                                         "keyname": "[parameters('customerManagedEncryptionKeyName')]",
-                                        "keyvaulturi": "[if(variables('customerManagedEncryptionIsEnabled'), reference(resourceId(subscription().subscriptionId, parameters('customerManagedEncryptionKeyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('customerManagedEncryptionKeyVaultName')), variables('keyVaultApiVersion')).vaultUri, json('null'))]",
+                                        "keyvaulturi": "[if(variables('customerManagedEncryptionIsEnabled'), take(reference(variables('customerManagedEncryptionKeyVaultResourceId'), variables('keyVaultApiVersion')).vaultUri, sub(length(reference(variables('customerManagedEncryptionKeyVaultResourceId'), variables('keyVaultApiVersion')).vaultUri), 1)), json('null'))]",
                                         "keyversion": "[if(variables('customerManagedEncryptionKeyVersionNameIsNotNullOrEmpty'), parameters('customerManagedEncryptionKeyVersion'), json('null'))]"
                                     },
                                     "services": {
