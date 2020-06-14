@@ -86,6 +86,13 @@
             },
             "type": "array"
         },
+        "isAdvancedThreatProtectionEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the advanced threat detection feature is enabled on the Azure Storage account."
+            },
+            "type": "bool"
+        },
         "isAllowTrustedMicrosoftServicesEnabled": {
             "defaultValue": false,
             "metadata": {
@@ -110,14 +117,14 @@
         "isSoftDeleteEnabledForBlobs": {
             "defaultValue": true,
             "metadata": {
-                "description": "Indicates whether the soft deletion feature is enabled for blobs in the Azure Storage account."
+                "description": "Indicates whether the soft-delete feature is enabled for blobs in the Azure Storage account."
             },
             "type": "bool"
         },
         "isSoftDeleteEnabledForFileShares": {
             "defaultValue": true,
             "metadata": {
-                "description": "Indicates whether the soft deletion feature is enabled for file shares in the Azure Storage account."
+                "description": "Indicates whether the soft-delete feature is enabled for file shares in the Azure Storage account."
             },
             "type": "bool"
         },
@@ -141,6 +148,13 @@
                 "description": "Specifies the location in which the Azure Storage resource(s) will be deployed."
             },
             "type": "string"
+        },
+        "queueNames": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of queue names that will be deployed within the Azure Storage account."
+            },
+            "type": "array"
         },
         "skuName": {
             "allowedValues": [
@@ -176,6 +190,13 @@
             },
             "minLength": 3,
             "type": "string"
+        },
+        "tableNames": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of table names that will be deployed within the Azure Storage account."
+            },
+            "type": "array"
         },
         "tags": {
             "defaultValue": {},
@@ -217,9 +238,17 @@
         "fileShareNamesCount": "[length(parameters('fileShareNames'))]",
         "fileShareNamesIsNotEmpty": "[greater(variables('fileShareNamesCount'), 0)]",
         "keyVaultApiVersion": "2019-09-01",
+        "queueApiVersion": "2019-06-01",
+        "queueNames": "[if(variables('queueNamesIsNotEmpty'), parameters('queueNames'), json('[ \"dummyQueue\" ]'))]",
+        "queueNamesCount": "[length(parameters('queueNames'))]",
+        "queueNamesIsNotEmpty": "[greater(variables('queueNamesCount'), 0)]",
         "storageAccountApiVersion": "2019-06-01",
         "storageAccountName": "[toLower(parameters('storageAccountName'))]",
         "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "tableApiVersion": "2019-06-01",
+        "tableNames": "[if(variables('tableNamesIsNotEmpty'), parameters('tableNames'), json('[ \"dummyTable\" ]'))]",
+        "tableNamesCount": "[length(parameters('tableNames'))]",
+        "tableNamesIsNotEmpty": "[greater(variables('tableNamesCount'), 0)]",
         "templateUriForMicrosoftKeyVaultAccessPolicies": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults/Microsoft.KeyVault-vaults-accessPolicies.json'), parameters('linkedTemplateQueryString')))]"
     },
     "resources": [
@@ -264,6 +293,17 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Storage/storageAccounts"
+        },
+        {
+            "apiVersion": "2019-01-01",
+            "dependsOn": [
+                "[variables('storageAccountResourceId')]"
+            ],
+            "name": "[format('{0}/Microsoft.Security/current', variables('storageAccountName'))]",
+            "properties": {
+                "isEnabled": "[parameters('isAdvancedThreatProtectionEnabled')]"
+            },
+            "type": "Microsoft.Storage/storageAccounts/providers/advancedThreatProtectionSettings"
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
@@ -435,6 +475,36 @@
             ],
             "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('fileShareNames')[copyIndex()])]",
             "type": "Microsoft.Storage/storageAccounts/fileServices/shares"
+        },
+        {
+            "apiVersion": "[variables('queueApiVersion')]",
+            "condition": "[variables('queueNamesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('queueNamesCount')]",
+                "mode": "parallel",
+                "name": "queueCopy"
+            },
+            "dependsOn": [
+                "[variables('customerManagedEncryptionPropertiesDeploymentResourceId')]",
+                "[variables('storageAccountResourceId')]"
+            ],
+            "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('queueNames')[copyIndex()])]",
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues"
+        },
+        {
+            "apiVersion": "[variables('tableApiVersion')]",
+            "condition": "[variables('tableNamesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('tableNamesCount')]",
+                "mode": "parallel",
+                "name": "queueCopy"
+            },
+            "dependsOn": [
+                "[variables('customerManagedEncryptionPropertiesDeploymentResourceId')]",
+                "[variables('storageAccountResourceId')]"
+            ],
+            "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('tableNames')[copyIndex()])]",
+            "type": "Microsoft.Storage/storageAccounts/tableServices/tables"
         }
     ]
 }
