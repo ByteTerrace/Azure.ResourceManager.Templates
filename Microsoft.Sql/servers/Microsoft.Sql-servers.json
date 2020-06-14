@@ -133,6 +133,20 @@
             },
             "type": "array"
         },
+        "isAzureResourceAccessEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether Azure services and resources are allowed to access the Azure SQL server."
+            },
+            "type": "bool"
+        },
+        "isPublicNetworkAccessEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the public network access feature is enabled on the Azure SQL server."
+            },
+            "type": "bool"
+        },
         "linkedTemplateBaseUri": {
             "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/",
             "metadata": {
@@ -153,20 +167,6 @@
                 "description": "Specifies the location in which the Azure SQL server resource(s) will be deployed."
             },
             "type": "string"
-        },
-        "isAzureResourceAccessEnabled": {
-            "defaultValue": false,
-            "metadata": {
-                "description": "Indicates whether Azure services and resources are allowed to access the Azure SQL server."
-            },
-            "type": "bool"
-        },
-        "isPublicNetworkAccessEnabled": {
-            "defaultValue": false,
-            "metadata": {
-                "description": "Indicates whether the public network access feature is enabled on the Azure SQL server."
-            },
-            "type": "bool"
         },
         "serverName": {
             "maxLength": 63,
@@ -241,11 +241,11 @@
         "connectionPolicyApiVersion": "2014-04-01",
         "customerManagedEncryptionAccessPolicyDeploymentName": "[format('{0}-{1}-CmeAccessPolicy', deployment().name, variables('serverName'))]",
         "customerManagedEncryptionAccessPolicyDeploymentResourceId": "[resourceId(variables('customerManagedEncryptionKeyVaultSubscriptionId'), variables('customerManagedEncryptionKeyVaultResourceGroupName'), 'Microsoft.Resources/deployments', variables('customerManagedEncryptionAccessPolicyDeploymentName'))]",
-        "customerManagedEncryptionIsEnabled": "[and(not(empty(coalesce(parameters('customerManagedEncryptionKeyName'), ''))), not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), ''))))]",
+        "customerManagedEncryptionIsEnabled": "[and(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), ''))), not(empty(coalesce(parameters('customerManagedEncryptionKeyName'), ''))), not(empty(coalesce(parameters('customerManagedEncryptionKeyVersion'), ''))))]",
         "customerManagedEncryptionKeyVaultResourceGroupName": "[if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultResourceGroupName'), ''))), parameters('customerManagedEncryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
         "customerManagedEncryptionKeyVaultResourceId": "[resourceId(variables('customerManagedEncryptionKeyVaultSubscriptionId'), variables('customerManagedEncryptionKeyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('customerManagedEncryptionKeyVaultName'))]",
         "customerManagedEncryptionKeyVaultSubscriptionId": "[if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultSubscriptionId'), ''))), parameters('customerManagedEncryptionKeyVaultSubscriptionId'), subscription().subscriptionId)]",
-        "customerManagedEncryptionServerKeyName": "[format('{0}_{1}_{2}', if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), ''))), parameters('customerManagedEncryptionKeyVaultName'), 'DummyVault'), if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), ''))), parameters('customerManagedEncryptionKeyVaultName'), 'DummyKey'), if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVersion'), ''))), parameters('customerManagedEncryptionKeyVersion'), 'DummyVersion'))]",
+        "customerManagedEncryptionServerKeyName": "[format('{0}_{1}_{2}', if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), ''))), parameters('customerManagedEncryptionKeyVaultName'), 'DummyVault'), if(not(empty(coalesce(parameters('customerManagedEncryptionKeyName'), ''))), parameters('customerManagedEncryptionKeyName'), 'DummyKey'), if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVersion'), ''))), parameters('customerManagedEncryptionKeyVersion'), 'DummyVersion'))]",
         "customerManagedEncryptionServerKeyResourceId": "[resourceId('Microsoft.Sql/servers/keys', variables('serverName'), variables('customerManagedEncryptionServerKeyName'))]",
         "databases": "[if(variables('databasesIsNotEmpty'), parameters('databases'), json('[ { \"databaseName\": \"DummyDatabase\", \"isAzureHybridBenefitEnabled\": false, \"skuName\": \"Basic\" } ]'))]",
         "databasesIsNotEmpty": "[greater(length(parameters('databases')), 0)]",
@@ -416,9 +416,9 @@
                     "permissions": {
                         "value": {
                             "keys": [
-                                "get",
-                                "unwrapKey",
-                                "wrapkey"
+                                "Get",
+                                "UnwrapKey",
+                                "Wrapkey"
                             ]
                         }
                     }
@@ -444,7 +444,7 @@
             "name": "[format('{0}/{1}', variables('serverName'), variables('customerManagedEncryptionServerKeyName'))]",
             "properties": {
                 "serverKeyType": "AzureKeyVault",
-                "uri": "[format('{0}keys/{1}/{2}', if(variables('customerManagedEncryptionIsEnabled'), reference(variables('customerManagedEncryptionKeyVaultResourceId'), variables('keyVaultApiVersion'), 'Full').properties.vaultUri, 'https://dummy.domain/'), parameters('customerManagedEncryptionKeyName'), parameters('customerManagedEncryptionKeyVersion'))]"
+                "uri": "[if(variables('customerManagedEncryptionIsEnabled'), format('{0}keys/{1}/{2}', reference(variables('customerManagedEncryptionKeyVaultResourceId'), variables('keyVaultApiVersion')).vaultUri, parameters('customerManagedEncryptionKeyName'), parameters('customerManagedEncryptionKeyVersion')), json('null'))]"
             },
             "type": "Microsoft.Sql/servers/keys"
         },

@@ -327,9 +327,9 @@
                     "permissions": {
                         "value": {
                             "keys": [
-                                "get",
-                                "unwrapKey",
-                                "wrapkey"
+                                "Get",
+                                "UnwrapKey",
+                                "Wrapkey"
                             ]
                         }
                     }
