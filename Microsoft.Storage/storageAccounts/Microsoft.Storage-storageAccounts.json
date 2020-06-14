@@ -1,6 +1,6 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
+    "contentVersion": "2.0.0.0",
     "parameters": {
         "accessTier": {
             "defaultValue": "Hot",
@@ -335,7 +335,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "2.0.0.0",
                     "uri": "[variables('templateUriForMicrosoftKeyVaultAccessPolicies')]"
                 }
             },
@@ -356,7 +356,7 @@
                 "parameters": {},
                 "template": {
                     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "2.0.0.0",
                     "resources": [
                         {
                             "apiVersion": "[variables('storageAccountApiVersion')]",

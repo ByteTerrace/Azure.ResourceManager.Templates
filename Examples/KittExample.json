@@ -137,7 +137,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "2.0.0.0",
                     "uri": "[variables('templateUriForMicrosoftStorageAccount')]"
                 }
             },
@@ -153,9 +153,6 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "auditStorageAccountName": {
-                        "value": "[format('{0}storage', parameters('applicationName'))]"
-                    },
                     "firewallRules": {
                         "value": [
                             "[parameters('clientIpAddress')]"
@@ -177,7 +174,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "2.0.0.0",
                     "uri": "[variables('templateUriForMicrosoftKeyVault')]"
                 }
             },

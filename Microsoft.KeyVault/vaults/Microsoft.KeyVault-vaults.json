@@ -1,6 +1,6 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
+    "contentVersion": "2.0.0.0",
     "parameters": {
         "accessPolicies": {
             "defaultValue": [],
@@ -8,27 +8,6 @@
                 "description": "An array of access policies that will be assigned to the Azure Key Vault."
             },
             "type": "array"
-        },
-        "auditStorageAccountName": {
-            "defaultValue": "",
-            "metadata": {
-                "description": "Specifies the name of the Azure Storage account that will be utilized by the audit feature."
-            },
-            "type": "string"
-        },
-        "auditStorageAccountResourceGroupName": {
-            "defaultValue": "",
-            "metadata": {
-                "description": "Specifies the resource group name of the Azure Storage account that will be utilized by the audit feature."
-            },
-            "type": "string"
-        },
-        "auditStorageAccountSubscriptionId": {
-            "defaultValue": "",
-            "metadata": {
-                "description": "Specifies the subscription id of the Azure Storage account that will be utilized by the audit feature."
-            },
-            "type": "string"
         },
         "firewallRules": {
             "defaultValue": [],
@@ -112,6 +91,13 @@
             },
             "type": "string"
         },
+        "secrets": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the array of secrets that will be stored within the Azure Key Vault."
+            },
+            "type": "secureObject"
+        },
         "tags": {
             "defaultValue": {},
             "metadata": {
@@ -128,10 +114,6 @@
         }
     },
     "variables": {
-        "auditStorageAccountName": "[toLower(if(not(empty(coalesce(parameters('auditStorageAccountName'), ''))), parameters('auditStorageAccountName'), 'DummyStorageAccountForAudit'))]",
-        "auditStorageAccountResourceGroupName": "[if(not(empty(coalesce(parameters('auditStorageAccountResourceGroupName'), ''))), parameters('auditStorageAccountResourceGroupName'), resourceGroup().name)]",
-        "auditStorageAccountResourceId": "[resourceId(variables('auditStorageAccountSubscriptionId'), variables('auditStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', variables('auditStorageAccountName'))]",
-        "auditStorageAccountSubscriptionId": "[if(not(empty(coalesce(parameters('auditStorageAccountSubscriptionId'), ''))), parameters('auditStorageAccountSubscriptionId'), subscription().subscriptionId)]",
         "copy": [
             {
                 "count": "[length(parameters('firewallRules'))]",
@@ -148,12 +130,13 @@
                 "name": "virtualNetworkRules"
             }
         ],
-        "diagnosticsSettingsApiVersion": "2017-05-01-preview",
         "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
-        "isAuditEnabled": "[variables('isAuditStorageAccountEnabled')]",
-        "isAuditStorageAccountEnabled": "[or(not(empty(coalesce(parameters('auditStorageAccountResourceGroupName'), ''))), not(empty(coalesce(parameters('auditStorageAccountName'), ''))))]",
         "keyVaultApiVersion": "2019-09-01",
         "keyVaultResourceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+        "secretsApiVersion": "2019-09-01",
+        "secretsArray": "[if(variables('secretsArrayIsNotEmpty'), parameters('secrets').array, json('[ { \"name\":\"dummySecret\", \"value\": \"Shhh, don''t tell anyone...\" } ]'))]",
+        "secretsArrayCount": "[length(union(json('{ \"array\": [] }'), parameters('secrets')).array)]",
+        "secretsArrayIsNotEmpty": "[greater(variables('secretsArrayCount'), 0)]",
         "virtualNetworkRulesIsNotEmpty": "[greater(length(parameters('virtualNetworkRules')), 0)]"
     },
     "resources": [
@@ -185,27 +168,20 @@
             "type": "Microsoft.KeyVault/vaults"
         },
         {
-            "apiVersion": "[variables('diagnosticsSettingsApiVersion')]",
-            "condition": "[variables('isAuditEnabled')]",
+            "apiVersion": "[variables('secretsApiVersion')]",
+            "condition": "[variables('secretsArrayIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('secretsArrayCount')]",
+                "name": "secretsCopy"
+            },
             "dependsOn": [
                 "[variables('keyVaultResourceId')]"
             ],
-            "location": "[parameters('location')]",
-            "name": "[format('{0}/Microsoft.Insights/audit', parameters('keyVaultName'))]",
+            "name": "[format('{0}/{1}', parameters('keyVaultName'), variables('secretsArray')[copyIndex()].name)]",
             "properties": {
-                "logs": [
-                    {
-                        "category": "AuditEvent",
-                        "enabled": true,
-                        "retentionPolicy": {
-                            "days": 365,
-                            "enabled": true
-                        }
-                    }
-                ],
-                "storageAccountId": "[variables('auditStorageAccountResourceId')]"
+                "value": "[variables('secretsArray')[copyIndex()].value]"
             },
-            "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings"
+            "type": "Microsoft.KeyVault/vaults/secrets"
         }
     ]
 }

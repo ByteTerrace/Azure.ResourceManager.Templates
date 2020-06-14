@@ -1,6 +1,6 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
+    "contentVersion": "2.0.0.0",
     "parameters": {
         "activeDirectoryAdministratorObjectId": {
             "defaultValue": "",
@@ -77,6 +77,41 @@
             },
             "type": "string"
         },
+        "customerManagedEncryptionKeyName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
+        "customerManagedEncryptionKeyVaultName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the key vault that houses the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
+        "customerManagedEncryptionKeyVaultResourceGroupName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the resource group name of the key vault that houses the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
+        "customerManagedEncryptionKeyVaultSubscriptionId": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the subscrioption id of the key vault that houses the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
+        "customerManagedEncryptionKeyVersion": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the version of the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
         "databases": {
             "defaultValue": [],
             "metadata": {
@@ -91,40 +126,26 @@
             },
             "type": "array"
         },
-        "encryptionKeyVaultKeyName": {
-            "defaultValue": "",
-            "metadata": {
-                "description": "Specifies the name of the customer-managed data encryption key."
-            },
-            "type": "string"
-        },
-        "encryptionKeyVaultKeyVersion": {
-            "defaultValue": "",
-            "metadata": {
-                "description": "Specifies the version of the customer-managed data encryption key."
-            },
-            "type": "string"
-        },
-        "encryptionKeyVaultName": {
-            "defaultValue": "",
-            "metadata": {
-                "description": "Specifies the name of the key vault that houses the customer-managed data encryption key."
-            },
-            "type": "string"
-        },
-        "encryptionKeyVaultResourceGroupName": {
-            "defaultValue": "",
-            "metadata": {
-                "description": "Specifies the resource group name of the key vault that houses the customer-managed data encryption key."
-            },
-            "type": "string"
-        },
         "firewallRules": {
             "defaultValue": [],
             "metadata": {
                 "description": "An array of firewall rules that will be assigned to the Azure SQL server."
             },
             "type": "array"
+        },
+        "linkedTemplateBaseUri": {
+            "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/",
+            "metadata": {
+                "description": "Specifies the base uri of external linked templates used by this template."
+            },
+            "type": "string"
+        },
+        "linkedTemplateQueryString": {
+            "defaultValue": "&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
+            "metadata": {
+                "description": "Specifies the query string that will be appended to the uri of external linked templates used by this template."
+            },
+            "type": "string"
         },
         "location": {
             "defaultValue": "[resourceGroup().location]",
@@ -217,19 +238,17 @@
         "auditStorageAccountResourceId": "[resourceId(variables('auditStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', variables('auditStorageAccountName'))]",
         "auditStorageBlobDataContributorRoleAssignmentDeploymentName": "[format('{0}-{1}', deployment().name, uniqueString('auditStorageBlobDataContributorRoleAssignment'))]",
         "auditStorageBlobDataContributorRoleAssignmentResourceId": "[resourceId('Microsoft.Resources/deployments', variables('auditStorageBlobDataContributorRoleAssignmentDeploymentName'))]",
-        "auditStorageBlobDataContributorRoleAssignmentUniqueId": "[guid(variables('auditStorageAccountResourceId'), variables('storageBlobDataContributorRoleResourceId'), variables('serverResourceId'))]",
-        "authorizationRoleAssignmentApiVersion": "2018-09-01-preview",
         "connectionPolicyApiVersion": "2014-04-01",
-        "customerEncryptionKeyAccessPolicyDeploymentName": "[format('{0}-{1}', deployment().name, uniqueString('customerEncryptionKeyAccessPolicy'))]",
-        "customerEncryptionKeyAccessPolicyResourceId": "[resourceId('Microsoft.Resources/deployments', variables('customerEncryptionKeyAccessPolicyDeploymentName'))]",
-        "customerEncryptionKeyName": "[format('{0}_{1}_{2}', variables('customerEncryptionKeyVaultName'), if(not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))), parameters('encryptionKeyVaultKeyName'), 'DummyKeyName'), if(not(empty(coalesce(parameters('encryptionKeyVaultKeyVersion'), ''))), parameters('encryptionKeyVaultKeyVersion'), 'DummyKeyVersion'))]",
-        "customerEncryptionKeyResourceId": "[resourceId('Microsoft.Sql/servers/keys', variables('serverName'), variables('customerEncryptionKeyName'))]",
-        "customerEncryptionKeyVaultName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), parameters('encryptionKeyVaultName'), 'DummyKeyVault')]",
-        "customerEncryptionKeyVaultResourceGroupName": "[if(not(empty(coalesce(parameters('encryptionKeyVaultResourceGroupName'), ''))), parameters('encryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
-        "customerEncryptionKeyVaultResourceId": "[resourceId(variables('customerEncryptionKeyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults/', variables('customerEncryptionKeyVaultName'))]",
+        "customerManagedEncryptionAccessPolicyDeploymentName": "[format('{0}-{1}-CmeAccessPolicy', deployment().name, variables('serverName'))]",
+        "customerManagedEncryptionAccessPolicyDeploymentResourceId": "[resourceId(variables('customerManagedEncryptionKeyVaultSubscriptionId'), variables('customerManagedEncryptionKeyVaultResourceGroupName'), 'Microsoft.Resources/deployments', variables('customerManagedEncryptionAccessPolicyDeploymentName'))]",
+        "customerManagedEncryptionIsEnabled": "[and(not(empty(coalesce(parameters('customerManagedEncryptionKeyName'), ''))), not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), ''))))]",
+        "customerManagedEncryptionKeyVaultResourceGroupName": "[if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultResourceGroupName'), ''))), parameters('customerManagedEncryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
+        "customerManagedEncryptionKeyVaultResourceId": "[resourceId(variables('customerManagedEncryptionKeyVaultSubscriptionId'), variables('customerManagedEncryptionKeyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('customerManagedEncryptionKeyVaultName'))]",
+        "customerManagedEncryptionKeyVaultSubscriptionId": "[if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultSubscriptionId'), ''))), parameters('customerManagedEncryptionKeyVaultSubscriptionId'), subscription().subscriptionId)]",
+        "customerManagedEncryptionServerKeyName": "[format('{0}_{1}_{2}', if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), ''))), parameters('customerManagedEncryptionKeyVaultName'), 'DummyVault'), if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), ''))), parameters('customerManagedEncryptionKeyVaultName'), 'DummyKey'), if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVersion'), ''))), parameters('customerManagedEncryptionKeyVersion'), 'DummyVersion'))]",
+        "customerManagedEncryptionServerKeyResourceId": "[resourceId('Microsoft.Sql/servers/keys', variables('serverName'), variables('customerManagedEncryptionServerKeyName'))]",
         "databases": "[if(variables('databasesIsNotEmpty'), parameters('databases'), json('[ { \"databaseName\": \"DummyDatabase\", \"isAzureHybridBenefitEnabled\": false, \"skuName\": \"Basic\" } ]'))]",
         "databasesIsNotEmpty": "[greater(length(parameters('databases')), 0)]",
-        "databasesTemplateUri": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Sql%2Fdatabases%2FMicrosoft.Sql-databases.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
         "deploymentApiVersion": "2019-10-01",
         "dnsAliasApiVersion": "2017-03-01-preview",
         "dnsAliases": "[if(variables('dnsAliasesIsNotEmpty'), parameters('dnsAliases'), json('[ \"dummyDnsAlias\" ]'))]",
@@ -242,11 +261,9 @@
         "isAdvancedDataSecurityEnabled": "[or(greater(length(parameters('advancedDataSecurityEmailAddresses')), 0), variables('isVulnerabilityAssessmentStorageAccountEnabled'))]",
         "isAuditEnabled": "[variables('isAuditStorageAccountEnabled')]",
         "isAuditStorageAccountEnabled": "[or(not(empty(coalesce(parameters('auditStorageAccountResourceGroupName'), ''))), not(empty(coalesce(parameters('auditStorageAccountName'), ''))))]",
-        "isCustomerEncryptionKeyEnabled": "[or(not(empty(coalesce(parameters('encryptionKeyVaultResourceGroupName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultName'), ''))), not(empty(coalesce(parameters('encryptionKeyVaultKeyName'), ''))))]",
-        "isStorageBlobDataContributorRoleAssignmentUnique": "[not(equals(variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentUniqueId'), variables('auditStorageBlobDataContributorRoleAssignmentUniqueId')))]",
+        "isStorageBlobDataContributorRoleAssignmentUnique": "[not(equals(variables('auditStorageAccountResourceId'), variables('vulnerabilityAssessmentStorageAccountResourceId')))]",
         "isVulnerabilityAssessmentStorageAccountEnabled": "[or(not(empty(coalesce(parameters('vulnerabilityAssessmentStorageAccountResourceGroupName'), ''))), not(empty(coalesce(parameters('vulnerabilityAssessmentStorageAccountName'), ''))))]",
         "keyApiVersion": "2015-05-01-preview",
-        "keyVaultAccessPolicyApiVersion": "2018-02-14",
         "keyVaultApiVersion": "2018-02-14",
         "securityAlertPolicyApiVersion": "2017-03-01-preview",
         "securityAlertPolicyResourceId": "[resourceId('Microsoft.Sql/servers/securityAlertPolicies', variables('serverName'), 'default')]",
@@ -255,6 +272,9 @@
         "serverResourceId": "[resourceId('Microsoft.Sql/servers', variables('serverName'))]",
         "storageAccountApiVersion": "2019-06-01",
         "storageBlobDataContributorRoleResourceId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+        "templateUriForMicrosoftKeyVaultAccessPolicies": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults/Microsoft.KeyVault-vaults-accessPolicies.json'), parameters('linkedTemplateQueryString')))]",
+        "templateUriForMicrosoftSqlDatabases": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Sql/databases/Microsoft.Sql-databases.json'), parameters('linkedTemplateQueryString')))]",
+        "templateUriForMicrosoftStorageAccountRoleAssignment": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Storage/storageAccounts/Microsoft.Storage-storageAccounts-roleAssignments.json'), parameters('linkedTemplateQueryString')))]",
         "virtualNetworkRuleApiVersion": "2015-05-01-preview",
         "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), parameters('virtualNetworkRules'), json('[ { \"ignoreMissingVnetServiceEndpoint\": false, \"ruleName\": \"dummyVirtualNetworkRule\", \"subnetName\": \"dummySubnet\", \"virtualNetworkName\": \"dummyVirtualNetwork\", \"virtualNetworkResourceGroupName\": \"dummyResourceGroup\" } ]'))]",
         "virtualNetworkRulesIsNotEmpty": "[greater(length(parameters('virtualNetworkRules')), 0)]",
@@ -264,8 +284,7 @@
         "vulnerabilityAssessmentStorageAccountResourceGroupName": "[if(not(empty(coalesce(parameters('vulnerabilityAssessmentStorageAccountResourceGroupName'), ''))), parameters('vulnerabilityAssessmentStorageAccountResourceGroupName'), resourceGroup().name)]",
         "vulnerabilityAssessmentStorageAccountResourceId": "[resourceId(variables('vulnerabilityAssessmentStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', variables('vulnerabilityAssessmentStorageAccountName'))]",
         "vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentDeploymentName": "[format('{0}-{1}', deployment().name, uniqueString('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignment'))]",
-        "vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentResourceId": "[resourceId('Microsoft.Resources/deployments', variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentDeploymentName'))]",
-        "vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentUniqueId": "[guid(variables('vulnerabilityAssessmentStorageAccountResourceId'), variables('storageBlobDataContributorRoleResourceId'), variables('serverResourceId'))]"
+        "vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentResourceId": "[resourceId('Microsoft.Resources/deployments', variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentDeploymentName'))]"
     },
     "resources": [
         {
@@ -376,75 +395,72 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[variables('isCustomerEncryptionKeyEnabled')]",
+            "condition": "[variables('customerManagedEncryptionIsEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
                 "[variables('administratorResourceId')]"
             ],
-            "name": "[variables('customerEncryptionKeyAccessPolicyDeploymentName')]",
+            "name": "[variables('customerManagedEncryptionAccessPolicyDeploymentName')]",
             "properties": {
                 "mode": "Incremental",
-                "parameters": {},
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "resources": [
-                        {
-                            "apiVersion": "[variables('keyVaultAccessPolicyApiVersion')]",
-                            "name": "[format('{0}/add', variables('customerEncryptionKeyVaultName'))]",
-                            "properties": {
-                                "accessPolicies": [
-                                    {
-                                        "objectId": "[reference(variables('serverResourceId'), variables('serverApiVersion'), 'Full').identity.principalId]",
-                                        "permissions": {
-                                            "certificates": [],
-                                            "keys": [
-                                                "Get",
-                                                "UnwrapKey",
-                                                "WrapKey"
-                                            ],
-                                            "secrets": []
-                                        },
-                                        "tenantId": "[subscription().tenantId]"
-                                    }
-                                ]
-                            },
-                            "type": "Microsoft.KeyVault/vaults/accessPolicies"
+                "parameters": {
+                    "actionType": {
+                        "value": "add"
+                    },
+                    "keyVaultName": {
+                        "value": "[parameters('customerManagedEncryptionKeyVaultName')]"
+                    },
+                    "objectId": {
+                        "value": "[reference(variables('serverResourceId'), variables('serverApiVersion'), 'Full').identity.principalId]"
+                    },
+                    "permissions": {
+                        "value": {
+                            "keys": [
+                                "get",
+                                "unwrapKey",
+                                "wrapkey"
+                            ]
                         }
-                    ]
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "2.0.0.0",
+                    "uri": "[variables('templateUriForMicrosoftKeyVaultAccessPolicies')]"
                 }
             },
-            "resourceGroup": "[variables('customerEncryptionKeyVaultResourceGroupName')]",
+            "resourceGroup": "[variables('customerManagedEncryptionKeyVaultResourceGroupName')]",
+            "subscriptionId": "[variables('customerManagedEncryptionKeyVaultSubscriptionId')]",
             "type": "Microsoft.Resources/deployments"
         },
         {
             "apiVersion": "[variables('keyApiVersion')]",
-            "condition": "[variables('isCustomerEncryptionKeyEnabled')]",
+            "condition": "[variables('customerManagedEncryptionIsEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
                 "[variables('administratorResourceId')]",
-                "[variables('customerEncryptionKeyAccessPolicyResourceId')]"
+                "[variables('customerManagedEncryptionAccessPolicyDeploymentResourceId')]"
             ],
             "kind": "AzureKeyVault",
-            "name": "[format('{0}/{1}', variables('serverName'), variables('customerEncryptionKeyName'))]",
+            "name": "[format('{0}/{1}', variables('serverName'), variables('customerManagedEncryptionServerKeyName'))]",
             "properties": {
                 "serverKeyType": "AzureKeyVault",
-                "uri": "[format('{0}keys/{1}/{2}', if(variables('isCustomerEncryptionKeyEnabled'), reference(variables('customerEncryptionKeyVaultResourceId'), variables('keyVaultApiVersion'), 'Full').properties.vaultUri, 'https://dummy.domain/'), parameters('encryptionKeyVaultKeyName'), parameters('encryptionKeyVaultKeyVersion'))]"
+                "uri": "[format('{0}keys/{1}/{2}', if(variables('customerManagedEncryptionIsEnabled'), reference(variables('customerManagedEncryptionKeyVaultResourceId'), variables('keyVaultApiVersion'), 'Full').properties.vaultUri, 'https://dummy.domain/'), parameters('customerManagedEncryptionKeyName'), parameters('customerManagedEncryptionKeyVersion'))]"
             },
             "type": "Microsoft.Sql/servers/keys"
         },
         {
             "apiVersion": "[variables('encryptionProtectorApiVersion')]",
-            "condition": "[variables('isCustomerEncryptionKeyEnabled')]",
+            "condition": "[variables('customerManagedEncryptionIsEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
                 "[variables('administratorResourceId')]",
-                "[variables('customerEncryptionKeyResourceId')]"
+                "[variables('customerManagedEncryptionAccessPolicyDeploymentResourceId')]",
+                "[variables('customerManagedEncryptionServerKeyResourceId')]"
             ],
             "kind": "AzureKeyVault",
             "name": "[format('{0}/current', variables('serverName'))]",
             "properties": {
-                "serverKeyName": "[variables('customerEncryptionKeyName')]",
+                "serverKeyName": "[variables('customerManagedEncryptionServerKeyName')]",
                 "serverKeyType": "AzureKeyVault"
             },
             "type": "Microsoft.Sql/servers/encryptionProtector"
@@ -459,23 +475,23 @@
             "name": "[variables('auditStorageBlobDataContributorRoleAssignmentDeploymentName')]",
             "properties": {
                 "mode": "Incremental",
-                "parameters": {},
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "resources": [
-                        {
-                            "apiVersion": "[variables('authorizationRoleAssignmentApiVersion')]",
-                            "name": "[format('{0}/Microsoft.Authorization/{1}', variables('auditStorageAccountName'), variables('auditStorageBlobDataContributorRoleAssignmentUniqueId'))]",
-                            "properties": {
-                                "principalId": "[reference(variables('serverResourceId'), variables('serverApiVersion'), 'Full').identity.principalId]",
-                                "principalType": "ServicePrincipal",
-                                "roleDefinitionId": "[variables('storageBlobDataContributorRoleResourceId')]",
-                                "scope": "[variables('auditStorageAccountResourceId')]"
-                            },
-                            "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments"
-                        }
-                    ]
+                "parameters": {
+                    "principalId": {
+                        "value": "[reference(variables('serverResourceId'), variables('serverApiVersion'), 'Full').identity.principalId]"
+                    },
+                    "principalType": {
+                        "value": "ServicePrincipal"
+                    },
+                    "roleDefinitionId": {
+                        "value": "[variables('storageBlobDataContributorRoleResourceId')]"
+                    },
+                    "storageAccountName": {
+                        "value": "[variables('auditStorageAccountName')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "2.0.0.0",
+                    "uri": "[variables('templateUriForMicrosoftStorageAccountRoleAssignment')]"
                 }
             },
             "resourceGroup": "[variables('auditStorageAccountResourceGroupName')]",
@@ -491,23 +507,23 @@
             "name": "[variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentDeploymentName')]",
             "properties": {
                 "mode": "Incremental",
-                "parameters": {},
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "resources": [
-                        {
-                            "apiVersion": "[variables('authorizationRoleAssignmentApiVersion')]",
-                            "name": "[format('{0}/Microsoft.Authorization/{1}', variables('vulnerabilityAssessmentStorageAccountName'), variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentUniqueId'))]",
-                            "properties": {
-                                "principalId": "[reference(variables('serverResourceId'), variables('serverApiVersion'), 'Full').identity.principalId]",
-                                "principalType": "ServicePrincipal",
-                                "roleDefinitionId": "[variables('storageBlobDataContributorRoleResourceId')]",
-                                "scope": "[variables('vulnerabilityAssessmentStorageAccountResourceId')]"
-                            },
-                            "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments"
-                        }
-                    ]
+                "parameters": {
+                    "principalId": {
+                        "value": "[reference(variables('serverResourceId'), variables('serverApiVersion'), 'Full').identity.principalId]"
+                    },
+                    "principalType": {
+                        "value": "ServicePrincipal"
+                    },
+                    "roleDefinitionId": {
+                        "value": "[variables('storageBlobDataContributorRoleResourceId')]"
+                    },
+                    "storageAccountName": {
+                        "value": "[variables('vulnerabilityAssessmentStorageAccountName')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "2.0.0.0",
+                    "uri": "[variables('templateUriForMicrosoftStorageAccountRoleAssignment')]"
                 }
             },
             "resourceGroup": "[variables('vulnerabilityAssessmentStorageAccountResourceGroupName')]",
@@ -613,8 +629,8 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
-                    "uri": "[variables('databasesTemplateUri')]"
+                    "contentVersion": "2.0.0.0",
+                    "uri": "[variables('templateUriForMicrosoftSqlDatabases')]"
                 }
             },
             "type": "Microsoft.Resources/deployments"
