@@ -227,7 +227,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "2.0.0.0",
                     "uri": "[variables('templateUriForMicrosoftSqlServer')]"
                 }
             },
@@ -235,6 +235,7 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": false,
             "dependsOn": [
                 "[variables('deploymentNameForMicrosoftStorageAccount')]",
                 "[variables('deploymentNameForMicrosoftVirtualNetwork')]"

@@ -374,7 +374,7 @@
             "name": "[format('{0}/{1}', variables('serverName'), variables('virtualNetworkRules')[copyIndex()].ruleName)]",
             "properties": {
                 "ignoreMissingVnetServiceEndpoint": "[union(json('{ \"ignoreMissingVnetServiceEndpoint\": false }'), variables('virtualNetworkRules')[copyIndex()]).ignoreMissingVnetServiceEndpoint]",
-                "virtualNetworkSubnetId": "[resourceId(union(json(format('{{ \"virtualNetworkResourceGroupName\": \"{0}\" }}', resourceGroup().name)), variables('virtualNetworkRules')[copyIndex()]).virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkRules')[copyIndex()].virtualNetworkName, variables('virtualNetworkRules')[copyIndex()].subnetName)]"
+                "virtualNetworkSubnetId": "[resourceId(union(json(format('{{ \"subscriptionId\": \"{0}\" }}', subscription().subscriptionId)), variables('virtualNetworkRules')[copyIndex()]).subscriptionId, union(json(format('{{ \"resourceGroupName\": \"{0}\" }}', resourceGroup().name)), variables('virtualNetworkRules')[copyIndex()]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkRules')[copyIndex()].virtualNetworkName, variables('virtualNetworkRules')[copyIndex()].subnetName)]"
             },
             "type": "Microsoft.Sql/servers/virtualNetworkRules"
         },
@@ -558,7 +558,7 @@
             "properties": {
                 "auditActionsAndGroups": "[if(greater(length(parameters('auditActionsAndGroupNames')), 0), parameters('auditActionsAndGroupNames'), json('null'))]",
                 "state": "[if(variables('isAuditEnabled'), 'Enabled', 'Disabled')]",
-                "storageEndpoint": "[if(variables('isAuditStorageAccountEnabled'), reference(variables('auditStorageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob, json('null'))]"
+                "storageEndpoint": "[if(variables('isAuditStorageAccountEnabled'), reference(variables('auditStorageAccountResourceId'), variables('storageAccountApiVersion')).primaryEndpoints.blob, json('null'))]"
             },
             "type": "Microsoft.Sql/servers/auditingSettings"
         },
@@ -579,7 +579,7 @@
                     "emailSubscriptionAdmins": true,
                     "isEnabled": "[variables('isVulnerabilityAssessmentStorageAccountEnabled')]"
                 },
-                "storageContainerPath": "[format('{0}vulnerability-assessment/', if(variables('isVulnerabilityAssessmentStorageAccountEnabled'), reference(variables('vulnerabilityAssessmentStorageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').properties.primaryEndpoints.blob, json('null')))]"
+                "storageContainerPath": "[format('{0}vulnerability-assessment/', if(variables('isVulnerabilityAssessmentStorageAccountEnabled'), reference(variables('vulnerabilityAssessmentStorageAccountResourceId'), variables('storageAccountApiVersion')).primaryEndpoints.blob, json('null')))]"
             },
             "type": "Microsoft.Sql/servers/vulnerabilityAssessments"
         },
