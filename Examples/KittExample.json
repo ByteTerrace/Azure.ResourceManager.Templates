@@ -27,9 +27,9 @@
         "deploymentNameForMicrosoftVirtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]",
         "deploymentNameForMicrosoftWebAppServerFarm": "[format('{0}-WebAppServerFarm', deployment().name)]",
         "templateUriForMicrosoftAppConfiguration": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.AppConfiguration/configurationStores/Microsoft.AppConfiguration-configurationStores.json'), parameters('templateQueryString')))]",
-        "templateUriForMicrosoftKeyVault": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults/Microsoft.KeyVault-vaults.json'), parameters('templateQueryString')))]",
-        "templateUriForMicrosoftSqlServer": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Sql/servers/Microsoft.Sql-servers.json'), parameters('templateQueryString')))]",
-        "templateUriForMicrosoftStorageAccount": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Storage/storageAccounts/Microsoft.Storage-storageAccounts.json'), parameters('templateQueryString')))]",
+        "templateUriForMicrosoftKeyVault": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/Microsoft.KeyVault-vaults.json'), parameters('templateQueryString')))]",
+        "templateUriForMicrosoftSqlServer": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Sql/Microsoft.Sql-servers.json'), parameters('templateQueryString')))]",
+        "templateUriForMicrosoftStorageAccount": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Storage/Microsoft.Storage-storageAccounts.json'), parameters('templateQueryString')))]",
         "templateUriForMicrosoftVirtualNetwork": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/virtualNetworks/Microsoft.Network-virtualNetworks.json'), parameters('templateQueryString')))]",
         "templateUriForMicrosoftWebAppServerFarm": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Web/serverfarms/Microsoft.Web-serverfarms.json'), parameters('templateQueryString')))]",
         "sqlServerSettings": {
@@ -124,6 +124,12 @@
                     "isAllowTrustedMicrosoftServicesEnabled": {
                         "value": true
                     },
+                    "linkedTemplateBaseUri": {
+                        "value": "[parameters('templateBaseUri')]"
+                    },
+                    "linkedTemplateQueryString": {
+                        "value": "[parameters('templateQueryString')]"
+                    },
                     "storageAccountName": {
                         "value": "[format('{0}storage', parameters('applicationName'))]"
                     },
@@ -209,6 +215,12 @@
                                 "startIpAddress": "[parameters('clientIpAddress')]"
                             }
                         ]
+                    },
+                    "linkedTemplateBaseUri": {
+                        "value": "[parameters('templateBaseUri')]"
+                    },
+                    "linkedTemplateQueryString": {
+                        "value": "[parameters('templateQueryString')]"
                     },
                     "serverName": {
                         "value": "[variables('sqlServerSettings').serverName]"
