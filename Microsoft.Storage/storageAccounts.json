@@ -249,7 +249,7 @@
         "tableNames": "[if(variables('tableNamesIsNotEmpty'), parameters('tableNames'), json('[ \"dummyTable\" ]'))]",
         "tableNamesCount": "[length(parameters('tableNames'))]",
         "tableNamesIsNotEmpty": "[greater(variables('tableNamesCount'), 0)]",
-        "templateUriForMicrosoftKeyVaultAccessPolicies": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/Microsoft.KeyVault-vaults-accessPolicies.json'), parameters('linkedTemplateQueryString')))]"
+        "templateUriForMicrosoftKeyVaultAccessPolicies": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults-accessPolicies.json'), parameters('linkedTemplateQueryString')))]"
     },
     "resources": [
         {
