@@ -1,7 +1,21 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
+    "contentVersion": "2.0.0.0",
     "parameters": {
+        "linkedTemplateBaseUri": {
+            "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/",
+            "metadata": {
+                "description": "Specifies the base uri of external linked templates used by this template."
+            },
+            "type": "string"
+        },
+        "linkedTemplateQueryString": {
+            "defaultValue": "&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
+            "metadata": {
+                "description": "Specifies the query string that will be appended to the uri of external linked templates used by this template."
+            },
+            "type": "string"
+        },
         "location": {
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
@@ -96,11 +110,10 @@
         "serviceEnvironmentName": "[if(not(empty(coalesce(parameters('serviceEnvironmentName'), ''))), parameters('serviceEnvironmentName'), 'DummyServiceEnvironment')]",
         "serviceEnvironmentResourceGroupName": "[if(not(empty(coalesce(parameters('serviceEnvironmentResourceGroupName'), ''))), parameters('serviceEnvironmentResourceGroupName'), resourceGroup().name)]",
         "serviceEnvironmentResourceId": "[resourceId(variables('serviceEnvironmentResourceGroupName'), 'Microsoft.Web/hostingEnvironments/', variables('serviceEnvironmentName'))]",
-        "siteApiVersion": "2019-08-01",
         "sites": "[if(variables('sitesIsNotEmpty'), parameters('sites'), json('[ { \"siteName\": \"DummySite\" } ]'))]",
         "sitesCount": "[length(parameters('sites'))]",
         "sitesIsNotEmpty": "[greater(variables('sitesCount'), 0)]",
-        "sitesTemplateUri": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Web%2Fsites%2FMicrosoft.Web-sites.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true"
+        "templateUriForMicrosoftWebSites": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Web/sites.json'), parameters('linkedTemplateQueryString')))]"
     },
     "resources": [
         {
@@ -193,8 +206,8 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
-                    "uri": "[variables('sitesTemplateUri')]"
+                    "contentVersion": "2.0.0.0",
+                    "uri": "[variables('templateUriForMicrosoftWebSites')]"
                 }
             },
             "type": "Microsoft.Resources/deployments"

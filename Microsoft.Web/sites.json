@@ -1,6 +1,6 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
+    "contentVersion": "2.0.0.0",
     "parameters": {
         "applicationSettings": {
             "defaultValue": [],
@@ -247,19 +247,16 @@
             "subnetResourceId": "[variables('virtualNetworkResourceId')]",
             "swiftSupported": true
         },
-        "siteConfigForVirtualNetworkResourceId": "[resourceId('Microsoft.Web/sites/config', parameters('siteName'), 'virtualNetwork')]",
         "siteConfigForWebProperties": {
             "ipSecurityRestrictions": "[if(variables('isVirtualNetworkIntegrationEnabled'), variables('ipSecurityRestrictions'), json('[]'))]",
             "scmIpSecurityRestrictions": null,
             "scmIpSecurityRestrictionsUseMain": true
         },
-        "siteConfigForWebResourceId": "[resourceId('Microsoft.Web/sites/config', parameters('siteName'), 'virtualNetwork')]",
         "siteKind": "[format('{0}{1}', parameters('kind'), if(variables('isLinuxOperatingSystem'), ',linux', ''))]",
         "siteResourceId": "[resourceId('Microsoft.Web/sites', parameters('siteName'))]",
         "sitesApiVersion": "2019-08-01",
         "sitesConfigApiVersion": "2019-08-01",
         "slots": "[if(variables('slotsIsNotEmpty'), parameters('slots'), json('[ { \"slotName\": \"DummySlot\" } ]'))]",
-        "slotsApiVersion": "2019-08-01",
         "slotsIsNotEmpty": "[greater(length(parameters('slots')), 0)]",
         "slotsTemplateUri": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Web%2Fsites%2FMicrosoft.Web-sites-slots.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
         "virtualNetworkResourceGroupName": "[if(not(empty(coalesce(parameters('virtualNetworkResourceGroupName'), ''))), parameters('virtualNetworkResourceGroupName'), resourceGroup().name)]",
