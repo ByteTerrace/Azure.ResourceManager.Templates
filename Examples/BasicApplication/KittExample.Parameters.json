@@ -4,9 +4,7 @@
     "parameters": {
         "environmentSettings": {
             "value":{
-                "clientIpAddress": {
-                    "value": "97.99.215.35"
-                },
+                "clientIpAddress": "97.99.215.35",
                 "configurationStore": {
                     "name": "KittExample-AppConfig"
                 },
