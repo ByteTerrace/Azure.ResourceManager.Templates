@@ -2,11 +2,11 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
     "contentVersion": "2.0.0.0",
     "parameters": {
-        "clientIpAddress": {
-            "value": "97.99.215.35"
-        },
         "environmentSettings": {
             "value":{
+                "clientIpAddress": {
+                    "value": "97.99.215.35"
+                },
                 "configurationStore": {
                     "name": "KittExample-AppConfig"
                 },
