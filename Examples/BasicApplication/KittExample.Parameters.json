@@ -1,0 +1,56 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "applicationName": {
+            "value": "KittExample000"
+        },
+        "clientIpAddress" {
+            "value": "97.99.215.35"
+        },
+        "environmentSettings": {
+            "sqlServerSettings": {
+                "serverName": "KittExample000-Sql"
+            },
+            "virtualNetworkSettings": {
+                "subnets": [
+                    {
+                        "name": "default",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24",
+                            "delegations": [
+                                {
+                                    "name": "delegation",
+                                    "properties": {
+                                        "serviceName": "Microsoft.Web/serverfarms"
+                                    }
+                                }
+                            ],
+                            "serviceEndpoints": [
+                                {
+                                    "service": "Microsoft.KeyVault"
+                                },
+                                {
+                                    "service": "Microsoft.Sql"
+                                },
+                                {
+                                    "service": "Microsoft.Storage"
+                                },
+                                {
+                                    "service": "Microsoft.Web"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "virtualNetworkName": "KittExample000-Vnet"
+            }
+        },
+        "templateBaseUri": {
+            "value": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/"
+        },
+        "templateQueryString": {
+            "value": "&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true"
+        }
+    }
+}

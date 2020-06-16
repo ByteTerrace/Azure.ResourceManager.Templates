@@ -9,6 +9,9 @@
         "clientIpAddress": {
             "type": "string"
         },
+        "environmentSettings": {
+            "type": "object"
+        },
         "templateBaseUri": {
             "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/",
             "type": "string"
@@ -31,43 +34,7 @@
         "templateUriForMicrosoftSqlServer": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Sql/servers.json'), parameters('templateQueryString')))]",
         "templateUriForMicrosoftStorageAccount": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Storage/storageAccounts.json'), parameters('templateQueryString')))]",
         "templateUriForMicrosoftVirtualNetwork": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/virtualNetworks.json'), parameters('templateQueryString')))]",
-        "templateUriForMicrosoftWebAppServerFarm": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Web/serverfarms.json'), parameters('templateQueryString')))]",
-        "sqlServerSettings": {
-            "serverName": "[format('{0}-Sql', parameters('applicationName'))]"
-        },
-        "virtualNetworkSettings": {
-            "subnets": [
-                {
-                    "name": "default",
-                    "properties": {
-                        "addressPrefix": "10.0.0.0/24",
-                        "delegations": [
-                            {
-                                "name": "delegation",
-                                "properties": {
-                                    "serviceName": "Microsoft.Web/serverfarms"
-                                }
-                            }
-                        ],
-                        "serviceEndpoints": [
-                            {
-                                "service": "Microsoft.KeyVault"
-                            },
-                            {
-                                "service": "Microsoft.Sql"
-                            },
-                            {
-                                "service": "Microsoft.Storage"
-                            },
-                            {
-                                "service": "Microsoft.Web"
-                            }
-                        ]
-                    }
-                }
-            ],
-            "virtualNetworkName": "[format('{0}-Vnet', parameters('applicationName'))]"
-        }
+        "templateUriForMicrosoftWebAppServerFarm": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Web/serverfarms.json'), parameters('templateQueryString')))]"
     },
     "resources": [
         {
@@ -77,10 +44,10 @@
                 "mode": "Incremental",
                 "parameters": {
                     "subnets": {
-                        "value": "[variables('virtualNetworkSettings').subnets]"
+                        "value": "[parameters('environmentSettings').virtualNetworkSettings.subnets]"
                     },
                     "virtualNetworkName": {
-                        "value": "[variables('virtualNetworkSettings').virtualNetworkName]"
+                        "value": "[parameters('environmentSettings').virtualNetworkSettings.virtualNetworkName]"
                     }
                 },
                 "templateLink": {
@@ -137,7 +104,7 @@
                         "value": [
                             {
                                 "subnetName": "default",
-                                "virtualNetworkName": "[variables('virtualNetworkSettings').virtualNetworkName]"
+                                "virtualNetworkName": "[parameters('environmentSettings').virtualNetworkSettings.virtualNetworkName]"
                             }
                         ]
                     }
@@ -174,7 +141,7 @@
                         "value": [
                             {
                                 "subnetName": "default",
-                                "virtualNetworkName": "[variables('virtualNetworkSettings').virtualNetworkName]"
+                                "virtualNetworkName": "[parameters('environmentSettings').virtualNetworkSettings.virtualNetworkName]"
                             }
                         ]
                     }
@@ -223,14 +190,14 @@
                         "value": "[parameters('templateQueryString')]"
                     },
                     "serverName": {
-                        "value": "[variables('sqlServerSettings').serverName]"
+                        "value": "[parameters('environmentSettings').sqlServerSettings.serverName]"
                     },
                     "virtualNetworkRules": {
                         "value": [
                             {
                                 "ruleName": "Temp",
                                 "subnetName": "default",
-                                "virtualNetworkName": "[variables('virtualNetworkSettings').virtualNetworkName]"
+                                "virtualNetworkName": "[parameters('environmentSettings').virtualNetworkSettings.virtualNetworkName]"
                             }
                         ]
                     },
