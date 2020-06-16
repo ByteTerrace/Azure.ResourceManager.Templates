@@ -1,49 +1,51 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "2.0.0.0",
     "parameters": {
         "applicationName": {
             "value": "KittExample000"
         },
-        "clientIpAddress" {
+        "clientIpAddress": {
             "value": "97.99.215.35"
         },
         "environmentSettings": {
-            "sqlServerSettings": {
-                "serverName": "KittExample000-Sql"
-            },
-            "virtualNetworkSettings": {
-                "subnets": [
-                    {
-                        "name": "default",
-                        "properties": {
-                            "addressPrefix": "10.0.0.0/24",
-                            "delegations": [
-                                {
-                                    "name": "delegation",
-                                    "properties": {
-                                        "serviceName": "Microsoft.Web/serverfarms"
+            "value":{
+                "sqlServerSettings": {
+                    "serverName": "KittExample000-Sql"
+                },
+                "virtualNetworkSettings": {
+                    "subnets": [
+                        {
+                            "name": "default",
+                            "properties": {
+                                "addressPrefix": "10.0.0.0/24",
+                                "delegations": [
+                                    {
+                                        "name": "delegation",
+                                        "properties": {
+                                            "serviceName": "Microsoft.Web/serverfarms"
+                                        }
                                     }
-                                }
-                            ],
-                            "serviceEndpoints": [
-                                {
-                                    "service": "Microsoft.KeyVault"
-                                },
-                                {
-                                    "service": "Microsoft.Sql"
-                                },
-                                {
-                                    "service": "Microsoft.Storage"
-                                },
-                                {
-                                    "service": "Microsoft.Web"
-                                }
-                            ]
+                                ],
+                                "serviceEndpoints": [
+                                    {
+                                        "service": "Microsoft.KeyVault"
+                                    },
+                                    {
+                                        "service": "Microsoft.Sql"
+                                    },
+                                    {
+                                        "service": "Microsoft.Storage"
+                                    },
+                                    {
+                                        "service": "Microsoft.Web"
+                                    }
+                                ]
+                            }
                         }
-                    }
-                ],
-                "virtualNetworkName": "KittExample000-Vnet"
+                    ],
+                    "virtualNetworkName": "KittExample000-Vnet"
+                }
             }
         },
         "templateBaseUri": {
