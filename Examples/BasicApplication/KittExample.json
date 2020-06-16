@@ -1,12 +1,9 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
+    "contentVersion": "2.0.0.0",
     "parameters": {
         "applicationName": {
             "defaultValue": "KittExample",
-            "type": "string"
-        },
-        "clientIpAddress": {
             "type": "string"
         },
         "environmentSettings": {
@@ -44,10 +41,10 @@
                 "mode": "Incremental",
                 "parameters": {
                     "subnets": {
-                        "value": "[parameters('environmentSettings').virtualNetworkSettings.subnets]"
+                        "value": "[parameters('environmentSettings').virtualNetwork.subnets]"
                     },
                     "virtualNetworkName": {
-                        "value": "[parameters('environmentSettings').virtualNetworkSettings.virtualNetworkName]"
+                        "value": "[parameters('environmentSettings').virtualNetwork.name]"
                     }
                 },
                 "templateLink": {
@@ -64,7 +61,7 @@
                 "mode": "Incremental",
                 "parameters": {
                     "configurationStoreName": {
-                        "value": "[format('{0}-AppConfig', parameters('applicationName'))]"
+                        "value": "[parameters('environmentSettings').configurationStore.name]"
                     }
                 },
                 "templateLink": {
@@ -85,7 +82,7 @@
                 "parameters": {
                     "firewallRules": {
                         "value": [
-                            "[parameters('clientIpAddress')]"
+                            "[parameters('environmentSettings').clientIpAddress]"
                         ]
                     },
                     "isAllowTrustedMicrosoftServicesEnabled": {
@@ -98,13 +95,13 @@
                         "value": "[parameters('templateQueryString')]"
                     },
                     "storageAccountName": {
-                        "value": "[format('{0}storage', parameters('applicationName'))]"
+                        "value": "[parameters('environmentSettings').storageAccount.name]"
                     },
                     "virtualNetworkRules": {
                         "value": [
                             {
                                 "subnetName": "default",
-                                "virtualNetworkName": "[parameters('environmentSettings').virtualNetworkSettings.virtualNetworkName]"
+                                "virtualNetworkName": "[parameters('environmentSettings').virtualNetwork.name]"
                             }
                         ]
                     }
@@ -128,20 +125,20 @@
                 "parameters": {
                     "firewallRules": {
                         "value": [
-                            "[parameters('clientIpAddress')]"
+                            "[parameters('environmentSettings').clientIpAddress]"
                         ]
                     },
                     "isAllowTrustedMicrosoftServicesEnabled": {
                         "value": true
                     },
                     "keyVaultName": {
-                        "value": "[format('{0}-KeyVault', parameters('applicationName'))]"
+                        "value": "[parameters('environmentSettings').keyVault.name]"
                     },
                     "virtualNetworkRules": {
                         "value": [
                             {
                                 "subnetName": "default",
-                                "virtualNetworkName": "[parameters('environmentSettings').virtualNetworkSettings.virtualNetworkName]"
+                                "virtualNetworkName": "[parameters('environmentSettings').virtualNetwork.name]"
                             }
                         ]
                     }
@@ -165,7 +162,7 @@
                 "mode": "Incremental",
                 "parameters": {
                     "auditStorageAccountName": {
-                        "value": "[format('{0}storage', parameters('applicationName'))]"
+                        "value": "[parameters('environmentSettings').storageAccount.name]"
                     },
                     "databases": {
                         "value": [
@@ -177,9 +174,9 @@
                     "firewallRules": {
                         "value": [
                             {
-                                "endIpAddress": "[parameters('clientIpAddress')]",
+                                "endIpAddress": "[parameters('environmentSettings').clientIpAddress]",
                                 "ruleName": "Temp",
-                                "startIpAddress": "[parameters('clientIpAddress')]"
+                                "startIpAddress": "[parameters('environmentSettings').clientIpAddress]"
                             }
                         ]
                     },
@@ -190,19 +187,19 @@
                         "value": "[parameters('templateQueryString')]"
                     },
                     "serverName": {
-                        "value": "[parameters('environmentSettings').sqlServerSettings.serverName]"
+                        "value": "[parameters('environmentSettings').sqlServer.name]"
                     },
                     "virtualNetworkRules": {
                         "value": [
                             {
                                 "ruleName": "Temp",
                                 "subnetName": "default",
-                                "virtualNetworkName": "[parameters('environmentSettings').virtualNetworkSettings.virtualNetworkName]"
+                                "virtualNetworkName": "[parameters('environmentSettings').virtualNetwork.name]"
                             }
                         ]
                     },
                     "vulnerabilityAssessmentStorageAccountName": {
-                        "value": "[format('{0}storage', parameters('applicationName'))]"
+                        "value": "[parameters('environmentSettings').storageAccount.name]"
                     }
                 },
                 "templateLink": {

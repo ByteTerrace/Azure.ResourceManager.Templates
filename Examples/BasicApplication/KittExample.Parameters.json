@@ -2,18 +2,24 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
     "contentVersion": "2.0.0.0",
     "parameters": {
-        "applicationName": {
-            "value": "KittExample000"
-        },
         "clientIpAddress": {
             "value": "97.99.215.35"
         },
         "environmentSettings": {
             "value":{
-                "sqlServerSettings": {
-                    "serverName": "KittExample000-Sql"
+                "configurationStore": {
+                    "name": "KittExample-AppConfig"
                 },
-                "virtualNetworkSettings": {
+                "keyVault": {
+                    "name": "KittExample-KeyVault"
+                },
+                "sqlServer": {
+                    "name": "KittExample-Sql"
+                },
+                "storageAccount": {
+                    "name": "kittexamplestorage"
+                },
+                "virtualNetwork": {
                     "subnets": [
                         {
                             "name": "default",
@@ -44,7 +50,7 @@
                             }
                         }
                     ],
-                    "virtualNetworkName": "KittExample000-Vnet"
+                    "name": "KittExample-Vnet"
                 }
             }
         },
