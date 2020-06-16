@@ -31,7 +31,7 @@
         "templateUriForMicrosoftSqlServer": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Sql/servers.json'), parameters('templateQueryString')))]",
         "templateUriForMicrosoftStorageAccount": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Storage/storageAccounts.json'), parameters('templateQueryString')))]",
         "templateUriForMicrosoftVirtualNetwork": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/virtualNetworks/Microsoft.Network-virtualNetworks.json'), parameters('templateQueryString')))]",
-        "templateUriForMicrosoftWebAppServerFarm": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Web/serverfarms/Microsoft.Web-serverfarms.json'), parameters('templateQueryString')))]",
+        "templateUriForMicrosoftWebAppServerFarm": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Web/serverfarms.json'), parameters('templateQueryString')))]",
         "sqlServerSettings": {
             "serverName": "[format('{0}-Sql', parameters('applicationName'))]"
         },
@@ -247,7 +247,6 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": false,
             "dependsOn": [
                 "[variables('deploymentNameForMicrosoftStorageAccount')]",
                 "[variables('deploymentNameForMicrosoftVirtualNetwork')]"
@@ -327,7 +326,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "2.0.0.0",
                     "uri": "[variables('templateUriForMicrosoftWebAppServerFarm')]"
                 }
             },
