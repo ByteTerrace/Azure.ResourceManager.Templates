@@ -81,6 +81,20 @@
             },
             "type": "string"
         },
+        "linkedTemplateBaseUri": {
+            "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/",
+            "metadata": {
+                "description": "Specifies the base uri of external linked templates used by this template."
+            },
+            "type": "string"
+        },
+        "linkedTemplateQueryString": {
+            "defaultValue": "&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
+            "metadata": {
+                "description": "Specifies the query string that will be appended to the uri of external linked templates used by this template."
+            },
+            "type": "string"
+        },
         "location": {
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
@@ -258,7 +272,7 @@
         "sitesConfigApiVersion": "2019-08-01",
         "slots": "[if(variables('slotsIsNotEmpty'), parameters('slots'), json('[ { \"slotName\": \"DummySlot\" } ]'))]",
         "slotsIsNotEmpty": "[greater(length(parameters('slots')), 0)]",
-        "slotsTemplateUri": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/Items?path=%2FMicrosoft.Web%2Fsites%2FMicrosoft.Web-sites-slots.json&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
+        "templateUriForMicrosoftWebSitesSlots": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Web/sites-slots.json'), parameters('linkedTemplateQueryString')))]",
         "virtualNetworkResourceGroupName": "[if(not(empty(coalesce(parameters('virtualNetworkResourceGroupName'), ''))), parameters('virtualNetworkResourceGroupName'), resourceGroup().name)]",
         "virtualNetworkResourceId": "[resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
     },
@@ -384,8 +398,8 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
-                    "uri": "[variables('slotsTemplateUri')]"
+                    "contentVersion": "2.0.0.0",
+                    "uri": "[variables('templateUriForMicrosoftWebSitesSlots')]"
                 }
             },
             "type": "Microsoft.Resources/deployments"
