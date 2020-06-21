@@ -335,9 +335,9 @@
         }
     ],
     "outputs": {
-        "principalId": {
-            "type": "string",
-            "value": "[reference(variables('slotResourceId'), variables('slotsApiVersion'), 'Full').identity.principalId]"
+        "identity": {
+            "type": "object",
+            "value": "[reference(variables('slotResourceId'), variables('slotsApiVersion'), 'Full').identity]"
         }
     }
 }

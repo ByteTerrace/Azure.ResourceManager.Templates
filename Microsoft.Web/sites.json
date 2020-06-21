@@ -467,5 +467,11 @@
             },
             "type": "Microsoft.Resources/deployments"
         }
-    ]
+    ],
+    "outputs": {
+        "identity": {
+            "type": "object",
+            "value": "[reference(variables('siteResourceId'), variables('sitesApiVersion'), 'Full').identity]"
+        }
+    }
 }
