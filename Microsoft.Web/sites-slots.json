@@ -63,6 +63,13 @@
             },
             "type": "bool"
         },
+        "keyVaultAccessPolicies": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of Azure Key Vault access policy permissions that will be granted to the Azure Web site slot."
+            },
+            "type": "array"
+        },
         "kind": {
             "allowedValues": [
                 "app",
@@ -71,6 +78,20 @@
             "defaultValue": "app",
             "metadata": {
                 "description": "Specifies the kind of Azure Web site slot."
+            },
+            "type": "string"
+        },
+        "linkedTemplateBaseUri": {
+            "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/",
+            "metadata": {
+                "description": "Specifies the base uri of external linked templates used by this template."
+            },
+            "type": "string"
+        },
+        "linkedTemplateQueryString": {
+            "defaultValue": "&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
+            "metadata": {
+                "description": "Specifies the query string that will be appended to the uri of external linked templates used by this template."
             },
             "type": "string"
         },
@@ -161,6 +182,7 @@
         }
     },
     "variables": {
+        "deploymentApiVersion": "2019-10-01",
         "functionAppSettings": [
             {
                 "name": "FUNCTIONS_EXTENSION_VERSION",
@@ -171,6 +193,9 @@
                 "value": "dotnet"
             }
         ],
+        "keyVaultAccessPolicies": "[if(variables('keyVaultAccessPoliciesIsNotEmpty'), parameters('keyVaultAccessPolicies'), json('[ { \"keyVaultName\": \"dummyKeyVault\", \"permissions\": [] } ]'))]",
+        "keyVaultAccessPoliciesCount": "[length(parameters('keyVaultAccessPolicies'))]",
+        "keyVaultAccessPoliciesIsNotEmpty": "[greater(variables('keyVaultAccessPoliciesCount'), 0)]",
         "ipSecurityRestrictions": [
             {
                 "action": "Allow",
@@ -228,6 +253,7 @@
         "sitesConfigApiVersion": "2019-08-01",
         "slotResourceId": "[resourceId('Microsoft.Web/sites/slots', parameters('siteName'), parameters('slotName'))]",
         "slotsApiVersion": "2019-08-01",
+        "templateUriForMicrosoftKeyVaultAccessPolicies": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults-accessPolicies.json'), parameters('linkedTemplateQueryString')))]",
         "virtualNetworkResourceGroupName": "[if(not(empty(coalesce(parameters('virtualNetworkResourceGroupName'), ''))), parameters('virtualNetworkResourceGroupName'), resourceGroup().name)]",
         "virtualNetworkResourceId": "[resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
     },
@@ -235,6 +261,9 @@
         {
             "apiVersion": "[variables('slotsApiVersion')]",
             "kind": "[variables('siteKind')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
             "location": "[parameters('location')]",
             "name": "[format('{0}/{1}', parameters('siteName'), parameters('slotName'))]",
             "tags": "[parameters('tags')]",
@@ -263,6 +292,52 @@
             "name": "[format('{0}/{1}/web', parameters('siteName'), parameters('slotName'))]",
             "properties": "[variables('siteConfigForWebProperties')]",
             "type": "Microsoft.Web/sites/slots/config"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[variables('keyVaultAccessPoliciesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('keyVaultAccessPoliciesCount')]",
+                "mode": "parallel",
+                "name": "keyVaultAccessPoliciesCopy"
+            },
+            "dependsOn": [
+                "[variables('slotResourceId')]"
+            ],
+            "name": "[format('{0}-{1}-{2}-KvAp{3}', deployment().name, parameters('siteName'), parameters('slotName'), copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "actionType": {
+                        "value": "add"
+                    },
+                    "keyVaultName": {
+                        "value": "[variables('keyVaultAccessPolicies')[copyIndex()].keyVaultName]"
+                    },
+                    "objectId": {
+                        "value": "[reference(variables('slotResourceId'), variables('slotsApiVersion'), 'Full').identity.principalId]"
+                    },
+                    "permissions": {
+                        "value": "[variables('keyVaultAccessPolicies')[copyIndex()].permissions]"
+                    },
+                    "tenantId": {
+                        "value": "[reference(variables('slotResourceId'), variables('slotsApiVersion'), 'Full').identity.tenantId]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "2.0.0.0",
+                    "uri": "[variables('templateUriForMicrosoftKeyVaultAccessPolicies')]"
+                }
+            },
+            "resourceGroup": "[union(json(format('{{ \"resourceGroupName\": \"{0}\" }}', resourceGroup().name)), variables('keyVaultAccessPolicies')[copyIndex()]).resourceGroupName]",
+            "subscriptionId": "[union(json(format('{{ \"subscriptionId\": \"{0}\" }}', subscription().subscriptionId)), variables('keyVaultAccessPolicies')[copyIndex()]).subscriptionId]",
+            "type": "Microsoft.Resources/deployments"
         }
-    ]
+    ],
+    "outputs": {
+        "principalId": {
+            "type": "string",
+            "value": "[reference(variables('slotResourceId'), variables('slotsApiVersion'), 'Full').identity.principalId]"
+        }
+    }
 }

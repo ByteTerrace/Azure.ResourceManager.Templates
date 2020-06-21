@@ -70,6 +70,13 @@
             },
             "type": "bool"
         },
+        "keyVaultAccessPolicies": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of Azure Key Vault access policy permissions that will be granted to the Azure Web site slot."
+            },
+            "type": "array"
+        },
         "kind": {
             "allowedValues": [
                 "app",
@@ -236,6 +243,9 @@
         "isHealthCheckEnabled": "[not(empty(coalesce(parameters('healthCheckPath'), '')))]",
         "isLinuxOperatingSystem": "[equals('linux', toLower(parameters('operatingSystemName')))]",
         "isVirtualNetworkIntegrationEnabled": "[or(not(empty(coalesce(parameters('virtualNetworkResourceGroupName')))), not(empty(coalesce(parameters('virtualNetworkName')))), not(empty(coalesce(parameters('subnetName')))))]",
+        "keyVaultAccessPolicies": "[if(variables('keyVaultAccessPoliciesIsNotEmpty'), parameters('keyVaultAccessPolicies'), json('[ { \"keyVaultName\": \"dummyKeyVault\", \"permissions\": [] } ]'))]",
+        "keyVaultAccessPoliciesCount": "[length(parameters('keyVaultAccessPolicies'))]",
+        "keyVaultAccessPoliciesIsNotEmpty": "[greater(variables('keyVaultAccessPoliciesCount'), 0)]",
         "servicePlanResourceGroupName": "[if(not(empty(coalesce(parameters('servicePlanResourceGroupName'), ''))), parameters('servicePlanResourceGroupName'), resourceGroup().name)]",
         "servicePlanResourceId": "[resourceId(variables('servicePlanResourceGroupName'), 'Microsoft.Web/serverfarms', parameters('servicePlanName'))]",
         "siteConfigForRoot": {
@@ -272,6 +282,7 @@
         "sitesConfigApiVersion": "2019-08-01",
         "slots": "[if(variables('slotsIsNotEmpty'), parameters('slots'), json('[ { \"slotName\": \"DummySlot\" } ]'))]",
         "slotsIsNotEmpty": "[greater(length(parameters('slots')), 0)]",
+        "templateUriForMicrosoftKeyVaultAccessPolicies": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults-accessPolicies.json'), parameters('linkedTemplateQueryString')))]",
         "templateUriForMicrosoftWebSitesSlots": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Web/sites-slots.json'), parameters('linkedTemplateQueryString')))]",
         "virtualNetworkResourceGroupName": "[if(not(empty(coalesce(parameters('virtualNetworkResourceGroupName'), ''))), parameters('virtualNetworkResourceGroupName'), resourceGroup().name)]",
         "virtualNetworkResourceId": "[resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
@@ -281,6 +292,9 @@
             "apiVersion": "[variables('sitesApiVersion')]",
             "condition": "[parameters('isProductionSlotDeploymentEnabled')]",
             "kind": "[variables('siteKind')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
             "location": "[parameters('location')]",
             "name": "[parameters('siteName')]",
             "properties": {
@@ -326,6 +340,46 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[variables('keyVaultAccessPoliciesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('keyVaultAccessPoliciesCount')]",
+                "mode": "parallel",
+                "name": "keyVaultAccessPoliciesCopy"
+            },
+            "dependsOn": [
+                "[variables('siteResourceId')]"
+            ],
+            "name": "[format('{0}-{1}-KvAp{2}', deployment().name, parameters('siteName'), copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "actionType": {
+                        "value": "add"
+                    },
+                    "keyVaultName": {
+                        "value": "[variables('keyVaultAccessPolicies')[copyIndex()].keyVaultName]"
+                    },
+                    "objectId": {
+                        "value": "[reference(variables('siteResourceId'), variables('sitesApiVersion'), 'Full').identity.principalId]"
+                    },
+                    "permissions": {
+                        "value": "[variables('keyVaultAccessPolicies')[copyIndex()].permissions]"
+                    },
+                    "tenantId": {
+                        "value": "[reference(variables('siteResourceId'), variables('sitesApiVersion'), 'Full').identity.tenantId]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "2.0.0.0",
+                    "uri": "[variables('templateUriForMicrosoftKeyVaultAccessPolicies')]"
+                }
+            },
+            "resourceGroup": "[union(json(format('{{ \"resourceGroupName\": \"{0}\" }}', resourceGroup().name)), variables('keyVaultAccessPolicies')[copyIndex()]).resourceGroupName]",
+            "subscriptionId": "[union(json(format('{{ \"subscriptionId\": \"{0}\" }}', subscription().subscriptionId)), variables('keyVaultAccessPolicies')[copyIndex()]).subscriptionId]",
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[variables('slotsIsNotEmpty')]",
             "copy": {
                 "count": "[length(variables('slots'))]",
@@ -360,8 +414,17 @@
                     "is32BitModeEnabled": {
                         "value": "[union(json('{ \"is32BitModeEnabled\": false }'), variables('slots')[copyIndex()]).is32BitModeEnabled]"
                     },
+                    "keyVaultAccessPolicies": {
+                        "value": "[union(json('{ \"keyVaultAccessPolicies\": [] }'), variables('slots')[copyIndex()]).keyVaultAccessPolicies]"
+                    },
                     "kind": {
                         "value": "[union(json('{ \"kind\": \"app\" }'), variables('slots')[copyIndex()]).kind]"
+                    },
+                    "linkedTemplateBaseUri": {
+                        "value": "[parameters('linkedTemplateBaseUri')]"
+                    },
+                    "linkedTemplateQueryString": {
+                        "value": "[parameters('linkedTemplateQueryString')]"
                     },
                     "location": {
                         "value": "[parameters('location')]"

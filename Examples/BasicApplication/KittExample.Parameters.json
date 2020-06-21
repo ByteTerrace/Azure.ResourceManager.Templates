@@ -37,6 +37,17 @@
                             "isAlwaysOnEnabled": false,
                             "isClientAffinityEnabled": false,
                             "is32BitModeEnabled": true,
+                            "keyVaultAccessPolicies": [
+                                {
+                                    "keyVaultName": "KittExample001",
+                                    "permissions": {
+                                        "secrets": [
+                                            "Get",
+                                            "List"
+                                        ]
+                                    }
+                                }
+                            ],
                             "siteName": "KittExample001-Portal",
                             "slots": [
                                 {

@@ -332,6 +332,9 @@
                                 "Wrapkey"
                             ]
                         }
+                    },
+                    "tenantId": {
+                        "value": "[reference(variables('storageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').identity.tenantId]"
                     }
                 },
                 "templateLink": {

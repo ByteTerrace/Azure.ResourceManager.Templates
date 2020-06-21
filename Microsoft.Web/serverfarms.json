@@ -171,6 +171,9 @@
                     "is32BitModeEnabled": {
                         "value": "[union(json('{ \"is32BitModeEnabled\": false }'), variables('sites')[copyIndex()]).is32BitModeEnabled]"
                     },
+                    "keyVaultAccessPolicies": {
+                        "value": "[union(json('{ \"keyVaultAccessPolicies\": [] }'), variables('sites')[copyIndex()]).keyVaultAccessPolicies]"
+                    },
                     "kind": {
                         "value": "[union(json('{ \"kind\": \"app\" }'), variables('sites')[copyIndex()]).kind]"
                     },
