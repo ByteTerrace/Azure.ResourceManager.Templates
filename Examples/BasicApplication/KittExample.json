@@ -204,6 +204,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "operatingSystemName": {
+                        "value": "[parameters('environmentSettings').appServicePlans[copyIndex()].operatingSystemName]"
+                    },
                     "servicePlanName": {
                         "value": "[parameters('environmentSettings').appServicePlans[copyIndex()].name]"
                     },
