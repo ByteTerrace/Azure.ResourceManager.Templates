@@ -221,5 +221,21 @@
             },
             "type": "Microsoft.Resources/deployments"
         }
-    ]
+    ],
+    "outputs": {
+        "siteIdentities": {
+            "copy": {
+                "count": "[variables('sitesCount')]",
+                "input": "[reference(format('{0}-site_{1}', deployment().name, copyIndex())).outputs.siteIdentity.value]"
+            },
+            "type": "array"
+        },
+        "slotIdentities": {
+            "copy": {
+                "count": "[variables('sitesCount')]",
+                "input": "[reference(format('{0}-site_{1}', deployment().name, copyIndex())).outputs.slotIdentities.value]"
+            },
+            "type": "array"
+        }
+    }
 }
