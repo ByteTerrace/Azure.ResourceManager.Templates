@@ -2,10 +2,6 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "2.0.0.0",
     "parameters": {
-        "applicationName": {
-            "defaultValue": "KittExample",
-            "type": "string"
-        },
         "environmentSettings": {
             "type": "object"
         },
@@ -86,7 +82,7 @@
                         ]
                     },
                     "isAllowTrustedMicrosoftServicesEnabled": {
-                        "value": true
+                        "value": "[parameters('environmentSettings').storageAccount.isAllowTrustedMicrosoftServicesEnabled]"
                     },
                     "linkedTemplateBaseUri": {
                         "value": "[parameters('templateBaseUri')]"
@@ -98,12 +94,7 @@
                         "value": "[parameters('environmentSettings').storageAccount.name]"
                     },
                     "virtualNetworkRules": {
-                        "value": [
-                            {
-                                "subnetName": "default",
-                                "virtualNetworkName": "[parameters('environmentSettings').virtualNetwork.name]"
-                            }
-                        ]
+                        "value": "[parameters('environmentSettings').storageAccount.virtualNetworkRules]"
                     }
                 },
                 "templateLink": {
@@ -123,24 +114,22 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "accessPolicies": {
+                        "value": []
+                    },
                     "firewallRules": {
                         "value": [
                             "[parameters('environmentSettings').clientIpAddress]"
                         ]
                     },
                     "isAllowTrustedMicrosoftServicesEnabled": {
-                        "value": true
+                        "value": "[parameters('environmentSettings').keyVault.isAllowTrustedMicrosoftServicesEnabled]"
                     },
                     "keyVaultName": {
                         "value": "[parameters('environmentSettings').keyVault.name]"
                     },
                     "virtualNetworkRules": {
-                        "value": [
-                            {
-                                "subnetName": "default",
-                                "virtualNetworkName": "[parameters('environmentSettings').virtualNetwork.name]"
-                            }
-                        ]
+                        "value": "[parameters('environmentSettings').keyVault.virtualNetworkRules]"
                     }
                 },
                 "templateLink": {
@@ -165,11 +154,7 @@
                         "value": "[parameters('environmentSettings').storageAccount.name]"
                     },
                     "databases": {
-                        "value": [
-                            {
-                                "databaseName": "[parameters('applicationName')]"
-                            }
-                        ]
+                        "value": "[parameters('environmentSettings').sqlServer.databases]"
                     },
                     "firewallRules": {
                         "value": [
@@ -190,13 +175,7 @@
                         "value": "[parameters('environmentSettings').sqlServer.name]"
                     },
                     "virtualNetworkRules": {
-                        "value": [
-                            {
-                                "ruleName": "Temp",
-                                "subnetName": "default",
-                                "virtualNetworkName": "[parameters('environmentSettings').virtualNetwork.name]"
-                            }
-                        ]
+                        "value": "[parameters('environmentSettings').sqlServer.virtualNetworkRules]"
                     },
                     "vulnerabilityAssessmentStorageAccountName": {
                         "value": "[parameters('environmentSettings').storageAccount.name]"
@@ -220,73 +199,13 @@
                 "mode": "Incremental",
                 "parameters": {
                     "servicePlanName": {
-                        "value": "[format('{0}-Portal-ASP', parameters('applicationName'))]"
+                        "value": "[parameters('environmentSettings').appServicePlan.name]"
                     },
                     "sites": {
-                        "value": [
-                            {
-                                "applicationSettings": [
-                                    {
-                                        "isSlotSetting": false,
-                                        "name": "A",
-                                        "value": "A"
-                                    },
-                                    {
-                                        "isSlotSetting": true,
-                                        "name": "B",
-                                        "value": "B"
-                                    }
-                                ],
-                                "connectionStrings": [
-                                    {
-                                        "isSlotSetting": true,
-                                        "name": "A",
-                                        "type": "MySql",
-                                        "value": "A"
-                                    },
-                                    {
-                                        "isSlotSetting": false,
-                                        "name": "B",
-                                        "type": "MySql",
-                                        "value": "B"
-                                    }
-                                ],
-                                "isAlwaysOnEnabled": false,
-                                "isClientAffinityEnabled": false,
-                                "is32BitModeEnabled": true,
-                                "siteName": "[format('{0}-Portal', parameters('applicationName'))]",
-                                "slots": [
-                                    {
-                                        "applicationSettings": [
-                                            {
-                                                "name": "A",
-                                                "value": "0"
-                                            },
-                                            {
-                                                "name": "B",
-                                                "value": "1"
-                                            }
-                                        ],
-                                        "connectionStrings": [
-                                            {
-                                                "name": "A",
-                                                "type": "MySql",
-                                                "value": "0"
-                                            },
-                                            {
-                                                "name": "B",
-                                                "type": "MySql",
-                                                "value": "1"
-                                            }
-                                        ],
-                                        "slotName": "development"
-                                    }
-                                ]
-                            }
-                        ]
+                        "value": "[parameters('environmentSettings').appServicePlan.sites]"
                     },
                     "skuName": {
-                        "value": "S1"
+                        "value": "[parameters('environmentSettings').appServicePlan.skuName]"
                     }
                 },
                 "templateLink": {
@@ -298,3 +217,4 @@
         }
     ]
 }
+ 

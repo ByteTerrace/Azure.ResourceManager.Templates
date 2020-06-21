@@ -389,7 +389,7 @@
                 "administratorType": "ActiveDirectory",
                 "login": "[parameters('activeDirectoryAdministratorUserName')]",
                 "sid": "[parameters('activeDirectoryAdministratorObjectId')]",
-                "tenantId": "[parameters('activeDirectoryAdministratorTenantId')]"
+                "tenantId": "[if(not(empty(coalesce(parameters('activeDirectoryAdministratorTenantId'), ''))), parameters('activeDirectoryAdministratorTenantId'), subscription().tenantId)]"
             },
             "type": "Microsoft.Sql/servers/administrators"
         },

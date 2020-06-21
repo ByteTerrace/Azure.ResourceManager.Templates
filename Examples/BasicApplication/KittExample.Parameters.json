@@ -4,18 +4,112 @@
     "parameters": {
         "environmentSettings": {
             "value":{
+                "appServicePlan": {
+                    "name": "KittExample-Portal-ASP",
+                    "sites": {
+                        "value": [
+                            {
+                                "applicationSettings": [
+                                    {
+                                        "isSlotSetting": false,
+                                        "name": "A",
+                                        "value": "A"
+                                    },
+                                    {
+                                        "isSlotSetting": true,
+                                        "name": "B",
+                                        "value": "B"
+                                    }
+                                ],
+                                "connectionStrings": [
+                                    {
+                                        "isSlotSetting": true,
+                                        "name": "A",
+                                        "type": "MySql",
+                                        "value": "A"
+                                    },
+                                    {
+                                        "isSlotSetting": false,
+                                        "name": "B",
+                                        "type": "MySql",
+                                        "value": "B"
+                                    }
+                                ],
+                                "isAlwaysOnEnabled": false,
+                                "isClientAffinityEnabled": false,
+                                "is32BitModeEnabled": true,
+                                "siteName": "KittExample-Portal",
+                                "slots": [
+                                    {
+                                        "applicationSettings": [
+                                            {
+                                                "name": "A",
+                                                "value": "0"
+                                            },
+                                            {
+                                                "name": "B",
+                                                "value": "1"
+                                            }
+                                        ],
+                                        "connectionStrings": [
+                                            {
+                                                "name": "A",
+                                                "type": "MySql",
+                                                "value": "0"
+                                            },
+                                            {
+                                                "name": "B",
+                                                "type": "MySql",
+                                                "value": "1"
+                                            }
+                                        ],
+                                        "slotName": "development"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "skuName": "S1"
+                },
                 "clientIpAddress": "97.99.215.35",
                 "configurationStore": {
-                    "name": "KittExample-AppConfig"
+                    "name": "KittExample001"
                 },
                 "keyVault": {
-                    "name": "KittExample-KeyVault"
+                    "isAllowTrustedMicrosoftServicesEnabled": false,
+                    "name": "KittExample001",
+                    "virtualNetworkRules": [
+                        {
+                            "subnetName": "default",
+                            "virtualNetworkName": "KittExample001"
+                        }
+                    ]
                 },
                 "sqlServer": {
-                    "name": "KittExample-Sql"
+                    "databases": [
+                        {
+                            "databaseName": "KittExampleDb",
+                            "skuName": "Basic"
+                        }
+                    ],
+                    "name": "KittExample001",
+                    "virtualNetworkRules": [
+                        {
+                            "ruleName": "ApplicationSubnet",
+                            "subnetName": "default",
+                            "virtualNetworkName": "KittExample001"
+                        }
+                    ]
                 },
                 "storageAccount": {
-                    "name": "kittexamplestorage"
+                    "isAllowTrustedMicrosoftServicesEnabled": true,
+                    "name": "KittExample001",
+                    "virtualNetworkRules": [
+                        {
+                            "subnetName": "default",
+                            "virtualNetworkName": "KittExample001"
+                        }
+                    ]
                 },
                 "virtualNetwork": {
                     "subnets": [
@@ -40,7 +134,7 @@
                             }
                         }
                     ],
-                    "name": "KittExample-Vnet"
+                    "name": "KittExample001"
                 }
             }
         },

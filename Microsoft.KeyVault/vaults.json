@@ -116,6 +116,16 @@
     "variables": {
         "copy": [
             {
+                "count": "[length(parameters('accessPolicies'))]",
+                "input": {
+                    "applicationId": "[union(json('{ \"applicationId\": null }'), parameters('accessPolicies')[copyIndex('accessPolicies')]).applicationId]",
+                    "objectId": "[parameters('accessPolicies')[copyIndex('accessPolicies')].objectId]",
+                    "permissions": "[parameters('accessPolicies')[copyIndex('accessPolicies')].permissions]",
+                    "tenantId": "[union(json(format('{{ \"tenantId\": \"{0}\" }}', subscription().tenantId)), parameters('accessPolicies')[copyIndex('accessPolicies')]).tenantId]"
+                },
+                "name": "accessPolicies"
+            },
+            {
                 "count": "[length(parameters('firewallRules'))]",
                 "input": {
                     "value": "[parameters('firewallRules')[copyIndex('firewallRules')]]"
@@ -145,7 +155,7 @@
             "location": "[parameters('location')]",
             "name": "[parameters('keyVaultName')]",
             "properties": {
-                "accessPolicies": "[parameters('accessPolicies')]",
+                "accessPolicies": "[variables('accessPolicies')]",
                 "createMode": "default",
                 "enabledForDeployment": "[parameters('isVirtualMachineDeploymentEnabled')]",
                 "enabledForDiskEncryption": "[parameters('isDiskEncryptionEnabled')]",
