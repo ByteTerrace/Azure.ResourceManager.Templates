@@ -307,45 +307,12 @@
             "type": "Microsoft.Web/sites"
         },
         {
-            "apiVersion": "[variables('sitesConfigApiVersion')]",
-            "condition": "[parameters('isProductionSlotDeploymentEnabled')]",
-            "dependsOn": [
-                "[variables('siteResourceId')]"
-            ],
-            "name": "[format('{0}/slotConfigNames', parameters('siteName'))]",
-            "properties": {
-                "appSettingNames": "[skip(variables('applicationSettingsSlotNames'), 1)]",
-                "connectionStringNames": "[skip(variables('connectionStringsSlotNames'), 1)]"
-            },
-            "type": "Microsoft.Web/sites/config"
-        },
-        {
-            "apiVersion": "[variables('sitesConfigApiVersion')]",
-            "condition": "[and(parameters('isProductionSlotDeploymentEnabled'), variables('isVirtualNetworkIntegrationEnabled'))]",
-            "dependsOn": [
-                "[variables('siteResourceId')]"
-            ],
-            "name": "[format('{0}/virtualNetwork', parameters('siteName'))]",
-            "properties": "[variables('siteConfigForVirtualNetworkProperties')]",
-            "type": "Microsoft.Web/sites/config"
-        },
-        {
-            "apiVersion": "[variables('sitesConfigApiVersion')]",
-            "condition": "[parameters('isProductionSlotDeploymentEnabled')]",
-            "dependsOn": [
-                "[variables('siteResourceId')]"
-            ],
-            "name": "[format('{0}/web', parameters('siteName'))]",
-            "properties": "[variables('siteConfigForWebProperties')]",
-            "type": "Microsoft.Web/sites/config"
-        },
-        {
             "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[and(parameters('isProductionSlotDeploymentEnabled'), variables('keyVaultPermissionsIsNotEmpty'))]",
             "copy": {
                 "count": "[variables('keyVaultPermissionsCount')]",
                 "mode": "parallel",
-                "name": "keyVaultAccessPoliciesCopy"
+                "name": "keyVaultPermissionsCopy"
             },
             "dependsOn": [
                 "[variables('siteResourceId')]"
@@ -378,6 +345,39 @@
             "resourceGroup": "[union(json(format('{{ \"resourceGroupName\": \"{0}\" }}', resourceGroup().name)), variables('keyVaultPermissions')[copyIndex()]).resourceGroupName]",
             "subscriptionId": "[union(json(format('{{ \"subscriptionId\": \"{0}\" }}', subscription().subscriptionId)), variables('keyVaultPermissions')[copyIndex()]).subscriptionId]",
             "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('sitesConfigApiVersion')]",
+            "condition": "[parameters('isProductionSlotDeploymentEnabled')]",
+            "dependsOn": [
+                "[variables('siteResourceId')]"
+            ],
+            "name": "[format('{0}/slotConfigNames', parameters('siteName'))]",
+            "properties": {
+                "appSettingNames": "[skip(variables('applicationSettingsSlotNames'), 1)]",
+                "connectionStringNames": "[skip(variables('connectionStringsSlotNames'), 1)]"
+            },
+            "type": "Microsoft.Web/sites/config"
+        },
+        {
+            "apiVersion": "[variables('sitesConfigApiVersion')]",
+            "condition": "[and(parameters('isProductionSlotDeploymentEnabled'), variables('isVirtualNetworkIntegrationEnabled'))]",
+            "dependsOn": [
+                "[variables('siteResourceId')]"
+            ],
+            "name": "[format('{0}/virtualNetwork', parameters('siteName'))]",
+            "properties": "[variables('siteConfigForVirtualNetworkProperties')]",
+            "type": "Microsoft.Web/sites/config"
+        },
+        {
+            "apiVersion": "[variables('sitesConfigApiVersion')]",
+            "condition": "[parameters('isProductionSlotDeploymentEnabled')]",
+            "dependsOn": [
+                "[variables('siteResourceId')]"
+            ],
+            "name": "[format('{0}/web', parameters('siteName'))]",
+            "properties": "[variables('siteConfigForWebProperties')]",
+            "type": "Microsoft.Web/sites/config"
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",

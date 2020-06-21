@@ -183,6 +183,7 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(coalesce(union(json('{ \"appServicePlan\": null }'), parameters('environmentSettings')).appServicePlan, '')))]",
             "dependsOn": [
                 "[variables('deploymentNameForMicrosoftKeyVault')]",
                 "[variables('deploymentNameForMicrosoftSqlServer')]",

@@ -275,31 +275,12 @@
             "type": "Microsoft.Web/sites/slots"
         },
         {
-            "apiVersion": "[variables('sitesConfigApiVersion')]",
-            "condition": "[variables('isVirtualNetworkIntegrationEnabled')]",
-            "dependsOn": [
-                "[variables('slotResourceId')]"
-            ],
-            "name": "[format('{0}/{1}/virtualNetwork', parameters('siteName'), parameters('slotName'))]",
-            "properties": "[variables('siteConfigForVirtualNetworkProperties')]",
-            "type": "Microsoft.Web/sites/slots/config"
-        },
-        {
-            "apiVersion": "[variables('sitesConfigApiVersion')]",
-            "dependsOn": [
-                "[variables('slotResourceId')]"
-            ],
-            "name": "[format('{0}/{1}/web', parameters('siteName'), parameters('slotName'))]",
-            "properties": "[variables('siteConfigForWebProperties')]",
-            "type": "Microsoft.Web/sites/slots/config"
-        },
-        {
             "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[variables('keyVaultPermissionsIsNotEmpty')]",
             "copy": {
                 "count": "[variables('keyVaultPermissionsCount')]",
                 "mode": "parallel",
-                "name": "keyVaultAccessPoliciesCopy"
+                "name": "keyVaultPermissionsCopy"
             },
             "dependsOn": [
                 "[variables('slotResourceId')]"
@@ -332,6 +313,25 @@
             "resourceGroup": "[union(json(format('{{ \"resourceGroupName\": \"{0}\" }}', resourceGroup().name)), variables('keyVaultPermissions')[copyIndex()]).resourceGroupName]",
             "subscriptionId": "[union(json(format('{{ \"subscriptionId\": \"{0}\" }}', subscription().subscriptionId)), variables('keyVaultPermissions')[copyIndex()]).subscriptionId]",
             "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('sitesConfigApiVersion')]",
+            "condition": "[variables('isVirtualNetworkIntegrationEnabled')]",
+            "dependsOn": [
+                "[variables('slotResourceId')]"
+            ],
+            "name": "[format('{0}/{1}/virtualNetwork', parameters('siteName'), parameters('slotName'))]",
+            "properties": "[variables('siteConfigForVirtualNetworkProperties')]",
+            "type": "Microsoft.Web/sites/slots/config"
+        },
+        {
+            "apiVersion": "[variables('sitesConfigApiVersion')]",
+            "dependsOn": [
+                "[variables('slotResourceId')]"
+            ],
+            "name": "[format('{0}/{1}/web', parameters('siteName'), parameters('slotName'))]",
+            "properties": "[variables('siteConfigForWebProperties')]",
+            "type": "Microsoft.Web/sites/slots/config"
         }
     ],
     "outputs": {
