@@ -281,7 +281,8 @@
         "sitesApiVersion": "2019-08-01",
         "sitesConfigApiVersion": "2019-08-01",
         "slots": "[if(variables('slotsIsNotEmpty'), parameters('slots'), json('[ { \"slotName\": \"DummySlot\" } ]'))]",
-        "slotsIsNotEmpty": "[greater(length(parameters('slots')), 0)]",
+        "slotsCount": "[length(parameters('slots'))]",
+        "slotsIsNotEmpty": "[greater(variables(parameters('slots')), 0)]",
         "templateUriForMicrosoftKeyVaultAccessPolicies": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults-accessPolicies.json'), parameters('linkedTemplateQueryString')))]",
         "templateUriForMicrosoftWebSitesSlots": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Web/sites-slots.json'), parameters('linkedTemplateQueryString')))]",
         "virtualNetworkResourceGroupName": "[if(not(empty(coalesce(parameters('virtualNetworkResourceGroupName'), ''))), parameters('virtualNetworkResourceGroupName'), resourceGroup().name)]",
@@ -382,7 +383,7 @@
             "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[variables('slotsIsNotEmpty')]",
             "copy": {
-                "count": "[length(variables('slots'))]",
+                "count": "[variables('slotsCount')]",
                 "mode": "parallel",
                 "name": "slotsCopy"
             },
@@ -469,9 +470,16 @@
         }
     ],
     "outputs": {
-        "identity": {
+        "siteIdentity": {
             "type": "object",
             "value": "[reference(variables('siteResourceId'), variables('sitesApiVersion'), 'Full').identity]"
+        },
+        "slotIdentities": {
+            "copy": {
+                "count": "[variables('slotsCount')]",
+                "input": "[reference(format('{0}-slot_{1}', deployment().name, copyIndex())).outputs.identity.value]"
+            },
+            "type": "array"
         }
     }
 }

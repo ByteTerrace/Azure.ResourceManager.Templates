@@ -21,7 +21,7 @@
         "deploymentNameForMicrosoftSqlServer": "[format('{0}-SqlServer', deployment().name)]",
         "deploymentNameForMicrosoftStorageAccount": "[format('{0}-StorageAccount', deployment().name)]",
         "deploymentNameForMicrosoftVirtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]",
-        "deploymentNameForMicrosoftWebAppServerFarm": "[format('{0}-WebAppServerFarm', deployment().name)]",
+        "deploymentNameForMicrosoftWebServer": "[format('{0}-WebServer', deployment().name)]",
         "templateUriForMicrosoftAppConfiguration": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.AppConfiguration/configurationStores.json'), parameters('templateQueryString')))]",
         "templateUriForMicrosoftKeyVault": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults.json'), parameters('templateQueryString')))]",
         "templateUriForMicrosoftSqlServer": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Sql/servers.json'), parameters('templateQueryString')))]",
@@ -189,7 +189,7 @@
                 "[variables('deploymentNameForMicrosoftStorageAccount')]",
                 "[variables('deploymentNameForMicrosoftVirtualNetwork')]"
             ],
-            "name": "[variables('deploymentNameForMicrosoftWebAppServerFarm')]",
+            "name": "[variables('deploymentNameForMicrosoftWebServer')]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
