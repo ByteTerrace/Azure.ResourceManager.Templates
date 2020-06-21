@@ -91,7 +91,6 @@
                     ],
                     "skuName": "S1"
                 },
-                "clientIpAddress": "97.99.215.35",
                 "configurationStore": {
                     "name": "KittExample001"
                 },
@@ -106,6 +105,9 @@
                             },
                             "objectId": "38eb40ba-c8c0-4ca9-8358-37f9395c64be"
                         }
+                    ],
+                    "firewallRules": [
+                        "97.99.215.35"
                     ],
                     "isAllowTrustedMicrosoftServicesEnabled": false,
                     "name": "KittExample001",
@@ -123,6 +125,13 @@
                             "skuName": "Basic"
                         }
                     ],
+                    "firewallRules": [
+                        {
+                            "endIpAddress": "97.99.215.35",
+                            "ruleName": "ClientIp_97.99.215.35",
+                            "startIpAddress": "97.99.215.35"
+                        }
+                    ],
                     "name": "KittExample001",
                     "virtualNetworkRules": [
                         {
@@ -133,6 +142,9 @@
                     ]
                 },
                 "storageAccount": {
+                    "firewallRules": [
+                        "97.99.215.35"
+                    ],
                     "isAllowTrustedMicrosoftServicesEnabled": true,
                     "name": "KittExample001",
                     "virtualNetworkRules": [

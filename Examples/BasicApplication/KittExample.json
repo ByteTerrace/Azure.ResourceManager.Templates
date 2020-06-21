@@ -63,9 +63,7 @@
                         "value": "[parameters('environmentSettings').keyVault.accessPolicies]"
                     },
                     "firewallRules": {
-                        "value": [
-                            "[parameters('environmentSettings').clientIpAddress]"
-                        ]
+                        "value": "[parameters('environmentSettings').keyVault.firewallRules]"
                     },
                     "isAllowTrustedMicrosoftServicesEnabled": {
                         "value": "[parameters('environmentSettings').keyVault.isAllowTrustedMicrosoftServicesEnabled]"
@@ -115,9 +113,7 @@
                 "mode": "Incremental",
                 "parameters": {
                     "firewallRules": {
-                        "value": [
-                            "[parameters('environmentSettings').clientIpAddress]"
-                        ]
+                        "value": "[parameters('environmentSettings').storageAccount.firewallRules]"
                     },
                     "isAllowTrustedMicrosoftServicesEnabled": {
                         "value": "[parameters('environmentSettings').storageAccount.isAllowTrustedMicrosoftServicesEnabled]"
@@ -160,13 +156,7 @@
                         "value": "[parameters('environmentSettings').sqlServer.databases]"
                     },
                     "firewallRules": {
-                        "value": [
-                            {
-                                "endIpAddress": "[parameters('environmentSettings').clientIpAddress]",
-                                "ruleName": "Temp",
-                                "startIpAddress": "[parameters('environmentSettings').clientIpAddress]"
-                            }
-                        ]
+                        "value": "[parameters('environmentSettings').sqlServer.firewallRules]"
                     },
                     "linkedTemplateBaseUri": {
                         "value": "[parameters('templateBaseUri')]"
