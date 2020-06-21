@@ -5,7 +5,7 @@
         "environmentSettings": {
             "value":{
                 "appServicePlan": {
-                    "name": "KittExample-Portal-ASP",
+                    "name": "KittExample001-Portal-ASP",
                     "sites": [
                         {
                             "applicationSettings": [
@@ -37,7 +37,7 @@
                             "isAlwaysOnEnabled": false,
                             "isClientAffinityEnabled": false,
                             "is32BitModeEnabled": true,
-                            "siteName": "KittExample-Portal",
+                            "siteName": "KittExample001-Portal",
                             "slots": [
                                 {
                                     "applicationSettings": [
