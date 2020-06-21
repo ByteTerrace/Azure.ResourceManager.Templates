@@ -115,7 +115,7 @@
                 "mode": "Incremental",
                 "parameters": {
                     "accessPolicies": {
-                        "value": []
+                        "value": "[parameters('environmentSettings').keyVault.accessPolicies]"
                     },
                     "firewallRules": {
                         "value": [
