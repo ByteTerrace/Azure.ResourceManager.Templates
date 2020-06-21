@@ -226,7 +226,10 @@
         "siteIdentities": {
             "copy": {
                 "count": "[variables('sitesCount')]",
-                "input": "[reference(format('{0}-site_{1}', deployment().name, copyIndex())).outputs.siteIdentity.value]"
+                "input": {
+                    "identity": "[reference(format('{0}-site_{1}', deployment().name, copyIndex())).outputs.siteIdentity.value]",
+                    "siteName": "[variables('sites')[copyIndex()].siteName]"
+                }
             },
             "type": "array"
         },

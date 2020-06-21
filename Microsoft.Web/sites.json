@@ -477,7 +477,10 @@
         "slotIdentities": {
             "copy": {
                 "count": "[variables('slotsCount')]",
-                "input": "[reference(format('{0}-slot_{1}', deployment().name, copyIndex())).outputs.identity.value]"
+                "input": {
+                    "identity": "[reference(format('{0}-slot_{1}', deployment().name, copyIndex())).outputs.identity.value]",
+                    "slotName": "[variables('slots')[copyIndex()].slotName]"
+                }
             },
             "type": "array"
         }
