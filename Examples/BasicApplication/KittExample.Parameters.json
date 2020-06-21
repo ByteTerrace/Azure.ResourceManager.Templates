@@ -74,6 +74,17 @@
                     "name": "KittExample001"
                 },
                 "keyVault": {
+                    "accessPolicies": [
+                        {
+                            "permissions": {
+                                "secrets": [
+                                    "Get",
+                                    "List"
+                                ]
+                            },
+                            "objectId": "38eb40ba-c8c0-4ca9-8358-37f9395c64be"
+                        }
+                    ],
                     "isAllowTrustedMicrosoftServicesEnabled": false,
                     "name": "KittExample001",
                     "virtualNetworkRules": [
