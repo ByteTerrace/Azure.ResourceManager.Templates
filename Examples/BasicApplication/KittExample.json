@@ -18,7 +18,7 @@
         "deploymentApiVersion": "2019-10-01",
         "deploymentNameForMicrosoftAppConfiguration": "[format('{0}-AppConfiguration', deployment().name)]",
         "deploymentNameForMicrosoftKeyVault": "[format('{0}-KeyVault', deployment().name)]",
-        "deploymentNameForMicrosoftSqlServer": "[format('{0}-MsSqlServer', deployment().name)]",
+        "deploymentNameForMicrosoftSqlServer": "[format('{0}-SqlServer', deployment().name)]",
         "deploymentNameForMicrosoftStorageAccount": "[format('{0}-StorageAccount', deployment().name)]",
         "deploymentNameForMicrosoftVirtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]",
         "deploymentNameForMicrosoftWebAppServerFarm": "[format('{0}-WebAppServerFarm', deployment().name)]",
@@ -52,6 +52,43 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "dependsOn": [
+                "[variables('deploymentNameForMicrosoftVirtualNetwork')]"
+            ],
+            "name": "[variables('deploymentNameForMicrosoftKeyVault')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "accessPolicies": {
+                        "value": "[parameters('environmentSettings').keyVault.accessPolicies]"
+                    },
+                    "firewallRules": {
+                        "value": [
+                            "[parameters('environmentSettings').clientIpAddress]"
+                        ]
+                    },
+                    "isAllowTrustedMicrosoftServicesEnabled": {
+                        "value": "[parameters('environmentSettings').keyVault.isAllowTrustedMicrosoftServicesEnabled]"
+                    },
+                    "keyVaultName": {
+                        "value": "[parameters('environmentSettings').keyVault.name]"
+                    },
+                    "virtualNetworkRules": {
+                        "value": "[parameters('environmentSettings').keyVault.virtualNetworkRules]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "2.0.0.0",
+                    "uri": "[variables('templateUriForMicrosoftKeyVault')]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "dependsOn": [
+                "[variables('deploymentNameForMicrosoftKeyVault')]"
+            ],
             "name": "[variables('deploymentNameForMicrosoftAppConfiguration')]",
             "properties": {
                 "mode": "Incremental",
@@ -70,6 +107,7 @@
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
             "dependsOn": [
+                "[variables('deploymentNameForMicrosoftKeyVault')]",
                 "[variables('deploymentNameForMicrosoftVirtualNetwork')]"
             ],
             "name": "[variables('deploymentNameForMicrosoftStorageAccount')]",
@@ -100,41 +138,6 @@
                 "templateLink": {
                     "contentVersion": "2.0.0.0",
                     "uri": "[variables('templateUriForMicrosoftStorageAccount')]"
-                }
-            },
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('deploymentApiVersion')]",
-            "dependsOn": [
-                "[variables('deploymentNameForMicrosoftStorageAccount')]",
-                "[variables('deploymentNameForMicrosoftVirtualNetwork')]"
-            ],
-            "name": "[variables('deploymentNameForMicrosoftKeyVault')]",
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "accessPolicies": {
-                        "value": "[parameters('environmentSettings').keyVault.accessPolicies]"
-                    },
-                    "firewallRules": {
-                        "value": [
-                            "[parameters('environmentSettings').clientIpAddress]"
-                        ]
-                    },
-                    "isAllowTrustedMicrosoftServicesEnabled": {
-                        "value": "[parameters('environmentSettings').keyVault.isAllowTrustedMicrosoftServicesEnabled]"
-                    },
-                    "keyVaultName": {
-                        "value": "[parameters('environmentSettings').keyVault.name]"
-                    },
-                    "virtualNetworkRules": {
-                        "value": "[parameters('environmentSettings').keyVault.virtualNetworkRules]"
-                    }
-                },
-                "templateLink": {
-                    "contentVersion": "2.0.0.0",
-                    "uri": "[variables('templateUriForMicrosoftKeyVault')]"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -191,6 +194,8 @@
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
             "dependsOn": [
+                "[variables('deploymentNameForMicrosoftKeyVault')]",
+                "[variables('deploymentNameForMicrosoftSqlServer')]",
                 "[variables('deploymentNameForMicrosoftStorageAccount')]",
                 "[variables('deploymentNameForMicrosoftVirtualNetwork')]"
             ],
@@ -217,4 +222,3 @@
         }
     ]
 }
- 
