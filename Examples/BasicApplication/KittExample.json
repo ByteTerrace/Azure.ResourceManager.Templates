@@ -15,6 +15,9 @@
         }
     },
     "variables": {
+        "appServicePlans": "[union(json('{ \"appServicePlans\": [] }'), parameters('environmentSettings')).appServicePlans]",
+        "appServicePlansCount": "[length(variables('appServicePlans'))]",
+        "appServicePlansIsNotEmpty": "[greater(variables('appServicePlansCount'), 0)]",
         "deploymentApiVersion": "2019-10-01",
         "deploymentNameForMicrosoftAppConfiguration": "[format('{0}-AppConfiguration', deployment().name)]",
         "deploymentNameForMicrosoftKeyVault": "[format('{0}-KeyVault', deployment().name)]",
@@ -22,6 +25,9 @@
         "deploymentNameForMicrosoftStorageAccount": "[format('{0}-StorageAccount', deployment().name)]",
         "deploymentNameForMicrosoftVirtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]",
         "deploymentNameForMicrosoftWebServer": "[format('{0}-WebServer', deployment().name)]",
+        "sqlServers": "[union(json('{ \"sqlServers\": [] }'), parameters('environmentSettings')).sqlServers]",
+        "sqlServersCount": "[length(variables('sqlServers'))]",
+        "sqlServersIsNotEmpty": "[greater(variables('sqlServersCount'), 0)]",
         "templateUriForMicrosoftAppConfiguration": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.AppConfiguration/configurationStores.json'), parameters('templateQueryString')))]",
         "templateUriForMicrosoftKeyVault": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults.json'), parameters('templateQueryString')))]",
         "templateUriForMicrosoftSqlServer": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Sql/servers.json'), parameters('templateQueryString')))]",
@@ -32,6 +38,7 @@
     "resources": [
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(union(json('{ \"virtualNetwork\": {} }'), parameters('environmentSettings')).virtualNetwork))]",
             "name": "[variables('deploymentNameForMicrosoftVirtualNetwork')]",
             "properties": {
                 "mode": "Incremental",
@@ -52,6 +59,7 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(union(json('{ \"keyVault\": {} }'), parameters('environmentSettings')).keyVault))]",
             "dependsOn": [
                 "[variables('deploymentNameForMicrosoftVirtualNetwork')]"
             ],
@@ -84,6 +92,7 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(union(json('{ \"configurationStore\": {} }'), parameters('environmentSettings')).configurationStore))]",
             "dependsOn": [
                 "[variables('deploymentNameForMicrosoftKeyVault')]"
             ],
@@ -104,6 +113,7 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(union(json('{ \"storageAccount\": {} }'), parameters('environmentSettings')).storageAccount))]",
             "dependsOn": [
                 "[variables('deploymentNameForMicrosoftKeyVault')]",
                 "[variables('deploymentNameForMicrosoftVirtualNetwork')]"
@@ -140,9 +150,9 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[greater(length(parameters('environmentSettings').sqlServers), 0)]",
+            "condition": "[variables('sqlServersIsNotEmpty')]",
             "copy": {
-                "count": "[length(parameters('environmentSettings').sqlServers)]",
+                "count": "[variables('sqlServersCount')]",
                 "mode": "parallel",
                 "name": "sqlServersCopy"
             },
@@ -151,7 +161,7 @@
                 "[variables('deploymentNameForMicrosoftStorageAccount')]",
                 "[variables('deploymentNameForMicrosoftVirtualNetwork')]"
             ],
-            "name": "[format('{0}_{1}', variables('deploymentNameForMicrosoftSqlServer'), copyIndex())]",
+            "name": "[if(variables('sqlServersIsNotEmpty'), format('{0}_{1}', variables('deploymentNameForMicrosoftSqlServer'), copyIndex()), variables('deploymentNameForMicrosoftSqlServer'))]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
@@ -189,9 +199,9 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[greater(length(parameters('environmentSettings').appServicePlans), 0)]",
+            "condition": "[variables('appServicePlansIsNotEmpty')]",
             "copy": {
-                "count": "[length(parameters('environmentSettings').appServicePlans)]",
+                "count": "[variables('appServicePlansCount')]",
                 "mode": "parallel",
                 "name": "appServicePlansCopy"
             },
@@ -200,21 +210,21 @@
                 "[variables('deploymentNameForMicrosoftStorageAccount')]",
                 "[variables('deploymentNameForMicrosoftVirtualNetwork')]"
             ],
-            "name": "[format('{0}_{1}', variables('deploymentNameForMicrosoftWebServer'), copyIndex())]",
+            "name": "[if(variables('appServicePlansIsNotEmpty'), format('{0}_{1}', variables('deploymentNameForMicrosoftWebServer'), copyIndex()), variables('deploymentNameForMicrosoftWebServer'))]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
                     "operatingSystemName": {
-                        "value": "[parameters('environmentSettings').appServicePlans[copyIndex()].operatingSystemName]"
+                        "value": "[variables('appServicePlans')[copyIndex()].operatingSystemName]"
                     },
                     "servicePlanName": {
-                        "value": "[parameters('environmentSettings').appServicePlans[copyIndex()].name]"
+                        "value": "[variables('appServicePlans')[copyIndex()].name]"
                     },
                     "sites": {
-                        "value": "[parameters('environmentSettings').appServicePlans[copyIndex()].sites]"
+                        "value": "[variables('appServicePlans')[copyIndex()].sites]"
                     },
                     "skuName": {
-                        "value": "[parameters('environmentSettings').appServicePlans[copyIndex()].skuName]"
+                        "value": "[variables('appServicePlans')[copyIndex()].skuName]"
                     }
                 },
                 "templateLink": {
