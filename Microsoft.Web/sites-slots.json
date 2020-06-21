@@ -304,7 +304,7 @@
             "dependsOn": [
                 "[variables('slotResourceId')]"
             ],
-            "name": "[format('{0}-{1}-{2}-KvAp{3}', deployment().name, parameters('siteName'), parameters('slotName'), copyIndex())]",
+            "name": "[format('{0}-{1}-{2}-kvap_{3}', deployment().name, parameters('siteName'), parameters('slotName'), copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {

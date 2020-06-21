@@ -73,6 +73,17 @@
                                             "value": "1"
                                         }
                                     ],
+                                    "keyVaultAccessPolicies": [
+                                        {
+                                            "keyVaultName": "KittExample001",
+                                            "permissions": {
+                                                "secrets": [
+                                                    "Get",
+                                                    "List"
+                                                ]
+                                            }
+                                        }
+                                    ],
                                     "slotName": "development"
                                 }
                             ]
