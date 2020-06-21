@@ -197,7 +197,6 @@
             },
             "dependsOn": [
                 "[variables('deploymentNameForMicrosoftKeyVault')]",
-                "[variables('deploymentNameForMicrosoftSqlServer')]",
                 "[variables('deploymentNameForMicrosoftStorageAccount')]",
                 "[variables('deploymentNameForMicrosoftVirtualNetwork')]"
             ],
