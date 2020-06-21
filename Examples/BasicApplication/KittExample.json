@@ -140,23 +140,29 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[greater(length(parameters('environmentSettings').sqlServers), 0)]",
+            "copy": {
+                "count": "[length(parameters('environmentSettings').sqlServers)]",
+                "mode": "parallel",
+                "name": "sqlServersCopy"
+            },
             "dependsOn": [
                 "[variables('deploymentNameForMicrosoftKeyVault')]",
                 "[variables('deploymentNameForMicrosoftStorageAccount')]",
                 "[variables('deploymentNameForMicrosoftVirtualNetwork')]"
             ],
-            "name": "[variables('deploymentNameForMicrosoftSqlServer')]",
+            "name": "[format('{0}_{1}', variables('deploymentNameForMicrosoftSqlServer'), copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
                     "auditStorageAccountName": {
-                        "value": "[parameters('environmentSettings').storageAccount.name]"
+                        "value": "[parameters('environmentSettings').sqlServers[copyIndex()].auditStorageAccountName]"
                     },
                     "databases": {
-                        "value": "[parameters('environmentSettings').sqlServer.databases]"
+                        "value": "[parameters('environmentSettings').sqlServers[copyIndex()].databases]"
                     },
                     "firewallRules": {
-                        "value": "[parameters('environmentSettings').sqlServer.firewallRules]"
+                        "value": "[parameters('environmentSettings').sqlServers[copyIndex()].firewallRules]"
                     },
                     "linkedTemplateBaseUri": {
                         "value": "[parameters('templateBaseUri')]"
@@ -165,13 +171,13 @@
                         "value": "[parameters('templateQueryString')]"
                     },
                     "serverName": {
-                        "value": "[parameters('environmentSettings').sqlServer.name]"
+                        "value": "[parameters('environmentSettings').sqlServers[copyIndex()].name]"
                     },
                     "virtualNetworkRules": {
-                        "value": "[parameters('environmentSettings').sqlServer.virtualNetworkRules]"
+                        "value": "[parameters('environmentSettings').sqlServers[copyIndex()].virtualNetworkRules]"
                     },
                     "vulnerabilityAssessmentStorageAccountName": {
-                        "value": "[parameters('environmentSettings').storageAccount.name]"
+                        "value": "[parameters('environmentSettings').sqlServers[copyIndex()].vulnerabilityAssessmentStorageAccountName]"
                     }
                 },
                 "templateLink": {

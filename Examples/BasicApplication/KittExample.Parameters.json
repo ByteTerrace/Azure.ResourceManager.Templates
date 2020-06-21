@@ -120,29 +120,31 @@
                         }
                     ]
                 },
-                "sqlServer": {
-                    "databases": [
-                        {
-                            "databaseName": "KittExampleDb",
-                            "skuName": "Basic"
-                        }
-                    ],
-                    "firewallRules": [
-                        {
-                            "endIpAddress": "97.99.215.35",
-                            "ruleName": "ClientIp_97.99.215.35",
-                            "startIpAddress": "97.99.215.35"
-                        }
-                    ],
-                    "name": "KittExample001",
-                    "virtualNetworkRules": [
-                        {
-                            "ruleName": "ApplicationSubnet",
-                            "subnetName": "default",
-                            "virtualNetworkName": "KittExample001"
-                        }
-                    ]
-                },
+                "sqlServers": [
+                    {
+                        "databases": [
+                            {
+                                "databaseName": "KittExampleDb",
+                                "skuName": "Basic"
+                            }
+                        ],
+                        "firewallRules": [
+                            {
+                                "endIpAddress": "97.99.215.35",
+                                "ruleName": "ClientIp_97.99.215.35",
+                                "startIpAddress": "97.99.215.35"
+                            }
+                        ],
+                        "name": "KittExample001",
+                        "virtualNetworkRules": [
+                            {
+                                "ruleName": "ApplicationSubnet",
+                                "subnetName": "default",
+                                "virtualNetworkName": "KittExample001"
+                            }
+                        ]
+                    }
+                ],
                 "storageAccount": {
                     "firewallRules": [
                         "97.99.215.35"
