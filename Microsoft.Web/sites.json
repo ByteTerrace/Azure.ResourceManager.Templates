@@ -349,7 +349,7 @@
             "dependsOn": [
                 "[variables('siteResourceId')]"
             ],
-            "name": "[format('{0}-{1}-KvAp{2}', deployment().name, parameters('siteName'), copyIndex())]",
+            "name": "[format('{0}-KvAp{2}', deployment().name, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
