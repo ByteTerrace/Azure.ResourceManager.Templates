@@ -4,93 +4,95 @@
     "parameters": {
         "environmentSettings": {
             "value":{
-                "appServicePlan": {
-                    "name": "KittExample001-Portal-ASP",
-                    "sites": [
-                        {
-                            "applicationSettings": [
-                                {
-                                    "isSlotSetting": false,
-                                    "name": "A",
-                                    "value": "A"
-                                },
-                                {
-                                    "isSlotSetting": true,
-                                    "name": "B",
-                                    "value": "B"
-                                }
-                            ],
-                            "connectionStrings": [
-                                {
-                                    "isSlotSetting": true,
-                                    "name": "A",
-                                    "type": "MySql",
-                                    "value": "A"
-                                },
-                                {
-                                    "isSlotSetting": false,
-                                    "name": "B",
-                                    "type": "MySql",
-                                    "value": "B"
-                                }
-                            ],
-                            "isAlwaysOnEnabled": false,
-                            "isClientAffinityEnabled": false,
-                            "is32BitModeEnabled": true,
-                            "keyVaultPermissions": [
-                                {
-                                    "keyVaultName": "KittExample001",
-                                    "permissions": {
-                                        "secrets": [
-                                            "Get",
-                                            "List"
-                                        ]
+                "appServicePlans": [
+                    {
+                        "name": "KittExample001-Portal-ASP",
+                        "sites": [
+                            {
+                                "applicationSettings": [
+                                    {
+                                        "isSlotSetting": false,
+                                        "name": "A",
+                                        "value": "A"
+                                    },
+                                    {
+                                        "isSlotSetting": true,
+                                        "name": "B",
+                                        "value": "B"
                                     }
-                                }
-                            ],
-                            "siteName": "KittExample001-Portal",
-                            "slots": [
-                                {
-                                    "applicationSettings": [
-                                        {
-                                            "name": "A",
-                                            "value": "0"
-                                        },
-                                        {
-                                            "name": "B",
-                                            "value": "1"
+                                ],
+                                "connectionStrings": [
+                                    {
+                                        "isSlotSetting": true,
+                                        "name": "A",
+                                        "type": "MySql",
+                                        "value": "A"
+                                    },
+                                    {
+                                        "isSlotSetting": false,
+                                        "name": "B",
+                                        "type": "MySql",
+                                        "value": "B"
+                                    }
+                                ],
+                                "isAlwaysOnEnabled": false,
+                                "isClientAffinityEnabled": false,
+                                "is32BitModeEnabled": true,
+                                "keyVaultPermissions": [
+                                    {
+                                        "keyVaultName": "KittExample001",
+                                        "permissions": {
+                                            "secrets": [
+                                                "Get",
+                                                "List"
+                                            ]
                                         }
-                                    ],
-                                    "connectionStrings": [
-                                        {
-                                            "name": "A",
-                                            "type": "MySql",
-                                            "value": "0"
-                                        },
-                                        {
-                                            "name": "B",
-                                            "type": "MySql",
-                                            "value": "1"
-                                        }
-                                    ],
-                                    "keyVaultPermissions": [
-                                        {
-                                            "keyVaultName": "KittExample001",
-                                            "permissions": {
-                                                "secrets": [
-                                                    "Get",
-                                                    "List"
-                                                ]
+                                    }
+                                ],
+                                "siteName": "KittExample001-Portal",
+                                "slots": [
+                                    {
+                                        "applicationSettings": [
+                                            {
+                                                "name": "A",
+                                                "value": "0"
+                                            },
+                                            {
+                                                "name": "B",
+                                                "value": "1"
                                             }
-                                        }
-                                    ],
-                                    "slotName": "development"
-                                }
-                            ]
-                        }
-                    ],
-                    "skuName": "S1"
-                },
+                                        ],
+                                        "connectionStrings": [
+                                            {
+                                                "name": "A",
+                                                "type": "MySql",
+                                                "value": "0"
+                                            },
+                                            {
+                                                "name": "B",
+                                                "type": "MySql",
+                                                "value": "1"
+                                            }
+                                        ],
+                                        "keyVaultPermissions": [
+                                            {
+                                                "keyVaultName": "KittExample001",
+                                                "permissions": {
+                                                    "secrets": [
+                                                        "Get",
+                                                        "List"
+                                                    ]
+                                                }
+                                            }
+                                        ],
+                                        "slotName": "development"
+                                    }
+                                ]
+                            }
+                        ],
+                        "skuName": "S1"
+                    }
+                ],
                 "configurationStore": {
                     "name": "KittExample001"
                 },

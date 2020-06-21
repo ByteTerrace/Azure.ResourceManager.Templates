@@ -183,25 +183,30 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(coalesce(union(json('{ \"appServicePlan\": null }'), parameters('environmentSettings')).appServicePlan, '')))]",
+            "condition": "[greater(length(parameters('environmentSettings').appServicePlans), 0)]",
+            "copy": {
+                "count": "[length(parameters('environmentSettings').appServicePlans)]",
+                "mode": "parallel",
+                "name": "appServicePlansCopy"
+            },
             "dependsOn": [
                 "[variables('deploymentNameForMicrosoftKeyVault')]",
                 "[variables('deploymentNameForMicrosoftSqlServer')]",
                 "[variables('deploymentNameForMicrosoftStorageAccount')]",
                 "[variables('deploymentNameForMicrosoftVirtualNetwork')]"
             ],
-            "name": "[variables('deploymentNameForMicrosoftWebServer')]",
+            "name": "[format('{0}_{1}', variables('deploymentNameForMicrosoftWebServer'), copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
                     "servicePlanName": {
-                        "value": "[parameters('environmentSettings').appServicePlan.name]"
+                        "value": "[parameters('environmentSettings').appServicePlans[copyIndex()].name]"
                     },
                     "sites": {
-                        "value": "[parameters('environmentSettings').appServicePlan.sites]"
+                        "value": "[parameters('environmentSettings').appServicePlans[copyIndex()].sites]"
                     },
                     "skuName": {
-                        "value": "[parameters('environmentSettings').appServicePlan.skuName]"
+                        "value": "[parameters('environmentSettings').appServicePlans[copyIndex()].skuName]"
                     }
                 },
                 "templateLink": {
