@@ -340,7 +340,7 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[variables('keyVaultAccessPoliciesIsNotEmpty')]",
+            "condition": "[and(parameters('isProductionSlotDeploymentEnabled'), variables('keyVaultAccessPoliciesIsNotEmpty'))]",
             "copy": {
                 "count": "[variables('keyVaultAccessPoliciesCount')]",
                 "mode": "parallel",
