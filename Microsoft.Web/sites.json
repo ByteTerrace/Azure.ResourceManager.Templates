@@ -70,7 +70,7 @@
             },
             "type": "bool"
         },
-        "keyVaultAccessPolicies": {
+        "keyVaultPermissions": {
             "defaultValue": [],
             "metadata": {
                 "description": "An array of Azure Key Vault access policy permissions that will be granted to the Azure Web site slot."
@@ -243,9 +243,9 @@
         "isHealthCheckEnabled": "[not(empty(coalesce(parameters('healthCheckPath'), '')))]",
         "isLinuxOperatingSystem": "[equals('linux', toLower(parameters('operatingSystemName')))]",
         "isVirtualNetworkIntegrationEnabled": "[or(not(empty(coalesce(parameters('virtualNetworkResourceGroupName')))), not(empty(coalesce(parameters('virtualNetworkName')))), not(empty(coalesce(parameters('subnetName')))))]",
-        "keyVaultAccessPolicies": "[if(variables('keyVaultAccessPoliciesIsNotEmpty'), parameters('keyVaultAccessPolicies'), json('[ { \"keyVaultName\": \"dummyKeyVault\", \"permissions\": [] } ]'))]",
-        "keyVaultAccessPoliciesCount": "[length(parameters('keyVaultAccessPolicies'))]",
-        "keyVaultAccessPoliciesIsNotEmpty": "[greater(variables('keyVaultAccessPoliciesCount'), 0)]",
+        "keyVaultPermissions": "[if(variables('keyVaultPermissionsIsNotEmpty'), parameters('keyVaultPermissions'), json('[ { \"keyVaultName\": \"dummyKeyVault\", \"permissions\": [] } ]'))]",
+        "keyVaultPermissionsCount": "[length(parameters('keyVaultPermissions'))]",
+        "keyVaultPermissionsIsNotEmpty": "[greater(variables('keyVaultPermissionsCount'), 0)]",
         "servicePlanResourceGroupName": "[if(not(empty(coalesce(parameters('servicePlanResourceGroupName'), ''))), parameters('servicePlanResourceGroupName'), resourceGroup().name)]",
         "servicePlanResourceId": "[resourceId(variables('servicePlanResourceGroupName'), 'Microsoft.Web/serverfarms', parameters('servicePlanName'))]",
         "siteConfigForRoot": {
@@ -341,9 +341,9 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[and(parameters('isProductionSlotDeploymentEnabled'), variables('keyVaultAccessPoliciesIsNotEmpty'))]",
+            "condition": "[and(parameters('isProductionSlotDeploymentEnabled'), variables('keyVaultPermissionsIsNotEmpty'))]",
             "copy": {
-                "count": "[variables('keyVaultAccessPoliciesCount')]",
+                "count": "[variables('keyVaultPermissionsCount')]",
                 "mode": "parallel",
                 "name": "keyVaultAccessPoliciesCopy"
             },
@@ -358,13 +358,13 @@
                         "value": "add"
                     },
                     "keyVaultName": {
-                        "value": "[variables('keyVaultAccessPolicies')[copyIndex()].keyVaultName]"
+                        "value": "[variables('keyVaultPermissions')[copyIndex()].keyVaultName]"
                     },
                     "objectId": {
                         "value": "[reference(variables('siteResourceId'), variables('sitesApiVersion'), 'Full').identity.principalId]"
                     },
                     "permissions": {
-                        "value": "[variables('keyVaultAccessPolicies')[copyIndex()].permissions]"
+                        "value": "[variables('keyVaultPermissions')[copyIndex()].permissions]"
                     },
                     "tenantId": {
                         "value": "[reference(variables('siteResourceId'), variables('sitesApiVersion'), 'Full').identity.tenantId]"
@@ -375,8 +375,8 @@
                     "uri": "[variables('templateUriForMicrosoftKeyVaultAccessPolicies')]"
                 }
             },
-            "resourceGroup": "[union(json(format('{{ \"resourceGroupName\": \"{0}\" }}', resourceGroup().name)), variables('keyVaultAccessPolicies')[copyIndex()]).resourceGroupName]",
-            "subscriptionId": "[union(json(format('{{ \"subscriptionId\": \"{0}\" }}', subscription().subscriptionId)), variables('keyVaultAccessPolicies')[copyIndex()]).subscriptionId]",
+            "resourceGroup": "[union(json(format('{{ \"resourceGroupName\": \"{0}\" }}', resourceGroup().name)), variables('keyVaultPermissions')[copyIndex()]).resourceGroupName]",
+            "subscriptionId": "[union(json(format('{{ \"subscriptionId\": \"{0}\" }}', subscription().subscriptionId)), variables('keyVaultPermissions')[copyIndex()]).subscriptionId]",
             "type": "Microsoft.Resources/deployments"
         },
         {
@@ -415,8 +415,8 @@
                     "is32BitModeEnabled": {
                         "value": "[union(json('{ \"is32BitModeEnabled\": false }'), variables('slots')[copyIndex()]).is32BitModeEnabled]"
                     },
-                    "keyVaultAccessPolicies": {
-                        "value": "[union(json('{ \"keyVaultAccessPolicies\": [] }'), variables('slots')[copyIndex()]).keyVaultAccessPolicies]"
+                    "keyVaultPermissions": {
+                        "value": "[union(json('{ \"keyVaultPermissions\": [] }'), variables('slots')[copyIndex()]).keyVaultPermissions]"
                     },
                     "kind": {
                         "value": "[union(json('{ \"kind\": \"app\" }'), variables('slots')[copyIndex()]).kind]"

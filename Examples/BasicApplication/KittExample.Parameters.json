@@ -37,7 +37,7 @@
                             "isAlwaysOnEnabled": false,
                             "isClientAffinityEnabled": false,
                             "is32BitModeEnabled": true,
-                            "keyVaultAccessPolicies": [
+                            "keyVaultPermissions": [
                                 {
                                     "keyVaultName": "KittExample001",
                                     "permissions": {
@@ -73,7 +73,7 @@
                                             "value": "1"
                                         }
                                     ],
-                                    "keyVaultAccessPolicies": [
+                                    "keyVaultPermissions": [
                                         {
                                             "keyVaultName": "KittExample001",
                                             "permissions": {
