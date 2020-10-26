@@ -1,14 +1,7 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "2.0.0.0",
+    "contentVersion": "0.0.0.0",
     "parameters": {
-        "accessPolicies": {
-            "defaultValue": [],
-            "metadata": {
-                "description": "An array of access policies that will be assigned to the Azure Key Vault."
-            },
-            "type": "array"
-        },
         "firewallRules": {
             "defaultValue": [],
             "metadata": {
@@ -37,10 +30,10 @@
             },
             "type": "bool"
         },
-        "isSoftDeleteEnabled": {
+        "isRbacAuthorizationEnabled": {
             "defaultValue": true,
             "metadata": {
-                "description": "Indicates whether the soft-delete feature is enabled on the Azure Key Vault."
+                "description": "Indicates whether the RBAC authorization feature is enabled on the Azure Key Vault."
             },
             "type": "bool"
         },
@@ -58,19 +51,19 @@
             },
             "type": "bool"
         },
-        "keyVaultName": {
-            "maxLength": 24,
-            "metadata": {
-                "description": "Specifies the name of the Azure Key Vault."
-            },
-            "minLength": 3,
-            "type": "string"
-        },
         "location": {
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
                 "description": "Specifies the location in which the Azure Key Vault resource(s) will be deployed."
             },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 24,
+            "metadata": {
+                "description": "Specifies the name of the Azure Key Vault."
+            },
+            "minLength": 3,
             "type": "string"
         },
         "skuName": {
@@ -98,6 +91,13 @@
             },
             "type": "secureObject"
         },
+        "softDeleteRetentionInDays": {
+            "defaultValue": 14,
+            "metadata": {
+                "description": "Specifies the amount of time, in days, that items will remain soft deleted within the Azure Key Vault."
+            },
+            "type": "int"
+        },
         "tags": {
             "defaultValue": {},
             "metadata": {
@@ -116,16 +116,6 @@
     "variables": {
         "copy": [
             {
-                "count": "[length(parameters('accessPolicies'))]",
-                "input": {
-                    "applicationId": "[union(json('{ \"applicationId\": null }'), parameters('accessPolicies')[copyIndex('accessPolicies')]).applicationId]",
-                    "objectId": "[parameters('accessPolicies')[copyIndex('accessPolicies')].objectId]",
-                    "permissions": "[parameters('accessPolicies')[copyIndex('accessPolicies')].permissions]",
-                    "tenantId": "[union(json(format('{{ \"tenantId\": \"{0}\" }}', subscription().tenantId)), parameters('accessPolicies')[copyIndex('accessPolicies')]).tenantId]"
-                },
-                "name": "accessPolicies"
-            },
-            {
                 "count": "[length(parameters('firewallRules'))]",
                 "input": {
                     "value": "[parameters('firewallRules')[copyIndex('firewallRules')]]"
@@ -135,45 +125,53 @@
             {
                 "count": "[length(parameters('virtualNetworkRules'))]",
                 "input": {
-                    "id": "[resourceId(union(json(format('{{ \"subscriptionId\": \"{0}\" }}', subscription().subscriptionId)), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subscriptionId, union(json(format('{{ \"resourceGroupName\": \"{0}\" }}', resourceGroup().name)), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
+                    "id": "[resourceId(union(variables('virtualNetworkRulesDefaultObject'), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subscriptionId, union(variables('virtualNetworkRulesDefaultObject'), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
                 },
                 "name": "virtualNetworkRules"
             }
         ],
         "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
-        "keyVaultApiVersion": "2019-09-01",
-        "keyVaultResourceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+        "keyVaultsApiVersion": "2019-09-01",
+        "keyVaultsProperties": {
+            "createMode": "default",
+            "enabledForDeployment": "[parameters('isVirtualMachineDeploymentEnabled')]",
+            "enabledForDiskEncryption": "[parameters('isDiskEncryptionEnabled')]",
+            "enabledForTemplateDeployment": "[parameters('isTemplateDeploymentEnabled')]",
+            "enablePurgeProtection": "[if(parameters('isPurgeProtectionEnabled'), parameters('isPurgeProtectionEnabled'), json('null'))]",
+            "enableRbacAuthorization": "[parameters('isRbacAuthorizationEnabled')]",
+            "enableSoftDelete": true,
+            "networkAcls": {
+                "bypass": "[if(parameters('isAllowTrustedMicrosoftServicesEnabled'), 'AzureServices', 'None')]",
+                "defaultAction": "Deny",
+                "ipRules": "[if(variables('firewallRulesIsNotEmpty'), variables('firewallRules'), json('null'))]",
+                "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), variables('virtualNetworkRules'), json('null'))]"
+            },
+            "sku": {
+                "family": "A",
+                "name": "[parameters('skuName')]"
+            },
+            "softDeleteRetentionInDays": "[parameters('softDeleteRetentionInDays')]",
+            "tenantId": "[parameters('tenantId')]"
+        },
+        "keyVaultsResourceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('name'))]",
         "secretsApiVersion": "2019-09-01",
-        "secretsArray": "[if(variables('secretsArrayIsNotEmpty'), parameters('secrets').array, json('[ { \"name\":\"dummySecret\", \"value\": \"Shhh, don''t tell anyone...\" } ]'))]",
-        "secretsArrayCount": "[length(union(json('{ \"array\": [] }'), parameters('secrets')).array)]",
+        "secretsArrayCount": "[length(union(variables('secretsDefaultObject'), parameters('secrets')).array)]",
         "secretsArrayIsNotEmpty": "[greater(variables('secretsArrayCount'), 0)]",
+        "secretsDefaultObject": {
+            "array": []
+        },
+        "virtualNetworkRulesDefaultObject": {
+            "resourceGroupName": "[resourceGroup().location]",
+            "subscriptionId": "[subscription().subscriptionId]"
+        },
         "virtualNetworkRulesIsNotEmpty": "[greater(length(parameters('virtualNetworkRules')), 0)]"
     },
     "resources": [
         {
-            "apiVersion": "[variables('keyVaultApiVersion')]",
+            "apiVersion": "[variables('keyVaultsApiVersion')]",
             "location": "[parameters('location')]",
-            "name": "[parameters('keyVaultName')]",
-            "properties": {
-                "accessPolicies": "[variables('accessPolicies')]",
-                "createMode": "default",
-                "enabledForDeployment": "[parameters('isVirtualMachineDeploymentEnabled')]",
-                "enabledForDiskEncryption": "[parameters('isDiskEncryptionEnabled')]",
-                "enabledForTemplateDeployment": "[parameters('isTemplateDeploymentEnabled')]",
-                "enablePurgeProtection": "[parameters('isPurgeProtectionEnabled')]",
-                "enableSoftDelete": "[parameters('isSoftDeleteEnabled')]",
-                "networkAcls": {
-                    "bypass": "[if(parameters('isAllowTrustedMicrosoftServicesEnabled'), 'AzureServices', 'None')]",
-                    "defaultAction": "Deny",
-                    "ipRules": "[if(variables('firewallRulesIsNotEmpty'), variables('firewallRules'), json('null'))]",
-                    "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), variables('virtualNetworkRules'), json('null'))]"
-                },
-                "sku": {
-                    "family": "A",
-                    "name": "[parameters('skuName')]"
-                },
-                "tenantId": "[parameters('tenantId')]"
-            },
+            "name": "[parameters('name')]",
+            "properties": "[variables('keyVaultsProperties')]",
             "tags": "[parameters('tags')]",
             "type": "Microsoft.KeyVault/vaults"
         },
@@ -185,11 +183,11 @@
                 "name": "secretsCopy"
             },
             "dependsOn": [
-                "[variables('keyVaultResourceId')]"
+                "[variables('keyVaultsResourceId')]"
             ],
-            "name": "[format('{0}/{1}', parameters('keyVaultName'), variables('secretsArray')[copyIndex()].name)]",
+            "name": "[format('{0}/{1}', parameters('name'), if(variables('secretsArrayIsNotEmpty'), parameters('secrets').array[copyIndex()].name, 'dummySecret'))]",
             "properties": {
-                "value": "[variables('secretsArray')[copyIndex()].value]"
+                "value": "[parameters('secrets').array[copyIndex()].value]"
             },
             "type": "Microsoft.KeyVault/vaults/secrets"
         }

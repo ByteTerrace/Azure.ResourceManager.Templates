@@ -1,15 +1,33 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "2.0.0.0",
+    "contentVersion": "0.0.0.0",
     "parameters": {
         "addressPrefixes": {
-            "defaultValue": [
-                "10.0.0.0/16"
-            ],
             "metadata": {
                 "description": "An array of address prefixes, in CIDR notation, that should be reserved for the Azure Virtual Network."
             },
             "type": "array"
+        },
+        "ddosProtectionPlanName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the Azure DDoS Protection Plan that will be assigned to the Azure Virtual Network."
+            },
+            "type": "string"
+        },
+        "ddosProtectionPlanResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure DDoS Protection Plan that will be assigned to the Azure Virtual Network."
+            },
+            "type": "string"
+        },
+        "ddosProtectionPlanSubscriptionId": {
+            "defaultValue": "[subscription().subscriptionId]",
+            "metadata": {
+                "description": "Specifies the subscription id of the Azure DDoS Protection Plan that will be assigned to the Azure Virtual Network."
+            },
+            "type": "string"
         },
         "location": {
             "defaultValue": "[resourceGroup().location]",
@@ -18,13 +36,7 @@
             },
             "type": "string"
         },
-        "subnets": {
-            "metadata": {
-                "description": "An array of subnets that should be created within the Azure Virtual Network."
-            },
-            "type": "array"
-        },
-        "virtualNetworkName": {
+        "name": {
             "maxLength": 64,
             "metadata": {
                 "description": "Specifies the name of the Azure Virtual Network."
@@ -40,17 +52,27 @@
             "type": "object"
         }
     },
+    "variables": {
+        "ddosProtectionPlanProperties": {
+            "id": "[if(variables('isDdosProtectionEnabled'), resourceId(parameters('ddosProtectionPlanSubscriptionId'), parameters('ddosProtectionPlanResourceGroupName'), 'Microsoft.Network/ddosProtectionPlans', parameters('ddosProtectionPlanName')), json('null'))]"
+        },
+        "isDdosProtectionEnabled": "[not(empty(parameters('ddosProtectionPlanName')))]",
+        "virtualNetworksApiVersion": "2020-05-01",
+        "virtualNetworksProperties": {
+            "addressSpace": {
+                "addressPrefixes": "[parameters('addressPrefixes')]"
+            },
+            "ddosProtectionPlan": "[if(variables('isDdosProtectionEnabled'), variables('ddosProtectionPlanProperties'), json('null'))]",
+            "enableDdosProtection": "[variables('isDdosProtectionEnabled')]",
+            "enableVmProtection": true
+        }
+    },
     "resources": [
         {
-            "apiVersion": "2019-11-01",
-            "name": "[parameters('virtualNetworkName')]",
+            "apiVersion": "[variables('virtualNetworksApiVersion')]",
+            "name": "[parameters('name')]",
             "location": "[parameters('location')]",
-            "properties": {
-                "addressSpace": {
-                    "addressPrefixes": "[parameters('addressPrefixes')]"
-                },
-                "subnets": "[parameters('subnets')]"
-            },
+            "properties": "[variables('virtualNetworksProperties')]",
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Network/virtualNetworks"
         }
