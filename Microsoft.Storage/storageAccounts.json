@@ -1,6 +1,6 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "2.0.0.0",
+    "contentVersion": "0.0.0.0",
     "parameters": {
         "accessTier": {
             "defaultValue": "Hot",
@@ -128,20 +128,6 @@
             },
             "type": "bool"
         },
-        "linkedTemplateBaseUri": {
-            "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/",
-            "metadata": {
-                "description": "Specifies the base uri of external linked templates used by this template."
-            },
-            "type": "string"
-        },
-        "linkedTemplateQueryString": {
-            "defaultValue": "&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
-            "metadata": {
-                "description": "Specifies the query string that will be appended to the uri of external linked templates used by this template."
-            },
-            "type": "string"
-        },
         "location": {
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
@@ -214,14 +200,14 @@
         }
     },
     "variables": {
+        "authorizationRoleAssignmentsApiVersion":"2018-09-01-preview",
         "blobContainerApiVersion": "2019-06-01",
         "blobContainerNames": "[if(variables('blobContainerNamesIsNotEmpty'), parameters('blobContainerNames'), json('[ \"dummyContainer\" ]'))]",
         "blobContainerNamesCount": "[length(parameters('blobContainerNames'))]",
         "blobContainerNamesIsNotEmpty": "[greater(variables('blobContainerNamesCount'), 0)]",
         "blobServicesApiVersion": "2019-06-01",
-        "customerManagedEncryptionAccessPolicyDeploymentName": "[format('{0}-{1}-CmeAccessPolicy', deployment().name, variables('storageAccountName'))]",
-        "customerManagedEncryptionAccessPolicyDeploymentResourceId": "[resourceId(variables('customerManagedEncryptionKeyVaultSubscriptionId'), variables('customerManagedEncryptionKeyVaultResourceGroupName'), 'Microsoft.Resources/deployments', variables('customerManagedEncryptionAccessPolicyDeploymentName'))]",
         "customerManagedEncryptionIsEnabled": "[and(not(empty(coalesce(parameters('customerManagedEncryptionKeyName'), ''))), not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), ''))))]",
+        "customerManagedEncryptionKeyVaultAuthorizationName": "[format('{0}/Microsoft.Authorization/{1}', if(variables('customerManagedEncryptionIsEnabled'), parameters('customerManagedEncryptionKeyVaultName'), 'dummyKeyVault'), guid(subscription().subscriptionId, resourceGroup().name, parameters('storageAccountName'), variables('keyVaultsCryptoServiceEncryptionRoleDefinitionId')))]",
         "customerManagedEncryptionKeyVaultResourceGroupName": "[if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultResourceGroupName'), ''))), parameters('customerManagedEncryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
         "customerManagedEncryptionKeyVaultResourceId": "[resourceId(variables('customerManagedEncryptionKeyVaultSubscriptionId'), variables('customerManagedEncryptionKeyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('customerManagedEncryptionKeyVaultName'))]",
         "customerManagedEncryptionKeyVaultSubscriptionId": "[if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultSubscriptionId'), ''))), parameters('customerManagedEncryptionKeyVaultSubscriptionId'), subscription().subscriptionId)]",
@@ -237,19 +223,51 @@
         "fileShareNames": "[if(variables('fileShareNamesIsNotEmpty'), parameters('fileShareNames'), json('[ \"dummyFileShare\" ]'))]",
         "fileShareNamesCount": "[length(parameters('fileShareNames'))]",
         "fileShareNamesIsNotEmpty": "[greater(variables('fileShareNamesCount'), 0)]",
-        "keyVaultApiVersion": "2019-09-01",
+        "keyVaultsApiVersion": "2019-09-01",
+        "keyVaultsCryptoServiceEncryptionRoleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]",
         "queueApiVersion": "2019-06-01",
         "queueNames": "[if(variables('queueNamesIsNotEmpty'), parameters('queueNames'), json('[ \"dummyQueue\" ]'))]",
         "queueNamesCount": "[length(parameters('queueNames'))]",
         "queueNamesIsNotEmpty": "[greater(variables('queueNamesCount'), 0)]",
         "storageAccountApiVersion": "2019-06-01",
         "storageAccountName": "[toLower(parameters('storageAccountName'))]",
+        "storageAccountsProperties": {
+            "accessTier": "[parameters('accessTier')]",
+            "isHnsEnabled": "[parameters('isHierarchicalNamespaceEnabled')]",
+            "largeFileSharesState": "[if(parameters('isLargeFileSharesEnabled'), 'Enabled', 'Disabled')]",
+            "networkAcls": {
+                "bypass": "[if(parameters('isAllowTrustedMicrosoftServicesEnabled'), 'AzureServices', 'None')]",
+                "copy": [
+                    {
+                        "count": "[length(parameters('firewallRules'))]",
+                        "input": {
+                            "action": "Allow",
+                            "value": "[parameters('firewallRules')[copyIndex('ipRules')]]"
+                        },
+                        "name": "ipRules"
+                    },
+                    {
+                        "count": "[length(parameters('virtualNetworkRules'))]",
+                        "input": {
+                            "action": "Allow",
+                            "id": "[resourceId(union(variables('virtualNetworkRulesDefaultObject'), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subscriptionId, union(variables('virtualNetworkRulesDefaultObject'), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
+                        },
+                        "name": "virtualNetworkRules"
+                    }
+                ],
+                "defaultAction": "Deny"
+            },
+            "supportsHttpsTrafficOnly": true
+        },
         "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "tableApiVersion": "2019-06-01",
         "tableNames": "[if(variables('tableNamesIsNotEmpty'), parameters('tableNames'), json('[ \"dummyTable\" ]'))]",
         "tableNamesCount": "[length(parameters('tableNames'))]",
         "tableNamesIsNotEmpty": "[greater(variables('tableNamesCount'), 0)]",
-        "templateUriForMicrosoftKeyVaultAccessPolicies": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults-accessPolicies.json'), parameters('linkedTemplateQueryString')))]"
+        "virtualNetworkRulesDefaultObject": {
+            "resourceGroupName": "[resourceGroup().location]",
+            "subscriptionId": "[subscription().subscriptionId]"
+        }
     },
     "resources": [
         {
@@ -260,34 +278,7 @@
             "kind": "[parameters('storageAccountKind')]",
             "location": "[parameters('location')]",
             "name": "[variables('storageAccountName')]",
-            "properties": {
-                "accessTier": "[parameters('accessTier')]",
-                "isHnsEnabled": "[parameters('isHierarchicalNamespaceEnabled')]",
-                "largeFileSharesState": "[if(parameters('isLargeFileSharesEnabled'), 'Enabled', 'Disabled')]",
-                "networkAcls": {
-                    "bypass": "[if(parameters('isAllowTrustedMicrosoftServicesEnabled'), 'AzureServices', 'None')]",
-                    "copy": [
-                        {
-                            "count": "[length(parameters('firewallRules'))]",
-                            "input": {
-                                "action": "Allow",
-                                "value": "[parameters('firewallRules')[copyIndex('ipRules')]]"
-                            },
-                            "name": "ipRules"
-                        },
-                        {
-                            "count": "[length(parameters('virtualNetworkRules'))]",
-                            "input": {
-                                "action": "Allow",
-                                "id": "[resourceId(union(json(format('{{ \"subscriptionId\": \"{0}\" }}', subscription().subscriptionId)), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subscriptionId, union(json(format('{{ \"resourceGroupName\": \"{0}\" }}', resourceGroup().name)), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
-                            },
-                            "name": "virtualNetworkRules"
-                        }
-                    ],
-                    "defaultAction": "Deny"
-                },
-                "supportsHttpsTrafficOnly": true
-            },
+            "properties": "[variables('storageAccountsProperties')]",
             "sku": {
                 "name": "[parameters('skuName')]"
             },
@@ -306,51 +297,21 @@
             "type": "Microsoft.Storage/storageAccounts/providers/advancedThreatProtectionSettings"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('authorizationRoleAssignmentsApiVersion')]",
             "condition": "[variables('customerManagedEncryptionIsEnabled')]",
-            "dependsOn": [
-                "[variables('storageAccountResourceId')]"
-            ],
-            "name": "[variables('customerManagedEncryptionAccessPolicyDeploymentName')]",
+            "name": "[variables('customerManagedEncryptionKeyVaultAuthorizationName')]",
             "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "actionType": {
-                        "value": "add"
-                    },
-                    "keyVaultName": {
-                        "value": "[parameters('customerManagedEncryptionKeyVaultName')]"
-                    },
-                    "objectId": {
-                        "value": "[reference(variables('storageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').identity.principalId]"
-                    },
-                    "permissions": {
-                        "value": {
-                            "keys": [
-                                "Get",
-                                "UnwrapKey",
-                                "Wrapkey"
-                            ]
-                        }
-                    },
-                    "tenantId": {
-                        "value": "[reference(variables('storageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').identity.tenantId]"
-                    }
-                },
-                "templateLink": {
-                    "contentVersion": "2.0.0.0",
-                    "uri": "[variables('templateUriForMicrosoftKeyVaultAccessPolicies')]"
-                }
+                "canDelegate": false,
+                "principalId": "[reference(variables('storageAccountResourceId'), variables('storageAccountApiVersion'), 'Full').identity.principalId]",
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[variables('keyVaultsCryptoServiceEncryptionRoleDefinitionId')]"
             },
-            "resourceGroup": "[variables('customerManagedEncryptionKeyVaultResourceGroupName')]",
-            "subscriptionId": "[variables('customerManagedEncryptionKeyVaultSubscriptionId')]",
-            "type": "Microsoft.Resources/deployments"
+            "type": "Microsoft.KeyVault/vaults/providers/roleAssignments"
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[variables('customerManagedEncryptionIsEnabled')]",
             "dependsOn": [
-                "[variables('customerManagedEncryptionAccessPolicyDeploymentResourceId')]",
                 "[variables('storageAccountResourceId')]"
             ],
             "name": "[variables('customerManagedEncryptionPropertiesDeploymentName')]",
@@ -370,7 +331,7 @@
                                 "encryption": {
                                     "keyvaultproperties": {
                                         "keyname": "[parameters('customerManagedEncryptionKeyName')]",
-                                        "keyvaulturi": "[if(variables('customerManagedEncryptionIsEnabled'), take(reference(variables('customerManagedEncryptionKeyVaultResourceId'), variables('keyVaultApiVersion')).vaultUri, sub(length(reference(variables('customerManagedEncryptionKeyVaultResourceId'), variables('keyVaultApiVersion')).vaultUri), 1)), json('null'))]",
+                                        "keyvaulturi": "[if(variables('customerManagedEncryptionIsEnabled'), take(reference(variables('customerManagedEncryptionKeyVaultResourceId'), variables('keyVaultsApiVersion')).vaultUri, sub(length(reference(variables('customerManagedEncryptionKeyVaultResourceId'), variables('keyVaultsApiVersion')).vaultUri), 1)), json('null'))]",
                                         "keyversion": "[if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVersion'), ''))), parameters('customerManagedEncryptionKeyVersion'), json('null'))]"
                                     },
                                     "services": {
@@ -411,7 +372,7 @@
             "name": "[format('{0}/{1}', variables('storageAccountName'), variables('encryptionScopes')[copyIndex()].encryptionScopeName)]",
             "properties": {
                 "keyVaultProperties": {
-                    "keyUri": "[if(variables('encryptionScopesIsNotEmpty'), format('{0}keys/{1}{2}', reference(resourceId(union(json(format('{{ \"subscriptionId\": \"{0}\" }}', subscription().subscriptionId)), variables('encryptionScopes')[copyIndex()]).subscriptionId, union(json(format('{{ \"resourceGroupName\": \"{0}\"}}', resourceGroup().name)), variables('encryptionScopes')[copyIndex()]).resourceGroupName, 'Microsoft.KeyVault/vaults', variables('encryptionScopes')[copyIndex()].keyVaultName), variables('keyVaultApiVersion')).vaultUri, variables('encryptionScopes')[copyIndex()].keyName, if(not(empty(union(json('{ \"keyVersion\": \"\"}'), variables('encryptionScopes')[copyIndex()]).keyVersion)), format('/{0}', variables('encryptionScopes')[copyIndex()].keyVersion), '')), json('null'))]"
+                    "keyUri": "[if(variables('encryptionScopesIsNotEmpty'), format('{0}keys/{1}{2}', reference(resourceId(union(json(format('{{ \"subscriptionId\": \"{0}\" }}', subscription().subscriptionId)), variables('encryptionScopes')[copyIndex()]).subscriptionId, union(json(format('{{ \"resourceGroupName\": \"{0}\"}}', resourceGroup().name)), variables('encryptionScopes')[copyIndex()]).resourceGroupName, 'Microsoft.KeyVault/vaults', variables('encryptionScopes')[copyIndex()].keyVaultName), variables('keyVaultsApiVersion')).vaultUri, variables('encryptionScopes')[copyIndex()].keyName, if(not(empty(union(json('{ \"keyVersion\": \"\"}'), variables('encryptionScopes')[copyIndex()]).keyVersion)), format('/{0}', variables('encryptionScopes')[copyIndex()].keyVersion), '')), json('null'))]"
                 },
                 "source": "Microsoft.KeyVault",
                 "state": "Enabled"
@@ -455,7 +416,7 @@
             "copy": {
                 "count": "[variables('blobContainerNamesCount')]",
                 "mode": "parallel",
-                "name": "blobContainerCopy"
+                "name": "blobContainersCopy"
             },
             "dependsOn": [
                 "[variables('customerManagedEncryptionPropertiesDeploymentResourceId')]",
@@ -470,7 +431,7 @@
             "copy": {
                 "count": "[variables('fileShareNamesCount')]",
                 "mode": "parallel",
-                "name": "fileShareCopy"
+                "name": "fileSharesCopy"
             },
             "dependsOn": [
                 "[variables('customerManagedEncryptionPropertiesDeploymentResourceId')]",
@@ -485,7 +446,7 @@
             "copy": {
                 "count": "[variables('queueNamesCount')]",
                 "mode": "parallel",
-                "name": "queueCopy"
+                "name": "queuesCopy"
             },
             "dependsOn": [
                 "[variables('customerManagedEncryptionPropertiesDeploymentResourceId')]",
@@ -500,7 +461,7 @@
             "copy": {
                 "count": "[variables('tableNamesCount')]",
                 "mode": "parallel",
-                "name": "queueCopy"
+                "name": "tablesCopy"
             },
             "dependsOn": [
                 "[variables('customerManagedEncryptionPropertiesDeploymentResourceId')]",

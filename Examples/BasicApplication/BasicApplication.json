@@ -1,0 +1,69 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceDefinitions": {
+            "type": "object"
+        },
+        "templateBaseUri": {
+            "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/",
+            "type": "string"
+        },
+        "templateQueryString": {
+            "defaultValue": "&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
+            "type": "string"
+        }
+    },
+    "variables": {
+        "defaultResourceDefinitions": {
+            "keyVaults": [],
+            "storageAccounts": [],
+            "virtualNetworks": []
+        },
+        "defaultResourceProperties": {
+            "keyVault": {},
+            "storageAccount": {},
+            "virtualNetwork": {}
+        },
+        "deploymentApiVersion": "2019-10-01",
+        "deploymentNames": {
+            "keyVault": "[format('{0}-KeyVault', deployment().name)]",
+            "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
+            "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]"
+        },
+        "resourceDefinitions": "[union(variables('defaultResourceDefinitions'), parameters('resourceDefinitions'))]",
+        "templateUris": {
+            "keyVault": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults.json'), parameters('templateQueryString')))]",
+            "storageAccount": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Storage/storageAccounts.json'), parameters('templateQueryString')))]",
+            "virtualNetwork": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/virtualNetworks.json'), parameters('templateQueryString')))]"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').virtualNetworks))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').virtualNetworks)]",
+                "mode": "parallel",
+                "name": "virtualNetworksCopy"
+            },
+            "name": "[variables('deploymentNames').virtualNetwork]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "name": {
+                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).name]"
+                    },
+                    "subnets": {
+                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).subnets]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUris').virtualNetwork]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        }
+    ]
+}
