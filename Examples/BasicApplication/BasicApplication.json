@@ -5,6 +5,9 @@
         "resourceDefinitions": {
             "type": "object"
         },
+        "tags": {
+            "type": "object"
+        },
         "templateBaseUri": {
             "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/ResourceManager.Templates/",
             "type": "string"
@@ -24,7 +27,10 @@
             "keyVault": {},
             "storageAccount": {},
             "virtualNetwork": {
-                "addressPrefixes": []
+                "addressPrefixes": [],
+                "ddosProtectionPlanName": "",
+                "ddosProtectionPlanResourceGroupName": "[resourceGroup().name]",
+                "ddosProtectionPlanSubscriptionId": "[subscription().subscriptionId]"
             }
         },
         "deploymentApiVersion": "2019-10-01",
@@ -49,15 +55,27 @@
                 "mode": "parallel",
                 "name": "virtualNetworksCopy"
             },
-            "name": "[variables('deploymentNames').virtualNetwork]",
+            "name": "[format('{0}_{1}', variables('deploymentNames').virtualNetwork, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
                     "addressPrefixes": {
                         "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).addressPrefixes]"
                     },
+                    "ddosProtectionPlanName": {
+                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).ddosProtectionPlanName]"
+                    },
+                    "ddosProtectionPlanResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).ddosProtectionPlanResourceGroupName]"
+                    },
+                    "ddosProtectionPlanSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).ddosProtectionPlanSubscriptionId]"
+                    },
                     "name": {
                         "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
                     }
                 },
                 "templateLink": {
