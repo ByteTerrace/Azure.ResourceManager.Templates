@@ -23,7 +23,9 @@
         "defaultResourceProperties": {
             "keyVault": {},
             "storageAccount": {},
-            "virtualNetwork": {}
+            "virtualNetwork": {
+                "addressPrefixes": []
+            }
         },
         "deploymentApiVersion": "2019-10-01",
         "deploymentNames": {
@@ -51,6 +53,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "addressPrefixes": {
+                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).addressPrefixes]"
+                    },
                     "name": {
                         "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).name]"
                     }
