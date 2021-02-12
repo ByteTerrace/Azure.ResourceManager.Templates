@@ -6,7 +6,7 @@
             "type": "object"
         },
         "templateBaseUri": {
-            "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/",
+            "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/ResourceManager.Templates/",
             "type": "string"
         },
         "templateQueryString": {
@@ -53,9 +53,6 @@
                 "parameters": {
                     "name": {
                         "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).name]"
-                    },
-                    "subnets": {
-                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).subnets]"
                     }
                 },
                 "templateLink": {
