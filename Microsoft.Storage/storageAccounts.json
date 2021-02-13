@@ -227,6 +227,9 @@
         "fileShareNames": "[if(variables('fileShareNamesIsNotEmpty'), parameters('fileShareNames'), json('[ \"dummyFileShare\" ]'))]",
         "fileShareNamesCount": "[length(parameters('fileShareNames'))]",
         "fileShareNamesIsNotEmpty": "[greater(variables('fileShareNamesCount'), 0)]",
+        "hierarchicalNamespaceProperties": {
+            "isHnsEnabled": "[parameters('isHierarchicalNamespaceEnabled')]"
+        },
         "keyVaultsApiVersion": "2019-09-01",
         "keyVaultsCryptoServiceEncryptionRoleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]",
         "queueApiVersion": "2019-06-01",
@@ -235,9 +238,8 @@
         "queueNamesIsNotEmpty": "[greater(variables('queueNamesCount'), 0)]",
         "storageAccountApiVersion": "2019-06-01",
         "storageAccountName": "[toLower(parameters('name'))]",
-        "storageAccountsProperties": {
+        "storageAccountProperties": {
             "accessTier": "[parameters('accessTier')]",
-            "isHnsEnabled": "[parameters('isHierarchicalNamespaceEnabled')]",
             "largeFileSharesState": "[if(parameters('isLargeFileSharesEnabled'), 'Enabled', 'Disabled')]",
             "minimumTlsVersion": "TLS1_2",
             "networkAcls": {
@@ -283,7 +285,7 @@
             "kind": "[parameters('storageAccountKind')]",
             "location": "[parameters('location')]",
             "name": "[variables('storageAccountName')]",
-            "properties": "[variables('storageAccountsProperties')]",
+            "properties": "[if(parameters('isHierarchicalNamespaceEnabled'), union(variables('storageAccountProperties'), variables('hierarchicalNamespaceProperties')), variables('storageAccountProperties'))]",
             "sku": {
                 "name": "[parameters('skuName')]"
             },
