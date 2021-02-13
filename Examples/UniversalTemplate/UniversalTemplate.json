@@ -36,9 +36,11 @@
             },
             "dnsZone": {
                 "private": {
+                    "aRecords": [],
                     "cnameRecords": []
                 },
                 "public": {
+                    "aRecords": [],
                     "cnameRecords": []
                 }
             },
@@ -165,6 +167,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "aRecords": {
+                        "value": "[union(variables('defaultResourceProperties').dnsZone.public, variables('resourceDefinitions').dnsZones.public[copyIndex()]).aRecords]"
+                    },
                     "cnameRecords": {
                         "value": "[union(variables('defaultResourceProperties').dnsZone.public, variables('resourceDefinitions').dnsZones.public[copyIndex()]).cnameRecords]"
                     },

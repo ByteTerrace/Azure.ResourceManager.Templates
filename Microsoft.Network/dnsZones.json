@@ -2,6 +2,13 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "aRecords": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of A records that will be created within the public Azure DNS zone."
+            },
+            "type": "array"
+        },
         "cnameRecords": {
             "defaultValue": [],
             "metadata": {
@@ -26,7 +33,13 @@
         }
     },
     "variables":{
-        "cnameRecords": "[if(variables('cnameRecordsIsNotEmpty'), parameters('cnameRecords'), json('[ { \"name\": \"dummyCname\" } ]'))]",
+        "aRecords": "[if(variables('aRecordsIsNotEmpty'), parameters('aRecords'), json('[ { \"name\": \"dummyA\" } ]'))]",
+        "aRecordsCount": "[length(parameters('aRecords'))]",
+        "aRecordsDefaultProperties": {
+            "timeToLive": 3600
+        },
+        "aRecordsIsNotEmpty": "[greater(variables('aRecordsCount'), 0)]",
+        "cnameRecords": "[if(variables('cnameRecordsIsNotEmpty'), parameters('cnameRecords'), json('[ { \"name\": \"dummyCNAME\" } ]'))]",
         "cnameRecordsCount": "[length(parameters('cnameRecords'))]",
         "cnameRecordsDefaultProperties": {
             "timeToLive": 3600
@@ -49,6 +62,30 @@
         },
         {
             "apiVersion": "2018-05-01",
+            "condition": "[variables('aRecordsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('aRecordsCount')]",
+                "mode": "parallel",
+                "name": "aRecordsCopy"
+            },
+            "dependsOn": [
+                "[variables('dnsZoneResourceId')]"
+            ],
+            "name": "[format('{0}/{1}', parameters('name'), variables('aRecords')[copyIndex()].name)]",
+            "properties": {
+                "ARecords": [
+                    {
+                        "ipv4Address": "[variables('cnameRecords')[copyIndex()].ipAddress]"
+                    }
+                ],
+                "targetResource": {},
+                "TTL": "[union(variables('aRecordsDefaultProperties'), variables('aRecords')[copyIndex()]).timeToLive]"
+            },
+            "type": "Microsoft.Network/dnszones/A"
+        },
+        {
+            "apiVersion": "2018-05-01",
+            "condition": "[variables('cnameRecordsIsNotEmpty')]",
             "copy": {
                 "count": "[variables('cnameRecordsCount')]",
                 "mode": "parallel",
