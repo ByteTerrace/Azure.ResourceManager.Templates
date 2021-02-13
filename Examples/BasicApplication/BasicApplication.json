@@ -38,23 +38,11 @@
             }
         },
         "deploymentApiVersion": "2019-10-01",
-        "deployments": {
-            "dnsZone": {
-                "name": "[format('{0}-DnsZone', deployment().name)]",
-                "resourceId": "[resourceId('Microsoft.Resources/deployments', variables('deployments').dnsZone.name)]"
-            },
-            "keyVault": {
-                "name": "[format('{0}-KeyVault', deployment().name)]",
-                "resourceId": "[resourceId('Microsoft.Resources/deployments', variables('deployments').keyVault.name)]"
-            },
-            "storageAccount": {
-                "name": "[format('{0}-StorageAccount', deployment().name)]",
-                "resourceId": "[resourceId('Microsoft.Resources/deployments', variables('deployments').storageAccount.name)]"
-            },
-            "virtualNetwork": {
-                "name": "[format('{0}-VirtualNetwork', deployment().name)]",
-                "resourceId": "[resourceId('Microsoft.Resources/deployments', variables('deployments').virtualNetwork.name)]"
-            }
+        "deploymentNames": {
+            "dnsZone": "[format('{0}-DnsZone', deployment().name)]",
+            "keyVault": "[format('{0}-KeyVault', deployment().name)]",
+            "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
+            "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]"
         },
         "resourceDefinitions": "[union(variables('defaultResourceDefinitions'), parameters('resourceDefinitions'))]",
         "templateUris": {
@@ -73,7 +61,7 @@
                 "mode": "parallel",
                 "name": "virtualNetworksCopy"
             },
-            "name": "[format('{0}_{1}', variables('deployments').virtualNetwork.name, copyIndex())]",
+            "name": "[format('{0}_{1}', variables('deploymentNames').virtualNetwork, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
@@ -112,9 +100,9 @@
                 "name": "dnsZonesCopy"
             },
             "dependsOn": [
-                "[variables('deployments').virtualNetwork.resourceId]"
+                "virtualNetworksCopy"
             ],
-            "name": "[format('{0}_{1}', variables('deployments').dnsZone.name, copyIndex())]",
+            "name": "[format('{0}_{1}', variables('deploymentNames').dnsZone, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
