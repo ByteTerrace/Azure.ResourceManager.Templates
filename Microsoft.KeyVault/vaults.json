@@ -1,6 +1,6 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "0.0.0.0",
+    "contentVersion": "1.0.0.0",
     "parameters": {
         "firewallRules": {
             "defaultValue": [],
@@ -66,6 +66,13 @@
             "minLength": 3,
             "type": "string"
         },
+        "secrets": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the array of secrets that will be stored within the Azure Key Vault."
+            },
+            "type": "secureObject"
+        },
         "skuName": {
             "allowedValues": [
                 "Premium",
@@ -76,20 +83,6 @@
                 "description": "Specifies the SKU name of the Azure Key Vault."
             },
             "type": "string"
-        },
-        "tenantId": {
-            "defaultValue": "[subscription().tenantId]",
-            "metadata": {
-                "description": "Specifies the Azure Active Directory tenant GUID that will be used for authenticating requests to the Azure Key Vault."
-            },
-            "type": "string"
-        },
-        "secrets": {
-            "defaultValue": {},
-            "metadata": {
-                "description": "An object that encapsulates the array of secrets that will be stored within the Azure Key Vault."
-            },
-            "type": "secureObject"
         },
         "softDeleteRetentionInDays": {
             "defaultValue": 14,
@@ -104,6 +97,13 @@
                 "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Key Vault."
             },
             "type": "object"
+        },
+        "tenantId": {
+            "defaultValue": "[subscription().tenantId]",
+            "metadata": {
+                "description": "Specifies the Azure Active Directory tenant GUID that will be used for authenticating requests to the Azure Key Vault."
+            },
+            "type": "string"
         },
         "virtualNetworkRules": {
             "defaultValue": [],

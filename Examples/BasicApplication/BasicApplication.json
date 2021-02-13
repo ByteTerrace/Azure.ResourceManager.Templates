@@ -28,7 +28,20 @@
             "dnsZone": {
                 "type": "Public"
             },
-            "keyVault": {},
+            "keyVault": {
+                "firewallRules": "",
+                "isAllowTrustedMicrosoftServicesEnabled": "false",
+                "isDiskEncryptionEnabled": "false",
+                "isPurgeProtectionEnabled": "true",
+                "isRbacAuthorizationEnabled": "true",
+                "isTemplateDeploymentEnabled": "false",
+                "isVirtualMachineDeploymentEnabled": "false",
+                "secrets": {},
+                "skuName": "Premium",
+                "softDeleteRetentionInDays": 14,
+                "tenantId": "[subscription().tenantId]",
+                "virtualNetworkRules": []
+            },
             "storageAccount": {},
             "virtualNetwork": {
                 "addressPrefixes": [],
@@ -119,6 +132,71 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "uri": "[variables('templateUris').dnsZone]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').keyVaults))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').keyVaults)]",
+                "mode": "parallel",
+                "name": "keyVaultsCopy"
+            },
+            "dependsOn": [
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').keyVault, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "firewallRules": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).firewallRules]"
+                    },
+                    "isAllowTrustedMicrosoftServicesEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
+                    },
+                    "isDiskEncryptionEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).isDiskEncryptionEnabled]"
+                    },
+                    "isPurgeProtectionEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).isPurgeProtectionEnabled]"
+                    },
+                    "isRbacAuthorizationEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).isRbacAuthorizationEnabled]"
+                    },
+                    "isTemplateDeploymentEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).isTemplateDeploymentEnabled]"
+                    },
+                    "isVirtualMachineDeploymentEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).isVirtualMachineDeploymentEnabled]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').keyVaults[copyIndex()].name]"
+                    },
+                    "secrets": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).secrets]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).skuName]"
+                    },
+                    "softDeleteRetentionInDays": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).softDeleteRetentionInDays]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "tenantId": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).tenantId]"
+                    },
+                    "virtualNetworkRules": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).virtualNetworkRules]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUris').keyVault]"
                 }
             },
             "type": "Microsoft.Resources/deployments"
