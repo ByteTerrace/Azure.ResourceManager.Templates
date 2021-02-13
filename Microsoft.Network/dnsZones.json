@@ -26,8 +26,12 @@
         }
     },
     "variables":{
-        "cnameRecordsCount": "[length(variables('cnameRecords'))]",
-        "cnameRecords": "[parameters('cnameRecords')]",
+        "cnameRecords": "[if(variables('cnameRecordsIsNotEmpty'), parameters('cnameRecords'), json('[ { \"name\": \"dummyCname\" } ]'))]",
+        "cnameRecordsCount": "[length(parameters('cnameRecords'))]",
+        "cnameRecordsDefaultProperties": {
+            "timeToLive": 3600
+        },
+        "cnameRecordsIsNotEmpty": "[greater(variables('cnameRecordsCount'), 0)]",
         "dnsZoneResourceId": "[resourceId('Microsoft.Network/dnszones', parameters('name'))]"
     },
     "resources": [
@@ -59,7 +63,7 @@
                     "cname": "[variables('cnameRecords')[copyIndex()].alias]"
                 },
                 "targetResource": {},
-                "TTL": "[variables('cnameRecords')[copyIndex()].timeToLive]"
+                "TTL": "[union(variables('cnameRecordsDefaultProperties'), variables('cnameRecords')[copyIndex()]).timeToLive]"
             },
             "type": "Microsoft.Network/dnszones/CNAME"
         }
