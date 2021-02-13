@@ -35,8 +35,12 @@
                 "skuName": "Standard"
             },
             "dnsZone": {
-                "private": {},
-                "public": {}
+                "private": {
+                    "cnameRecords": []
+                },
+                "public": {
+                    "cnameRecords": []
+                }
             },
             "keyVault": {
                 "firewallRules": [],
@@ -161,6 +165,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "cnameRecords": {
+                        "value": "[union(variables('defaultResourceProperties').dnsZone.public, variables('resourceDefinitions').dnsZones.public[copyIndex()]).cnameRecords]"
+                    },
                     "name": {
                         "value": "[variables('resourceDefinitions').dnsZones.public[copyIndex()].name]"
                     },
