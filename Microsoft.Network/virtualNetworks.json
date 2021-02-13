@@ -81,8 +81,7 @@
             ],
             "ddosProtectionPlan": "[if(variables('isDdosProtectionEnabled'), variables('ddosProtectionPlanProperties'), json('null'))]",
             "enableDdosProtection": "[variables('isDdosProtectionEnabled')]",
-            "enableVmProtection": true,
-            "subnets": "[parameters('subnets')]"
+            "enableVmProtection": true
         }
     },
     "resources": [
