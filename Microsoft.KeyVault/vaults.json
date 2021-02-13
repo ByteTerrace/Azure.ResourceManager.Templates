@@ -142,7 +142,7 @@
             "enableSoftDelete": true,
             "networkAcls": {
                 "bypass": "[if(parameters('isAllowTrustedMicrosoftServicesEnabled'), 'AzureServices', 'None')]",
-                "defaultAction": "Deny",
+                "defaultAction": "[if(and(variables('firewallRulesIsNotEmpty'), variables('virtualNetworkRulesIsNotEmpty')), 'Deny', 'Allow')]",
                 "ipRules": "[if(variables('firewallRulesIsNotEmpty'), variables('firewallRules'), json('null'))]",
                 "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), variables('virtualNetworkRules'), json('null'))]"
             },
