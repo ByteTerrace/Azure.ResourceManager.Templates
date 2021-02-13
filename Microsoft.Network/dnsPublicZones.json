@@ -40,20 +40,20 @@
         }
     },
     "variables":{
-        "aRecords": "[if(variables('aRecordsIsNotEmpty'), parameters('aRecords'), json('[ { \"name\": \"dummyA\" } ]'))]",
+        "aRecords": "[if(variables('aRecordsIsNotEmpty'), parameters('aRecords'), createArray(createObject('name', 'dummyA')))]",
         "aRecordsCount": "[length(parameters('aRecords'))]",
         "aRecordsDefaultProperties": {
             "timeToLiveInSeconds": 3600
         },
         "aRecordsIsNotEmpty": "[greater(variables('aRecordsCount'), 0)]",
-        "cnameRecords": "[if(variables('cnameRecordsIsNotEmpty'), parameters('cnameRecords'), json('[ { \"name\": \"dummyCNAME\" } ]'))]",
+        "cnameRecords": "[if(variables('cnameRecordsIsNotEmpty'), parameters('cnameRecords'), createArray(createObject('name', 'dummyCNAME')))]",
         "cnameRecordsCount": "[length(parameters('cnameRecords'))]",
         "cnameRecordsDefaultProperties": {
             "timeToLiveInSeconds": 3600
         },
         "cnameRecordsIsNotEmpty": "[greater(variables('cnameRecordsCount'), 0)]",
         "dnsZoneResourceId": "[resourceId('Microsoft.Network/dnszones', parameters('name'))]",
-        "txtRecords": "[if(variables('txtRecordsIsNotEmpty'), parameters('txtRecords'), json('[ { \"name\": \"dummyTXT\" } ]'))]",
+        "txtRecords": "[if(variables('txtRecordsIsNotEmpty'), parameters('txtRecords'), createArray(createObject('name', 'dummyTXT')))]",
         "txtRecordsCount": "[length(parameters('txtRecords'))]",
         "txtRecordsDefaultProperties": {
             "timeToLiveInSeconds": 3600

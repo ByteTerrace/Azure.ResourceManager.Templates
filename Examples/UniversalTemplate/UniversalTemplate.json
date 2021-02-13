@@ -35,7 +35,11 @@
                 "skuName": "Standard"
             },
             "dnsZone": {
-                "private": {},
+                "private": {
+                    "aRecords": [],
+                    "cnameRecords": [],
+                    "txtRecords": []
+                },
                 "public": {
                     "aRecords": [],
                     "cnameRecords": [],
@@ -152,6 +156,44 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').dnsZones.private))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').dnsZones.private)]",
+                "mode": "parallel",
+                "name": "privateDnsZonesCopy"
+            },
+            "dependsOn": [
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').dnsPrivateZone, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "aRecords": {
+                        "value": "[union(variables('defaultResourceProperties').dnsZone.private, variables('resourceDefinitions').dnsZones.private[copyIndex()]).aRecords]"
+                    },
+                    "cnameRecords": {
+                        "value": "[union(variables('defaultResourceProperties').dnsZone.private, variables('resourceDefinitions').dnsZones.private[copyIndex()]).cnameRecords]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').dnsZones.private[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "txtRecords": {
+                        "value": "[union(variables('defaultResourceProperties').dnsZone.private, variables('resourceDefinitions').dnsZones.private[copyIndex()]).txtRecords]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUris').dnsPrivateZone]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[not(empty(variables('resourceDefinitions').dnsZones.public))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').dnsZones.public)]",
@@ -184,35 +226,6 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "uri": "[variables('templateUris').dnsPublicZone]"
-                }
-            },
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').dnsZones.private))]",
-            "copy": {
-                "count": "[length(variables('resourceDefinitions').dnsZones.private)]",
-                "mode": "parallel",
-                "name": "privateDnsZonesCopy"
-            },
-            "dependsOn": [
-                "virtualNetworksCopy"
-            ],
-            "name": "[format('{0}_{1}', variables('deploymentNames').dnsPrivateZone, copyIndex())]",
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "name": {
-                        "value": "[variables('resourceDefinitions').dnsZones.private[copyIndex()].name]"
-                    },
-                    "tags": {
-                        "value": "[parameters('tags')]"
-                    }
-                },
-                "templateLink": {
-                    "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').dnsPrivateZone]"
                 }
             },
             "type": "Microsoft.Resources/deployments"
