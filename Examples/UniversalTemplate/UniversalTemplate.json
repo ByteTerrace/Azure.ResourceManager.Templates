@@ -19,6 +19,7 @@
     },
     "variables": {
         "defaultResourceDefinitions": {
+            "applicationConfigurationStores": [],
             "dnsZones": {
                 "private": [],
                 "public": []
@@ -28,6 +29,9 @@
             "virtualNetworks": []
         },
         "defaultResourceProperties": {
+            "applicationConfigurationStore": {
+                "skuName": "Standard"
+            },
             "dnsZone": {
                 "private": {},
                 "public": {}
@@ -81,6 +85,7 @@
         },
         "deploymentApiVersion": "2020-10-01",
         "deploymentNames": {
+            "applicationConfigurationStore": "[format('{0}-AppConfigStore', deployment().name)]",
             "dnsZonePrivate": "[format('{0}-DnsZonePrivate', deployment().name)]",
             "dnsZonePublic": "[format('{0}-DnsZonePublic', deployment().name)]",
             "keyVault": "[format('{0}-KeyVault', deployment().name)]",
@@ -89,6 +94,7 @@
         },
         "resourceDefinitions": "[union(variables('defaultResourceDefinitions'), parameters('resourceDefinitions'))]",
         "templateUris": {
+            "applicationConfigurationStore": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.AppConfiguration/configurationStores.json'), parameters('templateQueryString')))]",
             "dnsZonePrivate": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/privateDnsZones.json'), parameters('templateQueryString')))]",
             "dnsZonePublic": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsZones.json'), parameters('templateQueryString')))]",
             "keyVault": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults.json'), parameters('templateQueryString')))]",
@@ -263,6 +269,39 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').applicationConfigurationStores))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').applicationConfigurationStores)]",
+                "mode": "parallel",
+                "name": "applicationConfigurationStoresCopy"
+            },
+            "dependsOn": [
+                "keyVaultsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').applicationConfigurationStore, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "name": {
+                        "value": "[variables('resourceDefinitions').applicationConfigurationStores[copyIndex()].name]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').applicationConfigurationStores[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUris').applicationConfigurationStore]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[not(empty(variables('resourceDefinitions').storageAccounts))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').storageAccounts)]",
@@ -270,7 +309,8 @@
                 "name": "storageAccountsCopy"
             },
             "dependsOn": [
-                "keyVaultsCopy"
+                "keyVaultsCopy",
+                "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').storageAccount, copyIndex())]",
             "properties": {

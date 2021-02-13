@@ -4,6 +4,11 @@
     "parameters": {
         "resourceDefinitions": {
             "value": {
+                "applicationConfigurationStores": [
+                    {
+                        "name": "byteterrace"
+                    }
+                ],
                 "dnsZones": {
                     "private": [
                         {
