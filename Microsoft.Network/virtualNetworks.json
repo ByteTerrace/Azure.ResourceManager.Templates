@@ -44,6 +44,13 @@
             "minLength": 2,
             "type": "string"
         },
+        "subnets": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of subnets that will be created within the Azure Virtual Network."
+            },
+            "type": "array"
+        },
         "tags": {
             "defaultValue": {},
             "metadata": {
@@ -57,14 +64,15 @@
             "id": "[if(variables('isDdosProtectionEnabled'), resourceId(parameters('ddosProtectionPlanSubscriptionId'), parameters('ddosProtectionPlanResourceGroupName'), 'Microsoft.Network/ddosProtectionPlans', parameters('ddosProtectionPlanName')), json('null'))]"
         },
         "isDdosProtectionEnabled": "[not(empty(parameters('ddosProtectionPlanName')))]",
-        "virtualNetworksApiVersion": "2020-05-01",
+        "virtualNetworksApiVersion": "2020-07-01",
         "virtualNetworksProperties": {
             "addressSpace": {
                 "addressPrefixes": "[parameters('addressPrefixes')]"
             },
             "ddosProtectionPlan": "[if(variables('isDdosProtectionEnabled'), variables('ddosProtectionPlanProperties'), json('null'))]",
             "enableDdosProtection": "[variables('isDdosProtectionEnabled')]",
-            "enableVmProtection": true
+            "enableVmProtection": true,
+            "subnets": "[parameters('subnets')]"
         }
     },
     "resources": [

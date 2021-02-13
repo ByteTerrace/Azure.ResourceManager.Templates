@@ -75,7 +75,8 @@
                 "addressPrefixes": [],
                 "ddosProtectionPlanName": "",
                 "ddosProtectionPlanResourceGroupName": "[resourceGroup().name]",
-                "ddosProtectionPlanSubscriptionId": "[subscription().subscriptionId]"
+                "ddosProtectionPlanSubscriptionId": "[subscription().subscriptionId]",
+                "subnets": []
             }
         },
         "deploymentApiVersion": "2020-10-01",
@@ -125,6 +126,9 @@
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
+                    },
+                    "subnets": {
+                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).subnets]"
                     }
                 },
                 "templateLink": {
