@@ -19,11 +19,15 @@
     },
     "variables": {
         "defaultResourceDefinitions": {
+            "dnsZones": [],
             "keyVaults": [],
             "storageAccounts": [],
             "virtualNetworks": []
         },
         "defaultResourceProperties": {
+            "dnsZone": {
+                "type": "Public"
+            },
             "keyVault": {},
             "storageAccount": {},
             "virtualNetwork": {
@@ -34,13 +38,27 @@
             }
         },
         "deploymentApiVersion": "2019-10-01",
-        "deploymentNames": {
-            "keyVault": "[format('{0}-KeyVault', deployment().name)]",
-            "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
-            "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]"
+        "deployments": {
+            "dnsZone": {
+                "name": "[format('{0}-DnsZone', deployment().name)]",
+                "resourceId": "[resourceId('Microsoft.Resources/deployments', variables('deployments').dnsZone.name)]"
+            },
+            "keyVault": {
+                "name": "[format('{0}-KeyVault', deployment().name)]",
+                "resourceId": "[resourceId('Microsoft.Resources/deployments', variables('deployments').keyVault.name)]"
+            },
+            "storageAccount": {
+                "name": "[format('{0}-StorageAccount', deployment().name)]",
+                "resourceId": "[resourceId('Microsoft.Resources/deployments', variables('deployments').storageAccount.name)]"
+            },
+            "virtualNetwork": {
+                "name": "[format('{0}-VirtualNetwork', deployment().name)]",
+                "resourceId": "[resourceId('Microsoft.Resources/deployments', variables('deployments').virtualNetwork.name)]"
+            }
         },
         "resourceDefinitions": "[union(variables('defaultResourceDefinitions'), parameters('resourceDefinitions'))]",
         "templateUris": {
+            "dnsZone": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsZones.json'), parameters('templateQueryString')))]",
             "keyVault": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults.json'), parameters('templateQueryString')))]",
             "storageAccount": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Storage/storageAccounts.json'), parameters('templateQueryString')))]",
             "virtualNetwork": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/virtualNetworks.json'), parameters('templateQueryString')))]"
@@ -55,7 +73,7 @@
                 "mode": "parallel",
                 "name": "virtualNetworksCopy"
             },
-            "name": "[format('{0}_{1}', variables('deploymentNames').virtualNetwork, copyIndex())]",
+            "name": "[format('{0}_{1}', variables('deployments').virtualNetwork.name, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
@@ -72,7 +90,7 @@
                         "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).ddosProtectionPlanSubscriptionId]"
                     },
                     "name": {
-                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).name]"
+                        "value": "[variables('resourceDefinitions').virtualNetworks[copyIndex()].name]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
@@ -81,6 +99,38 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "uri": "[variables('templateUris').virtualNetwork]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').dnsZones))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').dnsZones)]",
+                "mode": "parallel",
+                "name": "dnsZonesCopy"
+            },
+            "dependsOn": [
+                "[variables('deployments').virtualNetwork.resourceId]"
+            ],
+            "name": "[format('{0}_{1}', variables('deployments').dnsZone.name, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "name": {
+                        "value": "[variables('resourceDefinitions').dnsZones[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "type": {
+                        "value": "[union(variables('defaultResourceProperties').dnsZone, variables('resourceDefinitions').dnsZones[copyIndex()]).type]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUris').dnsZone]"
                 }
             },
             "type": "Microsoft.Resources/deployments"

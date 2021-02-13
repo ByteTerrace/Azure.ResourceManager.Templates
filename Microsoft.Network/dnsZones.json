@@ -2,19 +2,12 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "dnsZoneName": {
+        "name": {
             "maxLength": 63,
             "metadata": {
                 "description": "Specifies the name of the Azure DNS zone."
             },
             "minLength": 1,
-            "type": "string"
-        },
-        "dnsZoneType": {
-            "defaultValue": "Public",
-            "metadata": {
-                "description": "Specifies the type of the Azure DNS zone."
-            },
             "type": "string"
         },
         "tags": {
@@ -23,17 +16,24 @@
                 "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure DNS zone."
             },
             "type": "object"
+        },
+        "type": {
+            "defaultValue": "Public",
+            "metadata": {
+                "description": "Specifies the type of the Azure DNS zone."
+            },
+            "type": "string"
         }
     },
     "resources": [
         {
             "apiVersion": "2018-05-01",
             "location": "global",
-            "name": "[parameters('dnsZoneName')]",
+            "name": "[parameters('name')]",
             "properties": {
                 "registrationVirtualNetworks": [],
                 "resolutionVirtualNetworks": [],
-                "zoneType": "[parameters('dnsZoneType')]"
+                "zoneType": "[parameters('type')]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Network/dnsZones"
