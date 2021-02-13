@@ -38,7 +38,8 @@
                 "private": {},
                 "public": {
                     "aRecords": [],
-                    "cnameRecords": []
+                    "cnameRecords": [],
+                    "txtRecords": []
                 }
             },
             "keyVault": {
@@ -175,7 +176,10 @@
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
-                    }
+                    },
+                    "txtRecords": {
+                        "value": "[union(variables('defaultResourceProperties').dnsZone.public, variables('resourceDefinitions').dnsZones.public[copyIndex()]).txtRecords]"
+                    },
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
