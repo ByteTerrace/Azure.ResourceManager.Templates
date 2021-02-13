@@ -73,7 +73,8 @@
                 {
                     "count": "[length(parameters('subnets'))]",
                     "input": {
-                        "properties": "[parameters('subnets')[copyIndex('subnets')]]"
+                        "name": "[parameters('subnets')[copyIndex('subnets')].name]",
+                        "properties": "[union(parameters('subnets')[copyIndex('subnets')], createObject('name', uniqueString(parameters('subnets')[copyIndex('subnets')].name)))]"
                     },
                     "name": "subnets"
                 }
