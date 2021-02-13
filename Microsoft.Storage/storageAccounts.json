@@ -262,7 +262,7 @@
                         "name": "virtualNetworkRules"
                     }
                 ],
-                "defaultAction": "Deny"
+                "defaultAction": "[if(or(greater(parameters('firewallRules'), 0), greater(parameters('virtualNetworkRules'), 0)), 'Deny', 'Allow')]"
             },
             "supportsHttpsTrafficOnly": true
         },
