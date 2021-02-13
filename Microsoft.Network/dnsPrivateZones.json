@@ -82,13 +82,12 @@
             ],
             "name": "[format('{0}/{1}', parameters('name'), variables('aRecords')[copyIndex()].name)]",
             "properties": {
-                "ARecords": [
+                "aRecords": [
                     {
                         "ipv4Address": "[variables('aRecords')[copyIndex()].ipAddress]"
                     }
                 ],
-                "targetResource": {},
-                "TTL": "[union(variables('aRecordsDefaultProperties'), variables('aRecords')[copyIndex()]).timeToLiveInSeconds]"
+                "ttl": "[union(variables('aRecordsDefaultProperties'), variables('aRecords')[copyIndex()]).timeToLiveInSeconds]"
             },
             "type": "Microsoft.Network/privateDnsZones/A"
         },
@@ -105,11 +104,10 @@
             ],
             "name": "[format('{0}/{1}', parameters('name'), variables('cnameRecords')[copyIndex()].name)]",
             "properties": {
-                "CNAMERecord": {
+                "cnameRecord": {
                     "cname": "[variables('cnameRecords')[copyIndex()].alias]"
                 },
-                "targetResource": {},
-                "TTL": "[union(variables('cnameRecordsDefaultProperties'), variables('cnameRecords')[copyIndex()]).timeToLiveInSeconds]"
+                "ttl": "[union(variables('cnameRecordsDefaultProperties'), variables('cnameRecords')[copyIndex()]).timeToLiveInSeconds]"
             },
             "type": "Microsoft.Network/privateDnsZones/CNAME"
         },
@@ -126,9 +124,8 @@
             ],
             "name": "[format('{0}/{1}', parameters('name'), variables('txtRecords')[copyIndex()].name)]",
             "properties": {
-                "targetResource": {},
-                "TTL": "[union(variables('txtRecordsDefaultProperties'), variables('txtRecords')[copyIndex()]).timeToLiveInSeconds]",
-                "TXTRecords": [
+                "ttl": "[union(variables('txtRecordsDefaultProperties'), variables('txtRecords')[copyIndex()]).timeToLiveInSeconds]",
+                "txtRecords": [
                     {
                         "value": [
                             "[variables('txtRecords')[copyIndex()].value]"
