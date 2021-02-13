@@ -69,6 +69,15 @@
             "addressSpace": {
                 "addressPrefixes": "[parameters('addressPrefixes')]"
             },
+            "copy": [
+                {
+                    "count": "[length(parameters('subnets'))]",
+                    "input": {
+                        "properties": "[parameters('subnets')[copyIndex('subnets')]]"
+                    },
+                    "name": "subnets"
+                }
+            ],
             "ddosProtectionPlan": "[if(variables('isDdosProtectionEnabled'), variables('ddosProtectionPlanProperties'), json('null'))]",
             "enableDdosProtection": "[variables('isDdosProtectionEnabled')]",
             "enableVmProtection": true,
