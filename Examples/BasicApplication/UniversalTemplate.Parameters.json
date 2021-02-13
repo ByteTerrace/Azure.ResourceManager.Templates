@@ -1,0 +1,79 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceDefinitions": {
+            "value": {
+                "dnsZones": {
+                    "private": [
+                        {
+                            "name": "byteterrace.net"
+                        }
+                    ],
+                    "public": [
+                        {
+                            "name": "byteterrace.net"
+                        }
+                    ]
+                },
+                "keyVaults": [
+                    {
+                        "name": "byteterrace",
+                        "virtualNetworkRules": [
+                            {
+                                "subnetName": "byteterrace",
+                                "virtualNetworkName": "byteterrace.net"
+                            },
+                            {
+                                "subnetName": "0.1.2.X",
+                                "virtualNetworkName": "byteterrace.net"
+                            }
+                        ]
+                    }
+                ],
+                "storageAccounts": [
+                    {
+                        "name": "byteterrace",
+                        "virtualNetworkRules": [
+                            {
+                                "subnetName": "byteterrace",
+                                "virtualNetworkName": "byteterrace.net"
+                            },
+                            {
+                                "subnetName": "0.1.2.X",
+                                "virtualNetworkName": "byteterrace.net"
+                            }
+                        ]
+                    }
+                ],
+                "virtualNetworks": [
+                    {
+                        "addressPrefixes": [
+                          "10.0.0.0/8"
+                        ],
+                        "name": "byteterrace.net",
+                        "subnets": [
+                            {
+                                "addressPrefix": "10.255.255.224/27",
+                                "name": "byteterrace"
+                            },
+                            {
+                                "addressPrefix": "10.1.2.0/24",
+                                "name": "0.1.2.X"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        "tags": {
+            "value": {}
+        },
+        "templateBaseUri": {
+            "value": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/ResourceManager.Templates/"
+        },
+        "templateQueryString": {
+            "value": "&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true"
+        }
+    }
+}
