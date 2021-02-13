@@ -161,7 +161,7 @@
             "array": []
         },
         "virtualNetworkRulesDefaultObject": {
-            "resourceGroupName": "[resourceGroup().location]",
+            "resourceGroupName": "[resourceGroup().name]",
             "subscriptionId": "[subscription().subscriptionId]"
         },
         "virtualNetworkRulesIsNotEmpty": "[greater(length(parameters('virtualNetworkRules')), 0)]"
