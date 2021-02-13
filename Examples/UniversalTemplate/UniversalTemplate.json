@@ -218,7 +218,7 @@
                         "value": "[variables('resourceDefinitions').dnsZones.public[copyIndex()].name]"
                     },
                     "nsRecords": {
-                        "value": "[union(variables('defaultResourceProperties').dnsZone.private, variables('resourceDefinitions').dnsZones.private[copyIndex()]).nsRecords]"
+                        "value": "[union(variables('defaultResourceProperties').dnsZone.public, variables('resourceDefinitions').dnsZones.public[copyIndex()]).nsRecords]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
