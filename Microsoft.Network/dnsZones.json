@@ -36,13 +36,13 @@
         "aRecords": "[if(variables('aRecordsIsNotEmpty'), parameters('aRecords'), json('[ { \"name\": \"dummyA\" } ]'))]",
         "aRecordsCount": "[length(parameters('aRecords'))]",
         "aRecordsDefaultProperties": {
-            "timeToLive": 3600
+            "timeToLiveInSeconds": 3600
         },
         "aRecordsIsNotEmpty": "[greater(variables('aRecordsCount'), 0)]",
         "cnameRecords": "[if(variables('cnameRecordsIsNotEmpty'), parameters('cnameRecords'), json('[ { \"name\": \"dummyCNAME\" } ]'))]",
         "cnameRecordsCount": "[length(parameters('cnameRecords'))]",
         "cnameRecordsDefaultProperties": {
-            "timeToLive": 3600
+            "timeToLiveInSeconds": 3600
         },
         "cnameRecordsIsNotEmpty": "[greater(variables('cnameRecordsCount'), 0)]",
         "dnsZoneResourceId": "[resourceId('Microsoft.Network/dnszones', parameters('name'))]"
@@ -79,7 +79,7 @@
                     }
                 ],
                 "targetResource": {},
-                "TTL": "[union(variables('aRecordsDefaultProperties'), variables('aRecords')[copyIndex()]).timeToLive]"
+                "TTL": "[union(variables('aRecordsDefaultProperties'), variables('aRecords')[copyIndex()]).timeToLiveInSeconds]"
             },
             "type": "Microsoft.Network/dnszones/A"
         },
@@ -100,7 +100,7 @@
                     "cname": "[variables('cnameRecords')[copyIndex()].alias]"
                 },
                 "targetResource": {},
-                "TTL": "[union(variables('cnameRecordsDefaultProperties'), variables('cnameRecords')[copyIndex()]).timeToLive]"
+                "TTL": "[union(variables('cnameRecordsDefaultProperties'), variables('cnameRecords')[copyIndex()]).timeToLiveInSeconds]"
             },
             "type": "Microsoft.Network/dnszones/CNAME"
         }

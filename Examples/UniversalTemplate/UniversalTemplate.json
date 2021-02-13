@@ -35,10 +35,7 @@
                 "skuName": "Standard"
             },
             "dnsZone": {
-                "private": {
-                    "aRecords": [],
-                    "cnameRecords": []
-                },
+                "private": {},
                 "public": {
                     "aRecords": [],
                     "cnameRecords": []
