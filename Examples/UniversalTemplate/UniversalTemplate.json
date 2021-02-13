@@ -287,7 +287,7 @@
                         "value": "[variables('resourceDefinitions').applicationConfigurationStores[copyIndex()].name]"
                     },
                     "skuName": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').applicationConfigurationStores[copyIndex()]).skuName]"
+                        "value": "[union(variables('defaultResourceProperties').applicationConfigurationStore, variables('resourceDefinitions').applicationConfigurationStores[copyIndex()]).skuName]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
