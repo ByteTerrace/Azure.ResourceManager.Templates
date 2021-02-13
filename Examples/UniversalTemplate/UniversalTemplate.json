@@ -43,6 +43,7 @@
                 "public": {
                     "aRecords": [],
                     "cnameRecords": [],
+                    "nsRecords": [],
                     "txtRecords": []
                 }
             },
@@ -215,6 +216,9 @@
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').dnsZones.public[copyIndex()].name]"
+                    },
+                    "nsRecords": {
+                        "value": "[union(variables('defaultResourceProperties').dnsZone.private, variables('resourceDefinitions').dnsZones.private[copyIndex()]).nsRecords]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
