@@ -139,7 +139,7 @@
             ],
             "name": "[format('{0}/{1}', parameters('name'), variables('nsRecords')[copyIndex()].name)]",
             "properties": {
-                "NSRecords": "[variables('aRecords')[copyIndex()].nameServers]",
+                "NSRecords": "[variables('nsRecords')[copyIndex()].nameServers]",
                 "targetResource": {},
                 "TTL": "[union(variables('nsRecordsDefaultProperties'), variables('nsRecords')[copyIndex()]).timeToLiveInSeconds]"
             },
