@@ -74,7 +74,7 @@
                     "count": "[length(parameters('subnets'))]",
                     "input": {
                         "name": "[parameters('subnets')[copyIndex('subnets')].name]",
-                        "properties": "[intersection(parameters('subnets')[copyIndex('subnets')], union(parameters('subnets')[copyIndex('subnets')], createObject('name', uniqueString(parameters('subnets')[copyIndex('subnets')]))))]"
+                        "properties": "[intersection(parameters('subnets')[copyIndex('subnets')], union(parameters('subnets')[copyIndex('subnets')], createObject('name', uniqueString(parameters('subnets')[copyIndex('subnets')].name))))]"
                     },
                     "name": "subnets"
                 }
