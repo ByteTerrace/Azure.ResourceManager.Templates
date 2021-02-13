@@ -1,6 +1,6 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "0.0.0.0",
+    "contentVersion": "1.0.0.0",
     "parameters": {
         "accessTier": {
             "defaultValue": "Hot",
@@ -38,14 +38,14 @@
             "type": "string"
         },
         "customerManagedEncryptionKeyVaultResourceGroupName": {
-            "defaultValue": "",
+            "defaultValue": "[resourceGroup().name]",
             "metadata": {
                 "description": "Specifies the resource group name of the key vault that houses the customer-managed data encryption key."
             },
             "type": "string"
         },
         "customerManagedEncryptionKeyVaultSubscriptionId": {
-            "defaultValue": "",
+            "defaultValue": "[subscription().id]",
             "metadata": {
                 "description": "Specifies the subscrioption id of the key vault that houses the customer-managed data encryption key."
             },
@@ -115,14 +115,14 @@
             "type": "bool"
         },
         "isSoftDeleteEnabledForBlobs": {
-            "defaultValue": true,
+            "defaultValue": false,
             "metadata": {
                 "description": "Indicates whether the soft-delete feature is enabled for blobs in the Azure Storage account."
             },
             "type": "bool"
         },
         "isSoftDeleteEnabledForFileShares": {
-            "defaultValue": true,
+            "defaultValue": false,
             "metadata": {
                 "description": "Indicates whether the soft-delete feature is enabled for file shares in the Azure Storage account."
             },
@@ -133,6 +133,14 @@
             "metadata": {
                 "description": "Specifies the location in which the Azure Storage resource(s) will be deployed."
             },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 24,
+            "metadata": {
+                "description": "Specifies the name of the Azure Storage account."
+            },
+            "minLength": 3,
             "type": "string"
         },
         "queueNames": {
@@ -161,20 +169,16 @@
         },
         "storageAccountKind": {
             "allowedValues": [
+                "FileStorage",
+                "BlobStorage",
+                "BlockBlobStorage",
+                "Storage",
                 "StorageV2"
             ],
             "defaultValue": "StorageV2",
             "metadata": {
                 "description": "Specifies the kind of the Azure Storage account."
             },
-            "type": "string"
-        },
-        "storageAccountName": {
-            "maxLength": 24,
-            "metadata": {
-                "description": "Specifies the name of the Azure Storage account."
-            },
-            "minLength": 3,
             "type": "string"
         },
         "tableNames": {
@@ -207,7 +211,7 @@
         "blobContainerNamesIsNotEmpty": "[greater(variables('blobContainerNamesCount'), 0)]",
         "blobServicesApiVersion": "2019-06-01",
         "customerManagedEncryptionIsEnabled": "[and(not(empty(coalesce(parameters('customerManagedEncryptionKeyName'), ''))), not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), ''))))]",
-        "customerManagedEncryptionKeyVaultAuthorizationName": "[format('{0}/Microsoft.Authorization/{1}', if(variables('customerManagedEncryptionIsEnabled'), parameters('customerManagedEncryptionKeyVaultName'), 'dummyKeyVault'), guid(subscription().subscriptionId, resourceGroup().name, parameters('storageAccountName'), variables('keyVaultsCryptoServiceEncryptionRoleDefinitionId')))]",
+        "customerManagedEncryptionKeyVaultAuthorizationName": "[format('{0}/Microsoft.Authorization/{1}', if(variables('customerManagedEncryptionIsEnabled'), parameters('customerManagedEncryptionKeyVaultName'), 'dummyKeyVault'), guid(subscription().subscriptionId, resourceGroup().name, parameters('name'), variables('keyVaultsCryptoServiceEncryptionRoleDefinitionId')))]",
         "customerManagedEncryptionKeyVaultResourceGroupName": "[if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultResourceGroupName'), ''))), parameters('customerManagedEncryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
         "customerManagedEncryptionKeyVaultResourceId": "[resourceId(variables('customerManagedEncryptionKeyVaultSubscriptionId'), variables('customerManagedEncryptionKeyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('customerManagedEncryptionKeyVaultName'))]",
         "customerManagedEncryptionKeyVaultSubscriptionId": "[if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultSubscriptionId'), ''))), parameters('customerManagedEncryptionKeyVaultSubscriptionId'), subscription().subscriptionId)]",
@@ -230,11 +234,12 @@
         "queueNamesCount": "[length(parameters('queueNames'))]",
         "queueNamesIsNotEmpty": "[greater(variables('queueNamesCount'), 0)]",
         "storageAccountApiVersion": "2019-06-01",
-        "storageAccountName": "[toLower(parameters('storageAccountName'))]",
+        "storageAccountName": "[toLower(parameters('name'))]",
         "storageAccountsProperties": {
             "accessTier": "[parameters('accessTier')]",
             "isHnsEnabled": "[parameters('isHierarchicalNamespaceEnabled')]",
             "largeFileSharesState": "[if(parameters('isLargeFileSharesEnabled'), 'Enabled', 'Disabled')]",
+            "minimumTlsVersion": "TLS1_2",
             "networkAcls": {
                 "bypass": "[if(parameters('isAllowTrustedMicrosoftServicesEnabled'), 'AzureServices', 'None')]",
                 "copy": [
@@ -320,7 +325,7 @@
                 "parameters": {},
                 "template": {
                     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "2.0.0.0",
+                    "contentVersion": "1.0.0.0",
                     "resources": [
                         {
                             "apiVersion": "[variables('storageAccountApiVersion')]",
