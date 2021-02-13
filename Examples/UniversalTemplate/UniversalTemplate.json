@@ -179,7 +179,7 @@
                     },
                     "txtRecords": {
                         "value": "[union(variables('defaultResourceProperties').dnsZone.public, variables('resourceDefinitions').dnsZones.public[copyIndex()]).txtRecords]"
-                    },
+                    }
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
