@@ -82,11 +82,7 @@
             ],
             "name": "[format('{0}/{1}', parameters('name'), variables('aRecords')[copyIndex()].name)]",
             "properties": {
-                "aRecords": [
-                    {
-                        "ipv4Address": "[variables('aRecords')[copyIndex()].ipAddress]"
-                    }
-                ],
+                "aRecords": "[variables('aRecords')[copyIndex()].ipAddresses]",
                 "ttl": "[union(variables('aRecordsDefaultProperties'), variables('aRecords')[copyIndex()]).timeToLiveInSeconds]"
             },
             "type": "Microsoft.Network/privateDnsZones/A"
@@ -125,13 +121,7 @@
             "name": "[format('{0}/{1}', parameters('name'), variables('txtRecords')[copyIndex()].name)]",
             "properties": {
                 "ttl": "[union(variables('txtRecordsDefaultProperties'), variables('txtRecords')[copyIndex()]).timeToLiveInSeconds]",
-                "txtRecords": [
-                    {
-                        "value": [
-                            "[variables('txtRecords')[copyIndex()].value]"
-                        ]
-                    }
-                ]
+                "txtRecords": "[variables('txtRecords')[copyIndex()].values]"
             },
             "type": "Microsoft.Network/privateDnsZones/TXT"
         }
