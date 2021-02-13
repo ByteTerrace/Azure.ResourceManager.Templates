@@ -273,79 +273,79 @@
                 "mode": "Incremental",
                 "parameters": {
                     "accessTier": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).accessTier]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).accessTier]"
                     },
                     "blobContainerNames": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).blobContainerNames]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).blobContainerNames]"
                     },
                     "blobSoftDeleteRetentionPeriodInDays": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).blobSoftDeleteRetentionPeriodInDays]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).blobSoftDeleteRetentionPeriodInDays]"
                     },
                     "customerManagedEncryptionKeyName": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).customerManagedEncryptionKeyName]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).customerManagedEncryptionKeyName]"
                     },
                     "customerManagedEncryptionKeyVaultName": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).customerManagedEncryptionKeyVaultName]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).customerManagedEncryptionKeyVaultName]"
                     },
                     "customerManagedEncryptionKeyVaultResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).customerManagedEncryptionKeyVaultResourceGroupName]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).customerManagedEncryptionKeyVaultResourceGroupName]"
                     },
                     "customerManagedEncryptionKeyVaultSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).customerManagedEncryptionKeyVaultSubscriptionId]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).customerManagedEncryptionKeyVaultSubscriptionId]"
                     },
                     "customerManagedEncryptionKeyVersion": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).customerManagedEncryptionKeyVersion]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).customerManagedEncryptionKeyVersion]"
                     },
                     "encryptionScopes": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).encryptionScopes]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).encryptionScopes]"
                     },
                     "fileShareNames": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).fileShareNames]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).fileShareNames]"
                     },
                     "fileShareSoftDeleteRetentionPeriodInDays": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).fileShareSoftDeleteRetentionPeriodInDays]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).fileShareSoftDeleteRetentionPeriodInDays]"
                     },
                     "firewallRules": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).firewallRules]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).firewallRules]"
                     },
                     "isAdvancedThreatProtectionEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).isAdvancedThreatProtectionEnabled]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isAdvancedThreatProtectionEnabled]"
                     },
                     "isAllowTrustedMicrosoftServicesEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
                     },
                     "isHierarchicalNamespaceEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).isHierarchicalNamespaceEnabled]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isHierarchicalNamespaceEnabled]"
                     },
                     "isLargeFileSharesEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).isLargeFileSharesEnabled]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isLargeFileSharesEnabled]"
                     },
                     "isSoftDeleteEnabledForBlobs": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).isSoftDeleteEnabledForBlobs]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isSoftDeleteEnabledForBlobs]"
                     },
                     "isSoftDeleteEnabledForFileShares": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).isSoftDeleteEnabledForFileShares]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isSoftDeleteEnabledForFileShares]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').storageAccounts[copyIndex()].name]"
                     },
                     "queueNames": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).queueNames]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).queueNames]"
                     },
                     "skuName": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).skuName]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).skuName]"
                     },
                     "storageAccountKind": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).storageAccountKind]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).storageAccountKind]"
                     },
                     "tableNames": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).tableNames]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).tableNames]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
                     },
                     "virtualNetworkRules": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).virtualNetworkRules]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).virtualNetworkRules]"
                     }
                 },
                 "templateLink": {
