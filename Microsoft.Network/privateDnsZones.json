@@ -5,7 +5,7 @@
         "name": {
             "maxLength": 63,
             "metadata": {
-                "description": "Specifies the name of the Azure DNS zone."
+                "description": "Specifies the name of the private Azure DNS zone."
             },
             "minLength": 1,
             "type": "string"
@@ -13,23 +13,19 @@
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure DNS zone."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the private Azure DNS zone."
             },
             "type": "object"
         }
     },
     "resources": [
         {
-            "apiVersion": "2018-05-01",
+            "apiVersion": "2020-06-01",
             "location": "global",
             "name": "[parameters('name')]",
-            "properties": {
-                "registrationVirtualNetworks": [],
-                "resolutionVirtualNetworks": [],
-                "zoneType": "Public"
-            },
+            "properties": {},
             "tags": "[parameters('tags')]",
-            "type": "Microsoft.Network/dnsZones"
+            "type": "Microsoft.Network/privateDnsZones"
         }
     ]
 }

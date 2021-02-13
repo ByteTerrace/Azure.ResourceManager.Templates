@@ -19,14 +19,18 @@
     },
     "variables": {
         "defaultResourceDefinitions": {
-            "dnsZones": [],
+            "dnsZones": {
+                "private": [],
+                "public": []
+            },
             "keyVaults": [],
             "storageAccounts": [],
             "virtualNetworks": []
         },
         "defaultResourceProperties": {
             "dnsZone": {
-                "type": "Public"
+                "private": {},
+                "public": {}
             },
             "keyVault": {
                 "firewallRules": [],
@@ -52,14 +56,16 @@
         },
         "deploymentApiVersion": "2019-10-01",
         "deploymentNames": {
-            "dnsZone": "[format('{0}-DnsZone', deployment().name)]",
+            "dnsZonePrivate": "[format('{0}-DnsZonePrivate', deployment().name)]",
+            "dnsZonePublic": "[format('{0}-DnsZonePublic', deployment().name)]",
             "keyVault": "[format('{0}-KeyVault', deployment().name)]",
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
             "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]"
         },
         "resourceDefinitions": "[union(variables('defaultResourceDefinitions'), parameters('resourceDefinitions'))]",
         "templateUris": {
-            "dnsZone": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsZones.json'), parameters('templateQueryString')))]",
+            "dnsZonePrivate": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/privateDnsZones.json'), parameters('templateQueryString')))]",
+            "dnsZonePublic": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsZones.json'), parameters('templateQueryString')))]",
             "keyVault": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults.json'), parameters('templateQueryString')))]",
             "storageAccount": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Storage/storageAccounts.json'), parameters('templateQueryString')))]",
             "virtualNetwork": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/virtualNetworks.json'), parameters('templateQueryString')))]"
@@ -106,32 +112,58 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').dnsZones))]",
+            "condition": "[not(empty(variables('resourceDefinitions').dnsZones.public))]",
             "copy": {
-                "count": "[length(variables('resourceDefinitions').dnsZones)]",
+                "count": "[length(variables('resourceDefinitions').dnsZones.public)]",
                 "mode": "parallel",
-                "name": "dnsZonesCopy"
+                "name": "publicDnsZonesCopy"
             },
             "dependsOn": [
                 "virtualNetworksCopy"
             ],
-            "name": "[format('{0}_{1}', variables('deploymentNames').dnsZone, copyIndex())]",
+            "name": "[format('{0}_{1}', variables('deploymentNames').dnsZonePublic, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
                     "name": {
-                        "value": "[variables('resourceDefinitions').dnsZones[copyIndex()].name]"
+                        "value": "[variables('resourceDefinitions').dnsZones.public[copyIndex()].name]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
-                    },
-                    "type": {
-                        "value": "[union(variables('defaultResourceProperties').dnsZone, variables('resourceDefinitions').dnsZones[copyIndex()]).type]"
                     }
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').dnsZone]"
+                    "uri": "[variables('templateUris').dnsZonePublic]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').dnsZones.private))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').dnsZones.private)]",
+                "mode": "parallel",
+                "name": "privateDnsZonesCopy"
+            },
+            "dependsOn": [
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').dnsZonePrivate, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "name": {
+                        "value": "[variables('resourceDefinitions').dnsZones.private[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUris').dnsZonePrivate]"
                 }
             },
             "type": "Microsoft.Resources/deployments"
