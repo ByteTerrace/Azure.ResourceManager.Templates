@@ -58,7 +58,7 @@
         "txtRecordsDefaultProperties": {
             "timeToLiveInSeconds": 3600
         },
-        "txtRecordsIsNotEmpty": "[greater(variables('txtRecordsCount'), 0)]",
+        "txtRecordsIsNotEmpty": "[greater(variables('txtRecordsCount'), 0)]"
     },
     "resources": [
         {
