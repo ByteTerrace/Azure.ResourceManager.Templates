@@ -2,10 +2,17 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "cnameRecords": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of CNAME records that will be created within the public Azure DNS zone."
+            },
+            "type": "array"
+        },
         "name": {
             "maxLength": 63,
             "metadata": {
-                "description": "Specifies the name of the Azure DNS zone."
+                "description": "Specifies the name of the public Azure DNS zone."
             },
             "minLength": 1,
             "type": "string"
@@ -13,10 +20,15 @@
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure DNS zone."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the public Azure DNS zone."
             },
             "type": "object"
         }
+    },
+    "variables":{
+        "cnameRecordsCount": "[length(variables('cnameRecords'))]",
+        "cnameRecords": "[parameters('cnameRecords')]",
+        "dnsZoneResourceId": "[resourceId('Microsoft.Network/dnszones', parameters('name'))]"
     },
     "resources": [
         {
@@ -30,6 +42,26 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Network/dnsZones"
+        },
+        {
+            "apiVersion": "2018-05-01",
+            "copy": {
+                "count": "[variables('cnameRecordsCount')]",
+                "mode": "parallel",
+                "name": "cnameRecordsCopy"
+            },
+            "dependsOn": [
+                "[variables('dnsZoneResourceId')]"
+            ],
+            "name": "[format('{0}/{1}', parameters('name'), variables('cnameRecords')[copyIndex()].name)]",
+            "properties": {
+                "CNAMERecord": {
+                    "cname": "[variables('cnameRecords')[copyIndex()].alias]"
+                },
+                "targetResource": {},
+                "TTL": "[variables('cnameRecords')[copyIndex()].timeToLive]"
+            },
+            "type": "Microsoft.Network/dnszones/CNAME"
         }
     ]
 }
