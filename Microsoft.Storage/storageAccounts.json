@@ -272,7 +272,7 @@
         "tableNamesCount": "[length(parameters('tableNames'))]",
         "tableNamesIsNotEmpty": "[greater(variables('tableNamesCount'), 0)]",
         "virtualNetworkRulesDefaultObject": {
-            "resourceGroupName": "[resourceGroup().location]",
+            "resourceGroupName": "[resourceGroup().name]",
             "subscriptionId": "[subscription().subscriptionId]"
         }
     },
