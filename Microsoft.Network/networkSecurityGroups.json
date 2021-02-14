@@ -2,6 +2,26 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "auditLogAnalyticsWorkspaceName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Log Analytics workspace that the Azure Network Security group audit feature will send its data to."
+            },
+            "type": "string"
+        },
+        "auditLogAnalyticsWorkspaceResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure Log Analytics workspace that the Azure Network Security group audit feature will send its data to."
+            },
+            "type": "string"
+        },
+        "auditLogAnalyticsWorkspaceSubscriptionId": {
+            "defaultValue": "[subscription().subscriptionId]",
+            "metadata": {
+                "description": "Specifies the subscription id of the Azure Log Analytics workspace that the Azure Network Security group audit feature will send its data to."
+            },
+            "type": "string"
+        },
         "location": {
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
@@ -32,6 +52,11 @@
             "type": "object"
         }
     },
+    "variables": {
+        "diagnosticSettingsApiVersion": "2017-05-01-preview",
+        "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
+        "networkSecurityGroupResourceId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('name'))]"
+    },
     "resources": [
         {
             "apiVersion": "2020-07-01",
@@ -42,6 +67,36 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Network/networkSecurityGroups"
-        }
+        },
+        {
+            "apiVersion": "[variables('diagnosticSettingsApiVersion')]",
+            "dependsOn": [
+                "[variables('networkSecurityGroupResourceId')]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/microsoft.insights/audit', parameters('name'))]",
+            "properties": {
+                "logs": [
+                    {
+                        "category": "NetworkSecurityGroupEvent",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    },
+                    {
+                        "category": "NetworkSecurityGroupRuleCounter",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    }
+                ],
+                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
+            },
+            "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings"
+        },
     ]
 }

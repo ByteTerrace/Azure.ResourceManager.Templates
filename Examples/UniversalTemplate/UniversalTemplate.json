@@ -99,6 +99,8 @@
                 "privateLinkScope": {}
             },
             "networkSecurityGroup": {
+                "auditLogAnalyticsWorkspaceResourceGroupName": "[resourceGroup().name]",
+                "auditLogAnalyticsWorkspaceSubscriptionId": "[subscription().subscriptionId]",
                 "securityRules": []
             },
             "sqlServer": {
@@ -207,6 +209,15 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "auditLogAnalyticsWorkspaceName": {
+                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).auditLogAnalyticsWorkspaceName]"
+                    },
+                    "auditLogAnalyticsWorkspaceResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
+                    },
+                    "auditLogAnalyticsWorkspaceSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    },
                     "name": {
                         "value": "[variables('resourceDefinitions').networkSecurityGroups[copyIndex()].name]"
                     },

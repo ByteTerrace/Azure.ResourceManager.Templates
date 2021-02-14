@@ -58,6 +58,7 @@
                 },
                 "networkSecurityGroups": [
                     {
+                        "auditLogAnalyticsWorkspaceName": "byteterrace",
                         "name": "byteterrace.net"
                     }
                 ],
