@@ -61,6 +61,11 @@
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
+                "features": {
+                    "enableLogAccessUsingOnlyResourcePermissions": true,
+                    "legacy": 0,
+                    "searchVersion": 1
+                },
                 "publicNetworkAccessForIngestion": "[if(parameters('isPublicNetworkAccessForIngestionEnabled'), 'Enabled', 'Disabled')]",
                 "publicNetworkAccessForQuery": "[if(parameters('isPublicNetworkAccessForQueryEnabled'), 'Enabled', 'Disabled')]",
                 "retentionInDays": "[parameters('dataRetentionInDays')]",
