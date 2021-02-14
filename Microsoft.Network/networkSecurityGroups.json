@@ -96,7 +96,7 @@
                 ],
                 "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
             },
-            "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings"
+            "type": "Microsoft.Network/networkSecurityGroups/providers/diagnosticsettings"
         },
     ]
 }
