@@ -328,14 +328,14 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "logAnalyticsWorkspaceName": {
-                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).logAnalyticsWorkspaceName]"
+                    "auditLogAnalyticsWorkspaceName": {
+                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).auditLogAnalyticsWorkspaceName]"
                     },
-                    "logAnalyticsWorkspaceResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).logAnalyticsWorkspaceResourceGroupName]"
+                    "auditLogAnalyticsWorkspaceResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
                     },
-                    "logAnalyticsWorkspaceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).logAnalyticsWorkspaceSubscriptionId]"
+                    "auditLogAnalyticsWorkspaceSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').cdnProfiles[copyIndex()].name]"
