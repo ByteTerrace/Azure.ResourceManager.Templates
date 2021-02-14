@@ -199,12 +199,83 @@
     "resources": [
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').monitor.privateLinkScopes))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').monitor.privateLinkScopes)]",
+                "mode": "parallel",
+                "name": "monitorPrivateLinkScopesCopy"
+            },
+            "name": "[format('{0}_{1}', variables('deploymentNames').monitorPrivateLinkScope, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "name": {
+                        "value": "[variables('resourceDefinitions').monitor.privateLinkScopes[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUris').monitorPrivateLinkScope]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces)]",
+                "mode": "parallel",
+                "name": "logAnalyticsWorkspacesCopy"
+            },
+            "dependsOn": [
+                "monitorPrivateLinkScopesCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').logAnalyticsWorkspace, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "dataRetentionInDays": {
+                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).dataRetentionInDays]"
+                    },
+                    "isPublicNetworkAccessForIngestionEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForIngestionEnabled]"
+                    },
+                    "isPublicNetworkAccessForQueryEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForQueryEnabled]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()].name]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUris').logAnalyticsWorkspace]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[not(empty(variables('resourceDefinitions').networkSecurityGroups))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').networkSecurityGroups)]",
                 "mode": "parallel",
                 "name": "networkSecurityGroupsCopy"
             },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy"
+            ],
             "name": "[format('{0}_{1}', variables('deploymentNames').networkSecurityGroup, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
@@ -288,6 +359,8 @@
                 "name": "privateDnsZonesCopy"
             },
             "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy",
                 "networkSecurityGroupsCopy",
                 "virtualNetworksCopy"
             ],
@@ -330,6 +403,8 @@
                 "name": "publicDnsZonesCopy"
             },
             "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy",
                 "networkSecurityGroupsCopy",
                 "virtualNetworksCopy"
             ],
@@ -362,79 +437,6 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "uri": "[variables('templateUris').dnsPublicZone]"
-                }
-            },
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').monitor.privateLinkScopes))]",
-            "copy": {
-                "count": "[length(variables('resourceDefinitions').monitor.privateLinkScopes)]",
-                "mode": "parallel",
-                "name": "monitorPrivateLinkScopesCopy"
-            },
-            "dependsOn": [
-                "networkSecurityGroupsCopy",
-                "virtualNetworksCopy"
-            ],
-            "name": "[format('{0}_{1}', variables('deploymentNames').monitorPrivateLinkScope, copyIndex())]",
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "name": {
-                        "value": "[variables('resourceDefinitions').monitor.privateLinkScopes[copyIndex()].name]"
-                    },
-                    "tags": {
-                        "value": "[parameters('tags')]"
-                    }
-                },
-                "templateLink": {
-                    "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').monitorPrivateLinkScope]"
-                }
-            },
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces))]",
-            "copy": {
-                "count": "[length(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces)]",
-                "mode": "parallel",
-                "name": "logAnalyticsWorkspacesCopy"
-            },
-            "dependsOn": [
-                "monitorPrivateLinkScopesCopy",
-                "networkSecurityGroupsCopy",
-                "virtualNetworksCopy"
-            ],
-            "name": "[format('{0}_{1}', variables('deploymentNames').logAnalyticsWorkspace, copyIndex())]",
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "dataRetentionInDays": {
-                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).dataRetentionInDays]"
-                    },
-                    "isPublicNetworkAccessForIngestionEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForIngestionEnabled]"
-                    },
-                    "isPublicNetworkAccessForQueryEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForQueryEnabled]"
-                    },
-                    "name": {
-                        "value": "[variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()].name]"
-                    },
-                    "skuName": {
-                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).skuName]"
-                    },
-                    "tags": {
-                        "value": "[parameters('tags')]"
-                    }
-                },
-                "templateLink": {
-                    "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').logAnalyticsWorkspace]"
                 }
             },
             "type": "Microsoft.Resources/deployments"
