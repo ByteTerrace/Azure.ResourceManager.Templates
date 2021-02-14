@@ -29,8 +29,10 @@
             },
             "hdInsightClusters": [],
             "keyVaults": [],
-            "logAnalyticsWorkspaces": [],
-            "monitorPrivateLinkScopes": [],
+            "monitor": {
+                "logAnalyticsWorkspaces": [],
+                "privateLinkScopes": []
+            },
             "networkSecurityGroups": [],
             "sqlServers": [],
             "storageAccounts": [],
@@ -79,13 +81,15 @@
                 "tenantId": "[subscription().tenantId]",
                 "virtualNetworkRules": []
             },
-            "logAnalyticsWorkspace": {
-                "dataRetentionInDays": 30,
-                "isPublicNetworkAccessForIngestionEnabled": false,
-                "isPublicNetworkAccessForQueryEnabled": false,
-                "skuName": "pergb2018"
+            "monitor": {
+                "logAnalyticsWorkspace": {
+                    "dataRetentionInDays": 30,
+                    "isPublicNetworkAccessForIngestionEnabled": false,
+                    "isPublicNetworkAccessForQueryEnabled": false,
+                    "skuName": "pergb2018"
+                },
+                "privateLinkScope": {}
             },
-            "monitorPrivateLinkScope": {},
             "networkSecurityGroup": {
                 "securityRules": []
             },
@@ -336,9 +340,9 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').monitorPrivateLinkScopes))]",
+            "condition": "[not(empty(variables('resourceDefinitions').monitor.privateLinkScopes))]",
             "copy": {
-                "count": "[length(variables('resourceDefinitions').monitorPrivateLinkScopes)]",
+                "count": "[length(variables('resourceDefinitions').monitor.privateLinkScopes)]",
                 "mode": "parallel",
                 "name": "monitorPrivateLinkScopesCopy"
             },
@@ -351,7 +355,7 @@
                 "mode": "Incremental",
                 "parameters": {
                     "name": {
-                        "value": "[variables('resourceDefinitions').monitorPrivateLinkScopes[copyIndex()].name]"
+                        "value": "[variables('resourceDefinitions').monitor.privateLinkScopes[copyIndex()].name]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
@@ -366,9 +370,9 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').logAnalyticsWorkspaces))]",
+            "condition": "[not(empty(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces))]",
             "copy": {
-                "count": "[length(variables('resourceDefinitions').logAnalyticsWorkspaces)]",
+                "count": "[length(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces)]",
                 "mode": "parallel",
                 "name": "logAnalyticsWorkspacesCopy"
             },
@@ -382,19 +386,19 @@
                 "mode": "Incremental",
                 "parameters": {
                     "dataRetentionInDays": {
-                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).dataRetentionInDays]"
+                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).dataRetentionInDays]"
                     },
                     "isPublicNetworkAccessForIngestionEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForIngestionEnabled]"
+                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForIngestionEnabled]"
                     },
                     "isPublicNetworkAccessForQueryEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForQueryEnabled]"
+                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForQueryEnabled]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()].name]"
                     },
                     "skuName": {
-                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).skuName]"
+                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).skuName]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"

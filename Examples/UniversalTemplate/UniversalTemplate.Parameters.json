@@ -37,16 +37,18 @@
                         ]
                     }
                 ],
-                "logAnalyticsWorkspaces": [
-                    {
-                        "name": "byteterrace"
-                    }
-                ],
-                "monitorPrivateLinkScopes": [
-                    {
-                        "name": "byteterrace"
-                    }
-                ],
+                "monitor": {
+                    "logAnalyticsWorkspaces": [
+                        {
+                            "name": "byteterrace"
+                        }
+                    ],
+                    "privateLinkScopes": [
+                        {
+                            "name": "byteterrace"
+                        }
+                    ]
+                },
                 "networkSecurityGroups": [
                     {
                         "name": "byteterrace.net"
