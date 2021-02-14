@@ -1,0 +1,47 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Specifies the location in which the Azure Network Security group resource(s) will be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 80,
+            "metadata": {
+                "description": "Specifies the name of the Azure Network Security group."
+            },
+            "minLength": 1,
+            "type": "string"
+        },
+        "securityRules": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of security rules that will be assigned to the Azure Network Security group."
+            },
+            "type": "array"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the public Azure Network Security group."
+            },
+            "type": "object"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-07-01",
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "securityRules": "[parameters('securityRules')]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Network/networkSecurityGroups"
+        }
+    ]
+}

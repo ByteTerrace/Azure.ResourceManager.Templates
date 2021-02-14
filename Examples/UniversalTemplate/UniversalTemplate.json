@@ -27,8 +27,9 @@
                 "private": [],
                 "public": []
             },
-            "logAnalyticsWorkspaces": [],
             "keyVaults": [],
+            "logAnalyticsWorkspaces": [],
+            "networkSecurityGroups": [],
             "sqlServers": [],
             "storageAccounts": [],
             "virtualNetworks": []
@@ -74,6 +75,9 @@
                 "isPublicNetworkAccessForIngestionEnabled": false,
                 "isPublicNetworkAccessForQueryEnabled": false,
                 "skuName": "pergb2018"
+            },
+            "networkSecurityGroup": {
+                "securityRules": []
             },
             "sqlServer": {
                 "activeDirectoryAdministratorObjectId": "",
@@ -136,6 +140,7 @@
             "dnsPublicZone": "[format('{0}-DnsPublicZone', deployment().name)]",
             "keyVault": "[format('{0}-KeyVault', deployment().name)]",
             "logAnalyticsWorkspace": "[format('{0}-LogAnalyticsWorkspace', deployment().name)]",
+            "networkSecurityGroup": "[format('{0}-NetworkSecurityGroup', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
             "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]"
@@ -148,6 +153,7 @@
             "dnsPublicZone": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsPublicZones.json'), parameters('templateQueryString')))]",
             "keyVault": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults.json'), parameters('templateQueryString')))]",
             "logAnalyticsWorkspace": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.OperationalInsights/workspaces.json'), parameters('templateQueryString')))]",
+            "networkSecurityGroup": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/networkSecurityGroups.json'), parameters('templateQueryString')))]",
             "sqlServer": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Sql/servers.json'), parameters('templateQueryString')))]",
             "storageAccount": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Storage/storageAccounts.json'), parameters('templateQueryString')))]",
             "virtualNetwork": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/virtualNetworks.json'), parameters('templateQueryString')))]"
@@ -156,30 +162,21 @@
     "resources": [
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').logAnalyticsWorkspaces))]",
+            "condition": "[not(empty(variables('resourceDefinitions').networkSecurityGroups))]",
             "copy": {
-                "count": "[length(variables('resourceDefinitions').logAnalyticsWorkspaces)]",
+                "count": "[length(variables('resourceDefinitions').networkSecurityGroups)]",
                 "mode": "parallel",
-                "name": "logAnalyticsWorkspacesCopy"
+                "name": "networkSecurityGroupsCopy"
             },
-            "name": "[format('{0}_{1}', variables('deploymentNames').logAnalyticsWorkspace, copyIndex())]",
+            "name": "[format('{0}_{1}', variables('deploymentNames').networkSecurityGroup, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "dataRetentionInDays": {
-                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).dataRetentionInDays]"
-                    },
-                    "isPublicNetworkAccessForIngestionEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForIngestionEnabled]"
-                    },
-                    "isPublicNetworkAccessForQueryEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForQueryEnabled]"
-                    },
                     "name": {
-                        "value": "[variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()].name]"
+                        "value": "[variables('resourceDefinitions').networkSecurityGroups[copyIndex()].name]"
                     },
-                    "skuName": {
-                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).skuName]"
+                    "securityRules": {
+                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).securityRules]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
@@ -187,7 +184,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').logAnalyticsWorkspace]"
+                    "uri": "[variables('templateUris').networkSecurityGroup]"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -200,6 +197,9 @@
                 "mode": "parallel",
                 "name": "virtualNetworksCopy"
             },
+            "dependsOn": [
+                "networkSecurityGroupsCopy"
+            ],
             "name": "[format('{0}_{1}', variables('deploymentNames').virtualNetwork, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
@@ -235,6 +235,48 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').logAnalyticsWorkspaces))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').logAnalyticsWorkspaces)]",
+                "mode": "parallel",
+                "name": "logAnalyticsWorkspacesCopy"
+            },
+            "dependsOn": [
+                "networkSecurityGroupsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').logAnalyticsWorkspace, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "dataRetentionInDays": {
+                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).dataRetentionInDays]"
+                    },
+                    "isPublicNetworkAccessForIngestionEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForIngestionEnabled]"
+                    },
+                    "isPublicNetworkAccessForQueryEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForQueryEnabled]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()].name]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUris').logAnalyticsWorkspace]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[not(empty(variables('resourceDefinitions').dnsZones.private))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').dnsZones.private)]",
@@ -242,6 +284,7 @@
                 "name": "privateDnsZonesCopy"
             },
             "dependsOn": [
+                "networkSecurityGroupsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').dnsPrivateZone, copyIndex())]",
@@ -283,6 +326,7 @@
                 "name": "publicDnsZonesCopy"
             },
             "dependsOn": [
+                "networkSecurityGroupsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').dnsPublicZone, copyIndex())]",
@@ -327,6 +371,7 @@
                 "name": "keyVaultsCopy"
             },
             "dependsOn": [
+                "networkSecurityGroupsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').keyVault, copyIndex())]",
@@ -393,6 +438,7 @@
             },
             "dependsOn": [
                 "keyVaultsCopy",
+                "networkSecurityGroupsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').communicationService, copyIndex())]",
@@ -426,6 +472,7 @@
             },
             "dependsOn": [
                 "keyVaultsCopy",
+                "networkSecurityGroupsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').applicationConfigurationStore, copyIndex())]",
@@ -459,6 +506,7 @@
             },
             "dependsOn": [
                 "keyVaultsCopy",
+                "networkSecurityGroupsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').storageAccount, copyIndex())]",
@@ -558,6 +606,7 @@
             },
             "dependsOn": [
                 "keyVaultsCopy",
+                "networkSecurityGroupsCopy",
                 "storageAccountsCopy",
                 "virtualNetworksCopy"
             ],

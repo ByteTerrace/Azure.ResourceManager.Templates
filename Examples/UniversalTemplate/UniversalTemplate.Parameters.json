@@ -46,6 +46,11 @@
                         "name": "byteterrace"
                     }
                 ],
+                "networkSecurityGroups": [
+                    {
+                        "name": "byteterrace"
+                    }
+                ],
                 "storageAccounts": [
                     {
                         "name": "byteterrace",
