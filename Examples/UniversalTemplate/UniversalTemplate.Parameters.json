@@ -6,6 +6,7 @@
             "value": {
                 "cdnProfiles": [
                     {
+                        "auditLogAnalyticsWorkspaceName": "byteterrace",
                         "name": "byteterrace-net"
                     }
                 ],
