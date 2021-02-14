@@ -9,7 +9,7 @@
                         "name": "byteterrace"
                     }
                 ],
-                "communicationsServices": [
+                "communicationServices": [
                     {
                         "name": "byteterrace"
                     }

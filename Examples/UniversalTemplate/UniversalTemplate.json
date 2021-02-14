@@ -22,7 +22,7 @@
     "variables": {
         "defaultResourceDefinitions": {
             "applicationConfigurationStores": [],
-            "communicationsServices": [],
+            "communicationServices": [],
             "dnsZones": {
                 "private": [],
                 "public": []
@@ -36,7 +36,7 @@
             "applicationConfigurationStore": {
                 "skuName": "Standard"
             },
-            "communicationsService": {
+            "communicationService": {
                 "dataLocation": "United States"
             },
             "dnsZone": {
