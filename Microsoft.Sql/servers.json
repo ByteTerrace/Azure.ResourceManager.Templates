@@ -235,6 +235,7 @@
         },
         "databasesIsNotEmpty": "[greater(length(parameters('databases')), 0)]",
         "deploymentsApiVersion": "2020-10-01",
+        "diagnosticSettingsApiVersion": "2017-05-01-preview",
         "dnsAliasesApiVersion": "2017-03-01-preview",
         "dnsAliases": "[if(variables('dnsAliasesIsNotEmpty'), parameters('dnsAliases'), createArray('dummyDnsAlias'))]",
         "dnsAliasesIsNotEmpty": "[greater(length(parameters('dnsAliases')), 0)]",
@@ -408,7 +409,7 @@
             "type": "Microsoft.Sql/servers/auditingSettings"
         },
         {
-            "apiVersion": "2017-05-01-preview",
+            "apiVersion": "[variables('diagnosticSettingsApiVersion')]",
             "dependsOn": [
                 "[variables('administratorResourceId')]",
                 "[variables('auditingSettingsResourceId')]",
