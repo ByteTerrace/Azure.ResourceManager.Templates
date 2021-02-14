@@ -724,7 +724,7 @@
                         "value": "[parameters('tags')]"
                     },
                     "version": {
-                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').hdInsightClusters[copyIndex()]).version]"
+                        "value": "[union(variables('defaultResourceProperties').hdInsightCluster, variables('resourceDefinitions').hdInsightClusters[copyIndex()]).version]"
                     }
                 },
                 "templateLink": {
