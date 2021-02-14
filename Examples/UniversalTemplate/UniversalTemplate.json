@@ -45,6 +45,8 @@
                 "skuName": "Standard"
             },
             "cdnProfile": {
+                "auditLogAnalyticsWorkspaceResourceGroupName": "[resourceGroup().name]",
+                "auditLogAnalyticsWorkspaceSubscriptionId": "[subscription().subscriptionId]",
                 "skuName": "Standard_Microsoft"
             },
             "communicationService": {
