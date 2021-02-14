@@ -52,6 +52,12 @@
                         "name": "byteterrace.net"
                     }
                 ],
+                "sqlServers": [
+                    {
+                        "databases": [],
+                        "name": "byteterrace"
+                    }
+                ],
                 "storageAccounts": [
                     {
                         "name": "byteterrace",
