@@ -328,6 +328,15 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "logAnalyticsWorkspaceName": {
+                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).logAnalyticsWorkspaceName]"
+                    },
+                    "logAnalyticsWorkspaceResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).logAnalyticsWorkspaceResourceGroupName]"
+                    },
+                    "logAnalyticsWorkspaceSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).logAnalyticsWorkspaceSubscriptionId]"
+                    },
                     "name": {
                         "value": "[variables('resourceDefinitions').cdnProfiles[copyIndex()].name]"
                     },
