@@ -12,7 +12,14 @@
         "logAnalyticsWorkspaceName": {
             "defaultValue": "",
             "metadata": {
-                "description": ""
+                "description": "Specifies the name of the Azure Log Analytics workspace which the data will be ingested to."
+            },
+            "type": "string"
+        },
+        "logAnalyticsWorkspaceResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure Log Analytics workspace which the data will be ingested to."
             },
             "type": "string"
         },
@@ -24,10 +31,17 @@
             "minLength": 1,
             "type": "string"
         },
+        "samplingPercentage": {
+            "defaultValue": 100,
+            "metadata": {
+                "description": "Specifies the percentage of data that will be ingested into the Azure Application Insights component."
+            },
+            "type": "int"
+        },
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Application Insights  component."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Application Insights component."
             },
             "type": "object"
         }
@@ -42,8 +56,8 @@
                 "Application_Type": "web",
                 "Flow_Type": "Bluefield",
                 "Request_Source": "rest",
-                "SamplingPercentage": 100,
-                "WorkspaceResourceId": "[if(not(empty(parameters('logAnalyticsWorkspaceName'))), resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName')), json('null'))]"
+                "SamplingPercentage": "[parameters('samplingPercentage')]",
+                "WorkspaceResourceId": "[if(not(empty(parameters('logAnalyticsWorkspaceName'))), resourceId(parameters('logAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName')), json('null'))]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Insights/components"

@@ -84,7 +84,9 @@
             },
             "monitor": {
                 "applicationInsightsComponent": {
-                    "logAnalyticsWorkspaceName": ""
+                    "logAnalyticsWorkspaceName": "",
+                    "logAnalyticsWorkspaceResourceGroupName": "[resourceGroup().name]",
+                    "samplingPercentage": 100
                 },
                 "logAnalyticsWorkspace": {
                     "dataRetentionInDays": 30,
@@ -438,8 +440,14 @@
                     "logAnalyticsWorkspaceName": {
                         "value": "[union(variables('defaultResourceProperties').monitor.applicationInsightsComponent, variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()]).logAnalyticsWorkspaceName]"
                     },
+                    "logAnalyticsWorkspaceResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').monitor.applicationInsightsComponent, variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()]).logAnalyticsWorkspaceResourceGroupName]"
+                    },
                     "name": {
                         "value": "[variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()].name]"
+                    },
+                    "samplingPercentage": {
+                        "value": "[union(variables('defaultResourceProperties').monitor.applicationInsightsComponent, variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()]).samplingPercentage]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
