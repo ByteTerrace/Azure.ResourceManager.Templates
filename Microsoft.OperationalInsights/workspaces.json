@@ -91,7 +91,7 @@
                 "[variables('workspaceResourceId')]"
             ],
             "location": "[parameters('location')]",
-            "name": "[format('{0}/SQLAccessToSensitiveData')]",
+            "name": "[format('{0}/SQLAccessToSensitiveData', parameters('name'))]",
             "properties": {
                 "Author": "",
                 "Dashboard": [
@@ -554,7 +554,7 @@
                 "[variables('workspaceResourceId')]"
             ],
             "location": "[parameters('location')]",
-            "name": "[format('{0}/SQLSecurityInsights')]",
+            "name": "[format('{0}/SQLSecurityInsights', parameters('name'))]",
             "properties": {
                 "Author": "",
                 "Dashboard": [
