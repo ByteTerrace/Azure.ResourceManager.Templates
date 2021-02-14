@@ -414,6 +414,7 @@
             "location": "[parameters('location')]",
             "name": "[format('SQLAuditing[{0}]', variables('serverName'))]",
             "plan": {
+                "name": "[format('SQLAuditing[{0}]', variables('serverName'))]",
                 "product": "SQLAuditing",
                 "promotionCode": "",
                 "publisher": "Microsoft"
