@@ -414,7 +414,7 @@
                 "[variables('auditingSettingsResourceId')]",
                 "[variables('serverResourceId')]"
             ],
-            "name": "[format('{0}/master/microsoft.insights/SQLSecurityAuditEvents', variables('serverName'))]",
+            "name": "[format('{0}/master/microsoft.insights/audit', variables('serverName'))]",
             "properties": {
                 "logs": [
                     {
