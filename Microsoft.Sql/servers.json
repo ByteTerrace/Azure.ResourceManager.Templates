@@ -324,7 +324,6 @@
             },
             "type": "Microsoft.Sql/servers/administrators"
         },
-        
         {
             "apiVersion": "[variables('keyApiVersion')]",
             "condition": "[variables('customerManagedEncryptionProperties').isEnabled]",
