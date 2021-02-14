@@ -38,6 +38,12 @@
                     }
                 ],
                 "monitor": {
+                    "applicationInsightsComponents": [
+                        {
+                            "logAnalyticsWorkspaceName": "byteterrace",
+                            "name": "byteterrace"
+                        }
+                    ],
                     "logAnalyticsWorkspaces": [
                         {
                             "name": "byteterrace"

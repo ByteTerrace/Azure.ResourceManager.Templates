@@ -30,6 +30,7 @@
             "hdInsightClusters": [],
             "keyVaults": [],
             "monitor": {
+                "applicationInsightsComponents": [],
                 "logAnalyticsWorkspaces": [],
                 "privateLinkScopes": []
             },
@@ -82,6 +83,9 @@
                 "virtualNetworkRules": []
             },
             "monitor": {
+                "applicationInsightsComponent": {
+                    "logAnalyticsWorkspaceName": ""
+                },
                 "logAnalyticsWorkspace": {
                     "dataRetentionInDays": 30,
                     "isPublicNetworkAccessForIngestionEnabled": false,
@@ -149,6 +153,7 @@
         "deploymentApiVersion": "2020-10-01",
         "deploymentNames": {
             "applicationConfigurationStore": "[format('{0}-AppConfigStore', deployment().name)]",
+            "applicationInsightsComponent": "[format('{0}-AppInsights', deployment().name)]",
             "communicationService": "[format('{0}-CommunicationService', deployment().name)]",
             "dnsPrivateZone": "[format('{0}-DnsPrivateZone', deployment().name)]",
             "dnsPublicZone": "[format('{0}-DnsPublicZone', deployment().name)]",
@@ -164,6 +169,7 @@
         "resourceDefinitions": "[union(variables('defaultResourceDefinitions'), parameters('resourceDefinitions'))]",
         "templateUris": {
             "applicationConfigurationStore": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.AppConfiguration/configurationStores.json'), parameters('templateQueryString')))]",
+            "applicationInsightsComponent": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Insights/components.json'), parameters('templateQueryString')))]",
             "communicationService": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Communication/communicationServices.json'), parameters('templateQueryString')))]",
             "dnsPrivateZone": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsPrivateZones.json'), parameters('templateQueryString')))]",
             "dnsPublicZone": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsPublicZones.json'), parameters('templateQueryString')))]",
@@ -407,6 +413,41 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "uri": "[variables('templateUris').logAnalyticsWorkspace]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').monitor.applicationInsightsComponents))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').monitor.applicationInsightsComponents)]",
+                "mode": "parallel",
+                "name": "applicationInsightsComponentsCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "networkSecurityGroupsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').applicationInsightsComponent, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "logAnalyticsWorkspaceName": {
+                        "value": "[union(variables('defaultResourceProperties').monitor.applicationInsightsComponent, variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()]).logAnalyticsWorkspaceName]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUris').applicationInsightsComponent]"
                 }
             },
             "type": "Microsoft.Resources/deployments"
