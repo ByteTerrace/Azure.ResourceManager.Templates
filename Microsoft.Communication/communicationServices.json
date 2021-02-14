@@ -1,0 +1,40 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "dataLocation": {
+            "defaultValue": "United States",
+            "metadata": {
+                "description": "Specifies the location where the communication service stores its data while at rest."
+            },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 64,
+            "metadata": {
+                "description": "Specifies the name of the Azure Communication Service."
+            },
+            "minLength": 2,
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Key Vault."
+            },
+            "type": "object"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-08-20-preview",
+            "location": "global",
+            "name": "[parameters('name')]",
+            "properties": {
+                "dataLocation": "[parameters('dataLocation')]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Communication/CommunicationServices"
+        }
+    ]
+}

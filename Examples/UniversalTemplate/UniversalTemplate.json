@@ -22,6 +22,7 @@
     "variables": {
         "defaultResourceDefinitions": {
             "applicationConfigurationStores": [],
+            "communicationsService": [],
             "dnsZones": {
                 "private": [],
                 "public": []
@@ -34,6 +35,9 @@
         "defaultResourceProperties": {
             "applicationConfigurationStore": {
                 "skuName": "Standard"
+            },
+            "communicationsService": {
+                "dataLocation": "United States"
             },
             "dnsZone": {
                 "private": {
@@ -326,6 +330,39 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "uri": "[variables('templateUris').keyVault]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').communicationServices))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').communicationServices)]",
+                "mode": "parallel",
+                "name": "communicationServicesCopy"
+            },
+            "dependsOn": [
+                "keyVaultsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').communicationService, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "dataLocation": {
+                        "value": "[union(variables('defaultResourceProperties').communicationService, variables('resourceDefinitions').communicationServices[copyIndex()]).dataLocation]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').communicationServices[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUris').communicationService]"
                 }
             },
             "type": "Microsoft.Resources/deployments"

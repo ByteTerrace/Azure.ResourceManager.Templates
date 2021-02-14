@@ -9,6 +9,11 @@
                         "name": "byteterrace"
                     }
                 ],
+                "communicationsServices": [
+                    {
+                        "name": "byteterrace"
+                    }
+                ],
                 "dnsZones": {
                     "private": [
                         {
