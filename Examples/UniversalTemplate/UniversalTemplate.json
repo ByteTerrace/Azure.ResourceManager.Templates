@@ -395,7 +395,7 @@
                         "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForQueryEnabled]"
                     },
                     "name": {
-                        "value": "[variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()].name]"
+                        "value": "[variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()].name]"
                     },
                     "skuName": {
                         "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).skuName]"
