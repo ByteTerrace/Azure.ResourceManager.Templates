@@ -1,6 +1,6 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "2.0.0.0",
+    "contentVersion": "1.0.0.0",
     "parameters": {
         "activeDirectoryAdministratorObjectId": {
             "defaultValue": "",
@@ -10,7 +10,7 @@
             "type": "string"
         },
         "activeDirectoryAdministratorTenantId": {
-            "defaultValue": "",
+            "defaultValue": "[subscription().tenantId]",
             "metadata": {
                 "description": "Specifies the Active Directory administrator tenant ID that will be assigned to the Azure SQL server."
             },
@@ -20,48 +20,6 @@
             "defaultValue": "",
             "metadata": {
                 "description": "Specifies the Active Directory administrator user name that will be assigned to the Azure SQL server."
-            },
-            "type": "string"
-        },
-        "advancedDataSecurityDisabledAlerts": {
-            "defaultValue": [],
-            "metadata": {
-                "description": "An array of alert names that will be disabled within the advanced data security feature."
-            },
-            "type": "array"
-        },
-        "advancedDataSecurityEmailAddresses": {
-            "defaultValue": [],
-            "metadata": {
-                "description": "An array of email addresses that will be notified by the advanced data security feature."
-            },
-            "type": "array"
-        },
-        "auditActionsAndGroupNames": {
-            "defaultValue": [],
-            "metadata": {
-                "description": "An array of audit action and group names that will be enabled within the audit feature."
-            },
-            "type": "array"
-        },
-        "auditRetentionInDays": {
-            "defaultValue": 0,
-            "metadata": {
-                "description": "Specifies the number of days worth of audit logs that the audit feature will retain."
-            },
-            "type": "int"
-        },
-        "auditStorageAccountName": {
-            "defaultValue": "",
-            "metadata": {
-                "description": "Specifies the name of the Azure Storage account that will be utilized by the audit feature."
-            },
-            "type": "string"
-        },
-        "auditStorageAccountResourceGroupName": {
-            "defaultValue": "",
-            "metadata": {
-                "description": "Specifies the resource group name of the Azure Storage account that will be utilized by the audit feature."
             },
             "type": "string"
         },
@@ -92,14 +50,14 @@
             "type": "string"
         },
         "customerManagedEncryptionKeyVaultResourceGroupName": {
-            "defaultValue": "",
+            "defaultValue": "[resourceGroup().name]",
             "metadata": {
                 "description": "Specifies the resource group name of the key vault that houses the customer-managed data encryption key."
             },
             "type": "string"
         },
         "customerManagedEncryptionKeyVaultSubscriptionId": {
-            "defaultValue": "",
+            "defaultValue": "[subscription().subscriptionId]",
             "metadata": {
                 "description": "Specifies the subscrioption id of the key vault that houses the customer-managed data encryption key."
             },
@@ -133,13 +91,6 @@
             },
             "type": "array"
         },
-        "isAzureResourceAccessEnabled": {
-            "defaultValue": false,
-            "metadata": {
-                "description": "Indicates whether Azure services and resources are allowed to access the Azure SQL server."
-            },
-            "type": "bool"
-        },
         "isPublicNetworkAccessEnabled": {
             "defaultValue": true,
             "metadata": {
@@ -147,8 +98,15 @@
             },
             "type": "bool"
         },
+        "isTrustedMicrosoftResourceAccessEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether trusted Azure services and resources are allowed to access the Azure SQL server."
+            },
+            "type": "bool"
+        },
         "linkedTemplateBaseUri": {
-            "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/",
+            "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/ResourceManager.Templates/",
             "metadata": {
                 "description": "Specifies the base uri of external linked templates used by this template."
             },
@@ -194,7 +152,7 @@
             "type": "securestring"
         },
         "sqlAdministratorUserPassword": {
-            "defaultValue": "[newGuid()]",
+            "defaultValue": "[base64(format('{0}|{1}', newGuid(), newGuid()))]",
             "metadata": {
                 "description": "Specifies the default SQL administrator user password that will be assigned to the Azure SQL server."
             },
@@ -213,78 +171,51 @@
                 "description": "An array of virtual network rules that will be assigned to the Azure SQL server."
             },
             "type": "array"
-        },
-        "vulnerabilityAssessmentStorageAccountName": {
-            "defaultValue": "",
-            "metadata": {
-                "description": "Specifies the name of the Azure Storage account that will be utilized by the vulnerability assessment feature."
-            },
-            "type": "string"
-        },
-        "vulnerabilityAssessmentStorageAccountResourceGroupName": {
-            "defaultValue": "",
-            "metadata": {
-                "description": "Specifies the resource group name of the Azure Storage account that will be utilized by the vulnerability assessment feature."
-            },
-            "type": "string"
         }
     },
     "variables": {
         "administratorApiVersion": "2019-06-01-preview",
         "administratorResourceId": "[resourceId('Microsoft.Sql/servers/administrators', variables('serverName'), 'activeDirectory')]",
-        "auditApiVersion": "2017-03-01-preview",
-        "auditStorageAccountName": "[toLower(if(not(empty(coalesce(parameters('auditStorageAccountName'), ''))), parameters('auditStorageAccountName'), 'DummyStorageAccountForAudit'))]",
-        "auditStorageAccountResourceGroupName": "[if(not(empty(coalesce(parameters('auditStorageAccountResourceGroupName'), ''))), parameters('auditStorageAccountResourceGroupName'), resourceGroup().name)]",
-        "auditStorageAccountResourceId": "[resourceId(variables('auditStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', variables('auditStorageAccountName'))]",
-        "auditStorageBlobDataContributorRoleAssignmentDeploymentName": "[format('{0}-{1}', deployment().name, uniqueString('auditStorageBlobDataContributorRoleAssignment'))]",
-        "auditStorageBlobDataContributorRoleAssignmentResourceId": "[resourceId('Microsoft.Resources/deployments', variables('auditStorageBlobDataContributorRoleAssignmentDeploymentName'))]",
         "connectionPolicyApiVersion": "2014-04-01",
-        "customerManagedEncryptionAccessPolicyDeploymentName": "[format('{0}-{1}-CmeAccessPolicy', deployment().name, variables('serverName'))]",
-        "customerManagedEncryptionAccessPolicyDeploymentResourceId": "[resourceId(variables('customerManagedEncryptionKeyVaultSubscriptionId'), variables('customerManagedEncryptionKeyVaultResourceGroupName'), 'Microsoft.Resources/deployments', variables('customerManagedEncryptionAccessPolicyDeploymentName'))]",
-        "customerManagedEncryptionIsEnabled": "[and(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), ''))), not(empty(coalesce(parameters('customerManagedEncryptionKeyName'), ''))), not(empty(coalesce(parameters('customerManagedEncryptionKeyVersion'), ''))))]",
-        "customerManagedEncryptionKeyVaultResourceGroupName": "[if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultResourceGroupName'), ''))), parameters('customerManagedEncryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
-        "customerManagedEncryptionKeyVaultResourceId": "[resourceId(variables('customerManagedEncryptionKeyVaultSubscriptionId'), variables('customerManagedEncryptionKeyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('customerManagedEncryptionKeyVaultName'))]",
-        "customerManagedEncryptionKeyVaultSubscriptionId": "[if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultSubscriptionId'), ''))), parameters('customerManagedEncryptionKeyVaultSubscriptionId'), subscription().subscriptionId)]",
-        "customerManagedEncryptionServerKeyName": "[format('{0}_{1}_{2}', if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), ''))), parameters('customerManagedEncryptionKeyVaultName'), 'DummyVault'), if(not(empty(coalesce(parameters('customerManagedEncryptionKeyName'), ''))), parameters('customerManagedEncryptionKeyName'), 'DummyKey'), if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVersion'), ''))), parameters('customerManagedEncryptionKeyVersion'), 'DummyVersion'))]",
-        "customerManagedEncryptionServerKeyResourceId": "[resourceId('Microsoft.Sql/servers/keys', variables('serverName'), variables('customerManagedEncryptionServerKeyName'))]",
-        "databases": "[if(variables('databasesIsNotEmpty'), parameters('databases'), json('[ { \"databaseName\": \"DummyDatabase\", \"isAzureHybridBenefitEnabled\": false, \"skuName\": \"Basic\" } ]'))]",
+        "customerManagedEncryptionKeyVaultResourceId": "[resourceId(variables('customerManagedEncryptionProperties').subscriptionId, variables('customerManagedEncryptionProperties').resourceGroupName, 'Microsoft.KeyVault/vaults', parameters('customerManagedEncryptionKeyVaultName'))]",
+        "customerManagedEncryptionProperties": {
+            "isEnabled": "[and(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), ''))), not(empty(coalesce(parameters('customerManagedEncryptionKeyName'), ''))), not(empty(coalesce(parameters('customerManagedEncryptionKeyVersion'), ''))))]",
+            "keyName": "[format('{0}_{1}_{2}', if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), ''))), parameters('customerManagedEncryptionKeyVaultName'), 'DummyVault'), if(not(empty(coalesce(parameters('customerManagedEncryptionKeyName'), ''))), parameters('customerManagedEncryptionKeyName'), 'DummyKey'), if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVersion'), ''))), parameters('customerManagedEncryptionKeyVersion'), 'DummyVersion'))]",
+            "resourceGroupName": "[if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultResourceGroupName'), ''))), parameters('customerManagedEncryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
+            "subscriptionId": "[if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultSubscriptionId'), ''))), parameters('customerManagedEncryptionKeyVaultSubscriptionId'), subscription().subscriptionId)]"
+        },
+        "customerManagedEncryptionServerKeyResourceId": "[resourceId('Microsoft.Sql/servers/keys', variables('serverName'), variables('customerManagedEncryptionProperties').keyName)]",
+        "databases": "[if(variables('databasesIsNotEmpty'), parameters('databases'), createArray(createObject('name', 'DummyDatabase')))]",
+        "databasesDefaultProperties": {
+            "catalogCollation": "DATABASE_DEFAULT",
+            "defaultCollation": "SQL_Latin1_General_CP1_CI_AS",
+            "isAzureHybridBenefitEnabled": false,
+            "skuName": "Basic"
+        },
         "databasesIsNotEmpty": "[greater(length(parameters('databases')), 0)]",
         "deploymentApiVersion": "2019-10-01",
         "dnsAliasApiVersion": "2017-03-01-preview",
-        "dnsAliases": "[if(variables('dnsAliasesIsNotEmpty'), parameters('dnsAliases'), json('[ \"dummyDnsAlias\" ]'))]",
+        "dnsAliases": "[if(variables('dnsAliasesIsNotEmpty'), parameters('dnsAliases'), createArray('dummyDnsAlias'))]",
         "dnsAliasesIsNotEmpty": "[greater(length(parameters('dnsAliases')), 0)]",
         "encryptionProtectorApiVersion": "2015-05-01-preview",
         "firewallRuleApiVersion": "2015-05-01-preview",
-        "firewallRules": "[if(variables('firewallRulesIsNotEmpty'), parameters('firewallRules'), json('[ { \"endIpAddress\": \"0.0.0.0\", \"ruleName\": \"dummyFirewallRule\", \"startIpAddress\": \"0.0.0.0\" }]'))]",
+        "firewallRules": "[if(variables('firewallRulesIsNotEmpty'), parameters('firewallRules'), createArray(createObject('endIpAddress', '0.0.0.0', 'ruleName', 'DummyRule', 'startIpAddress', '0.0.0.0')))]",
         "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
-        "isActiveDirectoryAdministratorEnabled": "[or(not(empty(coalesce(parameters('activeDirectoryAdministratorObjectId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorTenantId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorUserName'), ''))))]",
-        "isAdvancedDataSecurityEnabled": "[or(greater(length(parameters('advancedDataSecurityEmailAddresses')), 0), variables('isVulnerabilityAssessmentStorageAccountEnabled'))]",
-        "isAuditEnabled": "[variables('isAuditStorageAccountEnabled')]",
-        "isAuditStorageAccountEnabled": "[or(not(empty(coalesce(parameters('auditStorageAccountResourceGroupName'), ''))), not(empty(coalesce(parameters('auditStorageAccountName'), ''))))]",
-        "isStorageBlobDataContributorRoleAssignmentUnique": "[not(equals(variables('auditStorageAccountResourceId'), variables('vulnerabilityAssessmentStorageAccountResourceId')))]",
-        "isVulnerabilityAssessmentStorageAccountEnabled": "[or(not(empty(coalesce(parameters('vulnerabilityAssessmentStorageAccountResourceGroupName'), ''))), not(empty(coalesce(parameters('vulnerabilityAssessmentStorageAccountName'), ''))))]",
+        "isActiveDirectoryAdministratorEnabled": "[or(not(empty(coalesce(parameters('activeDirectoryAdministratorObjectId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorUserName'), ''))))]",
         "keyApiVersion": "2015-05-01-preview",
         "keyVaultApiVersion": "2018-02-14",
-        "securityAlertPolicyApiVersion": "2017-03-01-preview",
-        "securityAlertPolicyResourceId": "[resourceId('Microsoft.Sql/servers/securityAlertPolicies', variables('serverName'), 'default')]",
         "serverApiVersion": "2019-06-01-preview",
         "serverName": "[toLower(parameters('serverName'))]",
         "serverResourceId": "[resourceId('Microsoft.Sql/servers', variables('serverName'))]",
-        "storageAccountApiVersion": "2019-06-01",
-        "storageBlobDataContributorRoleResourceId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
-        "templateUriForMicrosoftKeyVaultAccessPolicies": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults-accessPolicies.json'), parameters('linkedTemplateQueryString')))]",
         "templateUriForMicrosoftSqlDatabases": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Sql/databases.json'), parameters('linkedTemplateQueryString')))]",
-        "templateUriForMicrosoftStorageAccountRoleAssignment": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Storage/storageAccounts-roleAssignments.json'), parameters('linkedTemplateQueryString')))]",
         "virtualNetworkRuleApiVersion": "2015-05-01-preview",
-        "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), parameters('virtualNetworkRules'), json('[ { \"ignoreMissingVnetServiceEndpoint\": false, \"ruleName\": \"dummyVirtualNetworkRule\", \"subnetName\": \"dummySubnet\", \"virtualNetworkName\": \"dummyVirtualNetwork\", \"virtualNetworkResourceGroupName\": \"dummyResourceGroup\" } ]'))]",
-        "virtualNetworkRulesIsNotEmpty": "[greater(length(parameters('virtualNetworkRules')), 0)]",
-        "vulnerabilityAssessmentApiVersion": "2018-06-01-preview",
-        "vulnerabilityAssessmentResourceId": "[resourceId('Microsoft.Sql/servers/vulnerabilityAssessments', variables('serverName'), 'default')]",
-        "vulnerabilityAssessmentStorageAccountName": "[toLower(if(not(empty(coalesce(parameters('vulnerabilityAssessmentStorageAccountName'), ''))), parameters('vulnerabilityAssessmentStorageAccountName'), 'DummyStorageAccountForAds'))]",
-        "vulnerabilityAssessmentStorageAccountResourceGroupName": "[if(not(empty(coalesce(parameters('vulnerabilityAssessmentStorageAccountResourceGroupName'), ''))), parameters('vulnerabilityAssessmentStorageAccountResourceGroupName'), resourceGroup().name)]",
-        "vulnerabilityAssessmentStorageAccountResourceId": "[resourceId(variables('vulnerabilityAssessmentStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', variables('vulnerabilityAssessmentStorageAccountName'))]",
-        "vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentDeploymentName": "[format('{0}-{1}', deployment().name, uniqueString('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignment'))]",
-        "vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentResourceId": "[resourceId('Microsoft.Resources/deployments', variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentDeploymentName'))]"
+        "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), parameters('virtualNetworkRules'), createArray(createObject('name', 'DummyRule')))]",
+        "virtualNetworkRulesDefaultProperties": {
+            "ignoreMissingVnetServiceEndpoint": false,
+            "resourceGroupName": "[resourceGroup().name]",
+            "subscriptionId": "[subscription().subscriptionId]"
+        },
+        "virtualNetworkRulesIsNotEmpty": "[greater(length(parameters('virtualNetworkRules')), 0)]"
     },
     "resources": [
         {
@@ -331,7 +262,7 @@
         },
         {
             "apiVersion": "[variables('firewallRuleApiVersion')]",
-            "condition": "[parameters('isAzureResourceAccessEnabled')]",
+            "condition": "[parameters('isTrustedMicrosoftResourceAccessEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]"
             ],
@@ -373,8 +304,8 @@
             ],
             "name": "[format('{0}/{1}', variables('serverName'), variables('virtualNetworkRules')[copyIndex()].ruleName)]",
             "properties": {
-                "ignoreMissingVnetServiceEndpoint": "[union(json('{ \"ignoreMissingVnetServiceEndpoint\": false }'), variables('virtualNetworkRules')[copyIndex()]).ignoreMissingVnetServiceEndpoint]",
-                "virtualNetworkSubnetId": "[resourceId(union(json(format('{{ \"subscriptionId\": \"{0}\" }}', subscription().subscriptionId)), variables('virtualNetworkRules')[copyIndex()]).subscriptionId, union(json(format('{{ \"resourceGroupName\": \"{0}\" }}', resourceGroup().name)), variables('virtualNetworkRules')[copyIndex()]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkRules')[copyIndex()].virtualNetworkName, variables('virtualNetworkRules')[copyIndex()].subnetName)]"
+                "ignoreMissingVnetServiceEndpoint": "[union(variables('virtualNetworkRulesDefaultProperties'), variables('virtualNetworkRules')[copyIndex()]).ignoreMissingVnetServiceEndpoint]",
+                "virtualNetworkSubnetId": "[resourceId(union(variables('virtualNetworkRulesDefaultProperties'), variables('virtualNetworkRules')[copyIndex()]).subscriptionId, union(variables('virtualNetworkRulesDefaultProperties'), variables('virtualNetworkRules')[copyIndex()]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkRules')[copyIndex()].virtualNetworkName, variables('virtualNetworkRules')[copyIndex()].subnetName)]"
             },
             "type": "Microsoft.Sql/servers/virtualNetworkRules"
         },
@@ -393,195 +324,37 @@
             },
             "type": "Microsoft.Sql/servers/administrators"
         },
+        
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[variables('customerManagedEncryptionIsEnabled')]",
+            "apiVersion": "[variables('keyApiVersion')]",
+            "condition": "[variables('customerManagedEncryptionProperties').isEnabled]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
                 "[variables('administratorResourceId')]"
             ],
-            "name": "[variables('customerManagedEncryptionAccessPolicyDeploymentName')]",
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "actionType": {
-                        "value": "add"
-                    },
-                    "keyVaultName": {
-                        "value": "[parameters('customerManagedEncryptionKeyVaultName')]"
-                    },
-                    "objectId": {
-                        "value": "[reference(variables('serverResourceId'), variables('serverApiVersion'), 'Full').identity.principalId]"
-                    },
-                    "permissions": {
-                        "value": {
-                            "keys": [
-                                "Get",
-                                "UnwrapKey",
-                                "Wrapkey"
-                            ]
-                        }
-                    }
-                },
-                "templateLink": {
-                    "contentVersion": "2.0.0.0",
-                    "uri": "[variables('templateUriForMicrosoftKeyVaultAccessPolicies')]"
-                }
-            },
-            "resourceGroup": "[variables('customerManagedEncryptionKeyVaultResourceGroupName')]",
-            "subscriptionId": "[variables('customerManagedEncryptionKeyVaultSubscriptionId')]",
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('keyApiVersion')]",
-            "condition": "[variables('customerManagedEncryptionIsEnabled')]",
-            "dependsOn": [
-                "[variables('serverResourceId')]",
-                "[variables('administratorResourceId')]",
-                "[variables('customerManagedEncryptionAccessPolicyDeploymentResourceId')]"
-            ],
             "kind": "AzureKeyVault",
-            "name": "[format('{0}/{1}', variables('serverName'), variables('customerManagedEncryptionServerKeyName'))]",
+            "name": "[format('{0}/{1}', variables('serverName'), variables('customerManagedEncryptionProperties').keyName)]",
             "properties": {
                 "serverKeyType": "AzureKeyVault",
-                "uri": "[if(variables('customerManagedEncryptionIsEnabled'), format('{0}keys/{1}/{2}', reference(variables('customerManagedEncryptionKeyVaultResourceId'), variables('keyVaultApiVersion')).vaultUri, parameters('customerManagedEncryptionKeyName'), parameters('customerManagedEncryptionKeyVersion')), json('null'))]"
+                "uri": "[if(variables('customerManagedEncryptionProperties').isEnabled, format('{0}keys/{1}/{2}', reference(variables('customerManagedEncryptionKeyVaultResourceId'), variables('keyVaultApiVersion')).vaultUri, parameters('customerManagedEncryptionKeyName'), parameters('customerManagedEncryptionKeyVersion')), json('null'))]"
             },
             "type": "Microsoft.Sql/servers/keys"
         },
         {
             "apiVersion": "[variables('encryptionProtectorApiVersion')]",
-            "condition": "[variables('customerManagedEncryptionIsEnabled')]",
+            "condition": "[variables('customerManagedEncryptionProperties').isEnabled]",
             "dependsOn": [
-                "[variables('serverResourceId')]",
                 "[variables('administratorResourceId')]",
-                "[variables('customerManagedEncryptionAccessPolicyDeploymentResourceId')]",
-                "[variables('customerManagedEncryptionServerKeyResourceId')]"
+                "[variables('customerManagedEncryptionServerKeyResourceId')]",
+                "[variables('serverResourceId')]"
             ],
             "kind": "AzureKeyVault",
             "name": "[format('{0}/current', variables('serverName'))]",
             "properties": {
-                "serverKeyName": "[variables('customerManagedEncryptionServerKeyName')]",
+                "serverKeyName": "[variables('customerManagedEncryptionProperties').keyName]",
                 "serverKeyType": "AzureKeyVault"
             },
             "type": "Microsoft.Sql/servers/encryptionProtector"
-        },
-        {
-            "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[variables('isAuditStorageAccountEnabled')]",
-            "dependsOn": [
-                "[variables('serverResourceId')]",
-                "[variables('administratorResourceId')]"
-            ],
-            "name": "[variables('auditStorageBlobDataContributorRoleAssignmentDeploymentName')]",
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "principalId": {
-                        "value": "[reference(variables('serverResourceId'), variables('serverApiVersion'), 'Full').identity.principalId]"
-                    },
-                    "principalType": {
-                        "value": "ServicePrincipal"
-                    },
-                    "roleDefinitionId": {
-                        "value": "[variables('storageBlobDataContributorRoleResourceId')]"
-                    },
-                    "storageAccountName": {
-                        "value": "[variables('auditStorageAccountName')]"
-                    }
-                },
-                "templateLink": {
-                    "contentVersion": "2.0.0.0",
-                    "uri": "[variables('templateUriForMicrosoftStorageAccountRoleAssignment')]"
-                }
-            },
-            "resourceGroup": "[variables('auditStorageAccountResourceGroupName')]",
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[and(variables('isVulnerabilityAssessmentStorageAccountEnabled'), variables('isStorageBlobDataContributorRoleAssignmentUnique'))]",
-            "dependsOn": [
-                "[variables('serverResourceId')]",
-                "[variables('administratorResourceId')]"
-            ],
-            "name": "[variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentDeploymentName')]",
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "principalId": {
-                        "value": "[reference(variables('serverResourceId'), variables('serverApiVersion'), 'Full').identity.principalId]"
-                    },
-                    "principalType": {
-                        "value": "ServicePrincipal"
-                    },
-                    "roleDefinitionId": {
-                        "value": "[variables('storageBlobDataContributorRoleResourceId')]"
-                    },
-                    "storageAccountName": {
-                        "value": "[variables('vulnerabilityAssessmentStorageAccountName')]"
-                    }
-                },
-                "templateLink": {
-                    "contentVersion": "2.0.0.0",
-                    "uri": "[variables('templateUriForMicrosoftStorageAccountRoleAssignment')]"
-                }
-            },
-            "resourceGroup": "[variables('vulnerabilityAssessmentStorageAccountResourceGroupName')]",
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('securityAlertPolicyApiVersion')]",
-            "dependsOn": [
-                "[variables('serverResourceId')]",
-                "[variables('administratorResourceId')]",
-                "[variables('auditStorageBlobDataContributorRoleAssignmentResourceId')]"
-            ],
-            "name": "[format('{0}/default', variables('serverName'))]",
-            "properties": {
-                "disabledAlerts": "[parameters('advancedDataSecurityDisabledAlerts')]",
-                "emailAccountAdmins": true,
-                "emailAddresses": "[parameters('advancedDataSecurityEmailAddresses')]",
-                "retentionDays": "[parameters('auditRetentionInDays')]",
-                "state": "[if(variables('isAdvancedDataSecurityEnabled'), 'Enabled', 'Disabled')]"
-            },
-            "type": "Microsoft.Sql/servers/securityAlertPolicies"
-        },
-        {
-            "apiVersion": "[variables('auditApiVersion')]",
-            "dependsOn": [
-                "[variables('serverResourceId')]",
-                "[variables('administratorResourceId')]",
-                "[variables('securityAlertPolicyResourceId')]",
-                "[variables('auditStorageBlobDataContributorRoleAssignmentResourceId')]"
-            ],
-            "name": "[format('{0}/default', variables('serverName'))]",
-            "properties": {
-                "auditActionsAndGroups": "[if(greater(length(parameters('auditActionsAndGroupNames')), 0), parameters('auditActionsAndGroupNames'), json('null'))]",
-                "state": "[if(variables('isAuditEnabled'), 'Enabled', 'Disabled')]",
-                "storageEndpoint": "[if(variables('isAuditStorageAccountEnabled'), reference(variables('auditStorageAccountResourceId'), variables('storageAccountApiVersion')).primaryEndpoints.blob, json('null'))]"
-            },
-            "type": "Microsoft.Sql/servers/auditingSettings"
-        },
-        {
-            "apiVersion": "[variables('vulnerabilityAssessmentApiVersion')]",
-            "condition": "[variables('isAdvancedDataSecurityEnabled')]",
-            "dependsOn": [
-                "[variables('serverResourceId')]",
-                "[variables('administratorResourceId')]",
-                "[variables('securityAlertPolicyResourceId')]",
-                "[variables('auditStorageBlobDataContributorRoleAssignmentResourceId')]",
-                "[variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentResourceId')]"
-            ],
-            "name": "[format('{0}/default', variables('serverName'))]",
-            "properties": {
-                "recurringScans": {
-                    "emails": "[parameters('advancedDataSecurityEmailAddresses')]",
-                    "emailSubscriptionAdmins": true,
-                    "isEnabled": "[variables('isVulnerabilityAssessmentStorageAccountEnabled')]"
-                },
-                "storageContainerPath": "[format('{0}vulnerability-assessment/', if(variables('isVulnerabilityAssessmentStorageAccountEnabled'), reference(variables('vulnerabilityAssessmentStorageAccountResourceId'), variables('storageAccountApiVersion')).primaryEndpoints.blob, json('null')))]"
-            },
-            "type": "Microsoft.Sql/servers/vulnerabilityAssessments"
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
@@ -593,27 +366,23 @@
             },
             "dependsOn": [
                 "[variables('serverResourceId')]",
-                "[variables('administratorResourceId')]",
-                "[variables('securityAlertPolicyResourceId')]",
-                "[variables('auditStorageBlobDataContributorRoleAssignmentResourceId')]",
-                "[variables('vulnerabilityAssessmentStorageBlobDataContributorRoleAssignmentResourceId')]",
-                "[variables('vulnerabilityAssessmentResourceId')]"
+                "[variables('administratorResourceId')]"
             ],
             "name": "[format('{0}-database_{1}', deployment().name, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
                     "catalogCollation": {
-                        "value": "[union(json('{ \"catalogCollation\": \"DATABASE_DEFAULT\" }'), variables('databases')[copyIndex()]).catalogCollation]"
+                        "value": "[union(variables('databasesDefaultProperties'), variables('databases')[copyIndex()]).catalogCollation]"
                     },
                     "databaseName": {
                         "value": "[variables('databases')[copyIndex()].databaseName]"
                     },
                     "defaultCollation": {
-                        "value": "[union(json('{ \"defaultCollation\": \"SQL_Latin1_General_CP1_CI_AS\" }'), variables('databases')[copyIndex()]).defaultCollation]"
+                        "value": "[union(variables('databasesDefaultProperties'), variables('databases')[copyIndex()]).defaultCollation]"
                     },
                     "isAzureHybridBenefitEnabled": {
-                        "value": "[union(json('{ \"isAzureHybridBenefitEnabled\": false }'), variables('databases')[copyIndex()]).isAzureHybridBenefitEnabled]"
+                        "value": "[union(variables('databasesDefaultProperties'), variables('databases')[copyIndex()]).isAzureHybridBenefitEnabled]"
                     },
                     "location": {
                         "value": "[parameters('location')]"
@@ -622,14 +391,14 @@
                         "value": "[variables('serverName')]"
                     },
                     "skuName": {
-                        "value": "[union(json('{ \"skuName\": \"Basic\" }'), variables('databases')[copyIndex()]).skuName]"
+                        "value": "[union(variables('databasesDefaultProperties'), variables('databases')[copyIndex()]).skuName]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "2.0.0.0",
+                    "contentVersion": "1.0.0.0",
                     "uri": "[variables('templateUriForMicrosoftSqlDatabases')]"
                 }
             },

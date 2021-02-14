@@ -27,6 +27,7 @@
                 "public": []
             },
             "keyVaults": [],
+            "sqlServers": [],
             "storageAccounts": [],
             "virtualNetworks": []
         },
@@ -61,6 +62,26 @@
                 "skuName": "Premium",
                 "softDeleteRetentionInDays": 14,
                 "tenantId": "[subscription().tenantId]",
+                "virtualNetworkRules": []
+            },
+            "sqlServer": {
+                "activeDirectoryAdministratorObjectId": "",
+                "activeDirectoryAdministratorTenantId": "[subscription().tenantId]",
+                "activeDirectoryAdministratorUserName": "",
+                "connectionPolicy": "Default",
+                "customerManagedEncryptionKeyName": "",
+                "customerManagedEncryptionKeyVaultName": "",
+                "customerManagedEncryptionKeyVaultResourceGroupName": "[resourceGroup().name]",
+                "customerManagedEncryptionKeyVaultSubscriptionId": "[subscription().subscriptionId]",
+                "customerManagedEncryptionKeyVersion": "",
+                "databases": [],
+                "dnsAliases": [],
+                "firewallRules": [],
+                "isPublicNetworkAccessEnabled": true,
+                "isTrustedMicrosoftResourceAccessEnabled": false,
+                "linkedTemplateBaseUri": "[parameters('templateBaseUri')]",
+                "linkedTemplateQueryString": "[parameters('templateQueryString')]",
+                "serverVersion": "12.0",
                 "virtualNetworkRules": []
             },
             "storageAccount": {
@@ -102,6 +123,7 @@
             "dnsPrivateZone": "[format('{0}-DnsPrivateZone', deployment().name)]",
             "dnsPublicZone": "[format('{0}-DnsPublicZone', deployment().name)]",
             "keyVault": "[format('{0}-KeyVault', deployment().name)]",
+            "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
             "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]"
         },
@@ -111,6 +133,7 @@
             "dnsPrivateZone": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsPrivateZones.json'), parameters('templateQueryString')))]",
             "dnsPublicZone": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsPublicZones.json'), parameters('templateQueryString')))]",
             "keyVault": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults.json'), parameters('templateQueryString')))]",
+            "sqlServer": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Sql/servers.json'), parameters('templateQueryString')))]",
             "storageAccount": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Storage/storageAccounts.json'), parameters('templateQueryString')))]",
             "virtualNetwork": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/virtualNetworks.json'), parameters('templateQueryString')))]"
         }
@@ -435,6 +458,85 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "uri": "[variables('templateUris').storageAccount]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').sqlServers))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').sqlServers)]",
+                "mode": "parallel",
+                "name": "sqlServersCopy"
+            },
+            "dependsOn": [
+                "keyVaultsCopy",
+                "storageAccountsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').sqlServer, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "activeDirectoryAdministratorObjectId": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).activeDirectoryAdministratorObjectId]"
+                    },
+                    "activeDirectoryAdministratorTenantId": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).activeDirectoryAdministratorTenantId]"
+                    },
+                    "activeDirectoryAdministratorUserName": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).activeDirectoryAdministratorUserName]"
+                    },
+                    "connectionPolicy": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).connectionPolicy]"
+                    },
+                    "customerManagedEncryptionKeyName": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).customerManagedEncryptionKeyName]"
+                    },
+                    "customerManagedEncryptionKeyVaultName": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).customerManagedEncryptionKeyVaultName]"
+                    },
+                    "customerManagedEncryptionKeyVaultResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).customerManagedEncryptionKeyVaultResourceGroupName]"
+                    },
+                    "customerManagedEncryptionKeyVaultSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).customerManagedEncryptionKeyVaultSubscriptionId]"
+                    },
+                    "customerManagedEncryptionKeyVersion": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).customerManagedEncryptionKeyVersion]"
+                    },
+                    "databases": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).databases]"
+                    },
+                    "dnsAliases": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).dnsAliases]"
+                    },
+                    "firewallRules": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).firewallRules]"
+                    },
+                    "isPublicNetworkAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).isPublicNetworkAccessEnabled]"
+                    },
+                    "isTrustedMicrosoftResourceAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).isTrustedMicrosoftResourceAccessEnabled]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').sqlServers[copyIndex()].name]"
+                    },
+                    "serverVersion": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).serverVersion]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "virtualNetworkRules": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).virtualNetworkRules]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUris').sqlServer]"
                 }
             },
             "type": "Microsoft.Resources/deployments"
