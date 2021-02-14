@@ -56,6 +56,7 @@
         }
     },
     "variables": {
+        "diagnosticSettingsApiVersion": "2017-05-01-preview",
         "sqlAccessToSensitiveDataViewResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/views', parameters('name'), 'SQLAccessToSensitiveData')]",
         "sqlNavigationQueryFieldsList": "bin(event_time_t, 1ms), SubscriptionId, ResourceGroup, server_instance_name_s, database_name_s, is_server_level_audit_s, statement_s, succeeded_s, duration_milliseconds_d, response_rows_d, affected_rows_d, action_name_s, class_type_description_s, client_ip_s, server_principal_name_s, database_principal_name_s, application_name_s, sequence_group_id_g, additional_information_s, data_sensitivity_information_s",
         "sqlNavigationQueryFilters": "Category == 'SQLSecurityAuditEvents' and ${Subscription ID} and ${Resource group name} and ${Server name} and ${Database name}",
@@ -87,6 +88,28 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.OperationalInsights/workspaces"
+        },
+        {
+            "apiVersion": "[variables('diagnosticSettingsApiVersion')]",
+            "dependsOn": [
+                "[variables('workspaceResourceId')]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/microsoft.insights/audit', parameters('name'))]",
+            "properties": {
+                "logs": [
+                    {
+                        "category": "Audit",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    }
+                ],
+                "workspaceId": "[variables('workspaceResourceId')]"
+            },
+            "type": "Microsoft.OperationalInsights/workspaces/providers/diagnosticsettings"
         },
         {
             "apiVersion": "[variables('workspaceViewsApiVersion')]",
