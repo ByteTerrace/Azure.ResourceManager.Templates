@@ -990,7 +990,8 @@
                 "name": "[format('SQLAuditing[{0}]', parameters('name'))]",
                 "product": "SQLAuditing",
                 "promotionCode": "",
-                "publisher": "Microsoft"
+                "publisher": "Microsoft",
+                "Version": "1.0"
             },
             "properties": {
                 "containedResources": [
