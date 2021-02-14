@@ -985,9 +985,9 @@
                 "[variables('workspaceResourceId')]"
             ],
             "location": "[parameters('location')]",
-            "name": "[format('SQLAuditing[{0}]', parameters('name'))]",
+            "name": "[format('SQLAuditing[{0}]', variables('name'))]",
             "plan": {
-                "name": "[format('SQLAuditing[{0}]', parameters('name'))]",
+                "name": "[format('SQLAuditing[{0}]', variables('name'))]",
                 "product": "OMSGallery/SQLAuditing",
                 "promotionCode": "",
                 "publisher": "Microsoft"
