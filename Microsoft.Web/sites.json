@@ -280,7 +280,7 @@
         "siteResourceId": "[resourceId('Microsoft.Web/sites', parameters('siteName'))]",
         "sitesApiVersion": "2019-08-01",
         "sitesConfigApiVersion": "2019-08-01",
-        "slots": "[if(variables('slotsIsNotEmpty'), parameters('slots'), json('[ { \"slotName\": \"DummySlot\" } ]'))]",
+        "slots": "[if(variables('slotsIsNotEmpty'), parameters('slots'), json('[ { \"slotName\": \"dummySlot\" } ]'))]",
         "slotsCount": "[length(parameters('slots'))]",
         "slotsIsNotEmpty": "[greater(variables('slotsCount'), 0)]",
         "templateUriForMicrosoftKeyVaultAccessPolicies": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults-accessPolicies.json'), parameters('linkedTemplateQueryString')))]",

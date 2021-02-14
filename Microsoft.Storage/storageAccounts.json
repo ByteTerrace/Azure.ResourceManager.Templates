@@ -206,7 +206,7 @@
     "variables": {
         "authorizationRoleAssignmentsApiVersion":"2018-09-01-preview",
         "blobContainerApiVersion": "2019-06-01",
-        "blobContainerNames": "[if(variables('blobContainerNamesIsNotEmpty'), parameters('blobContainerNames'), json('[ \"dummyContainer\" ]'))]",
+        "blobContainerNames": "[if(variables('blobContainerNamesIsNotEmpty'), parameters('blobContainerNames'), createArray('dummyContainer'))]",
         "blobContainerNamesCount": "[length(parameters('blobContainerNames'))]",
         "blobContainerNamesIsNotEmpty": "[greater(variables('blobContainerNamesCount'), 0)]",
         "blobServicesApiVersion": "2019-06-01",
@@ -219,12 +219,12 @@
         "customerManagedEncryptionPropertiesDeploymentResourceId": "[resourceId('Microsoft.Resources/deployments', variables('customerManagedEncryptionPropertiesDeploymentName'))]",
         "deploymentApiVersion": "2019-10-01",
         "encryptionScopeVersion": "2019-06-01",
-        "encryptionScopes": "[if(variables('encryptionScopesIsNotEmpty'), parameters('encryptionScopes'), json('[ { \"encryptionScopeName\": \"dummyEncryptionScope\", \"keyVaultName\": \"dummyKeyVault\" } ]'))]",
+        "encryptionScopes": "[if(variables('encryptionScopesIsNotEmpty'), parameters('encryptionScopes'), createArray(createObject('name', 'dummyEncryptionScope')))]",
         "encryptionScopesCount": "[length(parameters('encryptionScopes'))]",
         "encryptionScopesIsNotEmpty": "[greater(variables('encryptionScopesCount'), 0)]",
         "fileServicesApiVersion": "2019-06-01",
         "fileShareApiVersion": "2019-06-01",
-        "fileShareNames": "[if(variables('fileShareNamesIsNotEmpty'), parameters('fileShareNames'), json('[ \"dummyFileShare\" ]'))]",
+        "fileShareNames": "[if(variables('fileShareNamesIsNotEmpty'), parameters('fileShareNames'), createArray('dummyFileShare'))]",
         "fileShareNamesCount": "[length(parameters('fileShareNames'))]",
         "fileShareNamesIsNotEmpty": "[greater(variables('fileShareNamesCount'), 0)]",
         "hierarchicalNamespaceProperties": {
@@ -233,7 +233,7 @@
         "keyVaultsApiVersion": "2019-09-01",
         "keyVaultsCryptoServiceEncryptionRoleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]",
         "queueApiVersion": "2019-06-01",
-        "queueNames": "[if(variables('queueNamesIsNotEmpty'), parameters('queueNames'), json('[ \"dummyQueue\" ]'))]",
+        "queueNames": "[if(variables('queueNamesIsNotEmpty'), parameters('queueNames'), createArray('dummyQueue'))]",
         "queueNamesCount": "[length(parameters('queueNames'))]",
         "queueNamesIsNotEmpty": "[greater(variables('queueNamesCount'), 0)]",
         "storageAccountApiVersion": "2019-06-01",
@@ -268,7 +268,7 @@
         },
         "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "tableApiVersion": "2019-06-01",
-        "tableNames": "[if(variables('tableNamesIsNotEmpty'), parameters('tableNames'), json('[ \"dummyTable\" ]'))]",
+        "tableNames": "[if(variables('tableNamesIsNotEmpty'), parameters('tableNames'), createArray('dummyTable'))]",
         "tableNamesCount": "[length(parameters('tableNames'))]",
         "tableNamesIsNotEmpty": "[greater(variables('tableNamesCount'), 0)]",
         "virtualNetworkRulesDefaultObject": {
@@ -376,10 +376,10 @@
                 "[variables('customerManagedEncryptionPropertiesDeploymentResourceId')]",
                 "[variables('storageAccountResourceId')]"
             ],
-            "name": "[format('{0}/{1}', variables('storageAccountName'), variables('encryptionScopes')[copyIndex()].encryptionScopeName)]",
+            "name": "[format('{0}/{1}', variables('storageAccountName'), variables('encryptionScopes')[copyIndex()].name)]",
             "properties": {
                 "keyVaultProperties": {
-                    "keyUri": "[if(variables('encryptionScopesIsNotEmpty'), format('{0}keys/{1}{2}', reference(resourceId(union(json(format('{{ \"subscriptionId\": \"{0}\" }}', subscription().subscriptionId)), variables('encryptionScopes')[copyIndex()]).subscriptionId, union(json(format('{{ \"resourceGroupName\": \"{0}\"}}', resourceGroup().name)), variables('encryptionScopes')[copyIndex()]).resourceGroupName, 'Microsoft.KeyVault/vaults', variables('encryptionScopes')[copyIndex()].keyVaultName), variables('keyVaultsApiVersion')).vaultUri, variables('encryptionScopes')[copyIndex()].keyName, if(not(empty(union(json('{ \"keyVersion\": \"\"}'), variables('encryptionScopes')[copyIndex()]).keyVersion)), format('/{0}', variables('encryptionScopes')[copyIndex()].keyVersion), '')), json('null'))]"
+                    "keyUri": "[if(variables('encryptionScopesIsNotEmpty'), format('{0}keys/{1}{2}', reference(resourceId(union(createObject('subscriptionId', subscription().subscriptionId), variables('encryptionScopes')[copyIndex()]).subscriptionId, union(createObject('resourceGroupName', resourceGroup().name), variables('encryptionScopes')[copyIndex()]).resourceGroupName, 'Microsoft.KeyVault/vaults', variables('encryptionScopes')[copyIndex()].keyVaultName), variables('keyVaultsApiVersion')).vaultUri, variables('encryptionScopes')[copyIndex()].keyName, if(not(empty(union(createObject('keyVersion', ''), variables('encryptionScopes')[copyIndex()]).keyVersion)), format('/{0}', variables('encryptionScopes')[copyIndex()].keyVersion), '')), json('null'))]"
                 },
                 "source": "Microsoft.KeyVault",
                 "state": "Enabled"
