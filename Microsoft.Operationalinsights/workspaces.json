@@ -1,0 +1,78 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "dataRetentionInDays": {
+            "defaultValue": 30,
+            "maxValue": 730,
+            "metadata": {
+                "description": "Specifies the duration, in days, that data will be retained within the Azure Operational Insights workspace."
+            },
+            "minValue": 30,
+            "type": "int"
+        },
+        "isPublicNetworkAccessForIngestionEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether public network access is permitted to the Azure Operational Insights workspace when ingesting data."
+            },
+            "type": "bool"
+        },
+        "isPublicNetworkAccessForQueryEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether public network access is permitted to the Azure Operational Insights workspace when querying data."
+            },
+            "type": "bool"
+        },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Specifies the location in which the Azure Operational Insights workspace resource(s) will be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 63,
+            "metadata": {
+                "description": "Specifies the name of the Azure Operational Insights workspace."
+            },
+            "minLength": 4,
+            "type": "string"
+        },
+        "skuName": {
+            "defaultValue": "pergb2018",
+            "metadata": {
+                "description": "Specifies the SKU name of the Azure Operational Insights workspace."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Operational Insights workspace."
+            },
+            "type": "object"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-10-01",
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "publicNetworkAccessForIngestion": "[if(parameters('isPublicNetworkAccessForIngestionEnabled'), 'Enabled', 'Disabled')]",
+                "publicNetworkAccessForQuery": "[if(parameters('isPublicNetworkAccessForQueryEnabled'), 'Enabled', 'Disabled')]",
+                "retentionInDays": "[parameters('dataRetentionInDays')]",
+                "sku": {
+                    "name": "[parameters('skuName')]"
+                },
+                "workspaceCapping": {
+                    "dailyQuotaGb": -1
+                }
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Operationalinsights/workspaces"
+        }
+    ]
+}

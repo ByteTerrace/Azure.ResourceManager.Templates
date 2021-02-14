@@ -27,6 +27,7 @@
                 "private": [],
                 "public": []
             },
+            "logAnalyticsWorkspaces": [],
             "keyVaults": [],
             "sqlServers": [],
             "storageAccounts": [],
@@ -67,6 +68,12 @@
                 "softDeleteRetentionInDays": 14,
                 "tenantId": "[subscription().tenantId]",
                 "virtualNetworkRules": []
+            },
+            "logAnalyticsWorkspace": {
+                "dataRetentionInDays": 30,
+                "isPublicNetworkAccessForIngestionEnabled": false,
+                "isPublicNetworkAccessForQueryEnabled": false,
+                "skuName": "pergb2018"
             },
             "sqlServer": {
                 "activeDirectoryAdministratorObjectId": "",
@@ -128,6 +135,7 @@
             "dnsPrivateZone": "[format('{0}-DnsPrivateZone', deployment().name)]",
             "dnsPublicZone": "[format('{0}-DnsPublicZone', deployment().name)]",
             "keyVault": "[format('{0}-KeyVault', deployment().name)]",
+            "logAnalyticsWorkspace": "[format('{0}-LogAnalyticsWorkspace', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
             "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]"
@@ -139,12 +147,51 @@
             "dnsPrivateZone": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsPrivateZones.json'), parameters('templateQueryString')))]",
             "dnsPublicZone": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsPublicZones.json'), parameters('templateQueryString')))]",
             "keyVault": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults.json'), parameters('templateQueryString')))]",
+            "logAnalyticsWorkspace": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.OperationalInsights/workspaces.json'), parameters('templateQueryString')))]",
             "sqlServer": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Sql/servers.json'), parameters('templateQueryString')))]",
             "storageAccount": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Storage/storageAccounts.json'), parameters('templateQueryString')))]",
             "virtualNetwork": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/virtualNetworks.json'), parameters('templateQueryString')))]"
         }
     },
     "resources": [
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').logAnalyticsWorkspaces))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').logAnalyticsWorkspaces)]",
+                "mode": "parallel",
+                "name": "logAnalyticsWorkspacesCopy"
+            },
+            "name": "[format('{0}_{1}', variables('deploymentNames').logAnalyticsWorkspace, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "dataRetentionInDays": {
+                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).dataRetentionInDays]"
+                    },
+                    "isPublicNetworkAccessForIngestionEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForIngestionEnabled]"
+                    },
+                    "isPublicNetworkAccessForQueryEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForQueryEnabled]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()].name]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUris').logAnalyticsWorkspace]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[not(empty(variables('resourceDefinitions').virtualNetworks))]",
@@ -172,11 +219,11 @@
                     "name": {
                         "value": "[variables('resourceDefinitions').virtualNetworks[copyIndex()].name]"
                     },
-                    "tags": {
-                        "value": "[parameters('tags')]"
-                    },
                     "subnets": {
                         "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).subnets]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
                     }
                 },
                 "templateLink": {

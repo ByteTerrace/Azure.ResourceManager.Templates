@@ -14,7 +14,7 @@
             "metadata": {
                 "description": "Specifies the name of the Azure Communication Service."
             },
-            "minLength": 2,
+            "minLength": 1,
             "type": "string"
         },
         "tags": {

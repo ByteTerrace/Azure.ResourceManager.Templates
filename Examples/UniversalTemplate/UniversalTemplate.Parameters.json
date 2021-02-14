@@ -41,6 +41,11 @@
                         ]
                     }
                 ],
+                "logAnalyticsWorkspaces": [
+                    {
+                        "name": "byteterrace"
+                    }
+                ],
                 "storageAccounts": [
                     {
                         "name": "byteterrace",
