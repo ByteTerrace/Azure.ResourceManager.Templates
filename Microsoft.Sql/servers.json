@@ -374,9 +374,6 @@
                     "catalogCollation": {
                         "value": "[union(variables('databasesDefaultProperties'), variables('databases')[copyIndex()]).catalogCollation]"
                     },
-                    "databaseName": {
-                        "value": "[variables('databases')[copyIndex()].databaseName]"
-                    },
                     "defaultCollation": {
                         "value": "[union(variables('databasesDefaultProperties'), variables('databases')[copyIndex()]).defaultCollation]"
                     },
@@ -385,6 +382,9 @@
                     },
                     "location": {
                         "value": "[parameters('location')]"
+                    },
+                    "name": {
+                        "value": "[variables('databases')[copyIndex()].name]"
                     },
                     "serverName": {
                         "value": "[variables('serverName')]"

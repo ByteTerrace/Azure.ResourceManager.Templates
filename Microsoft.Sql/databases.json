@@ -9,14 +9,6 @@
             },
             "type": "string"
         },
-        "databaseName": {
-            "maxLength": 128,
-            "metadata": {
-                "description": "Specifies the name of the Azure SQL database."
-            },
-            "minLength": 1,
-            "type": "string"
-        },
         "defaultCollation": {
             "defaultValue": "SQL_Latin1_General_CP1_CI_AS",
             "metadata": {
@@ -36,6 +28,14 @@
             "metadata": {
                 "description": "Specifies the location in which the Azure SQL database resource(s) will be deployed."
             },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 128,
+            "metadata": {
+                "description": "Specifies the name of the Azure SQL database."
+            },
+            "minLength": 1,
             "type": "string"
         },
         "serverName": {
@@ -67,7 +67,7 @@
         {
             "apiVersion": "[variables('databasesApiVersion')]",
             "location": "[parameters('location')]",
-            "name": "[format('{0}/{1}', variables('serverName'), parameters('databaseName'))]",
+            "name": "[format('{0}/{1}', variables('serverName'), parameters('name'))]",
             "properties": {
                 "catalogCollation": "[parameters('catalogCollation')]",
                 "collation": "[parameters('defaultCollation')]",
