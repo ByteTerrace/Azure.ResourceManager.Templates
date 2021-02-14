@@ -1001,6 +1001,7 @@
                 "referencedResources": [],
                 "workspaceResourceId": "[variables('workspaceResourceId')]"
             },
+            "tags": "[parameters('tags')]",
             "type": "Microsoft.OperationsManagement/solutions"
         }
     ]
