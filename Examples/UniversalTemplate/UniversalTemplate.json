@@ -84,7 +84,6 @@
             },
             "monitor": {
                 "applicationInsightsComponent": {
-                    "logAnalyticsWorkspaceName": "",
                     "logAnalyticsWorkspaceResourceGroupName": "[resourceGroup().name]",
                     "logAnalyticsWorkspaceSubscriptionId": "[subscription().subscriptionId]",
                     "samplingPercentage": 100

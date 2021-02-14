@@ -10,7 +10,6 @@
             "type": "string"
         },
         "logAnalyticsWorkspaceName": {
-            "defaultValue": "",
             "metadata": {
                 "description": "Specifies the name of the Azure Log Analytics workspace which the data will be ingested to."
             },
