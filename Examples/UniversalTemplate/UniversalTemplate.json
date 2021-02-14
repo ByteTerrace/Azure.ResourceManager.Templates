@@ -249,48 +249,6 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').logAnalyticsWorkspaces))]",
-            "copy": {
-                "count": "[length(variables('resourceDefinitions').logAnalyticsWorkspaces)]",
-                "mode": "parallel",
-                "name": "logAnalyticsWorkspacesCopy"
-            },
-            "dependsOn": [
-                "networkSecurityGroupsCopy",
-                "virtualNetworksCopy"
-            ],
-            "name": "[format('{0}_{1}', variables('deploymentNames').logAnalyticsWorkspace, copyIndex())]",
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "dataRetentionInDays": {
-                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).dataRetentionInDays]"
-                    },
-                    "isPublicNetworkAccessForIngestionEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForIngestionEnabled]"
-                    },
-                    "isPublicNetworkAccessForQueryEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForQueryEnabled]"
-                    },
-                    "name": {
-                        "value": "[variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()].name]"
-                    },
-                    "skuName": {
-                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).skuName]"
-                    },
-                    "tags": {
-                        "value": "[parameters('tags')]"
-                    }
-                },
-                "templateLink": {
-                    "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').logAnalyticsWorkspace]"
-                }
-            },
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[not(empty(variables('resourceDefinitions').dnsZones.private))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').dnsZones.private)]",
@@ -402,6 +360,49 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "uri": "[variables('templateUris').monitorPrivateLinkScope]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').logAnalyticsWorkspaces))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').logAnalyticsWorkspaces)]",
+                "mode": "parallel",
+                "name": "logAnalyticsWorkspacesCopy"
+            },
+            "dependsOn": [
+                "monitorPrivateLinkScopesCopy",
+                "networkSecurityGroupsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').logAnalyticsWorkspace, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "dataRetentionInDays": {
+                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).dataRetentionInDays]"
+                    },
+                    "isPublicNetworkAccessForIngestionEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForIngestionEnabled]"
+                    },
+                    "isPublicNetworkAccessForQueryEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForQueryEnabled]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()].name]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, variables('resourceDefinitions').logAnalyticsWorkspaces[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUris').logAnalyticsWorkspace]"
                 }
             },
             "type": "Microsoft.Resources/deployments"
