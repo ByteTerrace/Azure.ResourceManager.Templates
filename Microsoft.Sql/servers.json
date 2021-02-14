@@ -414,9 +414,17 @@
                 "[variables('auditingSettingsResourceId')]",
                 "[variables('serverResourceId')]"
             ],
-            "name": "[format('{0}/master/microsoft.insights/SQLSecurityAuditEvents', variables('serverName'))]",
+            "name": "[format('{0}/master/Microsoft.Insights/SQLSecurityAuditEvents', variables('serverName'))]",
             "properties": {
                 "logs": [
+                    {
+                        "category": "DevOpsOperationsAudit",
+                        "enabled": "[variables('isAuditingEnabled')]",
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
                     {
                         "category": "SQLSecurityAuditEvents",
                         "enabled": "[variables('isAuditingEnabled')]",
