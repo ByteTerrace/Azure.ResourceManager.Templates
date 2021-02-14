@@ -552,6 +552,8 @@
             "dependsOn": [
                 "keyVaultsCopy",
                 "networkSecurityGroupsCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').storageAccount, copyIndex())]",
@@ -652,6 +654,8 @@
             "dependsOn": [
                 "keyVaultsCopy",
                 "networkSecurityGroupsCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
                 "storageAccountsCopy",
                 "virtualNetworksCopy"
             ],
@@ -732,6 +736,8 @@
             "dependsOn": [
                 "keyVaultsCopy",
                 "networkSecurityGroupsCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
                 "sqlServersCopy",
                 "storageAccountsCopy",
                 "virtualNetworksCopy"
