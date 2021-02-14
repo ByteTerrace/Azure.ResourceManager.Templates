@@ -205,7 +205,7 @@
         }
     },
     "variables": {
-        "apiVersion": {
+        "apiVersions": {
             "deployments": "2020-10-01",
             "diagnosticSettings": "2017-05-01-preview",
             "keyVaults": "2019-09-01",
@@ -272,7 +272,7 @@
     },
     "resources": [
         {
-            "apiVersion": "[variables('apiVersion').sqlServers]",
+            "apiVersion": "[variables('apiVersions').sqlServers]",
             "identity": {
                 "type": "SystemAssigned"
             },
@@ -283,7 +283,7 @@
             "type": "Microsoft.Sql/servers"
         },
         {
-            "apiVersion": "[variables('apiVersion').sqlConnectionPolicies]",
+            "apiVersion": "[variables('apiVersions').sqlConnectionPolicies]",
             "dependsOn": [
                 "[variables('serverResourceId')]"
             ],
@@ -294,7 +294,7 @@
             "type": "Microsoft.Sql/servers/connectionPolicies"
         },
         {
-            "apiVersion": "[variables('apiVersion').sqlDnsAliases]",
+            "apiVersion": "[variables('apiVersions').sqlDnsAliases]",
             "condition": "[variables('dnsAliasesIsNotEmpty')]",
             "copy": {
                 "count": "[length(variables('dnsAliases'))]",
@@ -308,7 +308,7 @@
             "type": "Microsoft.Sql/servers/dnsAliases"
         },
         {
-            "apiVersion": "[variables('apiVersion').sqlFirewallRules]",
+            "apiVersion": "[variables('apiVersions').sqlFirewallRules]",
             "condition": "[parameters('isTrustedMicrosoftResourceAccessEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]"
@@ -321,7 +321,7 @@
             "type": "Microsoft.Sql/servers/firewallRules"
         },
         {
-            "apiVersion": "[variables('apiVersion').sqlFirewallRules]",
+            "apiVersion": "[variables('apiVersions').sqlFirewallRules]",
             "condition": "[variables('firewallRulesIsNotEmpty')]",
             "copy": {
                 "count": "[length(variables('firewallRules'))]",
@@ -339,7 +339,7 @@
             "type": "Microsoft.Sql/servers/firewallRules"
         },
         {
-            "apiVersion": "[variables('apiVersion').sqlVirtualNetworkRules]",
+            "apiVersion": "[variables('apiVersions').sqlVirtualNetworkRules]",
             "condition": "[variables('virtualNetworkRulesIsNotEmpty')]",
             "copy": {
                 "count": "[length(variables('virtualNetworkRules'))]",
@@ -357,7 +357,7 @@
             "type": "Microsoft.Sql/servers/virtualNetworkRules"
         },
         {
-            "apiVersion": "[variables('apiVersion').sqlAdministrators]",
+            "apiVersion": "[variables('apiVersions').sqlAdministrators]",
             "condition": "[variables('isActiveDirectoryAdministratorEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]"
@@ -372,7 +372,7 @@
             "type": "Microsoft.Sql/servers/administrators"
         },
         {
-            "apiVersion": "[variables('apiVersion').sqlKeys]",
+            "apiVersion": "[variables('apiVersions').sqlKeys]",
             "condition": "[variables('customerManagedEncryptionProperties').isEnabled]",
             "dependsOn": [
                 "[variables('serverResourceId')]",
@@ -382,12 +382,12 @@
             "name": "[format('{0}/{1}', variables('serverName'), variables('customerManagedEncryptionProperties').keyName)]",
             "properties": {
                 "serverKeyType": "AzureKeyVault",
-                "uri": "[if(variables('customerManagedEncryptionProperties').isEnabled, format('{0}keys/{1}/{2}', reference(variables('customerManagedEncryptionKeyVaultResourceId'), variables('apiVersion').keyVaults).vaultUri, parameters('customerManagedEncryptionKeyName'), parameters('customerManagedEncryptionKeyVersion')), json('null'))]"
+                "uri": "[if(variables('customerManagedEncryptionProperties').isEnabled, format('{0}keys/{1}/{2}', reference(variables('customerManagedEncryptionKeyVaultResourceId'), variables('apiVersions').keyVaults).vaultUri, parameters('customerManagedEncryptionKeyName'), parameters('customerManagedEncryptionKeyVersion')), json('null'))]"
             },
             "type": "Microsoft.Sql/servers/keys"
         },
         {
-            "apiVersion": "[variables('apiVersion').sqlEncryptionProtectors]",
+            "apiVersion": "[variables('apiVersions').sqlEncryptionProtectors]",
             "condition": "[variables('customerManagedEncryptionProperties').isEnabled]",
             "dependsOn": [
                 "[variables('administratorResourceId')]",
@@ -403,7 +403,7 @@
             "type": "Microsoft.Sql/servers/encryptionProtector"
         },
         {
-            "apiVersion": "[variables('apiVersion').sqlConnectionPolicies]",
+            "apiVersion": "[variables('apiVersions').sqlConnectionPolicies]",
             "dependsOn": [
                 "[variables('administratorResourceId')]",
                 "[variables('serverResourceId')]"
@@ -413,7 +413,7 @@
             "type": "Microsoft.Sql/servers/auditingSettings"
         },
         {
-            "apiVersion": "[variables('apiVersion').diagnosticSettings]",
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
             "dependsOn": [
                 "[variables('administratorResourceId')]",
                 "[variables('auditingSettingsResourceId')]",
@@ -444,7 +444,7 @@
             "type": "Microsoft.Sql/servers/databases/providers/diagnosticSettings"
         },
         {
-            "apiVersion": "[variables('apiVersion').deployments]",
+            "apiVersion": "[variables('apiVersions').deployments]",
             "condition": "[variables('databasesIsNotEmpty')]",
             "copy": {
                 "count": "[length(variables('databases'))]",
