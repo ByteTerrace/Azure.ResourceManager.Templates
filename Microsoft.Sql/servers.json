@@ -209,9 +209,10 @@
         "administratorResourceId": "[resourceId('Microsoft.Sql/servers/administrators', variables('serverName'), 'activeDirectory')]",
         "auditingSettingsProperties": {
             "auditActionsAndGroups": "[parameters('auditActionsAndGroups')]",
-            "isAzureMonitorTargetEnabled": "[variables('isAuditingSettingsEnabled')]",
+            "isAzureMonitorTargetEnabled": "[variables('isAuditingEnabled')]",
+            "isDevopsAuditEnabled": "[variables('isAuditingEnabled')]",
             "retentionDays": 0,
-            "state": "[if(variables('isAuditingSettingsEnabled'), 'Enabled', 'Disabled')]",
+            "state": "[if(variables('isAuditingEnabled'), 'Enabled', 'Disabled')]",
             "storageAccountSubscriptionId": "00000000-0000-0000-0000-000000000000"
         },
         "auditingSettingsResourceId": "[resourceId('Microsoft.Sql/servers/auditingSettings', variables('serverName'), 'Default')]",
@@ -241,7 +242,7 @@
         "firewallRules": "[if(variables('firewallRulesIsNotEmpty'), parameters('firewallRules'), createArray(createObject('endIpAddress', '0.0.0.0', 'name', 'DummyRule', 'startIpAddress', '0.0.0.0')))]",
         "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
         "isActiveDirectoryAdministratorEnabled": "[or(not(empty(coalesce(parameters('activeDirectoryAdministratorObjectId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorUserName'), ''))))]",
-        "isAuditingSettingsEnabled": "[not(empty(coalesce(parameters('auditLogAnalyticsWorkspaceName'), '')))]",
+        "isAuditingEnabled": "[not(empty(coalesce(parameters('auditLogAnalyticsWorkspaceName'), '')))]",
         "keysApiVersion": "2015-05-01-preview",
         "keyVaultsApiVersion": "2019-09-01",
         "serversApiVersion": "2019-06-01-preview",
@@ -401,7 +402,7 @@
                 "[variables('administratorResourceId')]",
                 "[variables('serverResourceId')]"
             ],
-            "name": "[format('{0}/Default', variables('serverName'))]",
+            "name": "[format('{0}/default', variables('serverName'))]",
             "properties": "[variables('auditingSettingsProperties')]",
             "type": "Microsoft.Sql/servers/auditingSettings"
         },
@@ -417,7 +418,7 @@
                 "logs": [
                     {
                         "category": "SQLSecurityAuditEvents",
-                        "enabled": "[variables('isAuditingSettingsEnabled')]",
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "days": 0,
                             "enabled": false
