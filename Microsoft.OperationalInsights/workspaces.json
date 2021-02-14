@@ -988,10 +988,9 @@
             "name": "[format('SQLAuditing[{0}]', parameters('name'))]",
             "plan": {
                 "name": "[format('SQLAuditing[{0}]', parameters('name'))]",
-                "product": "SQLAuditing",
+                "product": "OMSGallery/SQLAuditing",
                 "promotionCode": "",
-                "publisher": "Microsoft",
-                "Version": "1.0"
+                "publisher": "Microsoft"
             },
             "properties": {
                 "containedResources": [
