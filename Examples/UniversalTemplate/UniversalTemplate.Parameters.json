@@ -4,11 +4,6 @@
     "parameters": {
         "resourceDefinitions": {
             "value": {
-                "applicationConfigurationStores": [
-                    {
-                        "name": "byteterrace"
-                    }
-                ],
                 "communicationServices": [
                     {
                         "name": "byteterrace"
@@ -48,7 +43,7 @@
                 ],
                 "networkSecurityGroups": [
                     {
-                        "name": "byteterrace"
+                        "name": "byteterrace.net"
                     }
                 ],
                 "storageAccounts": [
