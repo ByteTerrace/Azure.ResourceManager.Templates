@@ -747,7 +747,6 @@
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
-                "storageAccountsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').sqlServer, copyIndex())]",
