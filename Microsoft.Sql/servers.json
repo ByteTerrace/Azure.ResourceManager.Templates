@@ -403,7 +403,7 @@
             "type": "Microsoft.Sql/servers/encryptionProtector"
         },
         {
-            "apiVersion": "[variables('apiVersions').sqlConnectionPolicies]",
+            "apiVersion": "[variables('apiVersions').sqlAuditingSettings]",
             "dependsOn": [
                 "[variables('administratorResourceId')]",
                 "[variables('serverResourceId')]"
