@@ -27,6 +27,7 @@
                 "private": [],
                 "public": []
             },
+            "hdInsightClusters": [],
             "keyVaults": [],
             "logAnalyticsWorkspaces": [],
             "networkSecurityGroups": [],
@@ -55,6 +56,13 @@
                     "nsRecords": [],
                     "txtRecords": []
                 }
+            },
+            "hdInsightCluster": {
+                "configurationProfile": {},
+                "computeProfile": {},
+                "operatingSystem": "Linux",
+                "storageProfile": {},
+                "version": "4.0"
             },
             "keyVault": {
                 "firewallRules": [],
@@ -138,6 +146,7 @@
             "communicationService": "[format('{0}-CommunicationService', deployment().name)]",
             "dnsPrivateZone": "[format('{0}-DnsPrivateZone', deployment().name)]",
             "dnsPublicZone": "[format('{0}-DnsPublicZone', deployment().name)]",
+            "hdInsightCluster": "[format('{0}-HdInsightCluster', deployment().name)]",
             "keyVault": "[format('{0}-KeyVault', deployment().name)]",
             "logAnalyticsWorkspace": "[format('{0}-LogAnalyticsWorkspace', deployment().name)]",
             "networkSecurityGroup": "[format('{0}-NetworkSecurityGroup', deployment().name)]",
@@ -151,6 +160,7 @@
             "communicationService": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Communication/communicationServices.json'), parameters('templateQueryString')))]",
             "dnsPrivateZone": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsPrivateZones.json'), parameters('templateQueryString')))]",
             "dnsPublicZone": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsPublicZones.json'), parameters('templateQueryString')))]",
+            "hdInsightCluster": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.HDInsight/clusters.json'), parameters('templateQueryString')))]",
             "keyVault": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults.json'), parameters('templateQueryString')))]",
             "logAnalyticsWorkspace": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.OperationalInsights/workspaces.json'), parameters('templateQueryString')))]",
             "networkSecurityGroup": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/networkSecurityGroups.json'), parameters('templateQueryString')))]",
@@ -672,6 +682,54 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "uri": "[variables('templateUris').sqlServer]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').hdInsightClusters))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').hdInsightClusters)]",
+                "mode": "parallel",
+                "name": "hdInsightClustersCopy"
+            },
+            "dependsOn": [
+                "keyVaultsCopy",
+                "networkSecurityGroupsCopy",
+                "sqlServersCopy",
+                "storageAccountsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').hdInsightCluster, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "configurationProfile": {
+                        "value": "[union(variables('defaultResourceProperties').hdInsightCluster, variables('resourceDefinitions').hdInsightClusters[copyIndex()]).configurationProfile]"
+                    },
+                    "computeProfile": {
+                        "value": "[union(variables('defaultResourceProperties').hdInsightCluster, variables('resourceDefinitions').hdInsightClusters[copyIndex()]).computeProfile]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').hdInsightClusters[copyIndex()].name]"
+                    },
+                    "operatingSystem": {
+                        "value": "[union(variables('defaultResourceProperties').hdInsightCluster, variables('resourceDefinitions').hdInsightClusters[copyIndex()]).operatingSystem]"
+                    },
+                    "storageProfile": {
+                        "value": "[union(variables('defaultResourceProperties').hdInsightCluster, variables('resourceDefinitions').hdInsightClusters[copyIndex()]).storageProfile]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "version": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').hdInsightClusters[copyIndex()]).version]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUris').hdInsightCluster]"
                 }
             },
             "type": "Microsoft.Resources/deployments"

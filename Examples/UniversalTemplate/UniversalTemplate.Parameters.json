@@ -21,6 +21,7 @@
                         }
                     ]
                 },
+                "hdInsightClusters": [],
                 "keyVaults": [
                     {
                         "name": "byteterrace",
