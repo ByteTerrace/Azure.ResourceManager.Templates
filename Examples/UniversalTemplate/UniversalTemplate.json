@@ -69,6 +69,8 @@
                 "version": "4.0"
             },
             "keyVault": {
+                "auditLogAnalyticsWorkspaceResourceGroupName": "[resourceGroup().name]",
+                "auditLogAnalyticsWorkspaceSubscriptionId": "[subscription().subscriptionId]",
                 "firewallRules": [],
                 "isAllowTrustedMicrosoftServicesEnabled": false,
                 "isDiskEncryptionEnabled": false,
@@ -108,7 +110,6 @@
                     "FAILED_DATABASE_AUTHENTICATION_GROUP",
                     "SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP"
                 ],
-                "auditLogAnalyticsWorkspaceName": "",
                 "auditLogAnalyticsWorkspaceResourceGroupName": "[resourceGroup().name]",
                 "auditLogAnalyticsWorkspaceSubscriptionId": "[subscription().subscriptionId]",
                 "connectionPolicy": "Default",
@@ -480,6 +481,8 @@
                 "name": "keyVaultsCopy"
             },
             "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy",
                 "networkSecurityGroupsCopy",
                 "virtualNetworksCopy"
             ],
@@ -487,6 +490,15 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "auditLogAnalyticsWorkspaceName": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).auditLogAnalyticsWorkspaceName]"
+                    },
+                    "auditLogAnalyticsWorkspaceResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
+                    },
+                    "auditLogAnalyticsWorkspaceSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    },
                     "firewallRules": {
                         "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).firewallRules]"
                     },
