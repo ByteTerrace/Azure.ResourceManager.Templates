@@ -42,6 +42,11 @@
                         "name": "byteterrace"
                     }
                 ],
+                "monitorPrivateLinkScopes": [
+                    {
+                        "name": "byteterrace"
+                    }
+                ],
                 "networkSecurityGroups": [
                     {
                         "name": "byteterrace.net"

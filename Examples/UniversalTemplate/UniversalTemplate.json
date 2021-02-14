@@ -30,6 +30,7 @@
             "hdInsightClusters": [],
             "keyVaults": [],
             "logAnalyticsWorkspaces": [],
+            "monitorLinkScopes": [],
             "networkSecurityGroups": [],
             "sqlServers": [],
             "storageAccounts": [],
@@ -84,6 +85,7 @@
                 "isPublicNetworkAccessForQueryEnabled": false,
                 "skuName": "pergb2018"
             },
+            "monitorLinkScope": {},
             "networkSecurityGroup": {
                 "securityRules": []
             },
@@ -149,6 +151,7 @@
             "hdInsightCluster": "[format('{0}-HdInsightCluster', deployment().name)]",
             "keyVault": "[format('{0}-KeyVault', deployment().name)]",
             "logAnalyticsWorkspace": "[format('{0}-LogAnalyticsWorkspace', deployment().name)]",
+            "monitorPrivateLinkScope": "[format('{0}-MonitorPrivateLinkScope', deployment().name)]",
             "networkSecurityGroup": "[format('{0}-NetworkSecurityGroup', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
@@ -163,6 +166,7 @@
             "hdInsightCluster": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.HDInsight/clusters.json'), parameters('templateQueryString')))]",
             "keyVault": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults.json'), parameters('templateQueryString')))]",
             "logAnalyticsWorkspace": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.OperationalInsights/workspaces.json'), parameters('templateQueryString')))]",
+            "monitorPrivateLinkScope": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Insights/privateLinkScopes.json'), parameters('templateQueryString')))]",
             "networkSecurityGroup": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/networkSecurityGroups.json'), parameters('templateQueryString')))]",
             "sqlServer": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Sql/servers.json'), parameters('templateQueryString')))]",
             "storageAccount": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Storage/storageAccounts.json'), parameters('templateQueryString')))]",
@@ -368,6 +372,36 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "uri": "[variables('templateUris').dnsPublicZone]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').monitorPrivateLinkScopes))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').monitorPrivateLinkScopes)]",
+                "mode": "parallel",
+                "name": "monitorPrivateLinkScopesCopy"
+            },
+            "dependsOn": [
+                "networkSecurityGroupsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').monitorPrivateLinkScope, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "name": {
+                        "value": "[variables('resourceDefinitions').monitorPrivateLinkScopes[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUris').monitorPrivateLinkScope]"
                 }
             },
             "type": "Microsoft.Resources/deployments"

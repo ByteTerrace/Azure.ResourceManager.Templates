@@ -1,0 +1,31 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name": {
+            "maxLength": 255,
+            "metadata": {
+                "description": "Specifies the name of the Azure Monitor Private Link Scope."
+            },
+            "minLength": 1,
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Monitor Private Link Scope."
+            },
+            "type": "object"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-10-17-preview",
+            "location": "global",
+            "name": "[parameters('name')]",
+            "properties": {},
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Insights/privateLinkScopes"
+        }
+    ]
+}
