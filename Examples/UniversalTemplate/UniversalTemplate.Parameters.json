@@ -24,6 +24,7 @@
                 "hdInsightClusters": [],
                 "keyVaults": [
                     {
+                        "auditLogAnalyticsWorkspaceName": "byteterrace",
                         "name": "byteterrace",
                         "virtualNetworkRules": [
                             {
