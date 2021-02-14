@@ -198,7 +198,7 @@
         "dnsAliases": "[if(variables('dnsAliasesIsNotEmpty'), parameters('dnsAliases'), createArray('dummyDnsAlias'))]",
         "dnsAliasesIsNotEmpty": "[greater(length(parameters('dnsAliases')), 0)]",
         "encryptionProtectorApiVersion": "2015-05-01-preview",
-        "firewallRuleApiVersion": "2015-05-01-preview",
+        "firewallRulesApiVersion": "2015-05-01-preview",
         "firewallRules": "[if(variables('firewallRulesIsNotEmpty'), parameters('firewallRules'), createArray(createObject('endIpAddress', '0.0.0.0', 'name', 'DummyRule', 'startIpAddress', '0.0.0.0')))]",
         "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
         "isActiveDirectoryAdministratorEnabled": "[or(not(empty(coalesce(parameters('activeDirectoryAdministratorObjectId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorUserName'), ''))))]",
@@ -208,7 +208,7 @@
         "serverName": "[toLower(parameters('name'))]",
         "serverResourceId": "[resourceId('Microsoft.Sql/servers', variables('serverName'))]",
         "templateUriForMicrosoftSqlDatabases": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Sql/databases.json'), parameters('linkedTemplateQueryString')))]",
-        "virtualNetworkRuleApiVersion": "2015-05-01-preview",
+        "virtualNetworkRulesApiVersion": "2015-05-01-preview",
         "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), parameters('virtualNetworkRules'), createArray(createObject('name', 'DummyRule')))]",
         "virtualNetworkRulesDefaultProperties": {
             "ignoreMissingVnetServiceEndpoint": false,
@@ -261,7 +261,7 @@
             "type": "Microsoft.Sql/servers/dnsAliases"
         },
         {
-            "apiVersion": "[variables('firewallRuleApiVersion')]",
+            "apiVersion": "[variables('firewallRulesApiVersion')]",
             "condition": "[parameters('isTrustedMicrosoftResourceAccessEnabled')]",
             "dependsOn": [
                 "[variables('serverResourceId')]"
@@ -274,7 +274,7 @@
             "type": "Microsoft.Sql/servers/firewallRules"
         },
         {
-            "apiVersion": "[variables('firewallRuleApiVersion')]",
+            "apiVersion": "[variables('firewallRulesApiVersion')]",
             "condition": "[variables('firewallRulesIsNotEmpty')]",
             "copy": {
                 "count": "[length(variables('firewallRules'))]",
@@ -292,7 +292,7 @@
             "type": "Microsoft.Sql/servers/firewallRules"
         },
         {
-            "apiVersion": "[variables('virtualNetworkRuleApiVersion')]",
+            "apiVersion": "[variables('virtualNetworkRulesApiVersion')]",
             "condition": "[variables('virtualNetworkRulesIsNotEmpty')]",
             "copy": {
                 "count": "[length(variables('virtualNetworkRules'))]",
