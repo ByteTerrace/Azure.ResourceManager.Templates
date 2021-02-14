@@ -134,6 +134,11 @@
         }
     },
     "variables": {
+        "apiVersions": {
+            "diagnosticSettings": "2017-05-01-preview",
+            "keyVaults": "2019-09-01",
+            "keyVaultSecretsApiVersion": "2019-09-01"
+        },
         "copy": [
             {
                 "count": "[length(parameters('firewallRules'))]",
@@ -150,10 +155,8 @@
                 "name": "virtualNetworkRules"
             }
         ],
-        "diagnosticSettingsApiVersion": "2017-05-01-preview",
         "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
         "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
-        "keyVaultsApiVersion": "2019-09-01",
         "keyVaultProperties": {
             "createMode": "default",
             "enabledForDeployment": "[parameters('isVirtualMachineDeploymentEnabled')]",
@@ -176,7 +179,6 @@
             "tenantId": "[parameters('tenantId')]"
         },
         "keyVaultResourceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('name'))]",
-        "secretsApiVersion": "2019-09-01",
         "secretsArrayCount": "[length(union(variables('secretsDefaultObject'), parameters('secrets')).array)]",
         "secretsArrayIsNotEmpty": "[greater(variables('secretsArrayCount'), 0)]",
         "secretsDefaultObject": {
@@ -190,7 +192,7 @@
     },
     "resources": [
         {
-            "apiVersion": "[variables('keyVaultsApiVersion')]",
+            "apiVersion": "[variables('apiVersions').keyVaults]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": "[variables('keyVaultProperties')]",
@@ -198,7 +200,7 @@
             "type": "Microsoft.KeyVault/vaults"
         },
         {
-            "apiVersion": "[variables('diagnosticSettingsApiVersion')]",
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
             "dependsOn": [
                 "[variables('keyVaultResourceId')]"
             ],
@@ -220,7 +222,7 @@
             "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings"
         },
         {
-            "apiVersion": "[variables('secretsApiVersion')]",
+            "apiVersion": "[variables('apiVersions').keyVaultSecretsApiVersion]",
             "condition": "[variables('secretsArrayIsNotEmpty')]",
             "copy": {
                 "count": "[variables('secretsArrayCount')]",
