@@ -16,6 +16,13 @@
             },
             "type": "array"
         },
+        "mxRecords": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of MX records that will be created within the private Azure DNS zone."
+            },
+            "type": "array"
+        },
         "name": {
             "maxLength": 63,
             "metadata": {
@@ -53,6 +60,12 @@
         },
         "cnameRecordsIsNotEmpty": "[greater(variables('cnameRecordsCount'), 0)]",
         "dnsZoneResourceId": "[resourceId('Microsoft.Network/privateDnsZones', parameters('name'))]",
+        "mxRecords": "[if(variables('mxRecordsIsNotEmpty'), parameters('mxRecords'), createArray(createObject('name', 'dummyMX')))]",
+        "mxRecordsCount": "[length(parameters('mxRecords'))]",
+        "mxRecordsDefaultProperties": {
+            "timeToLiveInSeconds": 3600
+        },
+        "mxRecordsIsNotEmpty": "[greater(variables('mxRecordsCount'), 0)]",
         "txtRecords": "[if(variables('txtRecordsIsNotEmpty'), parameters('txtRecords'), createArray(createObject('name', 'dummyTXT')))]",
         "txtRecordsCount": "[length(parameters('txtRecords'))]",
         "txtRecordsDefaultProperties": {
@@ -106,6 +119,24 @@
                 "ttl": "[union(variables('cnameRecordsDefaultProperties'), variables('cnameRecords')[copyIndex()]).timeToLiveInSeconds]"
             },
             "type": "Microsoft.Network/privateDnsZones/CNAME"
+        },
+        {
+            "apiVersion": "2020-06-01",
+            "condition": "[variables('mxRecordsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('mxRecordsCount')]",
+                "mode": "parallel",
+                "name": "mxRecordsCopy"
+            },
+            "dependsOn": [
+                "[variables('dnsZoneResourceId')]"
+            ],
+            "name": "[format('{0}/{1}', parameters('name'), variables('mxRecords')[copyIndex()].name)]",
+            "properties": {
+                "mxRecords": "[variables('mxRecords')[copyIndex()].exchanges]",
+                "ttl": "[union(variables('mxRecordsDefaultProperties'), variables('mxRecords')[copyIndex()]).timeToLiveInSeconds]"
+            },
+            "type": "Microsoft.Network/privateDnsZones/MX"
         },
         {
             "apiVersion": "2020-06-01",

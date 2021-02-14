@@ -16,6 +16,13 @@
             },
             "type": "array"
         },
+        "mxRecords": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of MX records that will be created within the public Azure DNS zone."
+            },
+            "type": "array"
+        },
         "name": {
             "maxLength": 63,
             "metadata": {
@@ -60,6 +67,12 @@
         },
         "cnameRecordsIsNotEmpty": "[greater(variables('cnameRecordsCount'), 0)]",
         "dnsZoneResourceId": "[resourceId('Microsoft.Network/dnszones', parameters('name'))]",
+        "mxRecords": "[if(variables('mxRecordsIsNotEmpty'), parameters('mxRecords'), createArray(createObject('name', 'dummyMX')))]",
+        "mxRecordsCount": "[length(parameters('mxRecords'))]",
+        "mxRecordsDefaultProperties": {
+            "timeToLiveInSeconds": 3600
+        },
+        "mxRecordsIsNotEmpty": "[greater(variables('mxRecordsCount'), 0)]",
         "nsRecords": "[if(variables('nsRecordsIsNotEmpty'), parameters('nsRecords'), createArray(createObject('name', 'dummyNS')))]",
         "nsRecordsCount": "[length(parameters('nsRecords'))]",
         "nsRecordsDefaultProperties": {
@@ -125,6 +138,25 @@
                 "TTL": "[union(variables('cnameRecordsDefaultProperties'), variables('cnameRecords')[copyIndex()]).timeToLiveInSeconds]"
             },
             "type": "Microsoft.Network/dnszones/CNAME"
+        },
+        {
+            "apiVersion": "2018-05-01",
+            "condition": "[variables('mxRecordsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('mxRecordsCount')]",
+                "mode": "parallel",
+                "name": "mxRecordsCopy"
+            },
+            "dependsOn": [
+                "[variables('dnsZoneResourceId')]"
+            ],
+            "name": "[format('{0}/{1}', parameters('name'), variables('mxRecords')[copyIndex()].name)]",
+            "properties": {
+                "MXRecords": "[variables('mxRecords')[copyIndex()].exchanges]",
+                "targetResource": {},
+                "TTL": "[union(variables('mxRecordsDefaultProperties'), variables('mxRecords')[copyIndex()]).timeToLiveInSeconds]"
+            },
+            "type": "Microsoft.Network/dnszones/MX"
         },
         {
             "apiVersion": "2018-05-01",

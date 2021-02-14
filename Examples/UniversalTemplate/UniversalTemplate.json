@@ -38,11 +38,13 @@
                 "private": {
                     "aRecords": [],
                     "cnameRecords": [],
+                    "mxRecords": [],
                     "txtRecords": []
                 },
                 "public": {
                     "aRecords": [],
                     "cnameRecords": [],
+                    "mxRecords": [],
                     "nsRecords": [],
                     "txtRecords": []
                 }
@@ -176,6 +178,9 @@
                     "cnameRecords": {
                         "value": "[union(variables('defaultResourceProperties').dnsZone.private, variables('resourceDefinitions').dnsZones.private[copyIndex()]).cnameRecords]"
                     },
+                    "mxRecords": {
+                        "value": "[union(variables('defaultResourceProperties').dnsZone.private, variables('resourceDefinitions').dnsZones.private[copyIndex()]).mxRecords]"
+                    },
                     "name": {
                         "value": "[variables('resourceDefinitions').dnsZones.private[copyIndex()].name]"
                     },
@@ -213,6 +218,9 @@
                     },
                     "cnameRecords": {
                         "value": "[union(variables('defaultResourceProperties').dnsZone.public, variables('resourceDefinitions').dnsZones.public[copyIndex()]).cnameRecords]"
+                    },
+                    "mxRecords": {
+                        "value": "[union(variables('defaultResourceProperties').dnsZone.public, variables('resourceDefinitions').dnsZones.public[copyIndex()]).mxRecords]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').dnsZones.public[copyIndex()].name]"
