@@ -2,6 +2,26 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "auditLogAnalyticsWorkspaceName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Log Analytics workspace that the Azure Key Vault audit feature will send its data to."
+            },
+            "type": "string"
+        },
+        "auditLogAnalyticsWorkspaceResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure Log Analytics workspace that the Azure Key Vault audit feature will send its data to."
+            },
+            "type": "string"
+        },
+        "auditLogAnalyticsWorkspaceSubscriptionId": {
+            "defaultValue": "[subscription().subscriptionId]",
+            "metadata": {
+                "description": "Specifies the subscription id of the Azure Log Analytics workspace that the Azure Key Vault audit feature will send its data to."
+            },
+            "type": "string"
+        },
         "firewallRules": {
             "defaultValue": [],
             "metadata": {
@@ -130,7 +150,9 @@
                 "name": "virtualNetworkRules"
             }
         ],
+        "diagnosticSettingsApiVersion": "2017-05-01-preview",
         "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
+        "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
         "keyVaultsApiVersion": "2019-09-01",
         "keyVaultProperties": {
             "createMode": "default",
@@ -174,6 +196,28 @@
             "properties": "[variables('keyVaultProperties')]",
             "tags": "[parameters('tags')]",
             "type": "Microsoft.KeyVault/vaults"
+        },
+        {
+            "apiVersion": "[variables('diagnosticSettingsApiVersion')]",
+            "dependsOn": [
+                "[variables('keyVaultResourceId')]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/microsoft.insights/audit', parameters('name'))]",
+            "properties": {
+                "logs": [
+                    {
+                        "category": "AuditEvent",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    }
+                ],
+                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
+            },
+            "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings"
         },
         {
             "apiVersion": "[variables('secretsApiVersion')]",

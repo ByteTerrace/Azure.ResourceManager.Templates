@@ -103,14 +103,14 @@
         "hostingEnvironmentProfile": {
             "id": "[variables('serviceEnvironmentResourceId')]"
         },
-        "isHostingEnvironmentEnabled": "[or(not(empty(coalesce(parameters('serviceEnvironmentResourceGroupName'), ''))), not(empty(coalesce(parameters('serviceEnvironmentName'), ''))))]",
+        "isHostingEnvironmentEnabled": "[or(not(empty(parameters('serviceEnvironmentResourceGroupName'))), not(empty(parameters('serviceEnvironmentName'))))]",
         "isLinuxOperatingSystem": "[equals('linux', toLower(parameters('operatingSystemName')))]",
         "serverFarmApiVersion": "2019-08-01",
         "serverFarmResourceId": "[resourceId('Microsoft.Web/serverfarms/', parameters('servicePlanName'))]",
-        "serviceEnvironmentName": "[if(not(empty(coalesce(parameters('serviceEnvironmentName'), ''))), parameters('serviceEnvironmentName'), 'DummyServiceEnvironment')]",
-        "serviceEnvironmentResourceGroupName": "[if(not(empty(coalesce(parameters('serviceEnvironmentResourceGroupName'), ''))), parameters('serviceEnvironmentResourceGroupName'), resourceGroup().name)]",
+        "serviceEnvironmentName": "[if(not(empty(parameters('serviceEnvironmentName'))), parameters('serviceEnvironmentName'), 'DummyServiceEnvironment')]",
+        "serviceEnvironmentResourceGroupName": "[if(not(empty(parameters('serviceEnvironmentResourceGroupName'))), parameters('serviceEnvironmentResourceGroupName'), resourceGroup().name)]",
         "serviceEnvironmentResourceId": "[resourceId(variables('serviceEnvironmentResourceGroupName'), 'Microsoft.Web/hostingEnvironments/', variables('serviceEnvironmentName'))]",
-        "sites": "[if(variables('sitesIsNotEmpty'), parameters('sites'), json('[ { \"siteName\": \"DummySite\" } ]'))]",
+        "sites": "[if(variables('sitesIsNotEmpty'), parameters('sites'), createArray(createObject('siteName', 'DummySite')))]",
         "sitesCount": "[length(parameters('sites'))]",
         "sitesIsNotEmpty": "[greater(variables('sitesCount'), 0)]",
         "templateUriForMicrosoftWebSites": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Web/sites.json'), parameters('linkedTemplateQueryString')))]"

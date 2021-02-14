@@ -220,10 +220,10 @@
         "connectionPoliciesApiVersion": "2014-04-01",
         "customerManagedEncryptionKeyVaultResourceId": "[resourceId(variables('customerManagedEncryptionProperties').subscriptionId, variables('customerManagedEncryptionProperties').resourceGroupName, 'Microsoft.KeyVault/vaults', parameters('customerManagedEncryptionKeyVaultName'))]",
         "customerManagedEncryptionProperties": {
-            "isEnabled": "[and(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), ''))), not(empty(coalesce(parameters('customerManagedEncryptionKeyName'), ''))), not(empty(coalesce(parameters('customerManagedEncryptionKeyVersion'), ''))))]",
-            "keyName": "[format('{0}_{1}_{2}', if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), ''))), parameters('customerManagedEncryptionKeyVaultName'), 'DummyVault'), if(not(empty(coalesce(parameters('customerManagedEncryptionKeyName'), ''))), parameters('customerManagedEncryptionKeyName'), 'DummyKey'), if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVersion'), ''))), parameters('customerManagedEncryptionKeyVersion'), 'DummyVersion'))]",
-            "resourceGroupName": "[if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultResourceGroupName'), ''))), parameters('customerManagedEncryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
-            "subscriptionId": "[if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultSubscriptionId'), ''))), parameters('customerManagedEncryptionKeyVaultSubscriptionId'), subscription().subscriptionId)]"
+            "isEnabled": "[and(not(empty(parameters('customerManagedEncryptionKeyVaultName'))), not(empty(parameters('customerManagedEncryptionKeyName'))), not(empty(parameters('customerManagedEncryptionKeyVersion'))))]",
+            "keyName": "[format('{0}_{1}_{2}', if(not(empty(parameters('customerManagedEncryptionKeyVaultName'))), parameters('customerManagedEncryptionKeyVaultName'), 'DummyVault'), if(not(empty(parameters('customerManagedEncryptionKeyName'))), parameters('customerManagedEncryptionKeyName'), 'DummyKey'), if(not(empty(parameters('customerManagedEncryptionKeyVersion'))), parameters('customerManagedEncryptionKeyVersion'), 'DummyVersion'))]",
+            "resourceGroupName": "[if(not(empty(parameters('customerManagedEncryptionKeyVaultResourceGroupName'))), parameters('customerManagedEncryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
+            "subscriptionId": "[if(not(empty(parameters('customerManagedEncryptionKeyVaultSubscriptionId'))), parameters('customerManagedEncryptionKeyVaultSubscriptionId'), subscription().subscriptionId)]"
         },
         "customerManagedEncryptionServerKeyResourceId": "[resourceId('Microsoft.Sql/servers/keys', variables('serverName'), variables('customerManagedEncryptionProperties').keyName)]",
         "databases": "[if(variables('databasesIsNotEmpty'), parameters('databases'), createArray(createObject('name', 'DummyDatabase')))]",
@@ -243,8 +243,8 @@
         "firewallRulesApiVersion": "2015-05-01-preview",
         "firewallRules": "[if(variables('firewallRulesIsNotEmpty'), parameters('firewallRules'), createArray(createObject('endIpAddress', '0.0.0.0', 'name', 'DummyRule', 'startIpAddress', '0.0.0.0')))]",
         "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
-        "isActiveDirectoryAdministratorEnabled": "[or(not(empty(coalesce(parameters('activeDirectoryAdministratorObjectId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorUserName'), ''))))]",
-        "isAuditingEnabled": "[not(empty(coalesce(parameters('auditLogAnalyticsWorkspaceName'), '')))]",
+        "isActiveDirectoryAdministratorEnabled": "[or(not(empty(parameters('activeDirectoryAdministratorObjectId'))), not(empty(parameters('activeDirectoryAdministratorUserName'))))]",
+        "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
         "keysApiVersion": "2015-05-01-preview",
         "keyVaultsApiVersion": "2019-09-01",
         "serversApiVersion": "2019-06-01-preview",
@@ -363,7 +363,7 @@
                 "administratorType": "ActiveDirectory",
                 "login": "[parameters('activeDirectoryAdministratorUserName')]",
                 "sid": "[parameters('activeDirectoryAdministratorObjectId')]",
-                "tenantId": "[if(not(empty(coalesce(parameters('activeDirectoryAdministratorTenantId'), ''))), parameters('activeDirectoryAdministratorTenantId'), subscription().tenantId)]"
+                "tenantId": "[if(not(empty(parameters('activeDirectoryAdministratorTenantId'))), parameters('activeDirectoryAdministratorTenantId'), subscription().tenantId)]"
             },
             "type": "Microsoft.Sql/servers/administrators"
         },

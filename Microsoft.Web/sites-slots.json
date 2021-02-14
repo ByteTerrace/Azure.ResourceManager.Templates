@@ -206,10 +206,10 @@
             }
         ],
         "isFunctionApp": "[equals('functionapp', toLower(parameters('kind')))]",
-        "isHealthCheckEnabled": "[not(empty(coalesce(parameters('healthCheckPath'), '')))]",
+        "isHealthCheckEnabled": "[not(empty(parameters('healthCheckPath')))]",
         "isLinuxOperatingSystem": "[equals('linux', toLower(parameters('operatingSystemName')))]",
-        "isVirtualNetworkIntegrationEnabled": "[or(not(empty(coalesce(parameters('virtualNetworkResourceGroupName')))), not(empty(coalesce(parameters('virtualNetworkName')))), not(empty(coalesce(parameters('subnetName')))))]",
-        "servicePlanResourceGroupName": "[if(not(empty(coalesce(parameters('servicePlanResourceGroupName'), ''))), parameters('servicePlanResourceGroupName'), resourceGroup().name)]",
+        "isVirtualNetworkIntegrationEnabled": "[or(not(empty(parameters('virtualNetworkResourceGroupName'))), not(empty(parameters('virtualNetworkName'))), not(empty(parameters('subnetName'))))]",
+        "servicePlanResourceGroupName": "[if(not(empty(parameters('servicePlanResourceGroupName'))), parameters('servicePlanResourceGroupName'), resourceGroup().name)]",
         "servicePlanResourceId": "[resourceId(variables('servicePlanResourceGroupName'), 'Microsoft.Web/serverfarms', parameters('servicePlanName'))]",
         "siteConfigForRoot": {
             "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
@@ -254,7 +254,7 @@
         "slotResourceId": "[resourceId('Microsoft.Web/sites/slots', parameters('siteName'), parameters('slotName'))]",
         "slotsApiVersion": "2019-08-01",
         "templateUriForMicrosoftKeyVaultAccessPolicies": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults-accessPolicies.json'), parameters('linkedTemplateQueryString')))]",
-        "virtualNetworkResourceGroupName": "[if(not(empty(coalesce(parameters('virtualNetworkResourceGroupName'), ''))), parameters('virtualNetworkResourceGroupName'), resourceGroup().name)]",
+        "virtualNetworkResourceGroupName": "[if(not(empty(parameters('virtualNetworkResourceGroupName'))), parameters('virtualNetworkResourceGroupName'), resourceGroup().name)]",
         "virtualNetworkResourceId": "[resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
     },
     "resources": [

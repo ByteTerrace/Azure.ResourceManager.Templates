@@ -210,11 +210,11 @@
         "blobContainerNamesCount": "[length(parameters('blobContainerNames'))]",
         "blobContainerNamesIsNotEmpty": "[greater(variables('blobContainerNamesCount'), 0)]",
         "blobServicesApiVersion": "2019-06-01",
-        "customerManagedEncryptionIsEnabled": "[and(not(empty(coalesce(parameters('customerManagedEncryptionKeyName'), ''))), not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultName'), ''))))]",
+        "customerManagedEncryptionIsEnabled": "[and(not(empty(parameters('customerManagedEncryptionKeyName'))), not(empty(parameters('customerManagedEncryptionKeyVaultName'))))]",
         "customerManagedEncryptionKeyVaultAuthorizationName": "[format('{0}/Microsoft.Authorization/{1}', if(variables('customerManagedEncryptionIsEnabled'), parameters('customerManagedEncryptionKeyVaultName'), 'dummyKeyVault'), guid(subscription().subscriptionId, resourceGroup().name, parameters('name'), variables('keyVaultsCryptoServiceEncryptionRoleDefinitionId')))]",
-        "customerManagedEncryptionKeyVaultResourceGroupName": "[if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultResourceGroupName'), ''))), parameters('customerManagedEncryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
+        "customerManagedEncryptionKeyVaultResourceGroupName": "[if(not(empty(parameters('customerManagedEncryptionKeyVaultResourceGroupName'))), parameters('customerManagedEncryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
         "customerManagedEncryptionKeyVaultResourceId": "[if(variables('customerManagedEncryptionIsEnabled'), resourceId(variables('customerManagedEncryptionKeyVaultSubscriptionId'), variables('customerManagedEncryptionKeyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('customerManagedEncryptionKeyVaultName')), '')]",
-        "customerManagedEncryptionKeyVaultSubscriptionId": "[if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVaultSubscriptionId'), ''))), parameters('customerManagedEncryptionKeyVaultSubscriptionId'), subscription().subscriptionId)]",
+        "customerManagedEncryptionKeyVaultSubscriptionId": "[if(not(empty(parameters('customerManagedEncryptionKeyVaultSubscriptionId'))), parameters('customerManagedEncryptionKeyVaultSubscriptionId'), subscription().subscriptionId)]",
         "customerManagedEncryptionPropertiesDeploymentName": "[format('{0}-{1}-CmeProperties', deployment().name, variables('storageAccountName'))]",
         "customerManagedEncryptionPropertiesDeploymentResourceId": "[resourceId('Microsoft.Resources/deployments', variables('customerManagedEncryptionPropertiesDeploymentName'))]",
         "deploymentApiVersion": "2019-10-01",
@@ -339,7 +339,7 @@
                                     "keyvaultproperties": {
                                         "keyname": "[parameters('customerManagedEncryptionKeyName')]",
                                         "keyvaulturi": "[if(variables('customerManagedEncryptionIsEnabled'), take(reference(variables('customerManagedEncryptionKeyVaultResourceId'), variables('keyVaultsApiVersion')).vaultUri, sub(length(reference(variables('customerManagedEncryptionKeyVaultResourceId'), variables('keyVaultsApiVersion')).vaultUri), 1)), json('null'))]",
-                                        "keyversion": "[if(not(empty(coalesce(parameters('customerManagedEncryptionKeyVersion'), ''))), parameters('customerManagedEncryptionKeyVersion'), json('null'))]"
+                                        "keyversion": "[if(not(empty(parameters('customerManagedEncryptionKeyVersion'))), parameters('customerManagedEncryptionKeyVersion'), json('null'))]"
                                     },
                                     "services": {
                                         "blob": {

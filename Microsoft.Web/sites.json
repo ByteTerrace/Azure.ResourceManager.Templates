@@ -240,13 +240,13 @@
             }
         ],
         "isFunctionApp": "[equals('functionapp', toLower(parameters('kind')))]",
-        "isHealthCheckEnabled": "[not(empty(coalesce(parameters('healthCheckPath'), '')))]",
+        "isHealthCheckEnabled": "[not(empty(parameters('healthCheckPath')))]",
         "isLinuxOperatingSystem": "[equals('linux', toLower(parameters('operatingSystemName')))]",
-        "isVirtualNetworkIntegrationEnabled": "[or(not(empty(coalesce(parameters('virtualNetworkResourceGroupName')))), not(empty(coalesce(parameters('virtualNetworkName')))), not(empty(coalesce(parameters('subnetName')))))]",
+        "isVirtualNetworkIntegrationEnabled": "[or(not(empty(parameters('virtualNetworkResourceGroupName'))), not(empty(parameters('virtualNetworkName'))), not(empty(parameters('subnetName'))))]",
         "keyVaultPermissions": "[if(variables('keyVaultPermissionsIsNotEmpty'), parameters('keyVaultPermissions'), json('[ { \"keyVaultName\": \"dummyKeyVault\", \"permissions\": [] } ]'))]",
         "keyVaultPermissionsCount": "[length(parameters('keyVaultPermissions'))]",
         "keyVaultPermissionsIsNotEmpty": "[greater(variables('keyVaultPermissionsCount'), 0)]",
-        "servicePlanResourceGroupName": "[if(not(empty(coalesce(parameters('servicePlanResourceGroupName'), ''))), parameters('servicePlanResourceGroupName'), resourceGroup().name)]",
+        "servicePlanResourceGroupName": "[if(not(empty(parameters('servicePlanResourceGroupName'))), parameters('servicePlanResourceGroupName'), resourceGroup().name)]",
         "servicePlanResourceId": "[resourceId(variables('servicePlanResourceGroupName'), 'Microsoft.Web/serverfarms', parameters('servicePlanName'))]",
         "siteConfigForRoot": {
             "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
@@ -285,7 +285,7 @@
         "slotsIsNotEmpty": "[greater(variables('slotsCount'), 0)]",
         "templateUriForMicrosoftKeyVaultAccessPolicies": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults-accessPolicies.json'), parameters('linkedTemplateQueryString')))]",
         "templateUriForMicrosoftWebSitesSlots": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Web/sites-slots.json'), parameters('linkedTemplateQueryString')))]",
-        "virtualNetworkResourceGroupName": "[if(not(empty(coalesce(parameters('virtualNetworkResourceGroupName'), ''))), parameters('virtualNetworkResourceGroupName'), resourceGroup().name)]",
+        "virtualNetworkResourceGroupName": "[if(not(empty(parameters('virtualNetworkResourceGroupName'))), parameters('virtualNetworkResourceGroupName'), resourceGroup().name)]",
         "virtualNetworkResourceId": "[resourceId(variables('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
     },
     "resources": [
