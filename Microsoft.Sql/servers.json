@@ -246,8 +246,6 @@
         "isAuditingEnabled": "[not(empty(coalesce(parameters('auditLogAnalyticsWorkspaceName'), '')))]",
         "keysApiVersion": "2015-05-01-preview",
         "keyVaultsApiVersion": "2019-09-01",
-        "logAnalyticsSolutionsApiVersion": "2015-11-01-preview",
-        "logAnalyticsWorkspaceId": "[if(variables('auditingSettingsProperties').isAzureMonitorTargetEnabled, resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]",
         "serversApiVersion": "2019-06-01-preview",
         "serverName": "[toLower(parameters('name'))]",
         "serverResourceId": "[resourceId('Microsoft.Sql/servers', variables('serverName'))]",
@@ -410,29 +408,27 @@
             "type": "Microsoft.Sql/servers/auditingSettings"
         },
         {
-            "apiVersion": "[variables('logAnalyticsSolutionsApiVersion')]",
+            "apiVersion": "2017-05-01-preview",
             "dependsOn": [
                 "[variables('administratorResourceId')]",
                 "[variables('auditingSettingsResourceId')]",
                 "[variables('serverResourceId')]"
             ],
-            "location": "[parameters('location')]",
-            "name": "[format('SQLAuditing[{0}]', variables('serverName'))]",
-            "plan": {
-                "name": "[format('SQLAuditing[{0}]', variables('serverName'))]",
-                "product": "SQLAuditing",
-                "promotionCode": "",
-                "publisher": "Microsoft"
-            },
+            "name": "[format('{0}/master/microsoft.insights/SQLSecurityAuditEvents', variables('serverName'))]",
             "properties": {
-                "containedResources": [
-                    "[format('{0}/views/SQLAccessToSensitiveData', variables('logAnalyticsWorkspaceId'))]",
-                    "[format('{0}/views/SQLSecurityInsights', variables('logAnalyticsWorkspaceId'))]"
+                "logs": [
+                    {
+                        "category": "SQLSecurityAuditEvents",
+                        "enabled": "[variables('isAuditingEnabled')]",
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    }
                 ],
-                "referencedResources": [],
-                "workspaceResourceId": "[variables('logAnalyticsWorkspaceId')]"
+                "workspaceId": "[if(variables('auditingSettingsProperties').isAzureMonitorTargetEnabled, resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
             },
-            "type": "Microsoft.OperationsManagement/solutions"
+            "type": "Microsoft.Sql/servers/databases/providers/diagnosticSettings"
         },
         {
             "apiVersion": "[variables('deploymentsApiVersion')]",

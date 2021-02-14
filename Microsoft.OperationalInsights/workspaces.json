@@ -56,9 +56,12 @@
         }
     },
     "variables": {
+        "sqlAccessToSensitiveDataViewResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/views', parameters('name'), 'SQLAccessToSensitiveData')]",
         "sqlNavigationQueryFieldsList": "bin(event_time_t, 1ms), SubscriptionId, ResourceGroup, server_instance_name_s, database_name_s, is_server_level_audit_s, statement_s, succeeded_s, duration_milliseconds_d, response_rows_d, affected_rows_d, action_name_s, class_type_description_s, client_ip_s, server_principal_name_s, database_principal_name_s, application_name_s, sequence_group_id_g, additional_information_s, data_sensitivity_information_s",
         "sqlNavigationQueryFilters": "Category == 'SQLSecurityAuditEvents' and ${Subscription ID} and ${Resource group name} and ${Server name} and ${Database name}",
+        "sqlSecurityInsightsViewResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/views', parameters('name'), 'SQLSecurityInsights')]",
         "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]",
+        "workspaceSolutionsApiVersion": "2015-11-01-preview",
         "workspaceViewsApiVersion": "2017-03-03-preview"
     },
     "resources": [
@@ -973,6 +976,31 @@
                 "Source": "Local"
             },
             "type": "Microsoft.OperationalInsights/workspaces/views"
+        },
+        {
+            "apiVersion": "[variables('workspaceSolutionsApiVersion')]",
+            "dependsOn": [
+                "[variables('sqlAccessToSensitiveDataViewResourceId')]",
+                "[variables('sqlSecurityInsightsViewResourceId')]",
+                "[variables('workspaceResourceId')]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('SQLAuditing[{0}]', parameters('name'))]",
+            "plan": {
+                "name": "[format('SQLAuditing[{0}]', parameters('name'))]",
+                "product": "SQLAuditing",
+                "promotionCode": "",
+                "publisher": "Microsoft"
+            },
+            "properties": {
+                "containedResources": [
+                    "[format('{0}/views/SQLAccessToSensitiveData', variables('workspaceResourceId'))]",
+                    "[format('{0}/views/SQLSecurityInsights', variables('workspaceResourceId'))]"
+                ],
+                "referencedResources": [],
+                "workspaceResourceId": "[variables('workspaceResourceId')]"
+            },
+            "type": "Microsoft.OperationsManagement/solutions"
         }
     ]
 }
