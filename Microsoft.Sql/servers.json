@@ -411,6 +411,11 @@
         },
         {
             "apiVersion": "[variables('logAnalyticsSolutionsApiVersion')]",
+            "dependsOn": [
+                "[variables('administratorResourceId')]",
+                "[variables('auditingSettingsResourceId')]",
+                "[variables('serverResourceId')]"
+            ],
             "location": "[parameters('location')]",
             "name": "[format('SQLAuditing[{0}]', variables('serverName'))]",
             "plan": {
