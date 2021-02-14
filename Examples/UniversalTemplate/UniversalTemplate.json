@@ -86,6 +86,7 @@
                 "applicationInsightsComponent": {
                     "logAnalyticsWorkspaceName": "",
                     "logAnalyticsWorkspaceResourceGroupName": "[resourceGroup().name]",
+                    "logAnalyticsWorkspaceSubscriptionId": "[subscription().subscriptionId]",
                     "samplingPercentage": 100
                 },
                 "logAnalyticsWorkspace": {
@@ -442,6 +443,9 @@
                     },
                     "logAnalyticsWorkspaceResourceGroupName": {
                         "value": "[union(variables('defaultResourceProperties').monitor.applicationInsightsComponent, variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()]).logAnalyticsWorkspaceResourceGroupName]"
+                    },
+                    "logAnalyticsWorkspaceSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').monitor.applicationInsightsComponent, variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()]).logAnalyticsWorkspaceSubscriptionId]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()].name]"

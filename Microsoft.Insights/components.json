@@ -23,6 +23,13 @@
             },
             "type": "string"
         },
+        "logAnalyticsWorkspaceSubscriptionId": {
+            "defaultValue": "[subscription().subscriptionId]",
+            "metadata": {
+                "description": "Specifies the subscription id of the Azure Log Analytics workspace which the data will be ingested to."
+            },
+            "type": "string"
+        },
         "name": {
             "maxLength": 260,
             "metadata": {
@@ -57,7 +64,7 @@
                 "Flow_Type": "Bluefield",
                 "Request_Source": "rest",
                 "SamplingPercentage": "[parameters('samplingPercentage')]",
-                "WorkspaceResourceId": "[if(not(empty(parameters('logAnalyticsWorkspaceName'))), resourceId(parameters('logAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName')), json('null'))]"
+                "WorkspaceResourceId": "[if(not(empty(parameters('logAnalyticsWorkspaceName'))), resourceId(parameters('logAnalyticsWorkspaceSubscriptionId'), parameters('logAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName')), json('null'))]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Insights/components"
