@@ -199,7 +199,7 @@
         "dnsAliasesIsNotEmpty": "[greater(length(parameters('dnsAliases')), 0)]",
         "encryptionProtectorApiVersion": "2015-05-01-preview",
         "firewallRuleApiVersion": "2015-05-01-preview",
-        "firewallRules": "[if(variables('firewallRulesIsNotEmpty'), parameters('firewallRules'), createArray(createObject('endIpAddress', '0.0.0.0', 'ruleName', 'DummyRule', 'startIpAddress', '0.0.0.0')))]",
+        "firewallRules": "[if(variables('firewallRulesIsNotEmpty'), parameters('firewallRules'), createArray(createObject('endIpAddress', '0.0.0.0', 'name', 'DummyRule', 'startIpAddress', '0.0.0.0')))]",
         "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
         "isActiveDirectoryAdministratorEnabled": "[or(not(empty(coalesce(parameters('activeDirectoryAdministratorObjectId'), ''))), not(empty(coalesce(parameters('activeDirectoryAdministratorUserName'), ''))))]",
         "keyApiVersion": "2015-05-01-preview",
@@ -284,7 +284,7 @@
             "dependsOn": [
                 "[variables('serverResourceId')]"
             ],
-            "name": "[format('{0}/{1}', variables('serverName'), variables('firewallRules')[copyIndex()].ruleName)]",
+            "name": "[format('{0}/{1}', variables('serverName'), variables('firewallRules')[copyIndex()].name)]",
             "properties": {
                 "endIpAddress": "[variables('firewallRules')[copyIndex()].endIpAddress]",
                 "startIpAddress": "[variables('firewallRules')[copyIndex()].startIpAddress]"
@@ -302,7 +302,7 @@
             "dependsOn": [
                 "[variables('serverResourceId')]"
             ],
-            "name": "[format('{0}/{1}', variables('serverName'), variables('virtualNetworkRules')[copyIndex()].ruleName)]",
+            "name": "[format('{0}/{1}', variables('serverName'), variables('virtualNetworkRules')[copyIndex()].name)]",
             "properties": {
                 "ignoreMissingVnetServiceEndpoint": "[union(variables('virtualNetworkRulesDefaultProperties'), variables('virtualNetworkRules')[copyIndex()]).ignoreMissingVnetServiceEndpoint]",
                 "virtualNetworkSubnetId": "[resourceId(union(variables('virtualNetworkRulesDefaultProperties'), variables('virtualNetworkRules')[copyIndex()]).subscriptionId, union(variables('virtualNetworkRulesDefaultProperties'), variables('virtualNetworkRules')[copyIndex()]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkRules')[copyIndex()].virtualNetworkName, variables('virtualNetworkRules')[copyIndex()].subnetName)]"
