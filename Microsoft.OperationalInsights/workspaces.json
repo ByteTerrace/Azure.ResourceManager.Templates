@@ -57,7 +57,7 @@
     },
     "resources": [
         {
-            "apiVersion": "2020-10-01",
+            "apiVersion": "2020-08-01",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
@@ -72,7 +72,7 @@
                 }
             },
             "tags": "[parameters('tags')]",
-            "type": "Microsoft.Operationalinsights/workspaces"
+            "type": "Microsoft.OperationalInsights/workspaces"
         }
     ]
 }
