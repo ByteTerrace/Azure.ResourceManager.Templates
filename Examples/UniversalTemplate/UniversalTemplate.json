@@ -103,6 +103,14 @@
                 "activeDirectoryAdministratorObjectId": "",
                 "activeDirectoryAdministratorTenantId": "[subscription().tenantId]",
                 "activeDirectoryAdministratorUserName": "",
+                "auditActionsAndGroups": [
+                    "BATCH_COMPLETED_GROUP",
+                    "FAILED_DATABASE_AUTHENTICATION_GROUP",
+                    "SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP"
+                ],
+                "auditLogAnalyticsWorkspaceName": "",
+                "auditLogAnalyticsWorkspaceResourceGroupName": "[resourceGroup().name]",
+                "auditLogAnalyticsWorkspaceSubscriptionId": "[subscription().subscriptionId]",
                 "connectionPolicy": "Default",
                 "customerManagedEncryptionKeyName": "",
                 "customerManagedEncryptionKeyVaultName": "",
@@ -155,7 +163,7 @@
         "deploymentApiVersion": "2020-10-01",
         "deploymentNames": {
             "applicationConfigurationStore": "[format('{0}-AppConfigStore', deployment().name)]",
-            "applicationInsightsComponent": "[format('{0}-AppInsights', deployment().name)]",
+            "applicationInsightsComponent": "[format('{0}-AppInsightsComponent', deployment().name)]",
             "communicationService": "[format('{0}-CommunicationService', deployment().name)]",
             "dnsPrivateZone": "[format('{0}-DnsPrivateZone', deployment().name)]",
             "dnsPublicZone": "[format('{0}-DnsPublicZone', deployment().name)]",
@@ -727,6 +735,18 @@
                     },
                     "activeDirectoryAdministratorUserName": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).activeDirectoryAdministratorUserName]"
+                    },
+                    "auditActionsAndGroups": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).auditActionsAndGroups]"
+                    },
+                    "auditLogAnalyticsWorkspaceName": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).auditLogAnalyticsWorkspaceName]"
+                    },
+                    "auditLogAnalyticsWorkspaceResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
+                    },
+                    "auditLogAnalyticsWorkspaceSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
                     },
                     "connectionPolicy": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).connectionPolicy]"
