@@ -717,6 +717,8 @@
             },
             "dependsOn": [
                 "keyVaultsCopy",
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy",
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",

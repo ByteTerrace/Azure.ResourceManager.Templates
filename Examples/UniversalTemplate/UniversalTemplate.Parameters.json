@@ -64,7 +64,19 @@
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",
                         "databases": [],
-                        "name": "byteterrace"
+                        "name": "byteterrace",
+                        "virtualNetworkRules": [
+                            {
+                                "name": "byteterrace",
+                                "subnetName": "byteterrace",
+                                "virtualNetworkName": "byteterrace.net"
+                            },
+                            {
+                                "name": "0.1.2.X",
+                                "subnetName": "0.1.2.X",
+                                "virtualNetworkName": "byteterrace.net"
+                            }
+                        ]
                     }
                 ],
                 "storageAccounts": [

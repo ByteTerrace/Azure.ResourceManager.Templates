@@ -207,6 +207,7 @@
     "variables": {
         "administratorsApiVersion": "2019-06-01-preview",
         "administratorResourceId": "[resourceId('Microsoft.Sql/servers/administrators', variables('serverName'), 'activeDirectory')]",
+        "auditingSettingsApiVersion": "2017-03-01-preview",
         "auditingSettingsProperties": {
             "auditActionsAndGroups": "[parameters('auditActionsAndGroups')]",
             "isAzureMonitorTargetEnabled": "[variables('isAuditingEnabled')]",
@@ -397,7 +398,7 @@
             "type": "Microsoft.Sql/servers/encryptionProtector"
         },
         {
-            "apiVersion": "2017-03-01-preview",
+            "apiVersion": "[variables('auditingSettingsApiVersion')]",
             "dependsOn": [
                 "[variables('administratorResourceId')]",
                 "[variables('serverResourceId')]"
