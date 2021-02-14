@@ -5,14 +5,14 @@
         "dataLocation": {
             "defaultValue": "United States",
             "metadata": {
-                "description": "Specifies the location where the communication service stores its data while at rest."
+                "description": "Specifies the location where the Azure Communication service stores its data while at rest."
             },
             "type": "string"
         },
         "name": {
             "maxLength": 64,
             "metadata": {
-                "description": "Specifies the name of the Azure Communication Service."
+                "description": "Specifies the name of the Azure Communication service."
             },
             "minLength": 1,
             "type": "string"
@@ -20,7 +20,7 @@
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Key Vault."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Communication service."
             },
             "type": "object"
         }

@@ -22,6 +22,7 @@
     "variables": {
         "defaultResourceDefinitions": {
             "applicationConfigurationStores": [],
+            "cdnProfiles": [],
             "communicationServices": [],
             "dnsZones": {
                 "private": [],
@@ -42,6 +43,9 @@
         "defaultResourceProperties": {
             "applicationConfigurationStore": {
                 "skuName": "Standard"
+            },
+            "cdnProfile": {
+                "skuName": "Standard_Microsoft"
             },
             "communicationService": {
                 "dataLocation": "United States"
@@ -167,6 +171,7 @@
         "deploymentNames": {
             "applicationConfigurationStore": "[format('{0}-AppConfigStore', deployment().name)]",
             "applicationInsightsComponent": "[format('{0}-AppInsightsComponent', deployment().name)]",
+            "cdnProfile": "[format('{0}-CdnProfile', deployment().name)]",
             "communicationService": "[format('{0}-CommunicationService', deployment().name)]",
             "dnsPrivateZone": "[format('{0}-DnsPrivateZone', deployment().name)]",
             "dnsPublicZone": "[format('{0}-DnsPublicZone', deployment().name)]",
@@ -183,6 +188,7 @@
         "templateUris": {
             "applicationConfigurationStore": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.AppConfiguration/configurationStores.json'), parameters('templateQueryString')))]",
             "applicationInsightsComponent": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Insights/components.json'), parameters('templateQueryString')))]",
+            "cdnProfile": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Cdn/profiles.json'), parameters('templateQueryString')))]",
             "communicationService": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Communication/communicationServices.json'), parameters('templateQueryString')))]",
             "dnsPrivateZone": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsPrivateZones.json'), parameters('templateQueryString')))]",
             "dnsPublicZone": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsPublicZones.json'), parameters('templateQueryString')))]",
@@ -302,6 +308,39 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "uri": "[variables('templateUris').networkSecurityGroup]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').cdnProfiles))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').cdnProfiles)]",
+                "mode": "parallel",
+                "name": "cdnProfilesCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').cdnProfile, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "name": {
+                        "value": "[variables('resourceDefinitions').cdnProfiles[copyIndex()].name]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUris').cdnProfile]"
                 }
             },
             "type": "Microsoft.Resources/deployments"
