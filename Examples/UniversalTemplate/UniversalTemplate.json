@@ -22,7 +22,7 @@
     "variables": {
         "defaultResourceDefinitions": {
             "applicationConfigurationStores": [],
-            "communicationsService": [],
+            "communicationsServices": [],
             "dnsZones": {
                 "private": [],
                 "public": []
