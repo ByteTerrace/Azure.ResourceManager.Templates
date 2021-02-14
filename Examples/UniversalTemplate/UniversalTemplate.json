@@ -30,7 +30,7 @@
             "hdInsightClusters": [],
             "keyVaults": [],
             "logAnalyticsWorkspaces": [],
-            "monitorLinkScopes": [],
+            "monitorPrivateLinkScopes": [],
             "networkSecurityGroups": [],
             "sqlServers": [],
             "storageAccounts": [],
@@ -85,7 +85,7 @@
                 "isPublicNetworkAccessForQueryEnabled": false,
                 "skuName": "pergb2018"
             },
-            "monitorLinkScope": {},
+            "monitorPrivateLinkScope": {},
             "networkSecurityGroup": {
                 "securityRules": []
             },
