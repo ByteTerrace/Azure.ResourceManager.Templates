@@ -28,6 +28,11 @@
                     ]
                 },
                 "hdInsightClusters": [],
+                "frontDoors": [
+                    {
+                        "name": "byteterrace"
+                    }
+                ],
                 "keyVaults": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",

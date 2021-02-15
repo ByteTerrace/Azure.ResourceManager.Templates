@@ -28,6 +28,7 @@
                 "private": [],
                 "public": []
             },
+            "frontDoors": [],
             "hdInsightClusters": [],
             "keyVaults": [],
             "monitor": {
@@ -67,6 +68,7 @@
                     "txtRecords": []
                 }
             },
+            "frontDoor": {},
             "hdInsightCluster": {
                 "configurationProfile": {},
                 "computeProfile": {},
@@ -177,6 +179,7 @@
             "communicationService": "[format('{0}-CommunicationService', deployment().name)]",
             "dnsPrivateZone": "[format('{0}-DnsPrivateZone', deployment().name)]",
             "dnsPublicZone": "[format('{0}-DnsPublicZone', deployment().name)]",
+            "frontDoor": "[format('{0}-FrontDoor', deployment().name)]",
             "hdInsightCluster": "[format('{0}-HdInsightCluster', deployment().name)]",
             "keyVault": "[format('{0}-KeyVault', deployment().name)]",
             "logAnalyticsWorkspace": "[format('{0}-LogAnalyticsWorkspace', deployment().name)]",
@@ -194,6 +197,7 @@
             "communicationService": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Communication/communicationServices.json'), parameters('templateQueryString')))]",
             "dnsPrivateZone": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsPrivateZones.json'), parameters('templateQueryString')))]",
             "dnsPublicZone": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsPublicZones.json'), parameters('templateQueryString')))]",
+            "frontDoor": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/frontDoors.json'), parameters('templateQueryString')))]",
             "hdInsightCluster": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.HDInsight/clusters.json'), parameters('templateQueryString')))]",
             "keyVault": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults.json'), parameters('templateQueryString')))]",
             "logAnalyticsWorkspace": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.OperationalInsights/workspaces.json'), parameters('templateQueryString')))]",
@@ -923,6 +927,41 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "uri": "[variables('templateUris').hdInsightCluster]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').frontDoors))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').frontDoors)]",
+                "mode": "parallel",
+                "name": "frontDoorsCopy"
+            },
+            "dependsOn": [
+                "keyVaultsCopy",
+                "networkSecurityGroupsCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "sqlServersCopy",
+                "storageAccountsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').frontDoor, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "name": {
+                        "value": "[variables('resourceDefinitions').frontDoors[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('templateUris').frontDoor]"
                 }
             },
             "type": "Microsoft.Resources/deployments"
