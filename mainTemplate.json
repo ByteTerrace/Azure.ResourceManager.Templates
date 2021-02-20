@@ -14,6 +14,7 @@
     "variables": {
         "defaultResourceDefinitions": {
             "applicationConfigurationStores": [],
+            "applicationServicePlans": [],
             "cdnProfiles": [],
             "communicationServices": [],
             "containerRegistries": [],
@@ -37,6 +38,14 @@
         "defaultResourceProperties": {
             "applicationConfigurationStore": {
                 "skuName": "Standard"
+            },
+            "applicationServicePlan": {
+                "isPerSiteScalingEnabled": false,
+                "operatingSystemName": "Linux",
+                "serviceEnvironmentName": "",
+                "serviceEnvironmentResourceGroupName": "[resourceGroup().name]",
+                "serviceEnvironmentSubscriptionId": "[subscription().subscriptionId]",
+                "skuName": "P1v2"
             },
             "cdnProfile": {
                 "auditLogAnalyticsWorkspaceResourceGroupName": "[resourceGroup().name]",
@@ -173,6 +182,7 @@
         "deploymentNames": {
             "applicationConfigurationStore": "[format('{0}-AppConfigStore', deployment().name)]",
             "applicationInsightsComponent": "[format('{0}-AppInsightsComponent', deployment().name)]",
+            "applicationServicePlan": "[format('{0}-AppServicePlan', deployment().name)]",
             "cdnProfile": "[format('{0}-CdnProfile', deployment().name)]",
             "communicationService": "[format('{0}-CommunicationService', deployment().name)]",
             "containerRegistry": "[format('{0}-ContainerRegistry', deployment().name)]",
@@ -992,6 +1002,64 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "relativePath": "./Microsoft.Network/frontDoors.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').applicationServicePlans))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').applicationServicePlans)]",
+                "mode": "parallel",
+                "name": "applicationServicePlansCopy"
+            },
+            "dependsOn": [
+                "applicationInsightsComponentsCopy",
+                "cdnProfilesCopy",
+                "containerRegistriesCopy",
+                "keyVaultsCopy",
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "networkSecurityGroupsCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "sqlServersCopy",
+                "storageAccountsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').applicationServicePlan, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "isPerSiteScalingEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).isPerSiteScalingEnabled]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').applicationServicePlans[copyIndex()].name]"
+                    },
+                    "operatingSystemName": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).operatingSystemName]"
+                    },
+                    "serviceEnvironmentName": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).serviceEnvironmentName]"
+                    },
+                    "serviceEnvironmentResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).serviceEnvironmentResourceGroupName]"
+                    },
+                    "serviceEnvironmentSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).serviceEnvironmentSubscriptionId]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "relativePath": "./Microsoft.Web/serverfarms.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
