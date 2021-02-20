@@ -61,7 +61,21 @@
         }
     },
     "variables": {
-        "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]"
+        "copy": [
+            {
+                "count": "[length(parameters('firewallRules'))]",
+                "input": {
+                    "action": "Allow",
+                    "value": "[parameters('firewallRules')[copyIndex('ipRules')]]"
+                },
+                "name": "ipRules"
+            }
+        ],
+        "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
+        "networkRuleSetProperties": {
+            "defaultAction": "[if(variables('firewallRulesIsNotEmpty'), 'Deny', 'Allow')]",
+            "ipRules": "[variables('ipRules')]"
+        }
     },
     "resources": [
         {
@@ -74,19 +88,7 @@
             "properties": {
                 "adminUserEnabled": "[parameters('isAdministratorAccountEnabled')]",
                 "networkRuleBypassOptions": "[if(parameters('isTrustedMicrosoftResourceAccessEnabled'), 'AzureServices', 'None')]",
-                "networkRuleSet": {
-                    "defaultAction": "[if(variables('firewallRulesIsNotEmpty'), 'Deny', 'Allow')]",
-                    "copy": [
-                        {
-                            "count": "[length(parameters('firewallRules'))]",
-                            "input": {
-                                "action": "Allow",
-                                "value": "[parameters('firewallRules')[copyIndex('ipRules')]]"
-                            },
-                            "name": "ipRules"
-                        }
-                    ]
-                },
+                "networkRuleSet": "[if(equals(parameters('skuName'), 'Premium'), variables('networkRuleSetProperties'), json('null'))]",
                 "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]",
                 "zoneRedundancy": "Disabled"
             },
