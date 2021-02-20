@@ -139,16 +139,19 @@
                     {
                         "count": "[length(parameters('routingRules'))]",
                         "input": {
-                            "acceptedProtocols": "[parameters('routingRules')[copyIndex('routingRules')].acceptedProtocols]",
-                            "enabledState": "Enabled",
-                            "frontendEndpoints": "[json(replace(replace(replace(replace(replace(string(parameters('routingRules')[copyIndex('routingRules')].frontendEndpoints), '\",', '☠'), '\"]', '💀'), '\"', format('{{ \"id\": \"/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/frontdoors/{2}/frontendEndpoints/', subscription().subscriptionId, resourceGroup().name, parameters('name'))), '☠', '\" }, '), '💀', '\"}]'))]",
-                            "patternsToMatch": "[parameters('routingRules')[copyIndex('routingRules')].patternsToMatch]",
-                            "routeConfiguration": {
-                                "@odata.type": "#Microsoft.Azure.FrontDoor.Models.FrontdoorRedirectConfiguration",
-                                "customHost": "[parameters('routingRules')[copyIndex('routingRules')].customHost]",
-                                "customPath": "[parameters('routingRules')[copyIndex('routingRules')].customPath]",
-                                "redirectProtocol": "[parameters('routingRules')[copyIndex('routingRules')].redirectProtocol]",
-                                "redirectType": "[parameters('routingRules')[copyIndex('routingRules')].redirectType]"
+                            "name": "[parameters('routingRules')[copyIndex('routingRules')].name]",
+                            "properties":{
+                                "acceptedProtocols": "[parameters('routingRules')[copyIndex('routingRules')].acceptedProtocols]",
+                                "enabledState": "Enabled",
+                                "frontendEndpoints": "[json(replace(string(parameters('routingRules')[copyIndex('routingRules')].frontendEndpoints), '\"name\":\"', format('\"id\":\"/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/frontdoors/{2}/frontendEndpoints/', subscription().subscriptionId, resourceGroup().name, parameters('name'))))]",
+                                "patternsToMatch": "[parameters('routingRules')[copyIndex('routingRules')].patternsToMatch]",
+                                "routeConfiguration": {
+                                    "@odata.type": "#Microsoft.Azure.FrontDoor.Models.FrontdoorRedirectConfiguration",
+                                    "customHost": "[parameters('routingRules')[copyIndex('routingRules')].customHost]",
+                                    "customPath": "[parameters('routingRules')[copyIndex('routingRules')].customPath]",
+                                    "redirectProtocol": "[parameters('routingRules')[copyIndex('routingRules')].redirectProtocol]",
+                                    "redirectType": "[parameters('routingRules')[copyIndex('routingRules')].redirectType]"
+                                }
                             }
                         },
                         "name": "routingRules"

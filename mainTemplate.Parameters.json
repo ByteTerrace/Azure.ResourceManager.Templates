@@ -103,12 +103,40 @@
                         ],
                         "name": "byteterrace",
                         "routingRules": [
-                            "kittoes-com",
-                            "kittoes-info",
-                            "iamtheborg-com",
-                            "www-kittoes-com",
-                            "www-kittoes-info",
-                            "www-iamtheborg-com"
+                            {
+                                "acceptedProtocols": [
+                                    "Http",
+                                    "Https"
+                                ],
+                                "customHost": "www.linkedin.com",
+                                "customPath": "/in/kittoes0124",
+                                "frontendEndpoints": [
+                                    {
+                                        "name": "kittoes-com"
+                                    },
+                                    {
+                                        "name": "kittoes-info"
+                                    },
+                                    {
+                                        "name": "iamtheborg-com"
+                                    },
+                                    {
+                                        "name": "www-kittoes-com"
+                                    },
+                                    {
+                                        "name": "www-kittoes-info"
+                                    },
+                                    {
+                                        "name": "www-iamtheborg-com"
+                                    }
+                                ],
+                                "name": "LinkedIn-Kittoes0124",
+                                "patternsToMatch": [
+                                    "/*"
+                                ],
+                                "redirectProtocol": "HttpsOnly",
+                                "redirectType": "Found"
+                            }
                         ]
                     }
                 ],
