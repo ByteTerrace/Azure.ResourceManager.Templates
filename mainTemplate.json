@@ -16,6 +16,7 @@
             "applicationConfigurationStores": [],
             "cdnProfiles": [],
             "communicationServices": [],
+            "containerRegistries": [],
             "dnsZones": {
                 "private": [],
                 "public": []
@@ -44,6 +45,9 @@
             },
             "communicationService": {
                 "dataLocation": "United States"
+            },
+            "containerRegistry": {
+                "skuName": "Standard"
             },
             "dnsZone": {
                 "private": {
@@ -167,6 +171,7 @@
             "applicationInsightsComponent": "[format('{0}-AppInsightsComponent', deployment().name)]",
             "cdnProfile": "[format('{0}-CdnProfile', deployment().name)]",
             "communicationService": "[format('{0}-CommunicationService', deployment().name)]",
+            "containerRegistry": "[format('{0}-ContainerRegistry', deployment().name)]",
             "dnsPrivateZone": "[format('{0}-DnsPrivateZone', deployment().name)]",
             "dnsPublicZone": "[format('{0}-DnsPublicZone', deployment().name)]",
             "frontDoor": "[format('{0}-FrontDoor', deployment().name)]",
@@ -653,6 +658,42 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "relativePath": "./Microsoft.AppConfiguration/configurationStores.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').containerRegistries))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').containerRegistries)]",
+                "mode": "parallel",
+                "name": "containerRegistriesCopy"
+            },
+            "dependsOn": [
+                "keyVaultsCopy",
+                "networkSecurityGroupsCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').containerRegistry, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "name": {
+                        "value": "[variables('resourceDefinitions').containerRegistries[copyIndex()].name]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "relativePath": "./Microsoft.ContainerRegistry/registries.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"

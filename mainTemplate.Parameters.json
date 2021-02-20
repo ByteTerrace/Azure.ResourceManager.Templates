@@ -10,7 +10,16 @@
                         "name": "byteterrace-net"
                     }
                 ],
-                "communicationServices": [],
+                "communicationServices": [
+                    {
+                        "name": "byteterrace"
+                    }
+                ],
+                "containerRegistries": [
+                    {
+                        "name": "byteterrace"
+                    }
+                ],
                 "dnsZones": {
                     "private": [
                         {
@@ -24,7 +33,29 @@
                     ]
                 },
                 "hdInsightClusters": [],
-                "frontDoors": [],
+                "frontDoors": [
+                    {
+                        "backendPools": [
+                            {
+                                "healthProbeSettingsName": "https",
+                                "httpAddress": "www.linkedin.com",
+                                "loadBalancingSettingsName": "default",
+                                "name": "LinkedIn"
+                            }
+                        ],
+                        "healthProbeSettings": [
+                            {
+                                "intervalInSeconds": 255,
+                                "method": "Head",
+                                "name": "https",
+                                "path": "/",
+                                "protocol": "Https"
+                            }
+                        ],
+                        "name": "byteterrace",
+                        "routingRules": []
+                    }
+                ],
                 "keyVaults": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",
@@ -99,7 +130,24 @@
                         ]
                     }
                 ],
-                "virtualNetworks": []
+                "virtualNetworks": [
+                    {
+                        "addressPrefixes": [
+                          "10.0.0.0/8"
+                        ],
+                        "name": "byteterrace.net",
+                        "subnets": [
+                            {
+                                "addressPrefix": "10.255.255.224/27",
+                                "name": "byteterrace"
+                            },
+                            {
+                                "addressPrefix": "10.1.2.0/24",
+                                "name": "0.1.2.X"
+                            }
+                        ]
+                    }
+                ]
             }
         },
         "tags": {

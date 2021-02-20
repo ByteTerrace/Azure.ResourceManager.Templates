@@ -1,20 +1,13 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "2.0.0.0",
+    "contentVersion": "1.0.0.0",
     "parameters": {
-        "linkedTemplateBaseUri": {
-            "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/Azure.ResourceManager.Templates/",
+        "isPerSiteScalingEnabled": {
+            "defaultValue": false,
             "metadata": {
-                "description": "Specifies the base uri of external linked templates used by this template."
+                "description": "Indicates whether the feature that enables applications to scale independently is enabled on the Azure Web app service plan."
             },
-            "type": "string"
-        },
-        "linkedTemplateQueryString": {
-            "defaultValue": "&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
-            "metadata": {
-                "description": "Specifies the query string that will be appended to the uri of external linked templates used by this template."
-            },
-            "type": "string"
+            "type": "bool"
         },
         "location": {
             "defaultValue": "[resourceGroup().location]",
@@ -64,26 +57,6 @@
             "type": "array"
         },
         "skuName": {
-            "allowedValues": [
-                "B1",
-                "B2",
-                "B3",
-                "D1",
-                "F1",
-                "I1",
-                "I2",
-                "I3",
-                "P1",
-                "P1V2",
-                "P2",
-                "P2V2",
-                "P3",
-                "P3V2",
-                "S1",
-                "S2",
-                "S3",
-                "Y1"
-            ],
             "defaultValue": "F1",
             "metadata": {
                 "description": "Specifies the SKU name of the Azure Web app service plan."
@@ -99,34 +72,33 @@
         }
     },
     "variables": {
-        "deploymentApiVersion": "2019-10-01",
+        "apiVersions": {
+            "deployments": "2019-10-01",
+            "serverFarms": "2020-09-01"
+        },
         "hostingEnvironmentProfile": {
             "id": "[variables('serviceEnvironmentResourceId')]"
         },
         "isHostingEnvironmentEnabled": "[or(not(empty(parameters('serviceEnvironmentResourceGroupName'))), not(empty(parameters('serviceEnvironmentName'))))]",
         "isLinuxOperatingSystem": "[equals('linux', toLower(parameters('operatingSystemName')))]",
-        "serverFarmApiVersion": "2019-08-01",
         "serverFarmResourceId": "[resourceId('Microsoft.Web/serverfarms/', parameters('servicePlanName'))]",
         "serviceEnvironmentName": "[if(not(empty(parameters('serviceEnvironmentName'))), parameters('serviceEnvironmentName'), 'dummyServiceEnvironment')]",
         "serviceEnvironmentResourceGroupName": "[if(not(empty(parameters('serviceEnvironmentResourceGroupName'))), parameters('serviceEnvironmentResourceGroupName'), resourceGroup().name)]",
         "serviceEnvironmentResourceId": "[resourceId(variables('serviceEnvironmentResourceGroupName'), 'Microsoft.Web/hostingEnvironments/', variables('serviceEnvironmentName'))]",
         "sites": "[if(variables('sitesIsNotEmpty'), parameters('sites'), createArray(createObject('siteName', 'dummySite')))]",
         "sitesCount": "[length(parameters('sites'))]",
-        "sitesIsNotEmpty": "[greater(variables('sitesCount'), 0)]",
-        "templateUriForMicrosoftWebSites": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Web/sites.json'), parameters('linkedTemplateQueryString')))]"
+        "sitesIsNotEmpty": "[greater(variables('sitesCount'), 0)]"
     },
     "resources": [
         {
-            "apiVersion": "[variables('serverFarmApiVersion')]",
+            "apiVersion": "[variables('apiVersions').serverFarms]",
             "kind": "[if(variables('isLinuxOperatingSystem'), 'linux', '')]",
             "location": "[parameters('location')]",
             "name": "[parameters('servicePlanName')]",
             "properties": {
                 "hostingEnvironmentProfile": "[if(variables('isHostingEnvironmentEnabled'), variables('hostingEnvironmentProfile'), json('null'))]",
                 "hyperV": false,
-                "isSpot": false,
-                "isXenon": false,
-                "perSiteScaling": false,
+                "perSiteScaling": "[parameters('isPerSiteScalingEnabled')]",
                 "reserved": "[variables('isLinuxOperatingSystem')]"
             },
             "sku": {
@@ -136,7 +108,7 @@
             "type": "Microsoft.Web/serverfarms"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployments]",
             "condition": "[variables('sitesIsNotEmpty')]",
             "copy": {
                 "count": "[variables('sitesCount')]",
@@ -177,12 +149,6 @@
                     "kind": {
                         "value": "[union(json('{ \"kind\": \"app\" }'), variables('sites')[copyIndex()]).kind]"
                     },
-                    "linkedTemplateBaseUri": {
-                        "value": "[parameters('linkedTemplateBaseUri')]"
-                    },
-                    "linkedTemplateQueryString": {
-                        "value": "[parameters('linkedTemplateQueryString')]"
-                    },
                     "location": {
                         "value": "[parameters('location')]"
                     },
@@ -215,30 +181,11 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "2.0.0.0",
-                    "uri": "[variables('templateUriForMicrosoftWebSites')]"
+                    "contentVersion": "1.0.0.0",
+                    "uri": "./sites.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
         }
-    ],
-    "outputs": {
-        "siteIdentities": {
-            "copy": {
-                "count": "[variables('sitesCount')]",
-                "input": {
-                    "identity": "[reference(format('{0}-site_{1}', deployment().name, copyIndex())).outputs.siteIdentity.value]",
-                    "siteName": "[variables('sites')[copyIndex()].siteName]"
-                }
-            },
-            "type": "array"
-        },
-        "slotIdentities": {
-            "copy": {
-                "count": "[variables('sitesCount')]",
-                "input": "[reference(format('{0}-site_{1}', deployment().name, copyIndex())).outputs.slotIdentities.value]"
-            },
-            "type": "array"
-        }
-    }
+    ]
 }
