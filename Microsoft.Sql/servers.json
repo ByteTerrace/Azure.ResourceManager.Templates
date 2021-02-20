@@ -125,7 +125,7 @@
         "isPublicNetworkAccessEnabled": {
             "defaultValue": true,
             "metadata": {
-                "description": "Indicates whether the public network access feature is enabled on the Azure SQL server."
+                "description": "Indicates whether the Azure SQL server is accessible from the internet."
             },
             "type": "bool"
         },

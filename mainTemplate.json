@@ -49,6 +49,7 @@
             "containerRegistry": {
                 "firewallRules": [],
                 "isAdministratorAccountEnabled": false,
+                "isPublicNetworkAccessEnabled": true,
                 "isTrustedMicrosoftResourceAccessEnabled": false,
                 "skuName": "Standard"
             },
@@ -689,6 +690,9 @@
                     },
                     "isAdministratorAccountEnabled": {
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isAdministratorAccountEnabled]"
+                    },
+                    "isPublicNetworkAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isPublicNetworkAccessEnabled]"
                     },
                     "isTrustedMicrosoftResourceAccessEnabled": {
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isTrustedMicrosoftResourceAccessEnabled]"
