@@ -136,20 +136,6 @@
             },
             "type": "bool"
         },
-        "linkedTemplateBaseUri": {
-            "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/ResourceManager.Templates/",
-            "metadata": {
-                "description": "Specifies the base uri of external linked templates used by this template."
-            },
-            "type": "string"
-        },
-        "linkedTemplateQueryString": {
-            "defaultValue": "&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
-            "metadata": {
-                "description": "Specifies the query string that will be appended to the uri of external linked templates used by this template."
-            },
-            "type": "string"
-        },
         "location": {
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
@@ -262,7 +248,6 @@
             "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]",
             "version": "[parameters('serverVersion')]"
         },
-        "templateUriForMicrosoftSqlDatabases": "[uri(parameters('linkedTemplateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Sql/databases.json'), parameters('linkedTemplateQueryString')))]",
         "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), parameters('virtualNetworkRules'), createArray(createObject('name', 'dummyRule')))]",
         "virtualNetworkRulesDefaultProperties": {
             "ignoreMissingVnetServiceEndpoint": false,
@@ -487,7 +472,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUriForMicrosoftSqlDatabases')]"
+                    "uri": "./databases.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"

@@ -9,14 +9,6 @@
         "tags": {
             "defaultValue": {},
             "type": "object"
-        },
-        "templateBaseUri": {
-            "defaultValue": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/ResourceManager.Templates/",
-            "type": "string"
-        },
-        "templateQueryString": {
-            "defaultValue": "&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true",
-            "type": "string"
         }
     },
     "variables": {
@@ -133,8 +125,6 @@
                 "firewallRules": [],
                 "isPublicNetworkAccessEnabled": true,
                 "isTrustedMicrosoftResourceAccessEnabled": false,
-                "linkedTemplateBaseUri": "[parameters('templateBaseUri')]",
-                "linkedTemplateQueryString": "[parameters('templateQueryString')]",
                 "serverVersion": "12.0",
                 "virtualNetworkRules": []
             },
@@ -189,24 +179,7 @@
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
             "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]"
         },
-        "resourceDefinitions": "[union(variables('defaultResourceDefinitions'), parameters('resourceDefinitions'))]",
-        "templateUris": {
-            "applicationConfigurationStore": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.AppConfiguration/configurationStores.json'), parameters('templateQueryString')))]",
-            "applicationInsightsComponent": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Insights/components.json'), parameters('templateQueryString')))]",
-            "cdnProfile": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Cdn/profiles.json'), parameters('templateQueryString')))]",
-            "communicationService": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Communication/communicationServices.json'), parameters('templateQueryString')))]",
-            "dnsPrivateZone": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsPrivateZones.json'), parameters('templateQueryString')))]",
-            "dnsPublicZone": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/dnsPublicZones.json'), parameters('templateQueryString')))]",
-            "frontDoor": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/frontDoors.json'), parameters('templateQueryString')))]",
-            "hdInsightCluster": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.HDInsight/clusters.json'), parameters('templateQueryString')))]",
-            "keyVault": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.KeyVault/vaults.json'), parameters('templateQueryString')))]",
-            "logAnalyticsWorkspace": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.OperationalInsights/workspaces.json'), parameters('templateQueryString')))]",
-            "monitorPrivateLinkScope": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Insights/privateLinkScopes.json'), parameters('templateQueryString')))]",
-            "networkSecurityGroup": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/networkSecurityGroups.json'), parameters('templateQueryString')))]",
-            "sqlServer": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Sql/servers.json'), parameters('templateQueryString')))]",
-            "storageAccount": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Storage/storageAccounts.json'), parameters('templateQueryString')))]",
-            "virtualNetwork": "[uri(parameters('templateBaseUri'), format('Items?path={0}{1}', uriComponent('/Microsoft.Network/virtualNetworks.json'), parameters('templateQueryString')))]"
-        }
+        "resourceDefinitions": "[union(variables('defaultResourceDefinitions'), parameters('resourceDefinitions'))]"
     },
     "resources": [
         {
@@ -230,7 +203,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').monitorPrivateLinkScope]"
+                    "relativePath": "./Microsoft.Insights/privateLinkScopes.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -271,7 +244,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').logAnalyticsWorkspace]"
+                    "relativePath": "./Microsoft.OperationalInsights/workspaces.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -313,7 +286,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').networkSecurityGroup]"
+                    "relativePath": "./Microsoft.Network/networkSecurityGroups.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -355,7 +328,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').cdnProfile]"
+                    "relativePath": "./Microsoft.Cdn/profiles.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -399,7 +372,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').virtualNetwork]"
+                    "relativePath": "./Microsoft.Network/virtualNetworks.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -443,7 +416,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').dnsPrivateZone]"
+                    "relativePath": "./Microsoft.Network/dnsPrivateZones.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -490,7 +463,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').dnsPublicZone]"
+                    "relativePath": "./Microsoft.Network/dnsPublicZones.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -534,7 +507,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').applicationInsightsComponent]"
+                    "relativePath": "./Microsoft.Insights/components.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -611,7 +584,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').keyVault]"
+                    "relativePath": "./Microsoft.KeyVault/vaults.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -645,7 +618,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').communicationService]"
+                    "relativePath": "./Microsoft.Communication/communicationServices.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -679,7 +652,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').applicationConfigurationStore]"
+                    "relativePath": "./Microsoft.AppConfiguration/configurationStores.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -781,7 +754,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').storageAccount]"
+                    "relativePath": "./Microsoft.Storage/storageAccounts.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -876,7 +849,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').sqlServer]"
+                    "relativePath": "./Microsoft.Sql/servers.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -926,7 +899,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').hdInsightCluster]"
+                    "relativePath": "./Microsoft.HDInsight/clusters.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -961,7 +934,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "uri": "[variables('templateUris').frontDoor]"
+                    "relativePath": "./Microsoft.Network/frontDoors.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"

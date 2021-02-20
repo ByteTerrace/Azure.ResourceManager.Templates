@@ -97,6 +97,6 @@
                 "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
             },
             "type": "Microsoft.Network/networkSecurityGroups/providers/diagnosticsettings"
-        },
+        }
     ]
 }

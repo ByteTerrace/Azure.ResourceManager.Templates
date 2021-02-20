@@ -30,7 +30,25 @@
                 "hdInsightClusters": [],
                 "frontDoors": [
                     {
-                        "name": "byteterrace"
+                        "backendPools": [
+                            {
+                                "healthProbeSettingsName": "https",
+                                "httpAddress": "www.linkedin.com",
+                                "loadBalancingSettingsName": "default",
+                                "name": "LinkedIn"
+                            }
+                        ],
+                        "healthProbeSettings": [
+                            {
+                                "intervalInSeconds": 255,
+                                "method": "Head",
+                                "name": "https",
+                                "path": "/",
+                                "protocol": "Https"
+                            }
+                        ],
+                        "name": "byteterrace",
+                        "routingRules": []
                     }
                 ],
                 "keyVaults": [
@@ -129,12 +147,6 @@
         },
         "tags": {
             "value": {}
-        },
-        "templateBaseUri": {
-            "value": "https://dev.azure.com/ByteTerrace/Azure/_apis/git/repositories/ResourceManager.Templates/"
-        },
-        "templateQueryString": {
-            "value": "&recursionLevel=0&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true"
         }
     }
 }
