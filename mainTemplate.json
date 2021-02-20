@@ -47,6 +47,9 @@
                 "dataLocation": "United States"
             },
             "containerRegistry": {
+                "firewallRules": [],
+                "isAdministratorAccountEnabled": false,
+                "isTrustedMicrosoftResourceAccessEnabled": false,
                 "skuName": "Standard"
             },
             "dnsZone": {
@@ -681,6 +684,15 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "firewallRules": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).firewallRules]"
+                    },
+                    "isAdministratorAccountEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isAdministratorAccountEnabled]"
+                    },
+                    "isTrustedMicrosoftResourceAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isTrustedMicrosoftResourceAccessEnabled]"
+                    },
                     "name": {
                         "value": "[variables('resourceDefinitions').containerRegistries[copyIndex()].name]"
                     },

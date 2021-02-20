@@ -2,6 +2,27 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "firewallRules": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of firewall rules that will be assigned to the Azure Container registry."
+            },
+            "type": "array"
+        },
+        "isAdministratorAccountEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the Azure Container registry administrator user account is enabled."
+            },
+            "type": "bool"
+        },
+        "isTrustedMicrosoftResourceAccessEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether trusted Azure services and resources are allowed to access the Azure Container registry."
+            },
+            "type": "bool"
+        },
         "location": {
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
@@ -32,12 +53,30 @@
             "type": "object"
         }
     },
+    "variables": {
+        "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]"
+    },
     "resources": [
         {
-            "apiVersion": "2019-05-01",
+            "apiVersion": "2019-12-01-preview",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
+                "adminUserEnabled": "[parameters('isAdministratorAccountEnabled')]",
+                "networkRuleBypassOptions": "[if(parameters('isTrustedMicrosoftResourceAccessEnabled'), 'AzureServices', 'None')]",
+                "networkRuleSet": {
+                    "defaultAction": "[if(variables('firewallRulesIsNotEmpty'), 'Deny', 'Allow')]",
+                    "copy": [
+                        {
+                            "count": "[length(parameters('firewallRules'))]",
+                            "input": {
+                                "action": "Allow",
+                                "value": "[parameters('firewallRules')[copyIndex('ipRules')]]"
+                            },
+                            "name": "ipRules"
+                        }
+                    ]
+                },
                 "publicNetworkAccess": "Enabled",
                 "zoneRedundancy": "Disabled"
             },
