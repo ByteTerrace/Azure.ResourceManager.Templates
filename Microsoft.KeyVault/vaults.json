@@ -157,27 +157,6 @@
         ],
         "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
         "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
-        "keyVaultProperties": {
-            "createMode": "default",
-            "enabledForDeployment": "[parameters('isVirtualMachineDeploymentEnabled')]",
-            "enabledForDiskEncryption": "[parameters('isDiskEncryptionEnabled')]",
-            "enabledForTemplateDeployment": "[parameters('isTemplateDeploymentEnabled')]",
-            "enablePurgeProtection": "[if(parameters('isPurgeProtectionEnabled'), parameters('isPurgeProtectionEnabled'), json('null'))]",
-            "enableRbacAuthorization": "[parameters('isRbacAuthorizationEnabled')]",
-            "enableSoftDelete": true,
-            "networkAcls": {
-                "bypass": "[if(parameters('isAllowTrustedMicrosoftServicesEnabled'), 'AzureServices', 'None')]",
-                "defaultAction": "[if(or(variables('firewallRulesIsNotEmpty'), variables('virtualNetworkRulesIsNotEmpty')), 'Deny', 'Allow')]",
-                "ipRules": "[if(variables('firewallRulesIsNotEmpty'), variables('firewallRules'), json('null'))]",
-                "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), variables('virtualNetworkRules'), json('null'))]"
-            },
-            "sku": {
-                "family": "A",
-                "name": "[parameters('skuName')]"
-            },
-            "softDeleteRetentionInDays": "[parameters('softDeleteRetentionInDays')]",
-            "tenantId": "[parameters('tenantId')]"
-        },
         "keyVaultResourceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('name'))]",
         "secretsArrayCount": "[length(union(variables('secretsDefaultObject'), parameters('secrets')).array)]",
         "secretsArrayIsNotEmpty": "[greater(variables('secretsArrayCount'), 0)]",
@@ -195,7 +174,27 @@
             "apiVersion": "[variables('apiVersions').keyVaults]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
-            "properties": "[variables('keyVaultProperties')]",
+            "properties": {
+                "createMode": "default",
+                "enabledForDeployment": "[parameters('isVirtualMachineDeploymentEnabled')]",
+                "enabledForDiskEncryption": "[parameters('isDiskEncryptionEnabled')]",
+                "enabledForTemplateDeployment": "[parameters('isTemplateDeploymentEnabled')]",
+                "enablePurgeProtection": "[if(parameters('isPurgeProtectionEnabled'), parameters('isPurgeProtectionEnabled'), json('null'))]",
+                "enableRbacAuthorization": "[parameters('isRbacAuthorizationEnabled')]",
+                "enableSoftDelete": true,
+                "networkAcls": {
+                    "bypass": "[if(parameters('isAllowTrustedMicrosoftServicesEnabled'), 'AzureServices', 'None')]",
+                    "defaultAction": "[if(or(variables('firewallRulesIsNotEmpty'), variables('virtualNetworkRulesIsNotEmpty')), 'Deny', 'Allow')]",
+                    "ipRules": "[if(variables('firewallRulesIsNotEmpty'), variables('firewallRules'), json('null'))]",
+                    "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), variables('virtualNetworkRules'), json('null'))]"
+                },
+                "sku": {
+                    "family": "A",
+                    "name": "[parameters('skuName')]"
+                },
+                "softDeleteRetentionInDays": "[parameters('softDeleteRetentionInDays')]",
+                "tenantId": "[parameters('tenantId')]"
+            },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.KeyVault/vaults"
         },

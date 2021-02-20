@@ -169,7 +169,7 @@
             "type": "securestring"
         },
         "sqlAdministratorUserPassword": {
-            "defaultValue": "[base64(format('{0}|{1}', newGuid(), newGuid()))]",
+            "defaultValue": "[base64(replace(format('{0}{1}', newGuid(), newGuid()), '-', ''))]",
             "metadata": {
                 "description": "Specifies the default SQL administrator user password that will be assigned to the Azure SQL server."
             },

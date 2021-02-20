@@ -64,32 +64,31 @@
             "id": "[if(variables('isDdosProtectionEnabled'), resourceId(parameters('ddosProtectionPlanSubscriptionId'), parameters('ddosProtectionPlanResourceGroupName'), 'Microsoft.Network/ddosProtectionPlans', parameters('ddosProtectionPlanName')), json('null'))]"
         },
         "isDdosProtectionEnabled": "[not(empty(parameters('ddosProtectionPlanName')))]",
-        "virtualNetworksApiVersion": "2020-07-01",
-        "virtualNetworksProperties": {
-            "addressSpace": {
-                "addressPrefixes": "[parameters('addressPrefixes')]"
-            },
-            "copy": [
-                {
-                    "count": "[length(parameters('subnets'))]",
-                    "input": {
-                        "name": "[parameters('subnets')[copyIndex('subnets')].name]",
-                        "properties": "[intersection(parameters('subnets')[copyIndex('subnets')], union(parameters('subnets')[copyIndex('subnets')], createObject('name', uniqueString(parameters('subnets')[copyIndex('subnets')].name))))]"
-                    },
-                    "name": "subnets"
-                }
-            ],
-            "ddosProtectionPlan": "[if(variables('isDdosProtectionEnabled'), variables('ddosProtectionPlanProperties'), json('null'))]",
-            "enableDdosProtection": "[variables('isDdosProtectionEnabled')]",
-            "enableVmProtection": true
-        }
+        "virtualNetworksApiVersion": "2020-07-01"
     },
     "resources": [
         {
             "apiVersion": "[variables('virtualNetworksApiVersion')]",
             "name": "[parameters('name')]",
             "location": "[parameters('location')]",
-            "properties": "[variables('virtualNetworksProperties')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[parameters('addressPrefixes')]"
+                },
+                "copy": [
+                    {
+                        "count": "[length(parameters('subnets'))]",
+                        "input": {
+                            "name": "[parameters('subnets')[copyIndex('subnets')].name]",
+                            "properties": "[intersection(parameters('subnets')[copyIndex('subnets')], union(parameters('subnets')[copyIndex('subnets')], createObject('name', uniqueString(parameters('subnets')[copyIndex('subnets')].name))))]"
+                        },
+                        "name": "subnets"
+                    }
+                ],
+                "ddosProtectionPlan": "[if(variables('isDdosProtectionEnabled'), variables('ddosProtectionPlanProperties'), json('null'))]",
+                "enableDdosProtection": "[variables('isDdosProtectionEnabled')]",
+                "enableVmProtection": true
+            },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Network/virtualNetworks"
         }
