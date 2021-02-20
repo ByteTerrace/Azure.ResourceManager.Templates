@@ -77,7 +77,13 @@
                     "txtRecords": []
                 }
             },
-            "frontDoor": {},
+            "frontDoor": {
+                "backendPools": [],
+                "frontendEndpoints": [],
+                "healthProbeSettings": [],
+                "loadBalancingSettings": [],
+                "routingRules": []
+            },
             "hdInsightCluster": {
                 "configurationProfile": {},
                 "computeProfile": {},
@@ -992,8 +998,23 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "backendPools": {
+                        "value": "[union(variables('defaultResourceProperties').frontDoor, variables('resourceDefinitions').frontDoors[copyIndex()]).backendPools]"
+                    },
+                    "frontendEndpoints": {
+                        "value": "[union(variables('defaultResourceProperties').frontDoor, variables('resourceDefinitions').frontDoors[copyIndex()]).frontendEndpoints]"
+                    },
+                    "healthProbeSettings": {
+                        "value": "[union(variables('defaultResourceProperties').frontDoor, variables('resourceDefinitions').frontDoors[copyIndex()]).healthProbeSettings]"
+                    },
+                    "loadBalancingSettings": {
+                        "value": "[union(variables('defaultResourceProperties').frontDoor, variables('resourceDefinitions').frontDoors[copyIndex()]).loadBalancingSettings]"
+                    },
                     "name": {
                         "value": "[variables('resourceDefinitions').frontDoors[copyIndex()].name]"
+                    },
+                    "routingRules": {
+                        "value": "[union(variables('defaultResourceProperties').frontDoor, variables('resourceDefinitions').frontDoors[copyIndex()]).routingRules]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"

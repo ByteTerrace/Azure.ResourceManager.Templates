@@ -33,7 +33,31 @@
                     ],
                     "public": [
                         {
+                            "name": "bytrc.com"
+                        },
+                        {
+                            "name": "byteterrace.app"
+                        },
+                        {
+                            "name": "byteterrace.com"
+                        },
+                        {
+                            "name": "byteterrace.dev"
+                        },
+                        {
+                            "name": "byteterrace.info"
+                        },
+                        {
                             "name": "byteterrace.net"
+                        },
+                        {
+                            "name": "byteterrace.org"
+                        },
+                        {
+                            "name": "byteterrace.us"
+                        },
+                        {
+                            "name": "byteterrace.xyz"
                         }
                     ]
                 },
@@ -48,6 +72,26 @@
                                 "name": "LinkedIn"
                             }
                         ],
+                        "frontendEndpoints": [
+                            {
+                                "hostName": "kittoes.com"
+                            },
+                            {
+                                "hostName": "kittoes.info"
+                            },
+                            {
+                                "hostName": "iamtheborg.com"
+                            },
+                            {
+                                "hostName": "www.kittoes.com"
+                            },
+                            {
+                                "hostName": "www.kittoes.info"
+                            },
+                            {
+                                "hostName": "www.iamtheborg.com"
+                            }
+                        ],
                         "healthProbeSettings": [
                             {
                                 "intervalInSeconds": 255,
@@ -58,7 +102,14 @@
                             }
                         ],
                         "name": "byteterrace",
-                        "routingRules": []
+                        "routingRules": [
+                            "kittoes-com",
+                            "kittoes-info",
+                            "iamtheborg-com",
+                            "www-kittoes-com",
+                            "www-kittoes-info",
+                            "www-iamtheborg-com"
+                        ]
                     }
                 ],
                 "keyVaults": [

@@ -42,7 +42,7 @@
         "backendPoolDefaultProperties": {
             "httpPort": 80,
             "httpsPort": 443,
-            "weight": 0
+            "weight": 1
         },
         "frontendEndpointDefaultEntry": {
             "hostName": "[format('{0}.azurefd.net', parameters('name'))]"
@@ -60,9 +60,6 @@
             "additionalLatencyMilliseconds": 0,
             "sampleSize": 4,
             "successfulSamplesRequired": 2
-        },
-        "resourceIds": {
-            "frontDoor": "[resourceId('Microsoft.Network/frontdoors', parameters('name'))]"
         }
     },
     "resources": [
@@ -87,15 +84,15 @@
                                         "enabledState": "Enabled",
                                         "httpPort": "[union(variables('backendPoolDefaultProperties'), parameters('backendPools')[copyIndex('backendPools')]).httpPort]",
                                         "httpsPort": "[union(variables('backendPoolDefaultProperties'), parameters('backendPools')[copyIndex('backendPools')]).httpsPort]",
-                                        "priority": "[union(createObject('priority', copyIndex('backendPools')), parameters('backendPools')[copyIndex('backendPools')]).priority]",
+                                        "priority": "[add(union(createObject('priority', copyIndex('backendPools')), parameters('backendPools')[copyIndex('backendPools')]).priority, 1)]",
                                         "weight": "[union(variables('backendPoolDefaultProperties'), parameters('backendPools')[copyIndex('backendPools')]).weight]"
                                     }
                                 ],
                                 "healthProbeSettings": {
-                                    "id": "[format('{0}/healthprobesettings/{1}', variables('resourceIds').frontDoor, parameters('backendPools')[copyIndex('backendPools')].healthProbeSettingsName)]"
+                                    "id": "[resourceId('Microsoft.Network/frontdoors/healthProbeSettings', parameters('name'), parameters('backendPools')[copyIndex('backendPools')].healthProbeSettingsName)]"
                                 },
                                 "loadBalancingSettings": {
-                                    "id": "[format('{0}/loadbalancingsettings/{1}', variables('resourceIds').frontDoor, parameters('backendPools')[copyIndex('backendPools')].loadBalancingSettingsName)]"
+                                    "id": "[resourceId('Microsoft.Network/frontdoors/loadBalancingSettings', parameters('name'), parameters('backendPools')[copyIndex('backendPools')].loadBalancingSettingsName)]"
                                 }
                             }
                         },
@@ -144,7 +141,7 @@
                         "input": {
                             "acceptedProtocols": "[parameters('routingRules')[copyIndex('routingRules')].acceptedProtocols]",
                             "enabledState": "Enabled",
-                            "frontendEndpoints": "[parameters('routingRules')[copyIndex('routingRules')].frontendEndpoints]",
+                            "frontendEndpoints": "[json(replace(replace(replace(replace(replace(string(parameters('routingRules')[copyIndex('routingRules')].frontendEndpoints), '\",', '☠'), '\"]', '💀'), '\"', format('{{ \"id\": \"/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/frontdoors/{2}/frontendEndpoints/', subscription().subscriptionId, resourceGroup().name, parameters('name'))), '☠', '\" }, '), '💀', '\"}]'))]",
                             "patternsToMatch": "[parameters('routingRules')[copyIndex('routingRules')].patternsToMatch]",
                             "routeConfiguration": {
                                 "@odata.type": "#Microsoft.Azure.FrontDoor.Models.FrontdoorRedirectConfiguration",
