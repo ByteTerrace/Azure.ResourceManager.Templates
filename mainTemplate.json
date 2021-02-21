@@ -175,6 +175,7 @@
             "storageAccount": {
                 "accessTier": "Hot",
                 "blobContainerNames": [],
+                "blobCorsRules": [],
                 "blobSoftDeleteRetentionPeriodInDays": 7,
                 "customerManagedEncryptionKeyName": "",
                 "customerManagedEncryptionKeyVaultName": "",
@@ -187,10 +188,12 @@
                 "firewallRules": [],
                 "isAdvancedThreatProtectionEnabled": false,
                 "isAllowTrustedMicrosoftServicesEnabled": false,
+                "isChangeFeedEnabledForBlobs": false,
                 "isHierarchicalNamespaceEnabled": false,
                 "isLargeFileSharesEnabled": false,
                 "isSoftDeleteEnabledForBlobs": false,
                 "isSoftDeleteEnabledForFileShares": false,
+                "isVersioningEnabledForBlobs": false,
                 "queueNames": [],
                 "skuName": "Standard_LRS",
                 "storageAccountKind": "StorageV2",
@@ -854,6 +857,9 @@
                     "blobContainerNames": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).blobContainerNames]"
                     },
+                    "blobCorsRules": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).blobCorsRules]"
+                    },
                     "blobSoftDeleteRetentionPeriodInDays": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).blobSoftDeleteRetentionPeriodInDays]"
                     },
@@ -890,6 +896,9 @@
                     "isAllowTrustedMicrosoftServicesEnabled": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
                     },
+                    "isChangeFeedEnabledForBlobs": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isChangeFeedEnabledForBlobs]"
+                    },
                     "isHierarchicalNamespaceEnabled": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isHierarchicalNamespaceEnabled]"
                     },
@@ -901,6 +910,9 @@
                     },
                     "isSoftDeleteEnabledForFileShares": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isSoftDeleteEnabledForFileShares]"
+                    },
+                    "isVersioningEnabledForBlobs": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isVersioningEnabledForBlobs]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').storageAccounts[copyIndex()].name]"

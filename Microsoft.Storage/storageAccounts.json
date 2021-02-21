@@ -16,6 +16,13 @@
             },
             "type": "array"
         },
+        "blobCorsRules": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of blob CORS rules that will be deployed within the Azure Storage account."
+            },
+            "type": "array"
+        },
         "blobSoftDeleteRetentionPeriodInDays": {
             "defaultValue": 7,
             "metadata": {
@@ -100,6 +107,13 @@
             },
             "type": "bool"
         },
+        "isChangeFeedEnabledForBlobs": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the change feed feature is enabled for blobs in the Azure Storage account."
+            },
+            "type": "bool"
+        },
         "isHierarchicalNamespaceEnabled": {
             "defaultValue": false,
             "metadata": {
@@ -125,6 +139,13 @@
             "defaultValue": false,
             "metadata": {
                 "description": "Indicates whether the soft-delete feature is enabled for file shares in the Azure Storage account."
+            },
+            "type": "bool"
+        },
+        "isVersioningEnabledForBlobs": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the versioning feature is enabled for blobs in the Azure Storage account."
             },
             "type": "bool"
         },
@@ -399,11 +420,17 @@
             ],
             "name": "[format('{0}/default', variables('storageAccountName'))]",
             "properties": {
+                "changeFeed": {
+                    "enabled": "[parameters('isChangeFeedEnabledForBlobs')]"
+                },
+                "cors": {
+                    "corsRules": "[parameters('blobCorsRules')]"
+                },
                 "deleteRetentionPolicy": {
                     "days": "[parameters('blobSoftDeleteRetentionPeriodInDays')]",
                     "enabled": "[parameters('isSoftDeleteEnabledForBlobs')]"
                 },
-                "isVersioningEnabled": false
+                "isVersioningEnabled": "[parameters('isVersioningEnabledForBlobs')]"
             },
             "type": "Microsoft.Storage/storageAccounts/blobServices"
         },
