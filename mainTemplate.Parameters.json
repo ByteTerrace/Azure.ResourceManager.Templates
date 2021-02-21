@@ -20,6 +20,16 @@
                         "name": "byteterrace"
                     }
                 ],
+                "containerGroups": [
+                    {
+                        "containers": [
+                            {
+                                "name": "byteterrace"
+                            }
+                        ],
+                        "name": "byteterrace"
+                    }
+                ],
                 "containerRegistries": [
                     {
                         "name": "byteterrace"
@@ -143,17 +153,7 @@
                 "keyVaults": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",
-                        "name": "byteterrace",
-                        "virtualNetworkRules": [
-                            {
-                                "subnetName": "byteterrace",
-                                "virtualNetworkName": "byteterrace.net"
-                            },
-                            {
-                                "subnetName": "0.1.2.X",
-                                "virtualNetworkName": "byteterrace.net"
-                            }
-                        ]
+                        "name": "byteterrace"
                     }
                 ],
                 "managedIdentities": [
@@ -200,35 +200,17 @@
                 "sqlServers": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",
-                        "databases": [],
-                        "name": "byteterrace",
-                        "virtualNetworkRules": [
+                        "databases": [
                             {
-                                "name": "byteterrace",
-                                "subnetName": "byteterrace",
-                                "virtualNetworkName": "byteterrace.net"
-                            },
-                            {
-                                "name": "0.1.2.X",
-                                "subnetName": "0.1.2.X",
-                                "virtualNetworkName": "byteterrace.net"
+                                "name": "byteterrace"
                             }
-                        ]
+                        ],
+                        "name": "byteterrace"
                     }
                 ],
                 "storageAccounts": [
                     {
-                        "name": "byteterrace",
-                        "virtualNetworkRules": [
-                            {
-                                "subnetName": "byteterrace",
-                                "virtualNetworkName": "byteterrace.net"
-                            },
-                            {
-                                "subnetName": "0.1.2.X",
-                                "virtualNetworkName": "byteterrace.net"
-                            }
-                        ]
+                        "name": "byteterrace"
                     }
                 ],
                 "virtualNetworks": [
@@ -239,13 +221,9 @@
                         "name": "byteterrace.net",
                         "subnets": [
                             {
-                                "addressPrefix": "10.255.255.224/27",
+                                "addressPrefix": "10.255.255.192/26",
                                 "name": "byteterrace",
                                 "privateEndpointNetworkPolicies": "Disabled"
-                            },
-                            {
-                                "addressPrefix": "10.1.2.0/24",
-                                "name": "0.1.2.X"
                             }
                         ]
                     }

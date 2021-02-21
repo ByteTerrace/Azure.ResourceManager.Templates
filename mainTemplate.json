@@ -17,6 +17,7 @@
             "applicationServicePlans": [],
             "cdnProfiles": [],
             "communicationServices": [],
+            "containerGroups": [],
             "containerRegistries": [],
             "dnsZones": {
                 "private": [],
@@ -56,6 +57,17 @@
             },
             "communicationService": {
                 "dataLocation": "United States"
+            },
+            "containerGroup": {
+                "operatingSystemName": "Linux",
+                "ports": [
+                    {
+                        "port": 80,
+                        "protocol": "tcp"
+                    }
+                ],
+                "restartPolicy": "Always",
+                "skuName": "Standard"
             },
             "containerRegistry": {
                 "firewallRules": [],
@@ -200,6 +212,7 @@
             "applicationServicePlan": "[format('{0}-AppServicePlan', deployment().name)]",
             "cdnProfile": "[format('{0}-CdnProfile', deployment().name)]",
             "communicationService": "[format('{0}-CommunicationService', deployment().name)]",
+            "containerGroup": "[format('{0}-ContainerGroup', deployment().name)]",
             "containerRegistry": "[format('{0}-ContainerRegistry', deployment().name)]",
             "dnsPrivateZone": "[format('{0}-DnsPrivateZone', deployment().name)]",
             "dnsPublicZone": "[format('{0}-DnsPublicZone', deployment().name)]",
@@ -763,6 +776,55 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "relativePath": "./Microsoft.ContainerRegistry/registries.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').containerGroups))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').containerGroups)]",
+                "mode": "parallel",
+                "name": "containerGroupsCopy"
+            },
+            "dependsOn": [
+                "containerRegistriesCopy",
+                "keyVaultsCopy",
+                "networkSecurityGroupsCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').containerGroup, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "containers": {
+                        "value": "[variables('resourceDefinitions').containerGroups[copyIndex()].containers]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').containerGroups[copyIndex()].name]"
+                    },
+                    "operatingSystemName": {
+                        "value": "[union(variables('defaultResourceProperties').containerGroup, variables('resourceDefinitions').containerGroups[copyIndex()]).operatingSystemName]"
+                    },
+                    "ports": {
+                        "value": "[union(variables('defaultResourceProperties').containerGroup, variables('resourceDefinitions').containerGroups[copyIndex()]).ports]"
+                    },
+                    "restartPolicy": {
+                        "value": "[union(variables('defaultResourceProperties').containerGroup, variables('resourceDefinitions').containerGroups[copyIndex()]).restartPolicy]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').containerGroup, variables('resourceDefinitions').containerGroups[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "relativePath": "./Microsoft.ContainerInstance/containerGroups.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
