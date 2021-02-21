@@ -17,7 +17,7 @@
             "applicationServicePlans": [],
             "cdnProfiles": [],
             "communicationServices": [],
-            "containerGroups": [],
+            "containerInstances": [],
             "containerRegistries": [],
             "dnsZones": {
                 "private": [],
@@ -26,6 +26,7 @@
             "frontDoors": [],
             "hdInsightClusters": [],
             "keyVaults": [],
+            "kubernetesServiceClusters": [],
             "managedIdentities": [],
             "monitor": {
                 "applicationInsightsComponents": [],
@@ -58,7 +59,7 @@
             "communicationService": {
                 "dataLocation": "United States"
             },
-            "containerGroup": {
+            "containerInstance": {
                 "operatingSystemName": "Linux",
                 "ports": [
                     {
@@ -120,6 +121,9 @@
                 "softDeleteRetentionInDays": 14,
                 "tenantId": "[subscription().tenantId]",
                 "virtualNetworkRules": []
+            },
+            "kubernetesServiceCluster": {
+                "dnsPrefix": ""
             },
             "managedIdentity": {},
             "monitor": {
@@ -215,13 +219,14 @@
             "applicationServicePlan": "[format('{0}-AppServicePlan', deployment().name)]",
             "cdnProfile": "[format('{0}-CdnProfile', deployment().name)]",
             "communicationService": "[format('{0}-CommunicationService', deployment().name)]",
-            "containerGroup": "[format('{0}-ContainerGroup', deployment().name)]",
+            "containerInstance": "[format('{0}-ContainerInstance', deployment().name)]",
             "containerRegistry": "[format('{0}-ContainerRegistry', deployment().name)]",
             "dnsPrivateZone": "[format('{0}-DnsPrivateZone', deployment().name)]",
             "dnsPublicZone": "[format('{0}-DnsPublicZone', deployment().name)]",
             "frontDoor": "[format('{0}-FrontDoor', deployment().name)]",
             "hdInsightCluster": "[format('{0}-HdInsightCluster', deployment().name)]",
             "keyVault": "[format('{0}-KeyVault', deployment().name)]",
+            "kubernetesServiceCluster": "[format('{0}-KubernetesServiceCluster', deployment().name)]",
             "logAnalyticsWorkspace": "[format('{0}-LogAnalyticsWorkspace', deployment().name)]",
             "managedIdentity": "[format('{0}-ManagedIdentity', deployment().name)]",
             "monitorPrivateLinkScope": "[format('{0}-MonitorPrivateLinkScope', deployment().name)]",
@@ -785,11 +790,11 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').containerGroups))]",
+            "condition": "[not(empty(variables('resourceDefinitions').containerInstances))]",
             "copy": {
-                "count": "[length(variables('resourceDefinitions').containerGroups)]",
+                "count": "[length(variables('resourceDefinitions').containerInstances)]",
                 "mode": "parallel",
-                "name": "containerGroupsCopy"
+                "name": "containerInstancesCopy"
             },
             "dependsOn": [
                 "containerRegistriesCopy",
@@ -799,27 +804,27 @@
                 "publicDnsZonesCopy",
                 "virtualNetworksCopy"
             ],
-            "name": "[format('{0}_{1}', variables('deploymentNames').containerGroup, copyIndex())]",
+            "name": "[format('{0}_{1}', variables('deploymentNames').containerInstance, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
                     "containers": {
-                        "value": "[variables('resourceDefinitions').containerGroups[copyIndex()].containers]"
+                        "value": "[variables('resourceDefinitions').containerInstances[copyIndex()].containers]"
                     },
                     "name": {
-                        "value": "[variables('resourceDefinitions').containerGroups[copyIndex()].name]"
+                        "value": "[variables('resourceDefinitions').containerInstances[copyIndex()].name]"
                     },
                     "operatingSystemName": {
-                        "value": "[union(variables('defaultResourceProperties').containerGroup, variables('resourceDefinitions').containerGroups[copyIndex()]).operatingSystemName]"
+                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).operatingSystemName]"
                     },
                     "ports": {
-                        "value": "[union(variables('defaultResourceProperties').containerGroup, variables('resourceDefinitions').containerGroups[copyIndex()]).ports]"
+                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).ports]"
                     },
                     "restartPolicy": {
-                        "value": "[union(variables('defaultResourceProperties').containerGroup, variables('resourceDefinitions').containerGroups[copyIndex()]).restartPolicy]"
+                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).restartPolicy]"
                     },
                     "skuName": {
-                        "value": "[union(variables('defaultResourceProperties').containerGroup, variables('resourceDefinitions').containerGroups[copyIndex()]).skuName]"
+                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).skuName]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
@@ -827,7 +832,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "relativePath": "./Microsoft.ContainerInstance/containerGroups.json"
+                    "relativePath": "./Microsoft.ContainerInstance/containerInstances.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -1034,6 +1039,43 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "relativePath": "./Microsoft.Sql/servers.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').kubernetesServiceClusters))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').kubernetesServiceClusters)]",
+                "mode": "parallel",
+                "name": "kubernetesServiceClustersCopy"
+            },
+            "dependsOn": [
+                "keyVaultsCopy",
+                "networkSecurityGroupsCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "storageAccountsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').kubernetesServiceCluster, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "dnsPrefix": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).dnsPrefix]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "relativePath": "./Microsoft.ContainerService/managedClusters.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"

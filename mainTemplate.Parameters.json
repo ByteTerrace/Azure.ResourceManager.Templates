@@ -20,7 +20,7 @@
                         "name": "byteterrace"
                     }
                 ],
-                "containerGroups": [
+                "containerInstances": [
                     {
                         "containers": [
                             {
@@ -153,6 +153,17 @@
                 "keyVaults": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",
+                        "name": "byteterrace",
+                        "virtualNetworkRules": [
+                            {
+                                "subnetName": "byteterrace",
+                                "virtualNetworkName": "byteterrace.net"
+                            }
+                        ]
+                    }
+                ],
+                "kubernetesServiceClusters": [
+                    {
                         "name": "byteterrace"
                     }
                 ],
@@ -210,7 +221,13 @@
                 ],
                 "storageAccounts": [
                     {
-                        "name": "byteterrace"
+                        "name": "byteterrace",
+                        "virtualNetworkRules": [
+                            {
+                                "subnetName": "byteterrace",
+                                "virtualNetworkName": "byteterrace.net"
+                            }
+                        ]
                     }
                 ],
                 "virtualNetworks": [
@@ -223,7 +240,38 @@
                             {
                                 "addressPrefix": "10.255.255.192/26",
                                 "name": "byteterrace",
-                                "privateEndpointNetworkPolicies": "Disabled"
+                                "networkSecurityGroup": {
+                                    "id": "/subscriptions/28932662-8488-49f8-9638-94a96eaceacb/resourceGroups/byteterrace/providers/Microsoft.Network/networkSecurityGroups/byteterrace.net"
+                                },
+                                "privateEndpointNetworkPolicies": "Disabled",
+                                "serviceEndpoints": [
+                                    {
+                                        "locations": [
+                                            "*"
+                                        ],
+                                        "service": "Microsoft.KeyVault"
+                                    },
+                                    {
+                                        "locations": [
+                                            "southcentralus"
+                                        ],
+                                        "service": "Microsoft.Sql"
+                                    },
+                                    {
+                                        "locations": [
+                                            "brazilsouth",
+                                            "northcentralus",
+                                            "southcentralus"
+                                        ],
+                                        "service": "Microsoft.Storage"
+                                    },
+                                    {
+                                        "locations": [
+                                            "*"
+                                        ],
+                                        "service": "Microsoft.Web"
+                                    }
+                                ]
                             }
                         ]
                     }
