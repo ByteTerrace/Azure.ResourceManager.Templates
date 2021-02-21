@@ -832,7 +832,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "relativePath": "./Microsoft.ContainerInstance/containerInstances.json"
+                    "relativePath": "./Microsoft.ContainerInstance/containerGroups.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
