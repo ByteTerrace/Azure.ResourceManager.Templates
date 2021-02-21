@@ -1,6 +1,41 @@
-Useful Links
+# Quickstart
 
-----
+## Publish Template Spec via Azure CLI
+```
+$resourceGroupName = 'byteterrace';
+$templateFilePath = 'mainTemplate.json';
+$templateName = 'UniversalTemplate';
+$version = '1.0.0';
+
+az ts create `
+    --name $templateName `
+    --resource-group $resourceGroupName `
+    --template-file $templateFilePath `
+    --version $version `
+    --yes;
+```
+
+## Deploy Template Spec via Azure CLI
+```
+$parametersFilePath = 'mainTemplate.Parameters.json';
+$resourceGroupName = 'byteterrace';
+$templateFilePath = 'mainTemplate.json';
+$templateName = 'UniversalTemplate';
+$version = '1.0.0';
+
+$templateSpecId = (az ts show `
+    --name $templateName `
+    --query 'id' `
+    --resource-group $resourceGroupName `
+    --version $version);
+
+az deployment group create `
+    --parameters ('@{0}' -f $parametersFilePath) `
+    --resource-group 'byteterrace' `
+    --template-spec $templateSpecId;
+```
+
+# Useful Links
 - [Azure App Service - Access Restrictions](https://docs.microsoft.com/en-us/azure/app-service/app-service-ip-restrictions/)
 - [Azure App Service - Documentation](https://docs.microsoft.com/en-us/azure/app-service/)
 - [Azure Resource Manager - Function Functions](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/template-functions/)

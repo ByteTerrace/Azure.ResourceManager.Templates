@@ -9,7 +9,7 @@
             },
             "type": "string"
         },
-        "managedIdentityName": {
+        "name": {
             "maxLength": 128,
             "metadata": {
                 "description": "Specifies the name of the Azure Managed Identity."
@@ -32,7 +32,7 @@
         {
             "apiVersion": "[variables('managedIdentityUserAssignedIdentitiesApiVersion')]",
             "location": "[parameters('location')]",
-            "name": "[parameters('managedIdentityName')]",
+            "name": "[parameters('name')]",
             "properties": {},
             "tags": "[parameters('tags')]",
             "type": "Microsoft.ManagedIdentity/userAssignedIdentities"
@@ -41,7 +41,7 @@
     "outputs": {
         "principalId": {
             "type": "string",
-            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), variables('managedIdentityUserAssignedIdentitiesApiVersion'), 'Full').properties.principalId]"
+            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name')), variables('managedIdentityUserAssignedIdentitiesApiVersion'), 'Full').properties.principalId]"
         }
     }
 }

@@ -25,6 +25,7 @@
             "frontDoors": [],
             "hdInsightClusters": [],
             "keyVaults": [],
+            "managedIdentities": [],
             "monitor": {
                 "applicationInsightsComponents": [],
                 "logAnalyticsWorkspaces": [],
@@ -107,6 +108,7 @@
                 "tenantId": "[subscription().tenantId]",
                 "virtualNetworkRules": []
             },
+            "managedIdentity": {},
             "monitor": {
                 "applicationInsightsComponent": {
                     "logAnalyticsWorkspaceResourceGroupName": "[resourceGroup().name]",
@@ -198,6 +200,7 @@
             "hdInsightCluster": "[format('{0}-HdInsightCluster', deployment().name)]",
             "keyVault": "[format('{0}-KeyVault', deployment().name)]",
             "logAnalyticsWorkspace": "[format('{0}-LogAnalyticsWorkspace', deployment().name)]",
+            "managedIdentity": "[format('{0}-ManagedIdentity', deployment().name)]",
             "monitorPrivateLinkScope": "[format('{0}-MonitorPrivateLinkScope', deployment().name)]",
             "networkSecurityGroup": "[format('{0}-NetworkSecurityGroup', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
@@ -207,6 +210,32 @@
         "resourceDefinitions": "[union(variables('defaultResourceDefinitions'), parameters('resourceDefinitions'))]"
     },
     "resources": [
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').managedIdentities))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').managedIdentities)]",
+                "mode": "parallel",
+                "name": "managedIdentitiesCopy"
+            },
+            "name": "[format('{0}_{1}', variables('deploymentNames').managedIdentity, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "name": {
+                        "value": "[variables('resourceDefinitions').managedIdentities[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "relativePath": "./Microsoft.ManagedIdentity/userAssignedIdentities.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[not(empty(variables('resourceDefinitions').monitor.privateLinkScopes))]",
