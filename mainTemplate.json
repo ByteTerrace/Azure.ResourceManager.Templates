@@ -32,6 +32,7 @@
                 "privateLinkScopes": []
             },
             "networkSecurityGroups": [],
+            "privateEndpoints": [],
             "sqlServers": [],
             "storageAccounts": [],
             "virtualNetworks": []
@@ -128,6 +129,12 @@
                 "auditLogAnalyticsWorkspaceSubscriptionId": "[subscription().subscriptionId]",
                 "securityRules": []
             },
+            "privateEndpoint": {
+                "linkedResourceGroupName": "[resourceGroup().name]",
+                "linkedResourceSubscriptionId": "[subscription().subscriptionId]",
+                "virtualNetworkResourceGroupName": "[resourceGroup().name]",
+                "virtualNetworkSubscriptionId": "[subscription().subscriptionId]"
+            },
             "sqlServer": {
                 "activeDirectoryAdministratorObjectId": "",
                 "activeDirectoryAdministratorTenantId": "[subscription().tenantId]",
@@ -203,6 +210,7 @@
             "managedIdentity": "[format('{0}-ManagedIdentity', deployment().name)]",
             "monitorPrivateLinkScope": "[format('{0}-MonitorPrivateLinkScope', deployment().name)]",
             "networkSecurityGroup": "[format('{0}-NetworkSecurityGroup', deployment().name)]",
+            "privateEndpoint": "[format('{0}-PrivateEndpoint', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
             "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]"
@@ -1068,6 +1076,7 @@
                 "applicationInsightsComponentsCopy",
                 "cdnProfilesCopy",
                 "containerRegistriesCopy",
+                "frontDoorsCopy",
                 "keyVaultsCopy",
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
@@ -1110,6 +1119,73 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "relativePath": "./Microsoft.Web/serverfarms.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').privateEndpoints))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').privateEndpoints)]",
+                "mode": "parallel",
+                "name": "privateEndpointsCopy"
+            },
+            "dependsOn": [
+                "applicationInsightsComponentsCopy",
+                "applicationServicePlansCopy",
+                "containerRegistriesCopy",
+                "keyVaultsCopy",
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "networkSecurityGroupsCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "sqlServersCopy",
+                "storageAccountsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').privateEndpoint, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "groupIds": {
+                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].groupIds]"
+                    },
+                    "linkedResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).linkedResourceGroupName]"
+                    },
+                    "linkedResourcePath": {
+                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].linkedResourcePath]"
+                    },
+                    "linkedResourceSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).linkedResourceSubscriptionId]"
+                    },
+                    "linkedResourceType": {
+                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].linkedResourceType]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].name]"
+                    },
+                    "subnetName": {
+                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].subnetName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "virtualNetworkName": {
+                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].virtualNetworkName]"
+                    },
+                    "virtualNetworkResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).virtualNetworkResourceGroupName]"
+                    },
+                    "virtualNetworkSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).virtualNetworkSubscriptionId]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "relativePath": "./Microsoft.Network/privateEndpoints.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"

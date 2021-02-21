@@ -185,6 +185,18 @@
                         "name": "byteterrace.net"
                     }
                 ],
+                "privateEndpoints": [
+                    {
+                        "groupIds": [
+                            "sites"
+                        ],
+                        "linkedResourcePath": "byteterrace",
+                        "linkedResourceType": "Microsoft.Web/sites",
+                        "name": "byteterrace",
+                        "subnetName": "byteterrace",
+                        "virtualNetworkName": "byteterrace.net"
+                    }
+                ],
                 "sqlServers": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",
@@ -222,13 +234,14 @@
                 "virtualNetworks": [
                     {
                         "addressPrefixes": [
-                          "10.0.0.0/8"
+                            "10.0.0.0/8"
                         ],
                         "name": "byteterrace.net",
                         "subnets": [
                             {
                                 "addressPrefix": "10.255.255.224/27",
-                                "name": "byteterrace"
+                                "name": "byteterrace",
+                                "privateEndpointNetworkPolicies": "Disabled"
                             },
                             {
                                 "addressPrefix": "10.1.2.0/24",
