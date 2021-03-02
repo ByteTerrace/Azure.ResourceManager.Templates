@@ -208,6 +208,11 @@
                         "virtualNetworkName": "byteterrace.net"
                     }
                 ],
+                "routeTables": [
+                    {
+                        "name": "byteterrace.net"
+                    }
+                ],
                 "sqlServers": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",
@@ -239,11 +244,10 @@
                         "subnets": [
                             {
                                 "addressPrefix": "10.255.255.192/26",
+                                "isPrivateEndpointSupportEnabled": true,
+                                "networkSecurityGroupName": "byteterrace.net",
                                 "name": "byteterrace",
-                                "networkSecurityGroup": {
-                                    "id": "/subscriptions/28932662-8488-49f8-9638-94a96eaceacb/resourceGroups/byteterrace/providers/Microsoft.Network/networkSecurityGroups/byteterrace.net"
-                                },
-                                "privateEndpointNetworkPolicies": "Disabled",
+                                "routeTableName": "byteterrace.net",
                                 "serviceEndpoints": [
                                     {
                                         "locations": [

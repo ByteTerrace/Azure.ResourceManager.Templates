@@ -35,6 +35,7 @@
             },
             "networkSecurityGroups": [],
             "privateEndpoints": [],
+            "routeTables": [],
             "sqlServers": [],
             "storageAccounts": [],
             "virtualNetworks": []
@@ -151,6 +152,10 @@
                 "virtualNetworkResourceGroupName": "[resourceGroup().name]",
                 "virtualNetworkSubscriptionId": "[subscription().subscriptionId]"
             },
+            "routeTable": {
+                "isBgpRoutePropagationEnabled": false,
+                "routes": []
+            },
             "sqlServer": {
                 "activeDirectoryAdministratorObjectId": "",
                 "activeDirectoryAdministratorTenantId": "[subscription().tenantId]",
@@ -232,6 +237,7 @@
             "monitorPrivateLinkScope": "[format('{0}-MonitorPrivateLinkScope', deployment().name)]",
             "networkSecurityGroup": "[format('{0}-NetworkSecurityGroup', deployment().name)]",
             "privateEndpoint": "[format('{0}-PrivateEndpoint', deployment().name)]",
+            "routeTable": "[format('{0}-RouteTable', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
             "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]"
@@ -376,6 +382,42 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').routeTables))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').routeTables)]",
+                "mode": "parallel",
+                "name": "routeTablesCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').routeTable, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "isBgpRoutePropagationEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').routeTable, variables('resourceDefinitions').routeTables[copyIndex()]).isBgpRoutePropagationEnabled]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').routeTables[copyIndex()].name]"
+                    },
+                    "routes": {
+                        "value": "[union(variables('defaultResourceProperties').routeTable, variables('resourceDefinitions').routeTables[copyIndex()]).routes]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "relativePath": "./Microsoft.Network/routeTables.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[not(empty(variables('resourceDefinitions').cdnProfiles))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').cdnProfiles)]",
@@ -425,7 +467,8 @@
                 "name": "virtualNetworksCopy"
             },
             "dependsOn": [
-                "networkSecurityGroupsCopy"
+                "networkSecurityGroupsCopy",
+                "routeTablesCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').virtualNetwork, copyIndex())]",
             "properties": {
@@ -472,6 +515,7 @@
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
                 "networkSecurityGroupsCopy",
+                "routeTablesCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').dnsPrivateZone, copyIndex())]",
@@ -516,6 +560,7 @@
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
                 "networkSecurityGroupsCopy",
+                "routeTablesCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').dnsPublicZone, copyIndex())]",
@@ -563,6 +608,7 @@
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
                 "networkSecurityGroupsCopy",
+                "routeTablesCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').applicationInsightsComponent, copyIndex())]",
@@ -607,6 +653,7 @@
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
                 "networkSecurityGroupsCopy",
+                "routeTablesCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').keyVault, copyIndex())]",
@@ -683,6 +730,7 @@
             "dependsOn": [
                 "keyVaultsCopy",
                 "networkSecurityGroupsCopy",
+                "routeTablesCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').communicationService, copyIndex())]",
@@ -717,6 +765,7 @@
             "dependsOn": [
                 "keyVaultsCopy",
                 "networkSecurityGroupsCopy",
+                "routeTablesCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').applicationConfigurationStore, copyIndex())]",
@@ -753,6 +802,7 @@
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
+                "routeTablesCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').containerRegistry, copyIndex())]",
@@ -802,6 +852,7 @@
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
+                "routeTablesCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').containerInstance, copyIndex())]",
@@ -850,6 +901,7 @@
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
+                "routeTablesCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').storageAccount, copyIndex())]",
@@ -963,6 +1015,7 @@
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
+                "routeTablesCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').sqlServer, copyIndex())]",
@@ -1056,6 +1109,7 @@
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
+                "routeTablesCopy",
                 "storageAccountsCopy",
                 "virtualNetworksCopy"
             ],
@@ -1093,6 +1147,7 @@
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
+                "routeTablesCopy",
                 "sqlServersCopy",
                 "storageAccountsCopy",
                 "virtualNetworksCopy"
@@ -1143,6 +1198,7 @@
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
+                "routeTablesCopy",
                 "sqlServersCopy",
                 "storageAccountsCopy",
                 "virtualNetworksCopy"
@@ -1199,6 +1255,7 @@
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
+                "routeTablesCopy",
                 "sqlServersCopy",
                 "storageAccountsCopy",
                 "virtualNetworksCopy"
@@ -1257,6 +1314,7 @@
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
+                "routeTablesCopy",
                 "sqlServersCopy",
                 "storageAccountsCopy",
                 "virtualNetworksCopy"
