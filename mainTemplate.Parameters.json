@@ -20,7 +20,7 @@
                         "name": "byteterrace"
                     }
                 ],
-                "containerInstances": [
+                "_containerInstances": [
                     {
                         "containers": [
                             {
@@ -30,7 +30,7 @@
                         "name": "byteterrace"
                     }
                 ],
-                "containerRegistries": [
+                "_containerRegistries": [
                     {
                         "name": "byteterrace"
                     }
@@ -162,7 +162,7 @@
                         ]
                     }
                 ],
-                "kubernetesServiceClusters": [
+                "_kubernetesServiceClusters": [
                     {
                         "name": "byteterrace"
                     }
@@ -190,6 +190,11 @@
                         }
                     ]
                 },
+                "natGateways": [
+                    {
+                        "name": "byteterrace.net"
+                    }
+                ],
                 "networkSecurityGroups": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",
@@ -213,7 +218,7 @@
                         "name": "byteterrace.net"
                     }
                 ],
-                "sqlServers": [
+                "_sqlServers": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",
                         "databases": [
@@ -245,8 +250,9 @@
                             {
                                 "addressPrefix": "10.255.255.192/26",
                                 "isPrivateEndpointSupportEnabled": true,
-                                "networkSecurityGroupName": "byteterrace.net",
                                 "name": "byteterrace",
+                                "natGatewayName": "byteterrace.net",
+                                "networkSecurityGroupName": "byteterrace.net",
                                 "routeTableName": "byteterrace.net",
                                 "serviceEndpoints": [
                                     {

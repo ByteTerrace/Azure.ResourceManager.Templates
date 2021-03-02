@@ -33,6 +33,7 @@
                 "logAnalyticsWorkspaces": [],
                 "privateLinkScopes": []
             },
+            "natGateways": [],
             "networkSecurityGroups": [],
             "privateEndpoints": [],
             "routeTables": [],
@@ -141,6 +142,11 @@
                 },
                 "privateLinkScope": {}
             },
+            "natGateway": {
+                "publicIpAddresses": [],
+                "publicIpPrefixes": [],
+                "skuName": "Standard"
+            },
             "networkSecurityGroup": {
                 "auditLogAnalyticsWorkspaceResourceGroupName": "[resourceGroup().name]",
                 "auditLogAnalyticsWorkspaceSubscriptionId": "[subscription().subscriptionId]",
@@ -235,6 +241,7 @@
             "logAnalyticsWorkspace": "[format('{0}-LogAnalyticsWorkspace', deployment().name)]",
             "managedIdentity": "[format('{0}-ManagedIdentity', deployment().name)]",
             "monitorPrivateLinkScope": "[format('{0}-MonitorPrivateLinkScope', deployment().name)]",
+            "natGateway": "[format('{0}-NatGateway', deployment().name)]",
             "networkSecurityGroup": "[format('{0}-NetworkSecurityGroup', deployment().name)]",
             "privateEndpoint": "[format('{0}-PrivateEndpoint', deployment().name)]",
             "routeTable": "[format('{0}-RouteTable', deployment().name)]",
@@ -334,6 +341,45 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "relativePath": "./Microsoft.OperationalInsights/workspaces.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').natGateways))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').natGateways)]",
+                "mode": "parallel",
+                "name": "natGatewaysCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').natGateway, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "name": {
+                        "value": "[variables('resourceDefinitions').natGateways[copyIndex()].name]"
+                    },
+                    "publicIpAddresses": {
+                        "value": "[union(variables('defaultResourceProperties').natGateway, variables('resourceDefinitions').natGateways[copyIndex()]).publicIpAddresses]"
+                    },
+                    "publicIpPrefixes": {
+                        "value": "[union(variables('defaultResourceProperties').natGateway, variables('resourceDefinitions').natGateways[copyIndex()]).publicIpPrefixes]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').natGateway, variables('resourceDefinitions').natGateways[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "relativePath": "./Microsoft.Network/natGateways.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -467,6 +513,7 @@
                 "name": "virtualNetworksCopy"
             },
             "dependsOn": [
+                "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "routeTablesCopy"
             ],
@@ -514,6 +561,7 @@
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "routeTablesCopy",
                 "virtualNetworksCopy"
@@ -559,6 +607,7 @@
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "routeTablesCopy",
                 "virtualNetworksCopy"
@@ -607,6 +656,7 @@
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "routeTablesCopy",
                 "virtualNetworksCopy"
@@ -652,6 +702,7 @@
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "routeTablesCopy",
                 "virtualNetworksCopy"
@@ -729,6 +780,7 @@
             },
             "dependsOn": [
                 "keyVaultsCopy",
+                "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "routeTablesCopy",
                 "virtualNetworksCopy"
@@ -764,6 +816,7 @@
             },
             "dependsOn": [
                 "keyVaultsCopy",
+                "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "routeTablesCopy",
                 "virtualNetworksCopy"
@@ -799,6 +852,7 @@
             },
             "dependsOn": [
                 "keyVaultsCopy",
+                "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
@@ -849,6 +903,7 @@
             "dependsOn": [
                 "containerRegistriesCopy",
                 "keyVaultsCopy",
+                "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
@@ -898,6 +953,7 @@
             },
             "dependsOn": [
                 "keyVaultsCopy",
+                "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
@@ -1012,6 +1068,7 @@
                 "keyVaultsCopy",
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
@@ -1106,6 +1163,7 @@
             },
             "dependsOn": [
                 "keyVaultsCopy",
+                "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
@@ -1144,6 +1202,7 @@
             },
             "dependsOn": [
                 "keyVaultsCopy",
+                "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
@@ -1195,6 +1254,7 @@
             },
             "dependsOn": [
                 "keyVaultsCopy",
+                "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
@@ -1252,6 +1312,7 @@
                 "keyVaultsCopy",
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
@@ -1311,6 +1372,7 @@
                 "keyVaultsCopy",
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
