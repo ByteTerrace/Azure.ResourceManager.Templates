@@ -213,6 +213,17 @@
                         "virtualNetworkName": "byteterrace.net"
                     }
                 ],
+                "publicIpAddresses": [
+                    {
+                        "ipPrefixName": "byteterrace",
+                        "name": "byteterrace"
+                    }
+                ],
+                "publicIpPrefixes": [
+                    {
+                        "name": "byteterrace"
+                    }
+                ],
                 "routeTables": [
                     {
                         "name": "byteterrace.net"
