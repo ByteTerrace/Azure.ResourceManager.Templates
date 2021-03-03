@@ -39,15 +39,35 @@
             "type": "object"
         }
     },
-    "variables": {},
+    "variables": {
+        "defaultResourceProperties": {
+            "route": {
+                "nextHopIpAddress": "",
+                "nextHopType": "None"
+            }
+        }
+    },
     "resources": [
         {
             "apiVersion": "2020-07-01",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
-                "disableBgpRoutePropagation": "[parameters('isBgpRoutePropagationEnabled')]",
-                "routes": "[parameters('routes')]"
+                "copy": [
+                    {
+                        "count": "[length(parameters('routes'))]",
+                        "input": {
+                            "name": "[parameters('routes')[copyIndex('routes')].name]",
+                            "properties": {
+                                "addressPrefix": "[parameters('routes')[copyIndex('routes')].addressPrefix]",
+                                "nextHopIpAddress": "[union(variables('defaultResourceProperties').route, parameters('routes')[copyIndex('routes')]).nextHopIpAddress]",
+                                "nextHopType": "[union(variables('defaultResourceProperties').route, parameters('routes')[copyIndex('routes')]).nextHopType]"
+                            }
+                        },
+                        "name": "routes"
+                    }
+                ],
+                "disableBgpRoutePropagation": "[parameters('isBgpRoutePropagationEnabled')]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Network/routeTables"

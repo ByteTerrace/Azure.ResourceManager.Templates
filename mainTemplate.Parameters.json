@@ -20,7 +20,7 @@
                         "name": "byteterrace"
                     }
                 ],
-                "_containerInstances": [
+                "containerInstances": [
                     {
                         "containers": [
                             {
@@ -30,7 +30,7 @@
                         "name": "byteterrace"
                     }
                 ],
-                "_containerRegistries": [
+                "containerRegistries": [
                     {
                         "name": "byteterrace"
                     }
@@ -162,7 +162,7 @@
                         ]
                     }
                 ],
-                "_kubernetesServiceClusters": [
+                "kubernetesServiceClusters": [
                     {
                         "name": "byteterrace"
                     }
@@ -218,7 +218,7 @@
                         "name": "byteterrace.net"
                     }
                 ],
-                "_sqlServers": [
+                "sqlServers": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",
                         "databases": [

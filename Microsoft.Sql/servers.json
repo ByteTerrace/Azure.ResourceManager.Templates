@@ -192,6 +192,7 @@
     },
     "variables": {
         "apiVersions": {
+            "databases": "2019-06-01-preview",
             "deployments": "2020-10-01",
             "diagnosticSettings": "2017-05-01-preview",
             "keyVaults": "2019-09-01",
@@ -430,7 +431,7 @@
             "type": "Microsoft.Sql/servers/databases/providers/diagnosticSettings"
         },
         {
-            "apiVersion": "[variables('apiVersions').deployments]",
+            "apiVersion": "[variables('apiVersions').databases]",
             "condition": "[variables('databasesIsNotEmpty')]",
             "copy": {
                 "count": "[length(variables('databases'))]",
@@ -441,41 +442,19 @@
                 "[variables('resourceIds').sqlAdministrator]",
                 "[variables('resourceIds').sqlServer]"
             ],
-            "name": "[format('{0}-database_{1}', deployment().name, copyIndex())]",
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/{1}', variables('serverName'), variables('databases')[copyIndex()].name)]",
             "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "catalogCollation": {
-                        "value": "[union(variables('databasesDefaultProperties'), variables('databases')[copyIndex()]).catalogCollation]"
-                    },
-                    "defaultCollation": {
-                        "value": "[union(variables('databasesDefaultProperties'), variables('databases')[copyIndex()]).defaultCollation]"
-                    },
-                    "isAzureHybridBenefitEnabled": {
-                        "value": "[union(variables('databasesDefaultProperties'), variables('databases')[copyIndex()]).isAzureHybridBenefitEnabled]"
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    },
-                    "name": {
-                        "value": "[variables('databases')[copyIndex()].name]"
-                    },
-                    "serverName": {
-                        "value": "[variables('serverName')]"
-                    },
-                    "skuName": {
-                        "value": "[union(variables('databasesDefaultProperties'), variables('databases')[copyIndex()]).skuName]"
-                    },
-                    "tags": {
-                        "value": "[parameters('tags')]"
-                    }
-                },
-                "templateLink": {
-                    "contentVersion": "1.0.0.0",
-                    "uri": "./databases.json"
-                }
+                "catalogCollation": "[union(variables('databasesDefaultProperties'), variables('databases')[copyIndex()]).catalogCollation]",
+                "collation": "[union(variables('databasesDefaultProperties'), variables('databases')[copyIndex()]).defaultCollation]",
+                "createMode": "Default",
+                "licenseType": "[if(union(variables('databasesDefaultProperties'), variables('databases')[copyIndex()]).isAzureHybridBenefitEnabled, 'BasePrice', 'LicenseIncluded')]"
             },
-            "type": "Microsoft.Resources/deployments"
+            "sku": {
+                "name": "[union(variables('databasesDefaultProperties'), variables('databases')[copyIndex()]).skuName]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Sql/servers/databases"
         }
     ]
 }
