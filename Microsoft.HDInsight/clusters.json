@@ -2,6 +2,20 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "clusterAdministratorUserName": {
+            "defaultValue": "[uniqueString(parameters('name'))]",
+            "metadata": {
+                "description": "Specifies the administrator user name of the Azure HDInsight cluster."
+            },
+            "type": "securestring"
+        },
+        "clusterAdministratorUserPassword": {
+            "defaultValue": "[format('{0}{1}', uniqueString(newGuid()), toUpper(uniqueString(newGuid())))]",
+            "metadata": {
+                "description": "Specifies the administrator user password of the Azure HDInsight cluster."
+            },
+            "type": "securestring"
+        },
         "computeProfile": {
             "metadata": {
                 "description": "Specifies the compute profile of the Azure HDInsight cluster."
@@ -80,9 +94,9 @@
             "clusterDefinition": {
                 "configurations": {
                     "gateway": {
-                        "restAuthCredential.isEnabled": false,
-                        "restAuthCredential.password": "It's a secret to everybody!137",
-                        "restAuthCredential.username": "thewindfish"
+                        "restAuthCredential.isEnabled": true,
+                        "restAuthCredential.password": "[parameters('clusterAdministratorUserPassword')]",
+                        "restAuthCredential.username": "[parameters('clusterAdministratorUserName')]"
                     }
                 }
             },

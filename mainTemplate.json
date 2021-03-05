@@ -1324,6 +1324,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "clusterAdministratorUserName": {
+                        "value": "[union(createObject('clusterAdministratorUserName', uniqueString(variables('resourceDefinitions').hdInsightClusters[copyIndex()].name)), variables('resourceDefinitions').hdInsightClusters[copyIndex()]).clusterAdministratorUserName]"
+                    },
                     "configurationProfile": {
                         "value": "[union(variables('defaultResourceProperties').hdInsightCluster, variables('resourceDefinitions').hdInsightClusters[copyIndex()]).configurationProfile]"
                     },
