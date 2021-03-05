@@ -38,6 +38,7 @@ az deployment group create `
 # Useful Links
 - [Azure App Service - Access Restrictions](https://docs.microsoft.com/en-us/azure/app-service/app-service-ip-restrictions/)
 - [Azure App Service - Documentation](https://docs.microsoft.com/en-us/azure/app-service/)
+- [Azure Bastion - Network Security Groups](https://docs.microsoft.com/en-us/azure/bastion/bastion-nsg/)
 - [Azure HDInsight - Business Continuity](https://docs.microsoft.com/en-us/azure/hdinsight/hdinsight-business-continuity/)
 - [Azure Resource Manager - Function Functions](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/template-functions/)
 - [Azure Resource Manager - Naming Rules](https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules/)

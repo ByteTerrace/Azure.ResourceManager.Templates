@@ -266,6 +266,7 @@
                             },
                             {
                                 "access": "Allow",
+                                "destinationAddressPrefixes": [ "VirtualNetwork" ],
                                 "destinationPortRanges": [
                                     "5071",
                                     "8080"
@@ -273,7 +274,8 @@
                                 "direction": "Inbound",
                                 "name": "Allow-BastionHostCommunication-Inbound",
                                 "priority": 4094,
-                                "protocol": "*"
+                                "protocol": "*",
+                                "sourceAddressPrefixes": [ "VirtualNetwork" ]
                             },
                             {
                                 "access": "Allow",
@@ -301,20 +303,22 @@
                                 "destinationPortRanges": [ "443" ],
                                 "direction": "Outbound",
                                 "name": "Allow-AzureCloud-Outbound",
-                                "priority": 4089,
+                                "priority": 4093,
                                 "protocol": "TCP",
                                 "sourceAddressPrefixes": [ "*" ]
                             },
                             {
                                 "access": "Allow",
+                                "destinationAddressPrefixes": [ "VirtualNetwork" ],
                                 "destinationPortRanges": [
                                     "5071",
                                     "8080"
                                 ],
                                 "direction": "Outbound",
                                 "name": "Allow-BastionHostCommunication-Outbound",
-                                "priority": 4090,
-                                "protocol": "*"
+                                "priority": 4094,
+                                "protocol": "*",
+                                "sourceAddressPrefixes": [ "VirtualNetwork" ]
                             },
                             {
                                 "access": "Allow",
@@ -322,19 +326,20 @@
                                 "destinationPortRanges": [ "80" ],
                                 "direction": "Outbound",
                                 "name": "Allow-GetSessionInformation-Outbound",
-                                "priority": 4091,
+                                "priority": 4095,
                                 "protocol": "*",
                                 "sourceAddressPrefixes": [ "*" ]
                             },
                             {
                                 "access": "Allow",
+                                "destinationAddressPrefixes": [ "VirtualNetwork" ],
                                 "destinationPortRanges": [
                                     "22",
                                     "3389"
                                 ],
                                 "direction": "Outbound",
                                 "name": "Allow-SshRdp-Outbound",
-                                "priority": 4092,
+                                "priority": 4096,
                                 "protocol": "*",
                                 "sourceAddressPrefixes": [ "*" ]
                             }
@@ -346,6 +351,7 @@
                         "securityRules": [
                             {
                                 "access": "Allow",
+                                "destinationAddressPrefixes": [ "VirtualNetwork" ],
                                 "destinationPortRanges": [ "443" ],
                                 "direction": "Inbound",
                                 "name": "Allow-HdInsight.EastUs-Inbound",
@@ -355,6 +361,7 @@
                             },
                             {
                                 "access": "Allow",
+                                "destinationAddressPrefixes": [ "VirtualNetwork" ],
                                 "destinationPortRanges": [ "443" ],
                                 "direction": "Inbound",
                                 "name": "Allow-HdInsight.SouthCentralUs-Inbound",
@@ -364,6 +371,7 @@
                             },
                             {
                                 "access": "Allow",
+                                "destinationAddressPrefixes": [ "VirtualNetwork" ],
                                 "destinationPortRanges": [ "443" ],
                                 "direction": "Inbound",
                                 "name": "Allow-HdInsight.WestUs-Inbound",
