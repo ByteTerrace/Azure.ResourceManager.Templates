@@ -67,8 +67,7 @@
                         },
                         "name": "ipConfigurations"
                     }
-                ],
-                "dnsName": "[json('null')]"
+                ]
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Network/bastionHosts"
