@@ -15,6 +15,7 @@
         "defaultResourceDefinitions": {
             "applicationConfigurationStores": [],
             "applicationServicePlans": [],
+            "bastionHosts": [],
             "cdnProfiles": [],
             "communicationServices": [],
             "containerInstances": [],
@@ -159,13 +160,13 @@
                 "virtualNetworkSubscriptionId": "[subscription().subscriptionId]"
             },
             "publicIpAddress": {
-                "ipPrefixName": "",
-                "ipPrefixResourceGroupName": "[resourceGroup().name]",
-                "ipPrefixSubscriptionId": "[subscription().subscriptionId]",
-                "ipVersion": "IPv4",
+                "allocationMethod": "Static",
+                "prefixName": "",
+                "prefixResourceGroupName": "[resourceGroup().name]",
+                "prefixSubscriptionId": "[subscription().subscriptionId]",
                 "skuName": "Standard",
                 "skuTier": "Regional",
-                "type": "Static"
+                "version": "IPv4"
             },
             "publicIpPrefix": {
                 "ipVersion": "IPv4",
@@ -242,6 +243,7 @@
             "applicationConfigurationStore": "[format('{0}-AppConfigStore', deployment().name)]",
             "applicationInsightsComponent": "[format('{0}-AppInsightsComponent', deployment().name)]",
             "applicationServicePlan": "[format('{0}-AppServicePlan', deployment().name)]",
+            "bastionHost": "[format('{0}-BastionHost', deployment().name)]",
             "cdnProfile": "[format('{0}-CdnProfile', deployment().name)]",
             "communicationService": "[format('{0}-CommunicationService', deployment().name)]",
             "containerInstance": "[format('{0}-ContainerInstance', deployment().name)]",
@@ -417,20 +419,20 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "ipPrefixName": {
-                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).ipPrefixName]"
-                    },
-                    "ipPrefixResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).ipPrefixResourceGroupName]"
-                    },
-                    "ipPrefixSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).ipPrefixSubscriptionId]"
-                    },
-                    "ipVersion": {
-                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).ipVersion]"
+                    "allocationMethod": {
+                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).allocationMethod]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').publicIpAddresses[copyIndex()].name]"
+                    },
+                    "prefixName": {
+                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).prefixName]"
+                    },
+                    "prefixResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).prefixResourceGroupName]"
+                    },
+                    "prefixSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).prefixSubscriptionId]"
                     },
                     "skuName": {
                         "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).skuName]"
@@ -441,8 +443,8 @@
                     "tags": {
                         "value": "[parameters('tags')]"
                     },
-                    "type": {
-                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).type]"
+                    "version": {
+                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).version]"
                     }
                 },
                 "templateLink": {
@@ -750,6 +752,43 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "relativePath": "./Microsoft.Network/dnsPublicZones.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').bastionHosts))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').bastionHosts)]",
+                "mode": "parallel",
+                "name": "bastionHostsCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "networkSecurityGroupsCopy",
+                "publicIpAddressesCopy",
+                "publicIpPrefixesCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').bastionHost, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "ipConfigurations": {
+                        "value": "[variables('resourceDefinitions').bastionHosts[copyIndex()].ipConfigurations]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').bastionHosts[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "relativePath": "./Microsoft.Network/bastionHosts.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"

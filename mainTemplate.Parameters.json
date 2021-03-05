@@ -9,6 +9,23 @@
                         "name": "byteterrace"
                     }
                 ],
+                "bastionHosts": [
+                    {
+                        "ipConfigurations": [
+                            {
+                                "name": "default",
+                                "publicIpAddress": {
+                                    "name": "byteterrace"
+                                },
+                                "virtualNetwork": {
+                                    "name": "byteterrace.net",
+                                    "subnetName": "AzureBastionSubnet"
+                                }
+                            }
+                        ],
+                        "name": "byteterrace"
+                    }
+                ],
                 "cdnProfiles": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",
@@ -99,7 +116,7 @@
                             "kind": "spark"
                         },
                         "name": "byteterrace",
-                        "sshPublicKey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDENdRlm/dOA/WxbusmHv06LGr7KfaCa3iql+YU0FBpi7gCREUq9JkO58NztHDpeUIaQB1DWcLQr70+OS3gsWDZxwznjqni7x2jkiqImjfFuOCduIIGlfxpiZWL4mjw4aPD18SOdx7rcU5+kfPL9ddZXgPvlWf5tSxJxKP0AdrQ6ZFtbDNZch4jqdBeWIcbzhbM8ECVCn0YYysM4cnJlSDLFMoSBWmGb5QuVHo5zz8TsgRYUGEBA0teL9nslI8o1FgniG08RHrNy1l4H0dTA0wvcJK3JvxSLJcC1xfu3abnkzQOovCyW/uZLlna55diBhBzXRvM7B8U/T7BNuMtxDNR azuread\\davidsmith@DESKTOP-DAN41DQ",
+                        "sshPublicKey": "<sshPublicKey>",
                         "storageProfile": {
                             "storageAccounts": [
                                 {
@@ -199,7 +216,7 @@
                         ]
                     }
                 ],
-                "kubernetesServiceClusters": [
+                "_kubernetesServiceClusters": [
                     {
                         "name": "byteterrace"
                     }
@@ -235,34 +252,124 @@
                 "networkSecurityGroups": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",
+                        "name": "AzureBastionNetworkSecurityGroup",
+                        "securityRules": [
+                            {
+                                "access": "Allow",
+                                "destinationAddressPrefixes": [ "*" ],
+                                "destinationPortRanges": [ "443" ],
+                                "direction": "Inbound",
+                                "name": "Allow-AzureLoadBalancer-Inbound",
+                                "priority": 4093,
+                                "protocol": "TCP",
+                                "sourceAddressPrefixes": [ "AzureLoadBalancer" ]
+                            },
+                            {
+                                "access": "Allow",
+                                "destinationPortRanges": [
+                                    "5071",
+                                    "8080"
+                                ],
+                                "direction": "Inbound",
+                                "name": "Allow-BastionHostCommunication-Inbound",
+                                "priority": 4094,
+                                "protocol": "*"
+                            },
+                            {
+                                "access": "Allow",
+                                "destinationAddressPrefixes": [ "*" ],
+                                "destinationPortRanges": [ "443" ],
+                                "direction": "Inbound",
+                                "name": "Allow-Https-Inbound",
+                                "priority": 4095,
+                                "protocol": "TCP",
+                                "sourceAddressPrefixes": [ "Internet" ]
+                            },
+                            {
+                                "access": "Allow",
+                                "destinationAddressPrefixes": [ "*" ],
+                                "destinationPortRanges": [ "443" ],
+                                "direction": "Inbound",
+                                "name": "Allow-GatewayManager-Inbound",
+                                "priority": 4096,
+                                "protocol": "TCP",
+                                "sourceAddressPrefixes": [ "GatewayManager" ]
+                            },
+                            {
+                                "access": "Allow",
+                                "destinationAddressPrefixes": [ "AzureCloud" ],
+                                "destinationPortRanges": [ "443" ],
+                                "direction": "Outbound",
+                                "name": "Allow-AzureCloud-Outbound",
+                                "priority": 4089,
+                                "protocol": "TCP",
+                                "sourceAddressPrefixes": [ "*" ]
+                            },
+                            {
+                                "access": "Allow",
+                                "destinationPortRanges": [
+                                    "5071",
+                                    "8080"
+                                ],
+                                "direction": "Outbound",
+                                "name": "Allow-BastionHostCommunication-Outbound",
+                                "priority": 4090,
+                                "protocol": "*"
+                            },
+                            {
+                                "access": "Allow",
+                                "destinationAddressPrefixes": [ "Internet" ],
+                                "destinationPortRanges": [ "80" ],
+                                "direction": "Outbound",
+                                "name": "Allow-GetSessionInformation-Outbound",
+                                "priority": 4091,
+                                "protocol": "*",
+                                "sourceAddressPrefixes": [ "*" ]
+                            },
+                            {
+                                "access": "Allow",
+                                "destinationPortRanges": [
+                                    "22",
+                                    "3389"
+                                ],
+                                "direction": "Outbound",
+                                "name": "Allow-SshRdp-Outbound",
+                                "priority": 4092,
+                                "protocol": "*",
+                                "sourceAddressPrefixes": [ "*" ]
+                            }
+                        ]
+                    },
+                    {
+                        "auditLogAnalyticsWorkspaceName": "byteterrace",
                         "name": "byteterrace.net",
                         "securityRules": [
                             {
                                 "access": "Allow",
-                                "destinationPortRange": "443",
+                                "destinationPortRanges": [ "443" ],
                                 "direction": "Inbound",
-                                "name": "HdInsight.EastUs",
+                                "name": "Allow-HdInsight.EastUs-Inbound",
                                 "priority": 4094,
                                 "protocol": "TCP",
-                                "sourceAddressPrefix": "HDInsight.EastUS"
+                                "sourceAddressPrefixes": [ "HDInsight.EastUS" ]
                             },
                             {
                                 "access": "Allow",
-                                "destinationPortRange": "443",
+                                "destinationPortRanges": [ "443" ],
                                 "direction": "Inbound",
-                                "name": "HdInsight.SouthCentralUs",
+                                "name": "Allow-HdInsight.SouthCentralUs-Inbound",
                                 "priority": 4095,
                                 "protocol": "TCP",
-                                "sourceAddressPrefix": "HDInsight.SouthCentralUS"
+                                "sourceAddressPrefixes": [ "HDInsight.SouthCentralUS" ]
                             },
                             {
                                 "access": "Allow",
-                                "destinationPortRange": "443",
+                                "destinationPortRanges": [ "443" ],
                                 "direction": "Inbound",
-                                "name": "HdInsight.WestUs",
+                                "name": "Allow-HdInsight.WestUs-Inbound",
                                 "priority": 4096,
                                 "protocol": "TCP",
-                                "sourceAddressPrefix": "HDInsight.WestUS"
+                                "sourceAddressPrefixes": [ "HDInsight.WestUS" ]
                             }
                         ]
                     }
@@ -281,8 +388,8 @@
                 ],
                 "publicIpAddresses": [
                     {
-                        "ipPrefixName": "byteterrace",
-                        "name": "byteterrace"
+                        "name": "byteterrace",
+                        "prefixName": "byteterrace"
                     }
                 ],
                 "publicIpPrefixes": [
@@ -326,12 +433,17 @@
                         "name": "byteterrace.net",
                         "subnets": [
                             {
+                                "addressPrefix": "10.255.255.160/27",
+                                "isPrivateEndpointSupportEnabled": true,
+                                "name": "AzureBastionSubnet",
+                                "networkSecurityGroupName": "AzureBastionNetworkSecurityGroup",
+                                "serviceEndpoints": []
+                            },
+                            {
                                 "addressPrefix": "10.255.255.192/26",
                                 "isPrivateEndpointSupportEnabled": true,
                                 "name": "byteterrace",
-                                "natGatewayName": "byteterrace.net",
                                 "networkSecurityGroupName": "byteterrace.net",
-                                "routeTableName": "byteterrace.net",
                                 "serviceEndpoints": [
                                     {
                                         "locations": [
