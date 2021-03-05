@@ -26,7 +26,7 @@
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the public Azure Bastion host."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Bastion host."
             },
             "type": "object"
         }

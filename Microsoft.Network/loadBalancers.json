@@ -23,6 +23,13 @@
             },
             "type": "array"
         },
+        "inboundNatPools": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of inbound NAT pools that will be created within the Azure Load Balancer."
+            },
+            "type": "array"
+        },
         "inboundNatRules": {
             "defaultValue": [],
             "metadata": {
@@ -52,6 +59,13 @@
             "minLength": 1,
             "type": "string"
         },
+        "outboundRules": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of outbound rules that will be created within the Azure Load Balancer."
+            },
+            "type": "array"
+        },
         "skuName": {
             "allowedValues": [
                 "Basic",
@@ -77,7 +91,7 @@
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the public Azure Load Balancer."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Load Balancer."
             },
             "type": "object"
         }
@@ -111,6 +125,11 @@
                 "intervalInSeconds": 30,
                 "numberOfProbes": 2
             },
+            "inboundNatPool": {
+                "enableFloatingIp": false,
+                "enableTcpReset": false,
+                "idleTimeoutInMinutes": 4
+            },
             "inboundNatRule": {
                 "enableFloatingIp": false,
                 "enableTcpReset": false,
@@ -122,6 +141,10 @@
                 "enableTcpReset": false,
                 "idleTimeoutInMinutes": 4,
                 "isOutboundSnatDisabled": false
+            },
+            "outboundRule": {
+                "enableTcpReset": false,
+                "idleTimeoutInMinutes": 4
             }
         }
     },
@@ -155,19 +178,38 @@
                         "name": "frontendIPConfigurations"
                     },
                     {
+                        "count": "[length(parameters('inboundNatPools'))]",
+                        "input": {
+                            "name": "[parameters('inboundNatPools')[copyIndex('inboundNatPools')].name]",
+                            "properties": {
+                                "backendPort": "[parameters('inboundNatPools')[copyIndex('inboundNatPools')].backendPort]",
+                                "enableFloatingIP": "[union(variables('defaultResourceProperties').inboundNatPool, parameters('inboundNatPools')[copyIndex('inboundNatPools')]).enableFloatingIp]",
+                                "enableTcpReset": "[if(equals(toUpper(parameters('inboundNatPools')[copyIndex('inboundNatPools')].protocol), 'TCP'), union(variables('defaultResourceProperties').inboundNatPool, parameters('inboundNatPools')[copyIndex('inboundNatPools')]).enableTcpReset, json('null'))]",
+                                "idleTimeoutInMinutes": "[if(equals(toUpper(parameters('inboundNatPools')[copyIndex('inboundNatPools')].protocol), 'TCP'), union(variables('defaultResourceProperties').inboundNatPool, parameters('inboundNatPools')[copyIndex('inboundNatPools')]).idleTimeoutInMinutes, json('null'))]",
+                                "frontendIPConfiguration": {
+                                    "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', parameters('name'), parameters('inboundNatPools')[copyIndex('inboundNatPools')].frontendIpConfigurationName)]"
+                                },
+                                "frontendPortRangeEnd": "[parameters('inboundNatPools')[copyIndex('inboundNatPools')].frontendPortRangeEnd]",
+                                "frontendPortRangeStart": "[parameters('inboundNatPools')[copyIndex('inboundNatPools')].frontendPortRangeStart]",
+                                "protocol": "[toUpper(parameters('inboundNatPools')[copyIndex('inboundNatPools')].protocol)]"
+                            }
+                        },
+                        "name": "inboundNatPools"
+                    },
+                    {
                         "count": "[length(parameters('inboundNatRules'))]",
                         "input": {
                             "name": "[parameters('inboundNatRules')[copyIndex('inboundNatRules')].name]",
                             "properties": {
                                 "backendPort": "[parameters('inboundNatRules')[copyIndex('inboundNatRules')].backendPort]",
                                 "enableFloatingIP": "[union(variables('defaultResourceProperties').inboundNatRule, parameters('inboundNatRules')[copyIndex('inboundNatRules')]).enableFloatingIp]",
-                                "enableTcpReset": "[union(variables('defaultResourceProperties').inboundNatRule, parameters('inboundNatRules')[copyIndex('inboundNatRules')]).enableTcpReset]",
-                                "idleTimeoutInMinutes": "[union(variables('defaultResourceProperties').inboundNatRule, parameters('inboundNatRules')[copyIndex('inboundNatRules')]).idleTimeoutInMinutes]",
+                                "enableTcpReset": "[if(equals(toUpper(parameters('inboundNatRules')[copyIndex('inboundNatRules')].protocol), 'TCP'), union(variables('defaultResourceProperties').inboundNatPool, parameters('inboundNatRules')[copyIndex('inboundNatRules')]).enableTcpReset, json('null'))]",
+                                "idleTimeoutInMinutes": "[if(equals(toUpper(parameters('inboundNatRules')[copyIndex('inboundNatRules')].protocol), 'TCP'), union(variables('defaultResourceProperties').inboundNatPool, parameters('inboundNatRules')[copyIndex('inboundNatRules')]).idleTimeoutInMinutes, json('null'))]",
                                 "frontendIPConfiguration": {
                                     "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', parameters('name'), parameters('inboundNatRules')[copyIndex('inboundNatRules')].frontendIpConfigurationName)]"
                                 },
                                 "frontendPort": "[parameters('inboundNatRules')[copyIndex('inboundNatRules')].frontendPort]",
-                                "protocol": "[parameters('inboundNatRules')[copyIndex('inboundNatRules')].protocol]"
+                                "protocol": "[toUpper(parameters('inboundNatRules')[copyIndex('inboundNatRules')].protocol)]"
                             }
                         },
                         "name": "inboundNatRules"
@@ -199,6 +241,23 @@
                         "name": "loadBalancingRules"
                     },
                     {
+                        "count": "[length(parameters('outboundRules'))]",
+                        "input": {
+                            "name": "[parameters('outboundRules')[copyIndex('outboundRules')].name]",
+                            "properties": {
+                                "allocatedOutboundPorts": "[parameters('outboundRules')[copyIndex('outboundRules')].allocatedOuboundPortCount]",
+                                "backendAddressPool": {
+                                    "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('name'), parameters('outboundRules')[copyIndex('outboundRules')].backendAddressPoolName)]"
+                                },
+                                "enableTcpReset": "[if(equals(toUpper(parameters('outboundRules')[copyIndex('outboundRules')].protocol), 'TCP'), union(variables('defaultResourceProperties').outboundRule, parameters('outboundRules')[copyIndex('outboundRules')]).enableTcpReset, json('null'))]",
+                                "frontendIPConfigurations": "[createArray(createObject('id', resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', parameters('name'), parameters('outboundRules')[copyIndex('outboundRules')].frontendIpConfigurationName)))]",
+                                "idleTimeoutInMinutes": "[if(equals(toUpper(parameters('outboundRules')[copyIndex('outboundRules')].protocol), 'TCP'), union(variables('defaultResourceProperties').outboundRule, parameters('outboundRules')[copyIndex('outboundRules')]).idleTimeoutInMinutes, json('null'))]",
+                                "protocol": "[toUpper(parameters('outboundRules')[copyIndex('outboundRules')].protocol)]"
+                            }
+                        },
+                        "name": "outboundRules"
+                    },
+                    {
                         "count": "[length(parameters('healthProbes'))]",
                         "input": {
                             "name": "[parameters('healthProbes')[copyIndex('probes')].name]",
@@ -206,7 +265,7 @@
                                 "intervalInSeconds": "[union(variables('defaultResourceProperties').healthProbe, parameters('healthProbes')[copyIndex('probes')]).intervalInSeconds]",
                                 "numberOfProbes": "[union(variables('defaultResourceProperties').healthProbe, parameters('healthProbes')[copyIndex('probes')]).numberOfProbes]",
                                 "port": "[parameters('healthProbes')[copyIndex('probes')].port]",
-                                "protocol": "[parameters('healthProbes')[copyIndex('probes')].protocol]",
+                                "protocol": "[toUpper(parameters('healthProbes')[copyIndex('probes')].protocol)]",
                                 "requestPath": "[if(startsWith(toLower(parameters('healthProbes')[copyIndex('probes')].protocol), 'http'), union(createObject('requestPath', '/'), parameters('healthProbes')[copyIndex('probes')]).requestPath, json('null'))]"
                             }
                         },
