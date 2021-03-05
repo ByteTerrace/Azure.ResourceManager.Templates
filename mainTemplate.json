@@ -28,6 +28,7 @@
             "hdInsightClusters": [],
             "keyVaults": [],
             "kubernetesServiceClusters": [],
+            "loadBalancers": [],
             "managedIdentities": [],
             "monitor": {
                 "applicationInsightsComponents": [],
@@ -128,6 +129,13 @@
             "kubernetesServiceCluster": {
                 "dnsPrefix": ""
             },
+            "loadBalancer": {
+                "backendAddressPools": [],
+                "frontendIpConfigurations": [],
+                "inboundNatRules": [],
+                "skuName": "Standard",
+                "skuTier": "Regional"
+            },
             "managedIdentity": {},
             "monitor": {
                 "applicationInsightsComponent": {
@@ -161,9 +169,10 @@
             },
             "publicIpAddress": {
                 "allocationMethod": "Static",
-                "prefixName": "",
-                "prefixResourceGroupName": "[resourceGroup().name]",
-                "prefixSubscriptionId": "[subscription().subscriptionId]",
+                "dnsPrefix": "",
+                "ipPrefixName": "",
+                "ipPrefixResourceGroupName": "[resourceGroup().name]",
+                "ipPrefixSubscriptionId": "[subscription().subscriptionId]",
                 "skuName": "Standard",
                 "skuTier": "Regional",
                 "version": "IPv4"
@@ -254,6 +263,7 @@
             "hdInsightCluster": "[format('{0}-HdInsightCluster', deployment().name)]",
             "keyVault": "[format('{0}-KeyVault', deployment().name)]",
             "kubernetesServiceCluster": "[format('{0}-KubernetesServiceCluster', deployment().name)]",
+            "loadBalancer": "[format('{0}-LoadBalancer', deployment().name)]",
             "logAnalyticsWorkspace": "[format('{0}-LogAnalyticsWorkspace', deployment().name)]",
             "managedIdentity": "[format('{0}-ManagedIdentity', deployment().name)]",
             "monitorPrivateLinkScope": "[format('{0}-MonitorPrivateLinkScope', deployment().name)]",
@@ -422,17 +432,20 @@
                     "allocationMethod": {
                         "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).allocationMethod]"
                     },
+                    "dnsPrefix": {
+                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).dnsPrefix]"
+                    },
+                    "ipPrefixName": {
+                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).ipPrefixName]"
+                    },
+                    "ipPrefixResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).ipPrefixResourceGroupName]"
+                    },
+                    "ipPrefixSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).ipPrefixSubscriptionId]"
+                    },
                     "name": {
                         "value": "[variables('resourceDefinitions').publicIpAddresses[copyIndex()].name]"
-                    },
-                    "prefixName": {
-                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).prefixName]"
-                    },
-                    "prefixResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).prefixResourceGroupName]"
-                    },
-                    "prefixSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).prefixSubscriptionId]"
                     },
                     "skuName": {
                         "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).skuName]"
@@ -663,6 +676,43 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').bastionHosts))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').bastionHosts)]",
+                "mode": "parallel",
+                "name": "bastionHostsCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "networkSecurityGroupsCopy",
+                "publicIpAddressesCopy",
+                "publicIpPrefixesCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').bastionHost, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "ipConfigurations": {
+                        "value": "[variables('resourceDefinitions').bastionHosts[copyIndex()].ipConfigurations]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').bastionHosts[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "relativePath": "./Microsoft.Network/bastionHosts.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[not(empty(variables('resourceDefinitions').dnsZones.private))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').dnsZones.private)]",
@@ -758,29 +808,43 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').bastionHosts))]",
+            "condition": "[not(empty(variables('resourceDefinitions').loadBalancers))]",
             "copy": {
-                "count": "[length(variables('resourceDefinitions').bastionHosts)]",
+                "count": "[length(variables('resourceDefinitions').loadBalancers)]",
                 "mode": "parallel",
-                "name": "bastionHostsCopy"
+                "name": "loadBalancersCopy"
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
+                "routeTablesCopy",
                 "virtualNetworksCopy"
             ],
-            "name": "[format('{0}_{1}', variables('deploymentNames').bastionHost, copyIndex())]",
+            "name": "[format('{0}_{1}', variables('deploymentNames').loadBalancer, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "ipConfigurations": {
-                        "value": "[variables('resourceDefinitions').bastionHosts[copyIndex()].ipConfigurations]"
+                    "backendAddressPools": {
+                        "value": "[union(variables('defaultResourceProperties').loadBalancer, variables('resourceDefinitions').loadBalancers[copyIndex()]).backendAddressPools]"
+                    },
+                    "frontendIpConfigurations": {
+                        "value": "[union(variables('defaultResourceProperties').loadBalancer, variables('resourceDefinitions').loadBalancers[copyIndex()]).frontendIpConfigurations]"
+                    },
+                    "inboundNatRules": {
+                        "value": "[union(variables('defaultResourceProperties').loadBalancer, variables('resourceDefinitions').loadBalancers[copyIndex()]).inboundNatRules]"
                     },
                     "name": {
-                        "value": "[variables('resourceDefinitions').bastionHosts[copyIndex()].name]"
+                        "value": "[variables('resourceDefinitions').loadBalancers[copyIndex()].name]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').loadBalancer, variables('resourceDefinitions').loadBalancers[copyIndex()]).skuName]"
+                    },
+                    "skuTier": {
+                        "value": "[union(variables('defaultResourceProperties').loadBalancer, variables('resourceDefinitions').loadBalancers[copyIndex()]).skuTier]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
@@ -788,7 +852,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
-                    "relativePath": "./Microsoft.Network/bastionHosts.json"
+                    "relativePath": "./Microsoft.Network/loadBalancers.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"

@@ -221,6 +221,28 @@
                         "name": "byteterrace"
                     }
                 ],
+                "loadBalancers": [
+                    {
+                        "backendAddressPools": [
+                            {
+                                "name": "backend"
+                            }
+                        ],
+                        "frontendIpConfigurations": [
+                            {
+                                "name": "frontend",
+                                "privateIpAddress": {
+                                    "allocationMethod": "Dynamic",
+                                    "virtualNetwork": {
+                                        "name": "byteterrace.net",
+                                        "subnetName": "byteterrace"
+                                    }
+                                }
+                            }
+                        ],
+                        "name": "byteterrace"
+                    }
+                ],
                 "managedIdentities": [
                     {
                         "name": "byteterrace"
@@ -396,8 +418,9 @@
                 ],
                 "publicIpAddresses": [
                     {
-                        "name": "byteterrace",
-                        "prefixName": "byteterrace"
+                        "dnsPrefix": "byteterrace",
+                        "ipPrefixName": "byteterrace",
+                        "name": "byteterrace"
                     }
                 ],
                 "publicIpPrefixes": [
