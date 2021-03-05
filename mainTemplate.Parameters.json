@@ -240,6 +240,24 @@
                                 }
                             }
                         ],
+                        "healthProbes": [
+                            {
+                                "name": "HTTPS",
+                                "port": 443,
+                                "protocol": "HTTPS",
+                                "requestPath": "/healthcheck"
+                            }
+                        ],
+                        "loadBalancingRules": [
+                            {
+                                "backendAddressPoolName": "backend",
+                                "frontendIpConfigurationName": "frontend",
+                                "healthProbeName": "HTTPS",
+                                "name": "rule",
+                                "port": 443,
+                                "protocol": "TCP"
+                            }
+                        ],
                         "name": "byteterrace"
                     }
                 ],

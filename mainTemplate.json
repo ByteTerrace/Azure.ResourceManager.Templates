@@ -133,6 +133,7 @@
                 "backendAddressPools": [],
                 "frontendIpConfigurations": [],
                 "inboundNatRules": [],
+                "loadBalancingRules": [],
                 "skuName": "Standard",
                 "skuTier": "Regional"
             },
@@ -834,8 +835,14 @@
                     "frontendIpConfigurations": {
                         "value": "[union(variables('defaultResourceProperties').loadBalancer, variables('resourceDefinitions').loadBalancers[copyIndex()]).frontendIpConfigurations]"
                     },
+                    "healthProbes": {
+                        "value": "[union(variables('defaultResourceProperties').loadBalancer, variables('resourceDefinitions').loadBalancers[copyIndex()]).healthProbes]"
+                    },
                     "inboundNatRules": {
                         "value": "[union(variables('defaultResourceProperties').loadBalancer, variables('resourceDefinitions').loadBalancers[copyIndex()]).inboundNatRules]"
+                    },
+                    "loadBalancingRules": {
+                        "value": "[union(variables('defaultResourceProperties').loadBalancer, variables('resourceDefinitions').loadBalancers[copyIndex()]).loadBalancingRules]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').loadBalancers[copyIndex()].name]"

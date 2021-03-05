@@ -16,10 +16,24 @@
             },
             "type": "array"
         },
+        "healthProbes": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of health probes that will be created within the Azure Load Balancer."
+            },
+            "type": "array"
+        },
         "inboundNatRules": {
             "defaultValue": [],
             "metadata": {
                 "description": "An array of inbound NAT rules that will be created within the Azure Load Balancer."
+            },
+            "type": "array"
+        },
+        "loadBalancingRules": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of load balancing rules that will be created within the Azure Load Balancer."
             },
             "type": "array"
         },
@@ -93,10 +107,21 @@
                     "subscriptionId": "[subscription().subscriptionId]"
                 }
             },
+            "healthProbe": {
+                "intervalInSeconds": 30,
+                "numberOfProbes": 2
+            },
             "inboundNatRule": {
                 "enableFloatingIp": false,
                 "enableTcpReset": false,
                 "idleTimeoutInMinutes": 4
+            },
+            "loadBalancingRule": {
+                "distributionMode": "Default",
+                "enableFloatingIp": false,
+                "enableTcpReset": false,
+                "idleTimeoutInMinutes": 4,
+                "isOutboundSnatDisabled": false
             }
         }
     },
@@ -110,8 +135,7 @@
                     {
                         "count": "[length(parameters('backendAddressPools'))]",
                         "input": {
-                            "name": "[parameters('backendAddressPools')[copyIndex('backendAddressPools')].name]",
-                            "properties": {}
+                            "name": "[parameters('backendAddressPools')[copyIndex('backendAddressPools')].name]"
                         },
                         "name": "backendAddressPools"
                     },
@@ -147,6 +171,46 @@
                             }
                         },
                         "name": "inboundNatRules"
+                    },
+                    {
+                        "count": "[length(parameters('loadBalancingRules'))]",
+                        "input": {
+                            "name": "[parameters('loadBalancingRules')[copyIndex('loadBalancingRules')].name]",
+                            "properties": {
+                                "backendAddressPool": {
+                                    "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('name'), parameters('loadBalancingRules')[copyIndex('loadBalancingRules')].backendAddressPoolName)]"
+                                },
+                                "backendPort": "[union(createObject('backendPort', union(createObject('port', 0), parameters('loadBalancingRules')[copyIndex('loadBalancingRules')]).port), parameters('loadBalancingRules')[copyIndex('loadBalancingRules')]).backendPort]",
+                                "disableOutboundSnat": "[union(variables('defaultResourceProperties').loadBalancingRule, parameters('loadBalancingRules')[copyIndex('loadBalancingRules')]).isOutboundSnatDisabled]",
+                                "enableFloatingIP": "[union(variables('defaultResourceProperties').loadBalancingRule, parameters('loadBalancingRules')[copyIndex('loadBalancingRules')]).enableFloatingIp]",
+                                "enableTcpReset": "[if(equals(toUpper(parameters('loadBalancingRules')[copyIndex('loadBalancingRules')].protocol), 'TCP'), union(variables('defaultResourceProperties').loadBalancingRule, parameters('loadBalancingRules')[copyIndex('loadBalancingRules')]).enableTcpReset, json('null'))]",
+                                "frontendIPConfiguration": {
+                                    "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', parameters('name'), parameters('loadBalancingRules')[copyIndex('loadBalancingRules')].frontendIpConfigurationName)]"
+                                },
+                                "frontendPort": "[union(createObject('frontendPort', union(createObject('port', 0), parameters('loadBalancingRules')[copyIndex('loadBalancingRules')]).port), parameters('loadBalancingRules')[copyIndex('loadBalancingRules')]).frontendPort]",
+                                "idleTimeoutInMinutes": "[if(equals(toUpper(parameters('loadBalancingRules')[copyIndex('loadBalancingRules')].protocol), 'TCP'), union(variables('defaultResourceProperties').loadBalancingRule, parameters('loadBalancingRules')[copyIndex('loadBalancingRules')]).idleTimeoutInMinutes, json('null'))]",
+                                "loadDistribution": "[union(variables('defaultResourceProperties').loadBalancingRule, parameters('loadBalancingRules')[copyIndex('loadBalancingRules')]).distributionMode]",
+                                "probe": {
+                                    "id": "[resourceId('Microsoft.Network/loadBalancers/probes', parameters('name'), parameters('loadBalancingRules')[copyIndex('loadBalancingRules')].healthProbeName)]"
+                                },
+                                "protocol": "[toUpper(parameters('loadBalancingRules')[copyIndex('loadBalancingRules')].protocol)]"
+                            }
+                        },
+                        "name": "loadBalancingRules"
+                    },
+                    {
+                        "count": "[length(parameters('healthProbes'))]",
+                        "input": {
+                            "name": "[parameters('healthProbes')[copyIndex('probes')].name]",
+                            "properties": {
+                                "intervalInSeconds": "[union(variables('defaultResourceProperties').healthProbe, parameters('healthProbes')[copyIndex('probes')]).intervalInSeconds]",
+                                "numberOfProbes": "[union(variables('defaultResourceProperties').healthProbe, parameters('healthProbes')[copyIndex('probes')]).numberOfProbes]",
+                                "port": "[parameters('healthProbes')[copyIndex('probes')].port]",
+                                "protocol": "[parameters('healthProbes')[copyIndex('probes')].protocol]",
+                                "requestPath": "[if(startsWith(toLower(parameters('healthProbes')[copyIndex('probes')].protocol), 'http'), union(createObject('requestPath', '/'), parameters('healthProbes')[copyIndex('probes')]).requestPath, json('null'))]"
+                            }
+                        },
+                        "name": "probes"
                     }
                 ]
             },
