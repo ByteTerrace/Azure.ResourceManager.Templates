@@ -71,7 +71,44 @@
                         }
                     ]
                 },
-                "hdInsightClusters": [],
+                "hdInsightClusters": [
+                    {
+                        "computeProfile": {
+                            "roles": [
+                                {
+                                    "name": "headnode",
+                                    "targetInstanceCount": 2,
+                                    "virtualNetwork": {
+                                        "name": "byteterrace.net",
+                                        "subnetName": "byteterrace"
+                                    },
+                                    "vmSize": "Standard_D3_v2"
+                                },
+                                {
+                                    "name": "workernode",
+                                    "targetInstanceCount": 2,
+                                    "virtualNetwork": {
+                                        "name": "byteterrace.net",
+                                        "subnetName": "byteterrace"
+                                    },
+                                    "vmSize": "Standard_D3_v2"
+                                }
+                            ]
+                        },
+                        "configurationProfile": {
+                            "kind": "spark"
+                        },
+                        "name": "ybyteterrace",
+                        "sshPublicKey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDENdRlm/dOA/WxbusmHv06LGr7KfaCa3iql+YU0FBpi7gCREUq9JkO58NztHDpeUIaQB1DWcLQr70+OS3gsWDZxwznjqni7x2jkiqImjfFuOCduIIGlfxpiZWL4mjw4aPD18SOdx7rcU5+kfPL9ddZXgPvlWf5tSxJxKP0AdrQ6ZFtbDNZch4jqdBeWIcbzhbM8ECVCn0YYysM4cnJlSDLFMoSBWmGb5QuVHo5zz8TsgRYUGEBA0teL9nslI8o1FgniG08RHrNy1l4H0dTA0wvcJK3JvxSLJcC1xfu3abnkzQOovCyW/uZLlna55diBhBzXRvM7B8U/T7BNuMtxDNR azuread\\davidsmith@DESKTOP-DAN41DQ",
+                        "storageProfile": {
+                            "storageAccounts": [
+                                {
+                                    "name": "byteterrace"
+                                }
+                            ]
+                        }
+                    }
+                ],
                 "frontDoors": [
                     {
                         "backendPools": [
@@ -198,7 +235,36 @@
                 "networkSecurityGroups": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",
-                        "name": "byteterrace.net"
+                        "name": "byteterrace.net",
+                        "securityRules": [
+                            {
+                                "access": "Allow",
+                                "destinationPortRange": "443",
+                                "direction": "Inbound",
+                                "name": "HdInsight.EastUs",
+                                "priority": 4094,
+                                "protocol": "TCP",
+                                "sourceAddressPrefix": "HDInsight.EastUS"
+                            },
+                            {
+                                "access": "Allow",
+                                "destinationPortRange": "443",
+                                "direction": "Inbound",
+                                "name": "HdInsight.SouthCentralUs",
+                                "priority": 4095,
+                                "protocol": "TCP",
+                                "sourceAddressPrefix": "HDInsight.SouthCentralUS"
+                            },
+                            {
+                                "access": "Allow",
+                                "destinationPortRange": "443",
+                                "direction": "Inbound",
+                                "name": "HdInsight.WestUs",
+                                "priority": 4096,
+                                "protocol": "TCP",
+                                "sourceAddressPrefix": "HDInsight.WestUS"
+                            }
+                        ]
                     }
                 ],
                 "privateEndpoints": [
@@ -242,6 +308,7 @@
                 ],
                 "storageAccounts": [
                     {
+                        "isAllowTrustedMicrosoftServicesEnabled": true,
                         "name": "byteterrace",
                         "virtualNetworkRules": [
                             {
@@ -285,12 +352,6 @@
                                             "southcentralus"
                                         ],
                                         "service": "Microsoft.Storage"
-                                    },
-                                    {
-                                        "locations": [
-                                            "*"
-                                        ],
-                                        "service": "Microsoft.Web"
                                     }
                                 ]
                             }

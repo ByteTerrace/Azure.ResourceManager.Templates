@@ -4,7 +4,7 @@
     "parameters": {
         "resourceDefinitions": {
             "defaultValue": {},
-            "type": "object"
+            "type": "secureobject"
         },
         "tags": {
             "defaultValue": {},
@@ -104,8 +104,6 @@
                 "routingRules": []
             },
             "hdInsightCluster": {
-                "configurationProfile": {},
-                "computeProfile": {},
                 "operatingSystem": "Linux",
                 "storageProfile": {},
                 "version": "4.0"
@@ -1337,6 +1335,12 @@
                     },
                     "operatingSystem": {
                         "value": "[union(variables('defaultResourceProperties').hdInsightCluster, variables('resourceDefinitions').hdInsightClusters[copyIndex()]).operatingSystem]"
+                    },
+                    "sshPublicKey": {
+                        "value": "[variables('resourceDefinitions').hdInsightClusters[copyIndex()].sshPublicKey]"
+                    },
+                    "sshUserName": {
+                        "value": "[union(createObject('sshUserName', uniqueString(variables('resourceDefinitions').hdInsightClusters[copyIndex()].name)), variables('resourceDefinitions').hdInsightClusters[copyIndex()]).sshUserName]"
                     },
                     "storageProfile": {
                         "value": "[union(variables('defaultResourceProperties').hdInsightCluster, variables('resourceDefinitions').hdInsightClusters[copyIndex()]).storageProfile]"

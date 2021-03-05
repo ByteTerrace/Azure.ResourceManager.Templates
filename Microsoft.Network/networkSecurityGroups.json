@@ -53,6 +53,17 @@
         }
     },
     "variables": {
+        "defaultResourceProperties": {
+            "securityRule": {
+                "description": "",
+                "destinationAddressPrefix": "VirtualNetwork",
+                "destinationAddressPrefixes": [],
+                "destinationPortRanges": [],
+                "sourceAddressPrefixes": [],
+                "sourcePortRange": "*",
+                "sourcePortRanges": []
+            }
+        },
         "diagnosticSettingsApiVersion": "2017-05-01-preview",
         "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
         "networkSecurityGroupResourceId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('name'))]"
@@ -63,7 +74,31 @@
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
-                "securityRules": "[parameters('securityRules')]"
+                "copy": [
+                    {
+                        "count": "[length(parameters('securityRules'))]",
+                        "input": {
+                            "name": "[parameters('securityRules')[copyIndex('securityRules')].name]",
+                            "properties": {
+                                "access": "[parameters('securityRules')[copyIndex('securityRules')].access]",
+                                "description": "[union(variables('defaultResourceProperties').securityRule, parameters('securityRules')[copyIndex('securityRules')]).description]",
+                                "destinationAddressPrefix": "[union(variables('defaultResourceProperties').securityRule, parameters('securityRules')[copyIndex('securityRules')]).destinationAddressPrefix]",
+                                "destinationAddressPrefixes": "[union(variables('defaultResourceProperties').securityRule, parameters('securityRules')[copyIndex('securityRules')]).destinationAddressPrefixes]",
+                                "destinationPortRange": "[parameters('securityRules')[copyIndex('securityRules')].destinationPortRange]",
+                                "destinationPortRanges": "[union(variables('defaultResourceProperties').securityRule, parameters('securityRules')[copyIndex('securityRules')]).destinationPortRanges]",
+                                "direction": "[parameters('securityRules')[copyIndex('securityRules')].direction]",
+                                "priority": "[parameters('securityRules')[copyIndex('securityRules')].priority]",
+                                "protocol": "[parameters('securityRules')[copyIndex('securityRules')].protocol]",
+                                "sourceAddressPrefix": "[parameters('securityRules')[copyIndex('securityRules')].sourceAddressPrefix]",
+                                "sourceAddressPrefixes": "[union(variables('defaultResourceProperties').securityRule, parameters('securityRules')[copyIndex('securityRules')]).sourceAddressPrefixes]",
+                                "sourceApplicationSecurityGroups": [],
+                                "sourcePortRange": "[union(variables('defaultResourceProperties').securityRule, parameters('securityRules')[copyIndex('securityRules')]).sourcePortRange]",
+                                "sourcePortRanges": "[union(variables('defaultResourceProperties').securityRule, parameters('securityRules')[copyIndex('securityRules')]).sourcePortRanges]"
+                            }
+                        },
+                        "name": "securityRules"
+                    }
+                ]
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Network/networkSecurityGroups"
