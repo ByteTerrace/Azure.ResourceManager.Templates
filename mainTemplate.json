@@ -20,6 +20,7 @@
             "communicationServices": [],
             "containerInstances": [],
             "containerRegistries": [],
+            "cosmosDbAccounts": [],
             "dnsZones": {
                 "private": [],
                 "public": []
@@ -82,6 +83,16 @@
                 "isPublicNetworkAccessEnabled": true,
                 "isTrustedMicrosoftResourceAccessEnabled": false,
                 "skuName": "Standard"
+            },
+            "cosmosDbAccount": {
+                "consistencyPolicy": {},
+                "firewallRules": [],
+                "geoReplicationLocations": [],
+                "isAzurePortalAccessEnabled": false,
+                "isAzurePublicDatacenterAccessEnabled": false,
+                "isFreeTierEnabled": false,
+                "kind": "GlobalDocumentDB",
+                "virtualNetworkRules": []
             },
             "dnsZone": {
                 "private": {
@@ -260,6 +271,7 @@
             "communicationService": "[format('{0}-CommunicationService', deployment().name)]",
             "containerInstance": "[format('{0}-ContainerInstance', deployment().name)]",
             "containerRegistry": "[format('{0}-ContainerRegistry', deployment().name)]",
+            "cosmosDbAccount": "[format('{0}-CosmosDbAccount', deployment().name)]",
             "dnsPrivateZone": "[format('{0}-DnsPrivateZone', deployment().name)]",
             "dnsPublicZone": "[format('{0}-DnsPublicZone', deployment().name)]",
             "frontDoor": "[format('{0}-FrontDoor', deployment().name)]",
@@ -1376,6 +1388,68 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "relativePath": "./Microsoft.Sql/servers.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').cosmosDbAccounts))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').cosmosDbAccounts)]",
+                "mode": "parallel",
+                "name": "cosmosDbAccountsCopy"
+            },
+            "dependsOn": [
+                "keyVaultsCopy",
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
+                "networkSecurityGroupsCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "routeTablesCopy",
+                "sqlServersCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').cosmosDbAccount, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "consistencyPolicy": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).consistencyPolicy]"
+                    },
+                    "firewallRules": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).firewallRules]"
+                    },
+                    "geoReplicationLocations": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).geoReplicationLocations]"
+                    },
+                    "isAzurePortalAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isAzurePortalAccessEnabled]"
+                    },
+                    "isAzurePublicDatacenterAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isAzurePublicDatacenterAccessEnabled]"
+                    },
+                    "isFreeTierEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isFreeTierEnabled]"
+                    },
+                    "kind": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).kind]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').cosmosDbAccounts[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "virtualNetworkRules": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).virtualNetworkRules]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "relativePath": "./Microsoft.DocumentDB/databaseAccounts.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"

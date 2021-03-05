@@ -4,12 +4,12 @@
     "parameters": {
         "resourceDefinitions": {
             "value": {
-                "applicationServicePlans": [
+                "_applicationServicePlans": [
                     {
                         "name": "byteterrace"
                     }
                 ],
-                "bastionHosts": [
+                "_bastionHosts": [
                     {
                         "ipConfigurations": [
                             {
@@ -26,18 +26,18 @@
                         "name": "byteterrace"
                     }
                 ],
-                "cdnProfiles": [
+                "_cdnProfiles": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",
                         "name": "byteterrace-net"
                     }
                 ],
-                "communicationServices": [
+                "_communicationServices": [
                     {
                         "name": "byteterrace"
                     }
                 ],
-                "containerInstances": [
+                "_containerInstances": [
                     {
                         "containers": [
                             {
@@ -47,12 +47,24 @@
                         "name": "byteterrace"
                     }
                 ],
-                "containerRegistries": [
+                "_containerRegistries": [
                     {
                         "name": "byteterrace"
                     }
                 ],
-                "dnsZones": {
+                "cosmosDbAccounts": [
+                    {
+                        "isFreeTierEnabled": true,
+                        "name": "byteterrace",
+                        "virtualNetworkRules": [
+                            {
+                                "subnetName": "byteterrace",
+                                "virtualNetworkName": "byteterrace.net"
+                            }
+                        ]
+                    }
+                ],
+                "_dnsZones": {
                     "private": [
                         {
                             "name": "byteterrace.net"
@@ -88,7 +100,7 @@
                         }
                     ]
                 },
-                "hdInsightClusters": [
+                "_hdInsightClusters": [
                     {
                         "computeProfile": {
                             "roles": [
@@ -126,7 +138,7 @@
                         }
                     }
                 ],
-                "frontDoors": [
+                "_frontDoors": [
                     {
                         "backendPools": [
                             {
@@ -204,7 +216,7 @@
                         ]
                     }
                 ],
-                "keyVaults": [
+                "_keyVaults": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",
                         "name": "byteterrace",
@@ -221,7 +233,7 @@
                         "name": "byteterrace"
                     }
                 ],
-                "loadBalancers": [
+                "_loadBalancers": [
                     {
                         "backendAddressPools": [
                             {
@@ -261,12 +273,12 @@
                         "name": "byteterrace"
                     }
                 ],
-                "managedIdentities": [
+                "_managedIdentities": [
                     {
                         "name": "byteterrace"
                     }
                 ],
-                "monitor": {
+                "_monitor": {
                     "applicationInsightsComponents": [
                         {
                             "logAnalyticsWorkspaceName": "byteterrace",
@@ -284,12 +296,12 @@
                         }
                     ]
                 },
-                "natGateways": [
+                "_natGateways": [
                     {
                         "name": "byteterrace.net"
                     }
                 ],
-                "networkSecurityGroups": [
+                "_networkSecurityGroups": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",
                         "name": "AzureBastionNetworkSecurityGroup",
@@ -422,7 +434,7 @@
                         ]
                     }
                 ],
-                "privateEndpoints": [
+                "_privateEndpoints": [
                     {
                         "groupIds": [
                             "sites"
@@ -434,24 +446,24 @@
                         "virtualNetworkName": "byteterrace.net"
                     }
                 ],
-                "publicIpAddresses": [
+                "_publicIpAddresses": [
                     {
                         "dnsPrefix": "byteterrace",
                         "ipPrefixName": "byteterrace",
                         "name": "byteterrace"
                     }
                 ],
-                "publicIpPrefixes": [
+                "_publicIpPrefixes": [
                     {
                         "name": "byteterrace"
                     }
                 ],
-                "routeTables": [
+                "_routeTables": [
                     {
                         "name": "byteterrace.net"
                     }
                 ],
-                "sqlServers": [
+                "_sqlServers": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",
                         "databases": [
@@ -462,7 +474,7 @@
                         "name": "byteterrace"
                     }
                 ],
-                "storageAccounts": [
+                "_storageAccounts": [
                     {
                         "isAllowTrustedMicrosoftServicesEnabled": true,
                         "name": "byteterrace",
@@ -474,7 +486,7 @@
                         ]
                     }
                 ],
-                "virtualNetworks": [
+                "_virtualNetworks": [
                     {
                         "addressPrefixes": [
                             "10.0.0.0/8"
@@ -494,6 +506,12 @@
                                 "name": "byteterrace",
                                 "networkSecurityGroupName": "byteterrace.net",
                                 "serviceEndpoints": [
+                                    {
+                                        "locations": [
+                                            "*"
+                                        ],
+                                        "service": "Microsoft.AzureCosmosDB"
+                                    },
                                     {
                                         "locations": [
                                             "*"
