@@ -42,6 +42,7 @@
             "publicIpAddresses": [],
             "publicIpPrefixes": [],
             "routeTables": [],
+            "scripts": [],
             "sqlServers": [],
             "storageAccounts": [],
             "virtualNetworks": []
@@ -200,6 +201,9 @@
                 "isBgpRoutePropagationEnabled": false,
                 "routes": []
             },
+            "script": {
+                "kind": "AzurePowerShell"
+            },
             "sqlServer": {
                 "activeDirectoryAdministratorObjectId": "",
                 "activeDirectoryAdministratorTenantId": "[subscription().tenantId]",
@@ -288,6 +292,7 @@
             "publicIpAddress": "[format('{0}-PublicIpAddress', deployment().name)]",
             "publicIpPrefix": "[format('{0}-PublicIpPrefix', deployment().name)]",
             "routeTable": "[format('{0}-RouteTable', deployment().name)]",
+            "script": "[format('{0}-Script', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
             "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]"
@@ -317,6 +322,41 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "relativePath": "./Microsoft.ManagedIdentity/userAssignedIdentities.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').scripts))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').scripts)]",
+                "mode": "parallel",
+                "name": "scriptsCopy"
+            },
+            "dependsOn": [
+                "managedIdentitiesCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').script, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "kind": {
+                        "value": "[union(variables('defaultResourceProperties').script, variables('resourceDefinitions').scripts[copyIndex()]).kind]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').scripts[copyIndex()].name]"
+                    },
+                    "scriptContent": {
+                        "value": "[variables('resourceDefinitions').scripts[copyIndex()].scriptContent]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "relativePath": "./Microsoft.Resources/deploymentScripts.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"

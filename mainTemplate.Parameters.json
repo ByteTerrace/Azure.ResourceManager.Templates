@@ -463,6 +463,7 @@
                         "name": "byteterrace.net"
                     }
                 ],
+                "scripts": [],
                 "sqlServers": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",
