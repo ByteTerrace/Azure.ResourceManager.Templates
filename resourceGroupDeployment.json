@@ -1001,7 +1001,7 @@
                 "mode": "Incremental",
                 "parameters": {
                     "location": {
-                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').monitor.applicationInsightsComponent[copyIndex()]).location]"
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()]).location]"
                     },
                     "logAnalyticsWorkspaceName": {
                         "value": "[union(variables('defaultResourceProperties').monitor.applicationInsightsComponent, variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()]).logAnalyticsWorkspaceName]"
