@@ -42,7 +42,6 @@
             "type": "string"
         },
         "location": {
-            "defaultValue": "[resourceGroup().location]",
             "metadata": {
                 "description": "Specifies the location in which the Azure Public IP address resource(s) will be deployed."
             },

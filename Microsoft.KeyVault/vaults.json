@@ -72,7 +72,6 @@
             "type": "bool"
         },
         "location": {
-            "defaultValue": "[resourceGroup().location]",
             "metadata": {
                 "description": "Specifies the location in which the Azure Key Vault resource(s) will be deployed."
             },

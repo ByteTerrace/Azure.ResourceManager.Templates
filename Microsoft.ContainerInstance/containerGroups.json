@@ -9,7 +9,6 @@
             "type": "array"
         },
         "location": {
-            "defaultValue": "[resourceGroup().location]",
             "metadata": {
                 "description": "Specifies the location in which the Azure Container group resource(s) should be deployed."
             },

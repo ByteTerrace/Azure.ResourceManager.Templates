@@ -31,7 +31,6 @@
             "type": "bool"
         },
         "location": {
-            "defaultValue": "[resourceGroup().location]",
             "metadata": {
                 "description": "Specifies the location in which the Azure Container registry resource(s) should be deployed."
             },

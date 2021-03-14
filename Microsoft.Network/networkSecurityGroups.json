@@ -23,7 +23,6 @@
             "type": "string"
         },
         "location": {
-            "defaultValue": "[resourceGroup().location]",
             "metadata": {
                 "description": "Specifies the location in which the Azure Network Security group resource(s) will be deployed."
             },

@@ -10,7 +10,6 @@
             "type": "string"
         },
         "location": {
-            "defaultValue": "[resourceGroup().location]",
             "metadata": {
                 "description": "Specifies the location in which the Azure Kubernetes Service cluster resource(s) should be deployed."
             },

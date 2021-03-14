@@ -10,7 +10,6 @@
             "type": "bool"
         },
         "location": {
-            "defaultValue": "[resourceGroup().location]",
             "metadata": {
                 "description": "Specifies the location in which the Azure Route Table resource(s) will be deployed."
             },

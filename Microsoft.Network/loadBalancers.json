@@ -45,7 +45,6 @@
             "type": "array"
         },
         "location": {
-            "defaultValue": "[resourceGroup().location]",
             "metadata": {
                 "description": "Specifies the location in which the Azure Load Balancer resource(s) will be deployed."
             },

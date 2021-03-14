@@ -463,7 +463,20 @@
                         "name": "byteterrace.net"
                     }
                 ],
-                "scripts": [],
+                "scripts": {
+                    "postDeploy": [
+                        {
+                            "name": "GoodbyeDeploy",
+                            "scriptContent": "Write-Host 'Goodbye deploy!';"
+                        }
+                    ],
+                    "preDeploy": [
+                        {
+                            "name": "HelloDeploy",
+                            "scriptContent": "Write-Host 'Hello deploy!';"
+                        }
+                    ]
+                },
                 "sqlServers": [
                     {
                         "auditLogAnalyticsWorkspaceName": "byteterrace",

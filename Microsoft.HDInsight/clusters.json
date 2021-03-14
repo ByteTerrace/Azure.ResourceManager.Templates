@@ -29,7 +29,6 @@
             "type": "object"
         },
         "location": {
-            "defaultValue": "[resourceGroup().location]",
             "metadata": {
                 "description": "Specifies the location in which the Azure HDInsight cluster resource(s) will be deployed."
             },

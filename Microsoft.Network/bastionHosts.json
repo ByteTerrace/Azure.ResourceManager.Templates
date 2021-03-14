@@ -9,7 +9,6 @@
             "type": "array"
         },
         "location": {
-            "defaultValue": "[resourceGroup().location]",
             "metadata": {
                 "description": "Specifies the location in which the Azure Bastion host resource(s) will be deployed."
             },

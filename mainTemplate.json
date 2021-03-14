@@ -38,11 +38,17 @@
             },
             "natGateways": [],
             "networkSecurityGroups": [],
+            "policy": {
+                "definitions": []
+            },
             "privateEndpoints": [],
             "publicIpAddresses": [],
             "publicIpPrefixes": [],
             "routeTables": [],
-            "scripts": [],
+            "scripts": {
+                "postDeploy": [],
+                "preDeploy": []
+            },
             "sqlServers": [],
             "storageAccounts": [],
             "virtualNetworks": []
@@ -55,13 +61,13 @@
                 "isPerSiteScalingEnabled": false,
                 "operatingSystemName": "Linux",
                 "serviceEnvironmentName": "",
-                "serviceEnvironmentResourceGroupName": "[resourceGroup().name]",
-                "serviceEnvironmentSubscriptionId": "[subscription().subscriptionId]",
+                "serviceEnvironmentResourceGroupName": "[variables('resourceGroupName')]",
+                "serviceEnvironmentSubscriptionId": "[variables('subscriptionId')]",
                 "skuName": "P1v2"
             },
             "cdnProfile": {
-                "auditLogAnalyticsWorkspaceResourceGroupName": "[resourceGroup().name]",
-                "auditLogAnalyticsWorkspaceSubscriptionId": "[subscription().subscriptionId]",
+                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
+                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
                 "skuName": "Standard_Microsoft"
             },
             "communicationService": {
@@ -123,8 +129,8 @@
                 "version": "4.0"
             },
             "keyVault": {
-                "auditLogAnalyticsWorkspaceResourceGroupName": "[resourceGroup().name]",
-                "auditLogAnalyticsWorkspaceSubscriptionId": "[subscription().subscriptionId]",
+                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
+                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
                 "firewallRules": [],
                 "isAllowTrustedMicrosoftServicesEnabled": false,
                 "isDiskEncryptionEnabled": false,
@@ -154,8 +160,8 @@
             "managedIdentity": {},
             "monitor": {
                 "applicationInsightsComponent": {
-                    "logAnalyticsWorkspaceResourceGroupName": "[resourceGroup().name]",
-                    "logAnalyticsWorkspaceSubscriptionId": "[subscription().subscriptionId]",
+                    "logAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
+                    "logAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
                     "samplingPercentage": 100
                 },
                 "logAnalyticsWorkspace": {
@@ -166,28 +172,41 @@
                 },
                 "privateLinkScope": {}
             },
+            "location": "[if(variables('isResourceGroupDeployment'), resourceGroup().location, deployment().location)]",
             "natGateway": {
                 "publicIpAddresses": [],
                 "publicIpPrefixes": [],
                 "skuName": "Standard"
             },
             "networkSecurityGroup": {
-                "auditLogAnalyticsWorkspaceResourceGroupName": "[resourceGroup().name]",
-                "auditLogAnalyticsWorkspaceSubscriptionId": "[subscription().subscriptionId]",
+                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
+                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
                 "securityRules": []
             },
+            "policy": {
+                "definition": {
+                    "description": "",
+                    "metadata": {
+                        "deprecated": false,
+                        "preview": false,
+                        "version": "1.0.0"
+                    },
+                    "mode": "Indexed",
+                    "parameters": {}
+                }
+            },
             "privateEndpoint": {
-                "linkedResourceGroupName": "[resourceGroup().name]",
-                "linkedResourceSubscriptionId": "[subscription().subscriptionId]",
-                "virtualNetworkResourceGroupName": "[resourceGroup().name]",
-                "virtualNetworkSubscriptionId": "[subscription().subscriptionId]"
+                "linkedResourceGroupName": "[variables('resourceGroupName')]",
+                "linkedResourceSubscriptionId": "[variables('subscriptionId')]",
+                "virtualNetworkResourceGroupName": "[variables('resourceGroupName')]",
+                "virtualNetworkSubscriptionId": "[variables('subscriptionId')]"
             },
             "publicIpAddress": {
                 "allocationMethod": "Static",
                 "dnsPrefix": "",
                 "ipPrefixName": "",
-                "ipPrefixResourceGroupName": "[resourceGroup().name]",
-                "ipPrefixSubscriptionId": "[subscription().subscriptionId]",
+                "ipPrefixResourceGroupName": "[variables('resourceGroupName')]",
+                "ipPrefixSubscriptionId": "[variables('subscriptionId')]",
                 "skuName": "Standard",
                 "skuTier": "Regional",
                 "version": "IPv4"
@@ -213,13 +232,13 @@
                     "FAILED_DATABASE_AUTHENTICATION_GROUP",
                     "SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP"
                 ],
-                "auditLogAnalyticsWorkspaceResourceGroupName": "[resourceGroup().name]",
-                "auditLogAnalyticsWorkspaceSubscriptionId": "[subscription().subscriptionId]",
+                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
+                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
                 "connectionPolicy": "Default",
                 "customerManagedEncryptionKeyName": "",
                 "customerManagedEncryptionKeyVaultName": "",
-                "customerManagedEncryptionKeyVaultResourceGroupName": "[resourceGroup().name]",
-                "customerManagedEncryptionKeyVaultSubscriptionId": "[subscription().subscriptionId]",
+                "customerManagedEncryptionKeyVaultResourceGroupName": "[variables('resourceGroupName')]",
+                "customerManagedEncryptionKeyVaultSubscriptionId": "[variables('subscriptionId')]",
                 "customerManagedEncryptionKeyVersion": "",
                 "databases": [],
                 "dnsAliases": [],
@@ -236,8 +255,8 @@
                 "blobSoftDeleteRetentionPeriodInDays": 7,
                 "customerManagedEncryptionKeyName": "",
                 "customerManagedEncryptionKeyVaultName": "",
-                "customerManagedEncryptionKeyVaultResourceGroupName": "[resourceGroup().name]",
-                "customerManagedEncryptionKeyVaultSubscriptionId": "[subscription().id]",
+                "customerManagedEncryptionKeyVaultResourceGroupName": "[variables('resourceGroupName')]",
+                "customerManagedEncryptionKeyVaultSubscriptionId": "[variables('subscriptionId')]",
                 "customerManagedEncryptionKeyVersion": "",
                 "encryptionScopes": [],
                 "fileShareNames": [],
@@ -260,8 +279,8 @@
             "virtualNetwork": {
                 "addressPrefixes": [],
                 "ddosProtectionPlanName": "",
-                "ddosProtectionPlanResourceGroupName": "[resourceGroup().name]",
-                "ddosProtectionPlanSubscriptionId": "[subscription().subscriptionId]",
+                "ddosProtectionPlanResourceGroupName": "[variables('resourceGroupName')]",
+                "ddosProtectionPlanSubscriptionId": "[variables('subscriptionId')]",
                 "subnets": []
             }
         },
@@ -288,18 +307,106 @@
             "monitorPrivateLinkScope": "[format('{0}-MonitorPrivateLinkScope', deployment().name)]",
             "natGateway": "[format('{0}-NatGateway', deployment().name)]",
             "networkSecurityGroup": "[format('{0}-NetworkSecurityGroup', deployment().name)]",
+            "policyDefinition": "[format('{0}-PolicyDefinition', deployment().name)]",
             "privateEndpoint": "[format('{0}-PrivateEndpoint', deployment().name)]",
             "publicIpAddress": "[format('{0}-PublicIpAddress', deployment().name)]",
             "publicIpPrefix": "[format('{0}-PublicIpPrefix', deployment().name)]",
             "routeTable": "[format('{0}-RouteTable', deployment().name)]",
-            "script": "[format('{0}-Script', deployment().name)]",
+            "scriptPostDeploy": "[format('{0}-ScriptPostDeploy', deployment().name)]",
+            "scriptPreDeploy": "[format('{0}-ScriptPreDeploy', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
             "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]"
         },
-        "resourceDefinitions": "[union(variables('defaultResourceDefinitions'), parameters('resourceDefinitions'))]"
+        "isResourceGroupDeployment": "[empty(union(createObject('location', ''), deployment()).location)]",
+        "resourceGroupName": "[if(variables('isResourceGroupDeployment'), resourceGroup().name, '')]",
+        "resourceDefinitions": "[union(variables('defaultResourceDefinitions'), parameters('resourceDefinitions'))]",
+        "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').scripts.preDeploy))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').scripts.preDeploy)]",
+                "mode": "parallel",
+                "name": "scriptsPreDeployCopy"
+            },
+            "name": "[format('{0}_{1}', variables('deploymentNames').scriptPreDeploy, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "kind": {
+                        "value": "[union(variables('defaultResourceProperties').script, variables('resourceDefinitions').scripts.preDeploy[copyIndex()]).kind]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').scripts.preDeploy[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').scripts.preDeploy[copyIndex()].name]"
+                    },
+                    "scriptContent": {
+                        "value": "[variables('resourceDefinitions').scripts.preDeploy[copyIndex()].scriptContent]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "relativePath": "./Microsoft.Resources/deploymentScripts.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').policy.definitions))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').policy.definitions)]",
+                "mode": "parallel",
+                "name": "policyDefinitionsCopy"
+            },
+            "dependsOn": [
+                "scriptsPreDeployCopy"
+            ],
+            "location": "[if(variables('isResourceGroupDeployment'), '', variables('defaultResourceProperties').location)]",
+            "name": "[format('{0}_{1}', variables('deploymentNames').policyDefinition, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "description": {
+                        "value": "[union(variables('defaultResourceProperties').policy.definition, variables('resourceDefinitions').policy.definitions[copyIndex()]).description]"
+                    },
+                    "displayName": {
+                        "value": "[union(createObject('displayName', variables('resourceDefinitions').policy.definitions[copyIndex()].name), variables('resourceDefinitions').policy.definitions[copyIndex()]).displayName]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').policy.definitions[copyIndex()]).location]"
+                    },
+                    "metadata": {
+                        "value": "[union(variables('defaultResourceProperties').policy.definition, variables('resourceDefinitions').policy.definitions[copyIndex()]).metadata]"
+                    },
+                    "mode": {
+                        "value": "[union(variables('defaultResourceProperties').policy.definition, variables('resourceDefinitions').policy.definitions[copyIndex()]).mode]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').policy.definitions[copyIndex()].name]"
+                    },
+                    "parameters": {
+                        "value": "[union(variables('defaultResourceProperties').policy.definition, variables('resourceDefinitions').policy.definitions[copyIndex()]).parameters]"
+                    },
+                    "rules": {
+                        "value": "[variables('resourceDefinitions').policy.definitions[copyIndex()].rules]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "relativePath": "./Microsoft.Authorization/policyDefinitions.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[not(empty(variables('resourceDefinitions').managedIdentities))]",
@@ -308,10 +415,17 @@
                 "mode": "parallel",
                 "name": "managedIdentitiesCopy"
             },
+            "dependsOn": [
+                "policyDefinitionsCopy",
+                "scriptsPreDeployCopy"
+            ],
             "name": "[format('{0}_{1}', variables('deploymentNames').managedIdentity, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').managedIdentities[copyIndex()]).location]"
+                    },
                     "name": {
                         "value": "[variables('resourceDefinitions').managedIdentities[copyIndex()].name]"
                     },
@@ -328,47 +442,16 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').scripts))]",
-            "copy": {
-                "count": "[length(variables('resourceDefinitions').scripts)]",
-                "mode": "parallel",
-                "name": "scriptsCopy"
-            },
-            "dependsOn": [
-                "managedIdentitiesCopy"
-            ],
-            "name": "[format('{0}_{1}', variables('deploymentNames').script, copyIndex())]",
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "kind": {
-                        "value": "[union(variables('defaultResourceProperties').script, variables('resourceDefinitions').scripts[copyIndex()]).kind]"
-                    },
-                    "name": {
-                        "value": "[variables('resourceDefinitions').scripts[copyIndex()].name]"
-                    },
-                    "scriptContent": {
-                        "value": "[variables('resourceDefinitions').scripts[copyIndex()].scriptContent]"
-                    },
-                    "tags": {
-                        "value": "[parameters('tags')]"
-                    }
-                },
-                "templateLink": {
-                    "contentVersion": "1.0.0.0",
-                    "relativePath": "./Microsoft.Resources/deploymentScripts.json"
-                }
-            },
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[not(empty(variables('resourceDefinitions').monitor.privateLinkScopes))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').monitor.privateLinkScopes)]",
                 "mode": "parallel",
                 "name": "monitorPrivateLinkScopesCopy"
             },
+            "dependsOn": [
+                "policyDefinitionsCopy",
+                "scriptsPreDeployCopy"
+            ],
             "name": "[format('{0}_{1}', variables('deploymentNames').monitorPrivateLinkScope, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
@@ -396,7 +479,9 @@
                 "name": "logAnalyticsWorkspacesCopy"
             },
             "dependsOn": [
-                "monitorPrivateLinkScopesCopy"
+                "monitorPrivateLinkScopesCopy",
+                "policyDefinitionsCopy",
+                "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').logAnalyticsWorkspace, copyIndex())]",
             "properties": {
@@ -410,6 +495,9 @@
                     },
                     "isPublicNetworkAccessForQueryEnabled": {
                         "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForQueryEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).location]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()].name]"
@@ -438,7 +526,9 @@
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy"
+                "monitorPrivateLinkScopesCopy",
+                "policyDefinitionsCopy",
+                "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').publicIpPrefix, copyIndex())]",
             "properties": {
@@ -446,6 +536,9 @@
                 "parameters": {
                     "ipVersion": {
                         "value": "[union(variables('defaultResourceProperties').publicIpPrefix, variables('resourceDefinitions').publicIpPrefixes[copyIndex()]).ipVersion]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').publicIpPrefixes[copyIndex()]).location]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').publicIpPrefixes[copyIndex()].name]"
@@ -478,7 +571,9 @@
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
-                "publicIpPrefixesCopy"
+                "policyDefinitionsCopy",
+                "publicIpPrefixesCopy",
+                "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').publicIpAddress, copyIndex())]",
             "properties": {
@@ -498,6 +593,9 @@
                     },
                     "ipPrefixSubscriptionId": {
                         "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).ipPrefixSubscriptionId]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').publicIpAddresses[copyIndex()]).location]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').publicIpAddresses[copyIndex()].name]"
@@ -533,13 +631,18 @@
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
+                "policyDefinitionsCopy",
                 "publicIpAddressesCopy",
-                "publicIpPrefixesCopy"
+                "publicIpPrefixesCopy",
+                "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').natGateway, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').natGateways[copyIndex()]).location]"
+                    },
                     "name": {
                         "value": "[variables('resourceDefinitions').natGateways[copyIndex()].name]"
                     },
@@ -573,7 +676,9 @@
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy"
+                "monitorPrivateLinkScopesCopy",
+                "policyDefinitionsCopy",
+                "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').networkSecurityGroup, copyIndex())]",
             "properties": {
@@ -587,6 +692,9 @@
                     },
                     "auditLogAnalyticsWorkspaceSubscriptionId": {
                         "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).location]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').networkSecurityGroups[copyIndex()].name]"
@@ -615,7 +723,9 @@
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy"
+                "monitorPrivateLinkScopesCopy",
+                "policyDefinitionsCopy",
+                "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').routeTable, copyIndex())]",
             "properties": {
@@ -623,6 +733,9 @@
                 "parameters": {
                     "isBgpRoutePropagationEnabled": {
                         "value": "[union(variables('defaultResourceProperties').routeTable, variables('resourceDefinitions').routeTables[copyIndex()]).isBgpRoutePropagationEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').routeTables[copyIndex()]).location]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').routeTables[copyIndex()].name]"
@@ -651,7 +764,9 @@
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy"
+                "monitorPrivateLinkScopesCopy",
+                "policyDefinitionsCopy",
+                "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').cdnProfile, copyIndex())]",
             "properties": {
@@ -694,7 +809,9 @@
             "dependsOn": [
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "routeTablesCopy"
+                "policyDefinitionsCopy",
+                "routeTablesCopy",
+                "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').virtualNetwork, copyIndex())]",
             "properties": {
@@ -711,6 +828,9 @@
                     },
                     "ddosProtectionPlanSubscriptionId": {
                         "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).ddosProtectionPlanSubscriptionId]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').virtualNetworks[copyIndex()]).location]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').virtualNetworks[copyIndex()].name]"
@@ -741,8 +861,10 @@
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
                 "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
+                "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').bastionHost, copyIndex())]",
@@ -751,6 +873,9 @@
                 "parameters": {
                     "ipConfigurations": {
                         "value": "[variables('resourceDefinitions').bastionHosts[copyIndex()].ipConfigurations]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').bastionHosts[copyIndex()]).location]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').bastionHosts[copyIndex()].name]"
@@ -779,7 +904,9 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
                 "routeTablesCopy",
+                "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').dnsPrivateZone, copyIndex())]",
@@ -825,7 +952,9 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
                 "routeTablesCopy",
+                "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').dnsPublicZone, copyIndex())]",
@@ -874,9 +1003,11 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
                 "routeTablesCopy",
+                "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').loadBalancer, copyIndex())]",
@@ -897,6 +1028,9 @@
                     },
                     "inboundNatRules": {
                         "value": "[union(variables('defaultResourceProperties').loadBalancer, variables('resourceDefinitions').loadBalancers[copyIndex()]).inboundNatRules]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').loadBalancers[copyIndex()]).location]"
                     },
                     "loadBalancingRules": {
                         "value": "[union(variables('defaultResourceProperties').loadBalancer, variables('resourceDefinitions').loadBalancers[copyIndex()]).loadBalancingRules]"
@@ -937,13 +1071,18 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
                 "routeTablesCopy",
+                "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').applicationInsightsComponent, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').monitor.applicationInsightsComponent[copyIndex()]).location]"
+                    },
                     "logAnalyticsWorkspaceName": {
                         "value": "[union(variables('defaultResourceProperties').monitor.applicationInsightsComponent, variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()]).logAnalyticsWorkspaceName]"
                     },
@@ -983,7 +1122,9 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
                 "routeTablesCopy",
+                "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').keyVault, copyIndex())]",
@@ -1019,6 +1160,9 @@
                     },
                     "isVirtualMachineDeploymentEnabled": {
                         "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).isVirtualMachineDeploymentEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').keyVaults[copyIndex()]).location]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').keyVaults[copyIndex()].name]"
@@ -1061,7 +1205,9 @@
                 "keyVaultsCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
                 "routeTablesCopy",
+                "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').communicationService, copyIndex())]",
@@ -1097,13 +1243,18 @@
                 "keyVaultsCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
                 "routeTablesCopy",
+                "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').applicationConfigurationStore, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').applicationConfigurationStores[copyIndex()]).location]"
+                    },
                     "name": {
                         "value": "[variables('resourceDefinitions').applicationConfigurationStores[copyIndex()].name]"
                     },
@@ -1133,9 +1284,11 @@
                 "keyVaultsCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
+                "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').containerRegistry, copyIndex())]",
@@ -1153,6 +1306,9 @@
                     },
                     "isTrustedMicrosoftResourceAccessEnabled": {
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isTrustedMicrosoftResourceAccessEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').containerRegistries[copyIndex()]).location]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').containerRegistries[copyIndex()].name]"
@@ -1184,9 +1340,11 @@
                 "keyVaultsCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
+                "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').containerInstance, copyIndex())]",
@@ -1195,6 +1353,9 @@
                 "parameters": {
                     "containers": {
                         "value": "[variables('resourceDefinitions').containerInstances[copyIndex()].containers]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').containerInstances[copyIndex()]).location]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').containerInstances[copyIndex()].name]"
@@ -1234,9 +1395,11 @@
                 "keyVaultsCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
+                "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').storageAccount, copyIndex())]",
@@ -1306,6 +1469,9 @@
                     "isVersioningEnabledForBlobs": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isVersioningEnabledForBlobs]"
                     },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').storageAccounts[copyIndex()]).location]"
+                    },
                     "name": {
                         "value": "[variables('resourceDefinitions').storageAccounts[copyIndex()].name]"
                     },
@@ -1349,9 +1515,11 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
+                "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').sqlServer, copyIndex())]",
@@ -1412,6 +1580,9 @@
                     "isTrustedMicrosoftResourceAccessEnabled": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).isTrustedMicrosoftResourceAccessEnabled]"
                     },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').sqlServers[copyIndex()]).location]"
+                    },
                     "name": {
                         "value": "[variables('resourceDefinitions').sqlServers[copyIndex()].name]"
                     },
@@ -1446,9 +1617,11 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
+                "scriptsPreDeployCopy",
                 "sqlServersCopy",
                 "virtualNetworksCopy"
             ],
@@ -1476,6 +1649,9 @@
                     },
                     "kind": {
                         "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).kind]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).location]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').cosmosDbAccounts[copyIndex()].name]"
@@ -1506,9 +1682,11 @@
                 "keyVaultsCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
+                "scriptsPreDeployCopy",
                 "storageAccountsCopy",
                 "virtualNetworksCopy"
             ],
@@ -1518,6 +1696,9 @@
                 "parameters": {
                     "dnsPrefix": {
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).dnsPrefix]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).location]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()].name]"
@@ -1545,9 +1726,11 @@
                 "keyVaultsCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
+                "scriptsPreDeployCopy",
                 "sqlServersCopy",
                 "storageAccountsCopy",
                 "virtualNetworksCopy"
@@ -1564,6 +1747,9 @@
                     },
                     "computeProfile": {
                         "value": "[union(variables('defaultResourceProperties').hdInsightCluster, variables('resourceDefinitions').hdInsightClusters[copyIndex()]).computeProfile]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').hdInsightClusters[copyIndex()]).location]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').hdInsightClusters[copyIndex()].name]"
@@ -1606,9 +1792,11 @@
                 "keyVaultsCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
+                "scriptsPreDeployCopy",
                 "sqlServersCopy",
                 "storageAccountsCopy",
                 "virtualNetworksCopy"
@@ -1664,9 +1852,11 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
+                "scriptsPreDeployCopy",
                 "sqlServersCopy",
                 "storageAccountsCopy",
                 "virtualNetworksCopy"
@@ -1677,6 +1867,9 @@
                 "parameters": {
                     "isPerSiteScalingEnabled": {
                         "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).isPerSiteScalingEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').applicationServicePlans[copyIndex()]).location]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').applicationServicePlans[copyIndex()].name]"
@@ -1703,75 +1896,6 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "relativePath": "./Microsoft.Web/serverfarms.json"
-                }
-            },
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').privateEndpoints))]",
-            "copy": {
-                "count": "[length(variables('resourceDefinitions').privateEndpoints)]",
-                "mode": "parallel",
-                "name": "privateEndpointsCopy"
-            },
-            "dependsOn": [
-                "applicationInsightsComponentsCopy",
-                "applicationServicePlansCopy",
-                "containerRegistriesCopy",
-                "keyVaultsCopy",
-                "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "privateDnsZonesCopy",
-                "publicDnsZonesCopy",
-                "routeTablesCopy",
-                "sqlServersCopy",
-                "storageAccountsCopy",
-                "virtualNetworksCopy"
-            ],
-            "name": "[format('{0}_{1}', variables('deploymentNames').privateEndpoint, copyIndex())]",
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "groupIds": {
-                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].groupIds]"
-                    },
-                    "linkedResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).linkedResourceGroupName]"
-                    },
-                    "linkedResourcePath": {
-                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].linkedResourcePath]"
-                    },
-                    "linkedResourceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).linkedResourceSubscriptionId]"
-                    },
-                    "linkedResourceType": {
-                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].linkedResourceType]"
-                    },
-                    "name": {
-                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].name]"
-                    },
-                    "subnetName": {
-                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].subnetName]"
-                    },
-                    "tags": {
-                        "value": "[parameters('tags')]"
-                    },
-                    "virtualNetworkName": {
-                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].virtualNetworkName]"
-                    },
-                    "virtualNetworkResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).virtualNetworkResourceGroupName]"
-                    },
-                    "virtualNetworkSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).virtualNetworkSubscriptionId]"
-                    }
-                },
-                "templateLink": {
-                    "contentVersion": "1.0.0.0",
-                    "relativePath": "./Microsoft.Network/privateEndpoints.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
