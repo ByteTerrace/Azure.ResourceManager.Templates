@@ -38,9 +38,6 @@
             },
             "natGateways": [],
             "networkSecurityGroups": [],
-            "policy": {
-                "definitions": []
-            },
             "privateEndpoints": [],
             "publicIpAddresses": [],
             "publicIpPrefixes": [],
@@ -172,7 +169,7 @@
                 },
                 "privateLinkScope": {}
             },
-            "location": "[if(variables('isResourceGroupDeployment'), resourceGroup().location, deployment().location)]",
+            "location": "[resourceGroup().location]",
             "natGateway": {
                 "publicIpAddresses": [],
                 "publicIpPrefixes": [],
@@ -182,18 +179,6 @@
                 "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
                 "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
                 "securityRules": []
-            },
-            "policy": {
-                "definition": {
-                    "description": "",
-                    "metadata": {
-                        "deprecated": false,
-                        "preview": false,
-                        "version": "1.0.0"
-                    },
-                    "mode": "Indexed",
-                    "parameters": {}
-                }
             },
             "privateEndpoint": {
                 "linkedResourceGroupName": "[variables('resourceGroupName')]",
@@ -307,7 +292,6 @@
             "monitorPrivateLinkScope": "[format('{0}-MonitorPrivateLinkScope', deployment().name)]",
             "natGateway": "[format('{0}-NatGateway', deployment().name)]",
             "networkSecurityGroup": "[format('{0}-NetworkSecurityGroup', deployment().name)]",
-            "policyDefinition": "[format('{0}-PolicyDefinition', deployment().name)]",
             "privateEndpoint": "[format('{0}-PrivateEndpoint', deployment().name)]",
             "publicIpAddress": "[format('{0}-PublicIpAddress', deployment().name)]",
             "publicIpPrefix": "[format('{0}-PublicIpPrefix', deployment().name)]",
@@ -318,8 +302,7 @@
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
             "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]"
         },
-        "isResourceGroupDeployment": "[empty(union(createObject('location', ''), deployment()).location)]",
-        "resourceGroupName": "[if(variables('isResourceGroupDeployment'), resourceGroup().name, '')]",
+        "resourceGroupName": "[resourceGroup().name]",
         "resourceDefinitions": "[union(variables('defaultResourceDefinitions'), parameters('resourceDefinitions'))]",
         "subscriptionId": "[subscription().subscriptionId]"
     },
@@ -355,54 +338,6 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "relativePath": "./Microsoft.Resources/deploymentScripts.json"
-                }
-            },
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').policy.definitions))]",
-            "copy": {
-                "count": "[length(variables('resourceDefinitions').policy.definitions)]",
-                "mode": "parallel",
-                "name": "policyDefinitionsCopy"
-            },
-            "dependsOn": [
-                "scriptsPreDeployCopy"
-            ],
-            "location": "[if(variables('isResourceGroupDeployment'), '', variables('defaultResourceProperties').location)]",
-            "name": "[format('{0}_{1}', variables('deploymentNames').policyDefinition, copyIndex())]",
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "description": {
-                        "value": "[union(variables('defaultResourceProperties').policy.definition, variables('resourceDefinitions').policy.definitions[copyIndex()]).description]"
-                    },
-                    "displayName": {
-                        "value": "[union(createObject('displayName', variables('resourceDefinitions').policy.definitions[copyIndex()].name), variables('resourceDefinitions').policy.definitions[copyIndex()]).displayName]"
-                    },
-                    "location": {
-                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').policy.definitions[copyIndex()]).location]"
-                    },
-                    "metadata": {
-                        "value": "[union(variables('defaultResourceProperties').policy.definition, variables('resourceDefinitions').policy.definitions[copyIndex()]).metadata]"
-                    },
-                    "mode": {
-                        "value": "[union(variables('defaultResourceProperties').policy.definition, variables('resourceDefinitions').policy.definitions[copyIndex()]).mode]"
-                    },
-                    "name": {
-                        "value": "[variables('resourceDefinitions').policy.definitions[copyIndex()].name]"
-                    },
-                    "parameters": {
-                        "value": "[union(variables('defaultResourceProperties').policy.definition, variables('resourceDefinitions').policy.definitions[copyIndex()]).parameters]"
-                    },
-                    "rules": {
-                        "value": "[variables('resourceDefinitions').policy.definitions[copyIndex()].rules]"
-                    }
-                },
-                "templateLink": {
-                    "contentVersion": "1.0.0.0",
-                    "relativePath": "./Microsoft.Authorization/policyDefinitions.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -1896,6 +1831,147 @@
                 "templateLink": {
                     "contentVersion": "1.0.0.0",
                     "relativePath": "./Microsoft.Web/serverfarms.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').privateEndpoints))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').privateEndpoints)]",
+                "mode": "parallel",
+                "name": "privateEndpointsCopy"
+            },
+            "dependsOn": [
+                "applicationInsightsComponentsCopy",
+                "applicationServicePlansCopy",
+                "containerRegistriesCopy",
+                "keyVaultsCopy",
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
+                "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "routeTablesCopy",
+                "scriptsPreDeployCopy",
+                "sqlServersCopy",
+                "storageAccountsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').privateEndpoint, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "groupIds": {
+                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].groupIds]"
+                    },
+                    "linkedResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).linkedResourceGroupName]"
+                    },
+                    "linkedResourcePath": {
+                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].linkedResourcePath]"
+                    },
+                    "linkedResourceSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).linkedResourceSubscriptionId]"
+                    },
+                    "linkedResourceType": {
+                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].linkedResourceType]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').privateEndpoints[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].name]"
+                    },
+                    "subnetName": {
+                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].subnetName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "virtualNetworkName": {
+                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].virtualNetworkName]"
+                    },
+                    "virtualNetworkResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).virtualNetworkResourceGroupName]"
+                    },
+                    "virtualNetworkSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).virtualNetworkSubscriptionId]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "relativePath": "./Microsoft.Network/privateEndpoints.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').scripts.postDeploy))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').scripts.postDeploy)]",
+                "mode": "parallel",
+                "name": "scriptsPostDeployCopy"
+            },
+            "dependsOn": [
+                "applicationConfigurationStoresCopy",
+                "applicationInsightsComponentsCopy",
+                "applicationServicePlansCopy",
+                "bastionHostsCopy",
+                "cdnProfilesCopy",
+                "communicationServicesCopy",
+                "containerInstancesCopy",
+                "containerRegistriesCopy",
+                "cosmosDbAccountsCopy",
+                "frontDoorsCopy",
+                "hdInsightClustersCopy",
+                "keyVaultsCopy",
+                "kubernetesServiceClustersCopy",
+                "loadBalancersCopy",
+                "logAnalyticsWorkspacesCopy",
+                "managedIdentitiesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
+                "networkSecurityGroupsCopy",
+                "policyDefinitionsCopy",
+                "privateDnsZonesCopy",
+                "privateEndpointsCopy",
+                "publicDnsZonesCopy",
+                "publicIpAddressesCopy",
+                "publicIpPrefixesCopy",
+                "routeTablesCopy",
+                "scriptsPreDeployCopy",
+                "sqlServersCopy",
+                "storageAccountsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').scriptPostDeploy, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "kind": {
+                        "value": "[union(variables('defaultResourceProperties').script, variables('resourceDefinitions').scripts.postDeploy[copyIndex()]).kind]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').scripts.postDeploy[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').scripts.postDeploy[copyIndex()].name]"
+                    },
+                    "scriptContent": {
+                        "value": "[variables('resourceDefinitions').scripts.postDeploy[copyIndex()].scriptContent]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "relativePath": "./Microsoft.Resources/deploymentScripts.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"

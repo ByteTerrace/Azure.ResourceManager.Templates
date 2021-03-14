@@ -3,8 +3,8 @@
 ## Publish Template Spec via Azure CLI
 ```
 $resourceGroupName = 'byteterrace';
-$templateFilePath = 'mainTemplate.json';
-$templateName = 'UniversalTemplate';
+$templateFilePath = 'resourceGroupDeployment.json';
+$templateName = 'ResourceGroupDeployment';
 $version = '1.0.0';
 
 az ts create `
@@ -17,10 +17,10 @@ az ts create `
 
 ## Deploy Template Spec via Azure CLI
 ```
-$parametersFilePath = 'mainTemplate.Parameters.json';
+$parametersFilePath = 'resourceGroupDeployment.Parameters.json';
 $resourceGroupName = 'byteterrace';
-$templateFilePath = 'mainTemplate.json';
-$templateName = 'UniversalTemplate';
+$templateFilePath = 'resourceGroupDeployment.json';
+$templateName = 'ResourceGroupDeployment';
 $version = '1.0.0';
 
 $templateSpecId = (az ts show `
