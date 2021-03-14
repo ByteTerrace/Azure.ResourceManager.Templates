@@ -351,7 +351,6 @@
                 "name": "managedIdentitiesCopy"
             },
             "dependsOn": [
-                "policyDefinitionsCopy",
                 "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').managedIdentity, copyIndex())]",
@@ -384,7 +383,6 @@
                 "name": "monitorPrivateLinkScopesCopy"
             },
             "dependsOn": [
-                "policyDefinitionsCopy",
                 "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').monitorPrivateLinkScope, copyIndex())]",
@@ -415,7 +413,6 @@
             },
             "dependsOn": [
                 "monitorPrivateLinkScopesCopy",
-                "policyDefinitionsCopy",
                 "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').logAnalyticsWorkspace, copyIndex())]",
@@ -462,7 +459,6 @@
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
-                "policyDefinitionsCopy",
                 "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').publicIpPrefix, copyIndex())]",
@@ -506,7 +502,6 @@
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
-                "policyDefinitionsCopy",
                 "publicIpPrefixesCopy",
                 "scriptsPreDeployCopy"
             ],
@@ -566,7 +561,6 @@
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
-                "policyDefinitionsCopy",
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
                 "scriptsPreDeployCopy"
@@ -612,7 +606,6 @@
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
-                "policyDefinitionsCopy",
                 "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').networkSecurityGroup, copyIndex())]",
@@ -659,7 +652,6 @@
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
-                "policyDefinitionsCopy",
                 "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').routeTable, copyIndex())]",
@@ -700,7 +692,6 @@
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
-                "policyDefinitionsCopy",
                 "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').cdnProfile, copyIndex())]",
@@ -744,7 +735,6 @@
             "dependsOn": [
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "routeTablesCopy",
                 "scriptsPreDeployCopy"
             ],
@@ -796,7 +786,6 @@
                 "logAnalyticsWorkspacesCopy",
                 "monitorPrivateLinkScopesCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
                 "scriptsPreDeployCopy",
@@ -839,7 +828,6 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
@@ -887,7 +875,6 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
@@ -938,7 +925,6 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
                 "routeTablesCopy",
@@ -1006,7 +992,6 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
@@ -1057,7 +1042,6 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
@@ -1140,7 +1124,6 @@
                 "keyVaultsCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
@@ -1178,7 +1161,6 @@
                 "keyVaultsCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
@@ -1219,7 +1201,6 @@
                 "keyVaultsCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
@@ -1275,7 +1256,6 @@
                 "keyVaultsCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
@@ -1330,7 +1310,6 @@
                 "keyVaultsCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
@@ -1450,7 +1429,6 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
@@ -1552,7 +1530,6 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
@@ -1617,7 +1594,6 @@
                 "keyVaultsCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
@@ -1661,7 +1637,6 @@
                 "keyVaultsCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
@@ -1727,7 +1702,6 @@
                 "keyVaultsCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
@@ -1787,7 +1761,6 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
@@ -1852,7 +1825,6 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "routeTablesCopy",
@@ -1937,7 +1909,6 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "policyDefinitionsCopy",
                 "privateDnsZonesCopy",
                 "privateEndpointsCopy",
                 "publicDnsZonesCopy",
