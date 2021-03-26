@@ -12,6 +12,7 @@
         }
     },
     "variables": {
+        "contentVersion": "[deployment().properties.template.contentVersion]",
         "defaultResourceDefinitions": {
             "applicationConfigurationStores": [],
             "applicationServicePlans": [],
@@ -25,11 +26,17 @@
                 "private": [],
                 "public": []
             },
+            "eventGrid": {
+                "domains": []
+            },
             "frontDoors": [],
             "hdInsightClusters": [],
             "keyVaults": [],
             "kubernetesServiceClusters": [],
             "loadBalancers": [],
+            "logic": {
+                "applications": []
+            },
             "managedIdentities": [],
             "monitor": {
                 "applicationInsightsComponents": [],
@@ -113,6 +120,12 @@
                     "txtRecords": []
                 }
             },
+            "eventGrid": {
+                "domain": {
+                    "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
+                    "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]"
+                }
+            },
             "frontDoor": {
                 "backendPools": [],
                 "frontendEndpoints": [],
@@ -153,6 +166,13 @@
                 "outboundRules": [],
                 "skuName": "Standard",
                 "skuTier": "Regional"
+            },
+            "logic": {
+                "application": {
+                    "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
+                    "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
+                    "isEnabled": true
+                }
             },
             "managedIdentity": {},
             "monitor": {
@@ -282,12 +302,14 @@
             "cosmosDbAccount": "[format('{0}-CosmosDbAccount', deployment().name)]",
             "dnsPrivateZone": "[format('{0}-DnsPrivateZone', deployment().name)]",
             "dnsPublicZone": "[format('{0}-DnsPublicZone', deployment().name)]",
+            "eventGridDomain": "[format('{0}-EventGridDomain', deployment().name)]",
             "frontDoor": "[format('{0}-FrontDoor', deployment().name)]",
             "hdInsightCluster": "[format('{0}-HdInsightCluster', deployment().name)]",
             "keyVault": "[format('{0}-KeyVault', deployment().name)]",
             "kubernetesServiceCluster": "[format('{0}-KubernetesServiceCluster', deployment().name)]",
             "loadBalancer": "[format('{0}-LoadBalancer', deployment().name)]",
             "logAnalyticsWorkspace": "[format('{0}-LogAnalyticsWorkspace', deployment().name)]",
+            "logicApplicationWorkflow": "[format('{0}-LogicAppWorkflow', deployment().name)]",
             "managedIdentity": "[format('{0}-ManagedIdentity', deployment().name)]",
             "monitorPrivateLinkScope": "[format('{0}-MonitorPrivateLinkScope', deployment().name)]",
             "natGateway": "[format('{0}-NatGateway', deployment().name)]",
@@ -336,7 +358,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Resources/deploymentScripts.json"
                 }
             },
@@ -368,7 +390,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.ManagedIdentity/userAssignedIdentities.json"
                 }
             },
@@ -397,7 +419,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Insights/privateLinkScopes.json"
                 }
             },
@@ -442,7 +464,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.OperationalInsights/workspaces.json"
                 }
             },
@@ -485,7 +507,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/publicIpPrefixes.json"
                 }
             },
@@ -544,7 +566,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/publicIpAddresses.json"
                 }
             },
@@ -589,7 +611,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/natGateways.json"
                 }
             },
@@ -635,7 +657,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/networkSecurityGroups.json"
                 }
             },
@@ -675,7 +697,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/routeTables.json"
                 }
             },
@@ -718,7 +740,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Cdn/profiles.json"
                 }
             },
@@ -768,7 +790,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/virtualNetworks.json"
                 }
             },
@@ -809,7 +831,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/bastionHosts.json"
                 }
             },
@@ -856,7 +878,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/dnsPrivateZones.json"
                 }
             },
@@ -906,8 +928,57 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/dnsPublicZones.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').eventGrid.domains))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').eventGrid.domains)]",
+                "mode": "parallel",
+                "name": "eventGridDomainsCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
+                "networkSecurityGroupsCopy",
+                "publicIpAddressesCopy",
+                "publicIpPrefixesCopy",
+                "routeTablesCopy",
+                "scriptsPreDeployCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').eventGridDomain, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "auditLogAnalyticsWorkspaceName": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.domain, variables('resourceDefinitions').eventGrid.domains[copyIndex()]).auditLogAnalyticsWorkspaceName]"
+                    },
+                    "auditLogAnalyticsWorkspaceResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.domain, variables('resourceDefinitions').eventGrid.domains[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
+                    },
+                    "auditLogAnalyticsWorkspaceSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.domain, variables('resourceDefinitions').eventGrid.domains[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').eventGrid.domains[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').eventGrid.domains[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.EventGrid/domains.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -973,7 +1044,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/loadBalancers.json"
                 }
             },
@@ -1023,7 +1094,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Insights/components.json"
                 }
             },
@@ -1106,7 +1177,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.KeyVault/vaults.json"
                 }
             },
@@ -1143,7 +1214,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Communication/communicationServices.json"
                 }
             },
@@ -1183,7 +1254,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.AppConfiguration/configurationStores.json"
                 }
             },
@@ -1237,7 +1308,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.ContainerRegistry/registries.json"
                 }
             },
@@ -1292,7 +1363,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.ContainerInstance/containerGroups.json"
                 }
             },
@@ -1409,7 +1480,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Storage/storageAccounts.json"
                 }
             },
@@ -1510,7 +1581,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Sql/servers.json"
                 }
             },
@@ -1576,7 +1647,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.DocumentDB/databaseAccounts.json"
                 }
             },
@@ -1619,7 +1690,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.ContainerService/managedClusters.json"
                 }
             },
@@ -1684,7 +1755,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.HDInsight/clusters.json"
                 }
             },
@@ -1737,7 +1808,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/frontDoors.json"
                 }
             },
@@ -1802,8 +1873,67 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Web/serverfarms.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').logic.applications))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').logic.applications)]",
+                "mode": "parallel",
+                "name": "logicApplicationWorkflowsCopy"
+            },
+            "dependsOn": [
+                "applicationInsightsComponentsCopy",
+                "cdnProfilesCopy",
+                "containerRegistriesCopy",
+                "frontDoorsCopy",
+                "keyVaultsCopy",
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
+                "networkSecurityGroupsCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "routeTablesCopy",
+                "scriptsPreDeployCopy",
+                "sqlServersCopy",
+                "storageAccountsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').logicApplicationWorkflow, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "auditLogAnalyticsWorkspaceName": {
+                        "value": "[union(variables('defaultResourceProperties').logic.application, variables('resourceDefinitions').logic.applications[copyIndex()]).auditLogAnalyticsWorkspaceName]"
+                    },
+                    "auditLogAnalyticsWorkspaceResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').logic.application, variables('resourceDefinitions').logic.applications[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
+                    },
+                    "auditLogAnalyticsWorkspaceSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').logic.application, variables('resourceDefinitions').logic.applications[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    },
+                    "isEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').logic.application, variables('resourceDefinitions').logic.applications[copyIndex()]).isEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').logic.applications[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').logic.applications[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Logic/workflows.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -1822,6 +1952,7 @@
                 "containerRegistriesCopy",
                 "keyVaultsCopy",
                 "logAnalyticsWorkspacesCopy",
+                "logicApplicationWorkflowsCopy",
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
@@ -1875,7 +2006,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/privateEndpoints.json"
                 }
             },
@@ -1905,6 +2036,7 @@
                 "kubernetesServiceClustersCopy",
                 "loadBalancersCopy",
                 "logAnalyticsWorkspacesCopy",
+                "logicApplicationWorkflowsCopy",
                 "managedIdentitiesCopy",
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
