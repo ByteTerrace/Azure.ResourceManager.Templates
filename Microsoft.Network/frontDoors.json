@@ -2,16 +2,45 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "auditLogAnalyticsWorkspaceName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Log Analytics workspace that the Azure Front Door audit feature will send its data to."
+            },
+            "type": "string"
+        },
+        "auditLogAnalyticsWorkspaceResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure Log Analytics workspace that the Azure Front Door audit feature will send its data to."
+            },
+            "type": "string"
+        },
+        "auditLogAnalyticsWorkspaceSubscriptionId": {
+            "defaultValue": "[subscription().subscriptionId]",
+            "metadata": {
+                "description": "Specifies the subscription id of the Azure Log Analytics workspace that the Azure Front Door audit feature will send its data to."
+            },
+            "type": "string"
+        },
         "backendPools": {
             "defaultValue": [],
+            "metadata": {
+                "description": "An array of backend address pools that will be created within the Azure Front Door."
+            },
             "type": "array"
         },
         "frontendEndpoints": {
             "defaultValue": [],
+            "metadata": {
+                "description": "An array of frontend endpoints that will be created within the Azure Front Door."
+            },
             "type": "array"
         },
         "healthProbeSettings": {
             "defaultValue": [],
+            "metadata": {
+                "description": "An array of health probe settings that will be created within the Azure Front Door."
+            },
             "type": "array"
         },
         "loadBalancingSettings": {
@@ -28,6 +57,9 @@
         },
         "routingRules": {
             "defaultValue": [],
+            "metadata": {
+                "description": "An array of routing rules that will be created within the Azure Front Door."
+            },
             "type": "array"
         },
         "tags": {
@@ -39,11 +71,16 @@
         }
     },
     "variables": {
+        "apiVersions": {
+            "diagnosticSettings": "2017-05-01-preview",
+            "frontDoors": "2020-05-01"
+        },
         "backendPoolDefaultProperties": {
             "httpPort": 80,
             "httpsPort": 443,
             "weight": 1
         },
+        "frontDoorResourceId": "[resourceId('Microsoft.Network/frontdoors', parameters('name'))]",
         "frontendEndpointDefaultEntry": {
             "hostName": "[format('{0}.azurefd.net', parameters('name'))]"
         },
@@ -52,6 +89,7 @@
             "sessionAffinityTimeToLiveInSeconds": 0
         },
         "frontendEndpoints": "[union(createArray(variables('frontendEndpointDefaultEntry')), parameters('frontendEndpoints'))]",
+        "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
         "loadBalancingSettings": "[union(createArray(variables('loadBalancingSettingsDefaultEntry')), parameters('loadBalancingSettings'))]",
         "loadBalancingSettingsDefaultEntry": {
             "name": "default"
@@ -64,7 +102,7 @@
     },
     "resources": [
         {
-            "apiVersion": "2020-05-01",
+            "apiVersion": "[variables('apiVersions').frontDoors]",
             "location": "global",
             "name": "[parameters('name')]",
             "properties": {
@@ -160,6 +198,36 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Network/frontdoors"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "dependsOn": [
+                "[variables('frontDoorResourceId')]"
+            ],
+            "location": "global",
+            "name": "[format('{0}/microsoft.insights/audit', parameters('name'))]",
+            "properties": {
+                "logs": [
+                    {
+                        "category": "FrontdoorAccessLog",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    },
+                    {
+                        "category": "FrontdoorWebApplicationFirewallLog",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    }
+                ],
+                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
+            },
+            "type": "Microsoft.Network/frontdoors/providers/diagnosticsettings"
         }
     ]
 }

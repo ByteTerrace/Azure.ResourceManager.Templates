@@ -27,7 +27,9 @@
                 "public": []
             },
             "eventGrid": {
-                "domains": []
+                "domains": [],
+                "eventSubscriptions": [],
+                "topics": []
             },
             "frontDoors": [],
             "hdInsightClusters": [],
@@ -75,6 +77,8 @@
                 "skuName": "Standard_Microsoft"
             },
             "communicationService": {
+                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
+                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
                 "dataLocation": "United States"
             },
             "containerInstance": {
@@ -124,9 +128,18 @@
                 "domain": {
                     "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
                     "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]"
+                },
+                "eventSubscription": {
+                    "eventDeliverySchema": "EventGridSchema"
+                },
+                "topic": {
+                    "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
+                    "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]"
                 }
             },
             "frontDoor": {
+                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
+                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
                 "backendPools": [],
                 "frontendEndpoints": [],
                 "healthProbeSettings": [],
@@ -303,6 +316,8 @@
             "dnsPrivateZone": "[format('{0}-DnsPrivateZone', deployment().name)]",
             "dnsPublicZone": "[format('{0}-DnsPublicZone', deployment().name)]",
             "eventGridDomain": "[format('{0}-EventGridDomain', deployment().name)]",
+            "eventGridEventSubscription": "[format('{0}-EventGridEventSub', deployment().name)]",
+            "eventGridTopic": "[format('{0}-EventGridTopic', deployment().name)]",
             "frontDoor": "[format('{0}-FrontDoor', deployment().name)]",
             "hdInsightCluster": "[format('{0}-HdInsightCluster', deployment().name)]",
             "keyVault": "[format('{0}-KeyVault', deployment().name)]",
@@ -985,6 +1000,101 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').eventGrid.topics))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').eventGrid.topics)]",
+                "mode": "parallel",
+                "name": "eventGridTopicsCopy"
+            },
+            "dependsOn": [
+                "eventGridDomainsCopy",
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
+                "networkSecurityGroupsCopy",
+                "publicIpAddressesCopy",
+                "publicIpPrefixesCopy",
+                "routeTablesCopy",
+                "scriptsPreDeployCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').eventGridTopic, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "auditLogAnalyticsWorkspaceName": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.topic, variables('resourceDefinitions').eventGrid.topics[copyIndex()]).auditLogAnalyticsWorkspaceName]"
+                    },
+                    "auditLogAnalyticsWorkspaceResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.topic, variables('resourceDefinitions').eventGrid.topics[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
+                    },
+                    "auditLogAnalyticsWorkspaceSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.topic, variables('resourceDefinitions').eventGrid.topics[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').eventGrid.topics[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').eventGrid.topics[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.EventGrid/topics.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').eventGrid.eventSubscriptions))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').eventGrid.eventSubscriptions)]",
+                "mode": "parallel",
+                "name": "eventGridEventSubcriptionsCopy"
+            },
+            "dependsOn": [
+                "eventGridDomainsCopy",
+                "eventGridTopicsCopy",
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
+                "networkSecurityGroupsCopy",
+                "publicIpAddressesCopy",
+                "publicIpPrefixesCopy",
+                "routeTablesCopy",
+                "scriptsPreDeployCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').eventGridEventSubscription, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "destination": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.eventSubscription, variables('resourceDefinitions').eventGrid.eventSubscriptions[copyIndex()]).destination]"
+                    },
+                    "eventDeliverySchema": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.eventSubscription, variables('resourceDefinitions').eventGrid.eventSubscriptions[copyIndex()]).eventDeliverySchema]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').eventGrid.eventSubscriptions[copyIndex()].name]"
+                    },
+                    "topicName": {
+                        "value": "[variables('resourceDefinitions').eventGrid.eventSubscriptions[copyIndex()].topicName]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.EventGrid/eventSubscriptions.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[not(empty(variables('resourceDefinitions').loadBalancers))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').loadBalancers)]",
@@ -1203,6 +1313,15 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "auditLogAnalyticsWorkspaceName": {
+                        "value": "[union(variables('defaultResourceProperties').communicationService, variables('resourceDefinitions').communicationServices[copyIndex()]).auditLogAnalyticsWorkspaceName]"
+                    },
+                    "auditLogAnalyticsWorkspaceResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').communicationService, variables('resourceDefinitions').communicationServices[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
+                    },
+                    "auditLogAnalyticsWorkspaceSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').communicationService, variables('resourceDefinitions').communicationServices[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    },
                     "dataLocation": {
                         "value": "[union(variables('defaultResourceProperties').communicationService, variables('resourceDefinitions').communicationServices[copyIndex()]).dataLocation]"
                     },
@@ -1785,6 +1904,15 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "auditLogAnalyticsWorkspaceName": {
+                        "value": "[union(variables('defaultResourceProperties').frontDoor, variables('resourceDefinitions').frontDoors[copyIndex()]).auditLogAnalyticsWorkspaceName]"
+                    },
+                    "auditLogAnalyticsWorkspaceResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').frontDoor, variables('resourceDefinitions').frontDoors[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
+                    },
+                    "auditLogAnalyticsWorkspaceSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').frontDoor, variables('resourceDefinitions').frontDoors[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    },
                     "backendPools": {
                         "value": "[union(variables('defaultResourceProperties').frontDoor, variables('resourceDefinitions').frontDoors[copyIndex()]).backendPools]"
                     },
@@ -2030,6 +2158,9 @@
                 "containerInstancesCopy",
                 "containerRegistriesCopy",
                 "cosmosDbAccountsCopy",
+                "eventGridDomainsCopy",
+                "eventGridEventSubcriptionsCopy",
+                "eventGridTopicsCopy",
                 "frontDoorsCopy",
                 "hdInsightClustersCopy",
                 "keyVaultsCopy",

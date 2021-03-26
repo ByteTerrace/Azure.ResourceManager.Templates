@@ -47,7 +47,7 @@
     "variables": {
         "apiVersions": {
             "diagnosticSettings": "2017-05-01-preview",
-            "eventGridDomains": "2020-06-01"
+            "eventGridDomains": "2020-10-15-preview"
         },
         "eventGridDomainResourceId": "[resourceId('Microsoft.EventGrid/domains', parameters('name'))]",
         "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]"
@@ -55,6 +55,9 @@
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').eventGridDomains]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {

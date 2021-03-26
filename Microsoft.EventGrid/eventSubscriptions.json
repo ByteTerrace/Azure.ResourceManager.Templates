@@ -1,0 +1,86 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "destination": {
+            "metadata": {
+                "description": "Specifies the destination of the Azure Event Grid Subscription."
+            },
+            "type": "object"
+        },
+        "eventDeliverySchema": {
+            "defaultValue": "EventGridSchema",
+            "metadata": {
+                "description": "Specifies the event delivery schema that the Azure Event Grid Subscription will use to communicate."
+            },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 64,
+            "metadata": {
+                "description": "Specifies the name of the Azure Event Grid Subscription."
+            },
+            "minLength": 3,
+            "type": "string"
+        },
+        "topicName": {
+            "metadata": {
+                "description": "Specifies the name of Azure Event Grid Topic that will be subscribed to."
+            },
+            "type": "string"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "eventGridSubscriptions": "2020-10-15-preview"
+        },
+        "azureActiveDirectoryApplicationIdOrUri": "[union(variables('defaultResourceProperties').eventSubscription.destination, parameters('destination')).azureActiveDirectoryApplicationIdOrUri]",
+        "azureActiveDirectoryTenantId": "[union(variables('defaultResourceProperties').eventSubscription.destination, parameters('destination')).azureActiveDirectoryTenantId]",
+        "defaultResourceProperties": {
+            "eventSubscription": {
+                "destination": {
+                    "azureActiveDirectoryApplicationIdOrUri": "",
+                    "azureActiveDirectoryTenantId": "[subscription().tenantId]",
+                    "endpointUrl": "",
+                    "resourceGroupName": "[resourceGroup().name]",
+                    "resourcePath": "",
+                    "resourceType": "",
+                    "subscriptionId": "[subscription().subscriptionId]",
+                    "queueName": ""
+                }
+            }
+        },
+        "isAzureActiveDirectoryAuthenticationEnabled": "[and(variables('isWebHookDestination'), not(empty(variables('azureActiveDirectoryApplicationIdOrUri'))))]",
+        "isAzureFunctionDestination": "[equals(toLower(variables('destination').endpointType), 'azurefunction')]",
+        "isStorageQueueDestination": "[equals(toLower(variables('destination').endpointType), 'storagequeue')]",
+        "isWebHookDestination": "[equals(toLower(variables('destination').endpointType), 'webhook')]",
+        "destination": "[union(variables('defaultResourceProperties').eventSubscription.destination, parameters('destination'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').eventGridSubscriptions]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "deadLetterDestination": "[json('null')]",
+                "destination": {
+                    "endpointType": "[parameters('destination').endpointType]",
+                    "properties": {
+                        "azureActiveDirectoryApplicationIdOrUri": "[if(variables('isAzureActiveDirectoryAuthenticationEnabled'), variables('azureActiveDirectoryApplicationIdOrUri'), json('null'))]",
+                        "azureActiveDirectoryTenantId": "[if(variables('isAzureActiveDirectoryAuthenticationEnabled'), variables('azureActiveDirectoryTenantId'), json('null'))]",
+                        "endpointUrl": "[if(variables('isWebHookDestination'), parameters('destination').endpointUrl, json('null'))]",
+                        "maxEventsPerBatch": "[if(or(variables('isAzureFunctionDestination'), variables('isWebHookDestination')), parameters('destination').maxEventsPerBatch, json('null'))]",
+                        "preferredBatchSizeInKilobytes": "[if(or(variables('isAzureFunctionDestination'), variables('isWebHookDestination')), parameters('destination').preferredBatchSizeInKilobytes, json('null'))]",
+                        "queueName": "[if(variables('isStorageQueueDestination'), parameters('destination').queueName, json('null'))]",
+                        "resourceId": "[if(not(variables('isWebHookDestination')), format('/subscriptions/{0}/resourceGroups/{1}/providers/{2}/{3}', variables('destination').subscriptionId, variables('destination').resourceGroupName, variables('destination').resourceType, variables('destination').resourcePath), json('null'))]"
+                    }
+                },
+                "eventDeliverySchema": "[parameters('eventDeliverySchema')]",
+                "filter": "[json('null')]",
+                "labels": [],
+                "retryPolicy": "[json('null')]"
+            },
+            "scope": "[format('Microsoft.EventGrid/topics/{0}', parameters('topicName'))]",
+            "type": "Microsoft.EventGrid/eventSubscriptions"
+        }
+    ]
+}

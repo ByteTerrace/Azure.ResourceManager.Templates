@@ -32,8 +32,9 @@
                         "name": "byteterrace-net"
                     }
                 ],
-                "_communicationServices": [
+                "communicationServices": [
                     {
+                        "auditLogAnalyticsWorkspaceName": "byteterrace",
                         "name": "byteterrace"
                     }
                 ],
@@ -106,10 +107,29 @@
                             "auditLogAnalyticsWorkspaceName": "byteterrace",
                             "name": "byteterrace"
                         }
+                    ],
+                    "eventSubscriptions": [
+                        {
+                            "destination": {
+                                "endpointType": "StorageQueue",
+                                "queueName": "default",
+                                "resourcePath": "byteterrace",
+                                "resourceType": "Microsoft.Storage/storageAccounts"
+                            },
+                            "name": "byteterrace-default-storage",
+                            "topicName": "byteterrace-default"
+                        }
+                    ],
+                    "topics": [
+                        {
+                            "auditLogAnalyticsWorkspaceName": "byteterrace",
+                            "name": "byteterrace-default"
+                        }
                     ]
                 },
-                "_frontDoors": [
+                "frontDoors": [
                     {
+                        "auditLogAnalyticsWorkspaceName": "byteterrace",
                         "backendPools": [
                             {
                                 "healthProbeSettingsName": "https",
@@ -508,6 +528,9 @@
                     {
                         "isAllowTrustedMicrosoftServicesEnabled": true,
                         "name": "byteterrace",
+                        "queueNames": [
+                            "default"
+                        ],
                         "virtualNetworkRules": [
                             {
                                 "subnetName": "byteterrace",
