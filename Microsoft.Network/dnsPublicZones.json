@@ -190,9 +190,19 @@
             ],
             "name": "[format('{0}/{1}', parameters('name'), variables('txtRecords')[copyIndex()].name)]",
             "properties": {
+                "copy": [
+                    {
+                        "count": "[variables('txtRecordsCount')]",
+                        "input": {
+                            "value": [
+                                "[variables('txtRecords')[copyIndex()].values[copyIndex('TXTRecords')]]"
+                            ]
+                        },
+                        "name": "TXTRecords"
+                    }
+                ],
                 "targetResource": {},
-                "TTL": "[union(variables('txtRecordsDefaultProperties'), variables('txtRecords')[copyIndex()]).timeToLiveInSeconds]",
-                "TXTRecords": "[variables('txtRecords')[copyIndex()].values]"
+                "TTL": "[union(variables('txtRecordsDefaultProperties'), variables('txtRecords')[copyIndex()]).timeToLiveInSeconds]"
             },
             "type": "Microsoft.Network/dnszones/TXT"
         }
