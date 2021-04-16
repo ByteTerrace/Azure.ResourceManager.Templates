@@ -173,6 +173,7 @@
             "loadBalancer": {
                 "backendAddressPools": [],
                 "frontendIpConfigurations": [],
+                "healthProbes": [],
                 "inboundNatPools": [],
                 "inboundNatRules": [],
                 "loadBalancingRules": [],
