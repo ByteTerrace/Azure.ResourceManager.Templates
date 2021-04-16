@@ -1,0 +1,164 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "consistencyPolicy": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the consistency policy that will be enforced on the Azure Cosmos DB account."
+            },
+            "type": "object"
+        },
+        "geoReplicationLocations": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of locations that the Azure Cosmos DB account will be replicated to."
+            },
+            "type": "array"
+        },
+        "firewallRules": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of firewall rules that will be assigned to the Azure Cosmos DB account."
+            },
+            "type": "array"
+        },
+        "isAzurePortalAccessEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether access via the Azure Portal is enabled on the Azure Cosmos DB account."
+            },
+            "type": "bool"
+        },
+        "isAzurePublicDatacenterAccessEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether access via public Azure datacenters is enabled on the Azure Cosmos DB account."
+            },
+            "type": "bool"
+        },
+        "isFreeTierEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether free tier feature is enabled on the Azure Cosmos DB account."
+            },
+            "type": "bool"
+        },
+        "kind": {
+            "allowedValues": [
+                "GlobalDocumentDB",
+                "MongoDB",
+                "Parse"
+            ],
+            "defaultValue": "GlobalDocumentDB",
+            "metadata": {
+                "description": "Specifies the kind of the Azure Cosmos DB account."
+            },
+            "type": "string"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Cosmos DB account resource(s) will be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 44,
+            "metadata": {
+                "description": "Specifies the name of the Azure Cosmos DB account."
+            },
+            "minLength": 3,
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Cosmos DB account."
+            },
+            "type": "object"
+        },
+        "virtualNetworkRules": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of virtual network rules that will be assigned to the Azure Cosmos DB account."
+            },
+            "type": "array"
+        }
+    },
+    "variables": {
+        "azureDatacentersIpAddress": "0.0.0.0",
+        "azurePortalIpAddresses": [
+            "40.76.54.131",
+            "52.169.50.45",
+            "52.176.6.30",
+            "52.187.184.26",
+            "104.42.195.92"
+        ],
+        "defaultResourceProperties": {
+            "consistencyPolicy": {
+                "defaultConsistencyLevel": "Session",
+                "maxIntervalInSeconds": 300,
+                "maxStaleRequestCount": 100000
+            },
+            "geoReplicationLocation": {
+                "isZoneRedundant": false
+            },
+            "virtualNetworkRule": {
+                "resourceGroupName": "[resourceGroup().name]",
+                "subscriptionId": "[subscription().subscriptionId]"
+            }
+        },
+        "firewallRulesForAzureDatacenters": "[if(parameters('isAzurePublicDatacenterAccessEnabled'), union(createArray(variables('azureDatacentersIpAddress')), variables('azurePortalIpAddresses')), variables('firewallRulesForAzurePortal'))]",
+        "firewallRulesForAzurePortal": "[if(or(parameters('isAzurePortalAccessEnabled'), parameters('isAzurePublicDatacenterAccessEnabled')), union(variables('azurePortalIpAddresses'), parameters('firewallRules')), parameters('firewallRules'))]",
+        "geoReplicationLocations": "[if(equals(length(parameters('geoReplicationLocations')), 0), createArray(createObject('name', parameters('location'))), parameters('geoReplicationLocations'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-09-01",
+            "kind": "[parameters('kind')]",
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "consistencyPolicy": {
+                    "defaultConsistencyLevel": "[union(variables('defaultResourceProperties').consistencyPolicy, parameters('consistencyPolicy')).defaultConsistencyLevel]",
+                    "maxIntervalInSeconds": "[union(variables('defaultResourceProperties').consistencyPolicy, parameters('consistencyPolicy')).maxIntervalInSeconds]",
+                    "maxStalenessPrefix": "[union(variables('defaultResourceProperties').consistencyPolicy, parameters('consistencyPolicy')).maxStaleRequestCount]"
+                },
+                "copy": [
+                    {
+                        "count": "[length(variables('firewallRulesForAzureDatacenters'))]",
+                        "input": {
+                            "ipAddressOrRange": "[variables('firewallRulesForAzureDatacenters')[copyIndex('ipRules')]]"
+                        },
+                        "name": "ipRules"
+                    },
+                    {
+                        "count": "[length(variables('geoReplicationLocations'))]",
+                        "input": {
+                            "failoverPriority": "[union(createObject('failoverPriority', copyIndex('locations')), variables('geoReplicationLocations')[copyIndex('locations')]).failoverPriority]",
+                            "isZoneRedundant": "[union(variables('defaultResourceProperties').geoReplicationLocation, variables('geoReplicationLocations')[copyIndex('locations')]).isZoneRedundant]",
+                            "locationName": "[variables('geoReplicationLocations')[copyIndex('locations')].name]"
+                        },
+                        "name": "locations"
+                    },
+                    {
+                        "count": "[length(parameters('virtualNetworkRules'))]",
+                        "input": {
+                            "id": "[resourceId(union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subscriptionId, union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
+                        },
+                        "name": "virtualNetworkRules"
+                    }
+                ],
+                "databaseAccountOfferType": "Standard",
+                "enableAutomaticFailover": false,
+                "enableFreeTier": "[parameters('isFreeTierEnabled')]",
+                "enableMultipleWriteLocations": false,
+                "enableAnalyticalStorage": false,
+                "isVirtualNetworkFilterEnabled": "[greater(length(parameters('virtualNetworkRules')), 0)]",
+                "publicNetworkAccess": "Enabled"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.DocumentDB/databaseAccounts"
+        }
+    ]
+}

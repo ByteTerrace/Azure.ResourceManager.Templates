@@ -1,0 +1,93 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "auditLogAnalyticsWorkspaceName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Log Analytics workspace that the Azure CDN profile audit feature will send its data to."
+            },
+            "type": "string"
+        },
+        "auditLogAnalyticsWorkspaceResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure Log Analytics workspace that the Azure CDN profile audit feature will send its data to."
+            },
+            "type": "string"
+        },
+        "auditLogAnalyticsWorkspaceSubscriptionId": {
+            "defaultValue": "[subscription().subscriptionId]",
+            "metadata": {
+                "description": "Specifies the subscription id of the Azure Log Analytics workspace that the Azure CDN profile audit feature will send its data to."
+            },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 260,
+            "metadata": {
+                "description": "Specifies the name of the Azure CDN profile."
+            },
+            "minLength": 1,
+            "type": "string"
+        },
+        "skuName": {
+            "defaultValue": "Standard_Microsoft",
+            "metadata": {
+                "description": "Specifies the SKU name of the Azure CDN profile."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure CDN profile."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "cdnProfiles": "2020-09-01",
+            "diagnosticSettings": "2017-05-01-preview"
+        },
+        "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
+        "resourceIds": {
+            "cdnProfile": "[resourceId('Microsoft.Cdn/profiles', parameters('name'))]"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').cdnProfiles]",
+            "location": "global",
+            "name": "[parameters('name')]",
+            "properties": {},
+            "sku": {
+                "name": "[parameters('skuName')]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Cdn/profiles"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "dependsOn": [
+                "[variables('resourceIds').cdnProfile]"
+            ],
+            "location": "global",
+            "name": "[format('{0}/microsoft.insights/audit', parameters('name'))]",
+            "properties": {
+                "logs": [
+                    {
+                        "category": "AzureCdnAccessLog",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    }
+                ],
+                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
+            },
+            "type": "Microsoft.Cdn/profiles/providers/diagnosticsettings"
+        }
+    ]
+}

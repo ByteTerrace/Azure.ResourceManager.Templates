@@ -1,0 +1,62 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "kind": {
+            "allowedValues": [
+                "AzureCLI",
+                "AzurePowerShell"
+            ],
+            "defaultValue": "AzurePowerShell",
+            "metadata": {
+                "description": "Specifies the kind of the Azure Deployment Script."
+            },
+            "type": "string"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Deployment Script resource(s) will be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Deployment Script."
+            },
+            "type": "string"
+        },
+        "scriptContent": {
+            "metadata": {
+                "description": "Specifies the value of the Azure Deployment Script."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Deployment Script."
+            },
+            "type": "object"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-10-01",
+            "kind": "[parameters('kind')]",
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "arguments": "",
+                "azCliVersion": "[if(equals(toLower(parameters('kind')), 'azurecli'), '2.0.80', json('null'))]",
+                "azPowerShellVersion": "[if(equals(toLower(parameters('kind')), 'azurepowershell'), '3.0', json('null'))]",
+                "cleanupPreference": "Always",
+                "environmentVariables": [],
+                "retentionInterval": "PT3H",
+                "scriptContent": "[parameters('scriptContent')]",
+                "timeout": "PT1H"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Resources/deploymentScripts"
+        }
+    ]
+}

@@ -1,0 +1,149 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "containers": {
+            "metadata": {
+                "description": "An array of containers that will be deployed within the Azure Container group."
+            },
+            "type": "array"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Container group resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 63,
+            "metadata": {
+                "description": "Specifies the name of the Azure Container group."
+            },
+            "minLength": 1,
+            "type": "string"
+        },
+        "operatingSystemName": {
+            "allowedValues": [
+                "Linux",
+                "Windows"
+            ],
+            "defaultValue": "Linux",
+            "metadata": {
+                "description": "Specifies the name of operating system that the Azure Container group will run within."
+            },
+            "type": "string"
+        },
+        "ports": {
+            "defaultValue": [
+                {
+                    "port": 80,
+                    "protocol": "tcp"
+                }
+            ],
+            "metadata": {
+                "description": "An array of ports that will be opened to the Azure Container group."
+            },
+            "type": "array"
+        },
+        "restartPolicy": {
+            "allowedValues": [
+                "Always",
+                "Never",
+                "OnFailure"
+            ],
+            "defaultValue": "Always",
+            "metadata": {
+                "description": "Specifies restart policy of the Azure Container group."
+            },
+            "type": "string"
+        },
+        "skuName": {
+            "allowedValues": [
+                "Dedicated",
+                "Standard"
+            ],
+            "defaultValue": "Standard",
+            "metadata": {
+                "description": "Specifies the SKU name of the Azure Container group."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Container group."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "defaultResourceProperties": {
+            "container": {
+                "command": "[json('null')]",
+                "environmentVariables": [],
+                "image": "mcr.microsoft.com/azuredocs/aci-helloworld",
+                "ports": "[parameters('ports')]",
+                "resources": {
+                    "limits": {
+                        "cpuCoreCount": "[json('null')]",
+                        "gpuProperties": "[json('null')]",
+                        "memorySizeInGigabytes": "[json('null')]"
+                    },
+                    "requests": {
+                        "cpuCoreCount": 1.0,
+                        "gpuProperties": "[json('null')]",
+                        "memorySizeInGigabytes": 1.5
+                    }
+                }
+            }
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-12-01",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(parameters('containers'))]",
+                        "input": {
+                            "name": "[parameters('containers')[copyIndex('containers')].name]",
+                            "properties": {
+                                "command": "[union(variables('defaultResourceProperties').container, parameters('containers')[copyIndex('containers')]).command]",
+                                "environmentVariables": "[union(variables('defaultResourceProperties').container, parameters('containers')[copyIndex('containers')]).environmentVariables]",
+                                "image": "[union(variables('defaultResourceProperties').container, parameters('containers')[copyIndex('containers')]).image]",
+                                "ports": "[union(variables('defaultResourceProperties').container, parameters('containers')[copyIndex('containers')]).ports]",
+                                "resources": {
+                                    "limits": {
+                                        "cpu": "[union(variables('defaultResourceProperties').container, parameters('containers')[copyIndex('containers')]).resources.limits.cpuCoreCount]",
+                                        "gpu": "[union(variables('defaultResourceProperties').container, parameters('containers')[copyIndex('containers')]).resources.limits.gpuProperties]",
+                                        "memoryInGB": "[union(variables('defaultResourceProperties').container, parameters('containers')[copyIndex('containers')]).resources.limits.memorySizeInGigabytes]"
+                                    },
+                                    "requests": {
+                                        "cpu": "[union(variables('defaultResourceProperties').container, parameters('containers')[copyIndex('containers')]).resources.requests.cpuCoreCount]",
+                                        "gpu": "[union(variables('defaultResourceProperties').container, parameters('containers')[copyIndex('containers')]).resources.requests.gpuProperties]",
+                                        "memoryInGB": "[union(variables('defaultResourceProperties').container, parameters('containers')[copyIndex('containers')]).resources.requests.memorySizeInGigabytes]"
+                                    }
+                                }
+                            }
+                        },
+                        "name": "containers"
+                    }
+                ],
+                "ipAddress": {
+                    "ports": "[parameters('ports')]",
+                    "type": "Public"
+                },
+                "osType": "[parameters('operatingSystemName')]",
+                "restartPolicy": "[parameters('restartPolicy')]",
+                "sku": "[parameters('skuName')]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.ContainerInstance/containerGroups"
+        }
+    ]
+}

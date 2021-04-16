@@ -1,0 +1,101 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "firewallRules": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of firewall rules that will be assigned to the Azure Container registry."
+            },
+            "type": "array"
+        },
+        "isAdministratorAccountEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the Azure Container registry administrator user account is enabled."
+            },
+            "type": "bool"
+        },
+        "isPublicNetworkAccessEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the Azure Container registry is accessible from the internet."
+            },
+            "type": "bool"
+        },
+        "isTrustedMicrosoftResourceAccessEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether trusted Azure services and resources are allowed to access the Azure Container registry."
+            },
+            "type": "bool"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Container registry resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 50,
+            "metadata": {
+                "description": "Specifies the name of the Azure Container registry."
+            },
+            "minLength": 5,
+            "type": "string"
+        },
+        "skuName": {
+            "defaultValue": "Standard",
+            "metadata": {
+                "description": "Specifies the SKU name of the Azure Container registry."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Container registry."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "copy": [
+            {
+                "count": "[length(parameters('firewallRules'))]",
+                "input": {
+                    "action": "Allow",
+                    "value": "[parameters('firewallRules')[copyIndex('ipRules')]]"
+                },
+                "name": "ipRules"
+            }
+        ],
+        "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
+        "networkRuleSetProperties": {
+            "defaultAction": "[if(variables('firewallRulesIsNotEmpty'), 'Deny', 'Allow')]",
+            "ipRules": "[variables('ipRules')]"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-12-01-preview",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "adminUserEnabled": "[parameters('isAdministratorAccountEnabled')]",
+                "networkRuleBypassOptions": "[if(parameters('isTrustedMicrosoftResourceAccessEnabled'), 'AzureServices', 'None')]",
+                "networkRuleSet": "[if(equals(parameters('skuName'), 'Premium'), variables('networkRuleSetProperties'), json('null'))]",
+                "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]",
+                "zoneRedundancy": "Disabled"
+            },
+            "sku": {
+                "name": "[parameters('skuName')]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.ContainerRegistry/registries"
+        }
+    ]
+}

@@ -1,0 +1,109 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "groupIds": {
+            "metadata": {
+                "description": "An array of group ids that the the Azure Private Endpoint should connect to."
+            },
+            "type": "array"
+        },
+        "linkedResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the resource that will be associated with the Azure Private Endpoint."
+            },
+            "type": "string"
+        },
+        "linkedResourcePath": {
+            "metadata": {
+                "description": "Specifies the path to the resource that will be associated with the Azure Private Endpoint; this value is often simply the name of the resource."
+            },
+            "type": "string"
+        },
+        "linkedResourceSubscriptionId": {
+            "defaultValue": "[subscription().subscriptionId]",
+            "metadata": {
+                "description": "Specifies the subscription id of the resource that will be associated with the Azure Private Endpoint."
+            },
+            "type": "string"
+        },
+        "linkedResourceType": {
+            "metadata": {
+                "description": "Specifies the type of resource that will be associated with the Azure Private Endpoint."
+            },
+            "type": "string"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Private Endpoint resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 80,
+            "metadata": {
+                "description": "Specifies the name of the Azure Private Endpoint."
+            },
+            "minLength": 1,
+            "type": "string"
+        },
+        "subnetName": {
+            "metadata": {
+                "description": "Specifies the subnet name within the virtual network that the Azure Private Endpoint will be associated with."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Private Endpoint."
+            },
+            "type": "object"
+        },
+        "virtualNetworkName": {
+            "metadata": {
+                "description": "Specifies the name of the virtual network that the Azure Private Endpoint will be associated with."
+            },
+            "type": "string"
+        },
+        "virtualNetworkResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the virtual network that the Azure Private Endpoint will be associated with."
+            },
+            "type": "string"
+        },
+        "virtualNetworkSubscriptionId": {
+            "defaultValue": "[subscription().subscriptionId]",
+            "metadata": {
+                "description": "Specifies the subscription id of the virtual network that the Azure Private Endpoint will be associated with."
+            },
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-07-01",
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "customDnsConfigs": [],
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[parameters('name')]",
+                        "properties": {
+                            "groupIds": "[parameters('groupIds')]",
+                            "privateLinkServiceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/{2}/{3}', parameters('linkedResourceSubscriptionId'), parameters('linkedResourceGroupName'), parameters('linkedResourceType'), parameters('linkedResourcePath'))]"
+                        }
+                    }
+                ],
+                "subnet": {
+                    "id": "[resourceId(parameters('virtualNetworkSubscriptionId'), parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+                }
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Network/privateEndpoints"
+        }
+    ]
+}

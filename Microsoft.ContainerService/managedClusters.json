@@ -1,0 +1,51 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "dnsPrefix": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the DNS prefix to that will be assigned to the Azure Kubernetes Service cluster."
+            },
+            "type": "string"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Kubernetes Service cluster resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 63,
+            "metadata": {
+                "description": "Specifies the name of the Azure Kubernetes Service cluster."
+            },
+            "minLength": 1,
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Kubernetes Service cluster."
+            },
+            "type": "object"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-12-01",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "agentProfiles": [],
+                "dnsPrefix": "[toLower(parameters('dnsPrefix'))]",
+                "enableRBAC": true
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.ContainerService/managedClusters"
+        }
+    ]
+}

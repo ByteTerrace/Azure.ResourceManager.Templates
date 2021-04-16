@@ -1,0 +1,599 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceDefinitions": {
+            "value": {
+                "applicationServicePlans": [
+                    {
+                        "name": "byteterrace"
+                    }
+                ],
+                "bastionHosts": [
+                    {
+                        "ipConfigurations": [
+                            {
+                                "name": "default",
+                                "publicIpAddress": {
+                                    "name": "byteterrace"
+                                },
+                                "virtualNetwork": {
+                                    "name": "byteterrace.net",
+                                    "subnetName": "AzureBastionSubnet"
+                                }
+                            }
+                        ],
+                        "name": "byteterrace"
+                    }
+                ],
+                "cdnProfiles": [
+                    {
+                        "auditLogAnalyticsWorkspaceName": "byteterrace",
+                        "name": "byteterrace-net"
+                    }
+                ],
+                "communicationServices": [
+                    {
+                        "auditLogAnalyticsWorkspaceName": "byteterrace",
+                        "name": "byteterrace"
+                    }
+                ],
+                "containerInstances": [
+                    {
+                        "containers": [
+                            {
+                                "name": "byteterrace"
+                            }
+                        ],
+                        "name": "byteterrace"
+                    }
+                ],
+                "containerRegistries": [
+                    {
+                        "name": "byteterrace"
+                    }
+                ],
+                "cosmosDbAccounts": [
+                    {
+                        "isFreeTierEnabled": true,
+                        "name": "byteterrace",
+                        "virtualNetworkRules": [
+                            {
+                                "subnetName": "byteterrace",
+                                "virtualNetworkName": "byteterrace.net"
+                            }
+                        ]
+                    }
+                ],
+                "dnsZones": {
+                    "private": [
+                        {
+                            "name": "byteterrace.net"
+                        }
+                    ],
+                    "public": [
+                        {
+                            "name": "bytrc.com"
+                        },
+                        {
+                            "name": "byteterrace.app"
+                        },
+                        {
+                            "name": "byteterrace.com"
+                        },
+                        {
+                            "name": "byteterrace.dev"
+                        },
+                        {
+                            "name": "byteterrace.info"
+                        },
+                        {
+                            "name": "byteterrace.net"
+                        },
+                        {
+                            "name": "byteterrace.org"
+                        },
+                        {
+                            "name": "byteterrace.us"
+                        },
+                        {
+                            "name": "byteterrace.xyz"
+                        }
+                    ]
+                },
+                "eventGrid": {
+                    "domains": [
+                        {
+                            "auditLogAnalyticsWorkspaceName": "byteterrace",
+                            "name": "byteterrace"
+                        }
+                    ],
+                    "eventSubscriptions": [
+                        {
+                            "destination": {
+                                "endpointType": "StorageQueue",
+                                "queueName": "default",
+                                "resourcePath": "byteterrace",
+                                "resourceType": "Microsoft.Storage/storageAccounts"
+                            },
+                            "name": "byteterrace-default-storage",
+                            "topicName": "byteterrace-default"
+                        }
+                    ],
+                    "topics": [
+                        {
+                            "auditLogAnalyticsWorkspaceName": "byteterrace",
+                            "name": "byteterrace-default"
+                        }
+                    ]
+                },
+                "frontDoors": [
+                    {
+                        "auditLogAnalyticsWorkspaceName": "byteterrace",
+                        "backendPools": [
+                            {
+                                "healthProbeSettingsName": "https",
+                                "httpAddress": "www.linkedin.com",
+                                "loadBalancingSettingsName": "default",
+                                "name": "LinkedIn"
+                            }
+                        ],
+                        "frontendEndpoints": [
+                            {
+                                "hostName": "kittoes.com"
+                            },
+                            {
+                                "hostName": "kittoes.info"
+                            },
+                            {
+                                "hostName": "iamtheborg.com"
+                            },
+                            {
+                                "hostName": "www.kittoes.com"
+                            },
+                            {
+                                "hostName": "www.kittoes.info"
+                            },
+                            {
+                                "hostName": "www.iamtheborg.com"
+                            }
+                        ],
+                        "healthProbeSettings": [
+                            {
+                                "intervalInSeconds": 255,
+                                "method": "Head",
+                                "name": "https",
+                                "path": "/",
+                                "protocol": "Https"
+                            }
+                        ],
+                        "name": "byteterrace",
+                        "routingRules": [
+                            {
+                                "acceptedProtocols": [
+                                    "Http",
+                                    "Https"
+                                ],
+                                "customHost": "www.linkedin.com",
+                                "customPath": "/in/kittoes0124",
+                                "frontendEndpoints": [
+                                    {
+                                        "name": "kittoes-com"
+                                    },
+                                    {
+                                        "name": "kittoes-info"
+                                    },
+                                    {
+                                        "name": "iamtheborg-com"
+                                    },
+                                    {
+                                        "name": "www-kittoes-com"
+                                    },
+                                    {
+                                        "name": "www-kittoes-info"
+                                    },
+                                    {
+                                        "name": "www-iamtheborg-com"
+                                    }
+                                ],
+                                "name": "LinkedIn-Kittoes0124",
+                                "patternsToMatch": [
+                                    "/*"
+                                ],
+                                "redirectProtocol": "HttpsOnly",
+                                "redirectType": "Found"
+                            }
+                        ]
+                    }
+                ],
+                "hdInsightClusters": [
+                    {
+                        "computeProfile": {
+                            "roles": [
+                                {
+                                    "name": "headnode",
+                                    "targetInstanceCount": 2,
+                                    "virtualNetwork": {
+                                        "name": "byteterrace.net",
+                                        "subnetName": "byteterrace"
+                                    },
+                                    "vmSize": "Standard_A4_v2"
+                                },
+                                {
+                                    "name": "workernode",
+                                    "targetInstanceCount": 2,
+                                    "virtualNetwork": {
+                                        "name": "byteterrace.net",
+                                        "subnetName": "byteterrace"
+                                    },
+                                    "vmSize": "Standard_A4_v2"
+                                }
+                            ]
+                        },
+                        "configurationProfile": {
+                            "kind": "spark"
+                        },
+                        "name": "byteterrace",
+                        "sshPublicKey": "<sshPublicKey>",
+                        "storageProfile": {
+                            "storageAccounts": [
+                                {
+                                    "name": "byteterrace"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "keyVaults": [
+                    {
+                        "auditLogAnalyticsWorkspaceName": "byteterrace",
+                        "name": "byteterrace",
+                        "virtualNetworkRules": [
+                            {
+                                "subnetName": "byteterrace",
+                                "virtualNetworkName": "byteterrace.net"
+                            }
+                        ]
+                    }
+                ],
+                "_kubernetesServiceClusters": [
+                    {
+                        "name": "byteterrace"
+                    }
+                ],
+                "loadBalancers": [
+                    {
+                        "backendAddressPools": [
+                            {
+                                "name": "backend"
+                            }
+                        ],
+                        "frontendIpConfigurations": [
+                            {
+                                "name": "frontend",
+                                "privateIpAddress": {
+                                    "allocationMethod": "Dynamic",
+                                    "virtualNetwork": {
+                                        "name": "byteterrace.net",
+                                        "subnetName": "byteterrace"
+                                    }
+                                }
+                            }
+                        ],
+                        "healthProbes": [
+                            {
+                                "name": "HTTPS",
+                                "port": 443,
+                                "protocol": "HTTPS",
+                                "requestPath": "/healthcheck"
+                            }
+                        ],
+                        "loadBalancingRules": [
+                            {
+                                "backendAddressPoolName": "backend",
+                                "frontendIpConfigurationName": "frontend",
+                                "healthProbeName": "HTTPS",
+                                "name": "rule",
+                                "port": 443,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "name": "byteterrace"
+                    }
+                ],
+                "logic": {
+                    "applications": [
+                        {
+                            "auditLogAnalyticsWorkspaceName": "byteterrace",
+                            "name": "byteterrace"
+                        }
+                    ]
+                },
+                "managedIdentities": [
+                    {
+                        "name": "byteterrace"
+                    }
+                ],
+                "monitor": {
+                    "applicationInsightsComponents": [
+                        {
+                            "logAnalyticsWorkspaceName": "byteterrace",
+                            "name": "byteterrace"
+                        }
+                    ],
+                    "logAnalyticsWorkspaces": [
+                        {
+                            "name": "byteterrace"
+                        }
+                    ],
+                    "privateLinkScopes": [
+                        {
+                            "name": "byteterrace"
+                        }
+                    ]
+                },
+                "natGateways": [
+                    {
+                        "name": "byteterrace.net"
+                    }
+                ],
+                "networkSecurityGroups": [
+                    {
+                        "auditLogAnalyticsWorkspaceName": "byteterrace",
+                        "name": "AzureBastionNetworkSecurityGroup",
+                        "securityRules": [
+                            {
+                                "access": "Allow",
+                                "destinationAddressPrefixes": [ "*" ],
+                                "destinationPortRanges": [ "443" ],
+                                "direction": "Inbound",
+                                "name": "Allow-AzureLoadBalancer-Inbound",
+                                "priority": 4093,
+                                "protocol": "TCP",
+                                "sourceAddressPrefixes": [ "AzureLoadBalancer" ]
+                            },
+                            {
+                                "access": "Allow",
+                                "destinationAddressPrefixes": [ "VirtualNetwork" ],
+                                "destinationPortRanges": [
+                                    "5071",
+                                    "8080"
+                                ],
+                                "direction": "Inbound",
+                                "name": "Allow-BastionHostCommunication-Inbound",
+                                "priority": 4094,
+                                "protocol": "*",
+                                "sourceAddressPrefixes": [ "VirtualNetwork" ]
+                            },
+                            {
+                                "access": "Allow",
+                                "destinationAddressPrefixes": [ "*" ],
+                                "destinationPortRanges": [ "443" ],
+                                "direction": "Inbound",
+                                "name": "Allow-Https-Inbound",
+                                "priority": 4095,
+                                "protocol": "TCP",
+                                "sourceAddressPrefixes": [ "Internet" ]
+                            },
+                            {
+                                "access": "Allow",
+                                "destinationAddressPrefixes": [ "*" ],
+                                "destinationPortRanges": [ "443" ],
+                                "direction": "Inbound",
+                                "name": "Allow-GatewayManager-Inbound",
+                                "priority": 4096,
+                                "protocol": "TCP",
+                                "sourceAddressPrefixes": [ "GatewayManager" ]
+                            },
+                            {
+                                "access": "Allow",
+                                "destinationAddressPrefixes": [ "AzureCloud" ],
+                                "destinationPortRanges": [ "443" ],
+                                "direction": "Outbound",
+                                "name": "Allow-AzureCloud-Outbound",
+                                "priority": 4093,
+                                "protocol": "TCP",
+                                "sourceAddressPrefixes": [ "*" ]
+                            },
+                            {
+                                "access": "Allow",
+                                "destinationAddressPrefixes": [ "VirtualNetwork" ],
+                                "destinationPortRanges": [
+                                    "5071",
+                                    "8080"
+                                ],
+                                "direction": "Outbound",
+                                "name": "Allow-BastionHostCommunication-Outbound",
+                                "priority": 4094,
+                                "protocol": "*",
+                                "sourceAddressPrefixes": [ "VirtualNetwork" ]
+                            },
+                            {
+                                "access": "Allow",
+                                "destinationAddressPrefixes": [ "Internet" ],
+                                "destinationPortRanges": [ "80" ],
+                                "direction": "Outbound",
+                                "name": "Allow-GetSessionInformation-Outbound",
+                                "priority": 4095,
+                                "protocol": "*",
+                                "sourceAddressPrefixes": [ "*" ]
+                            },
+                            {
+                                "access": "Allow",
+                                "destinationAddressPrefixes": [ "VirtualNetwork" ],
+                                "destinationPortRanges": [
+                                    "22",
+                                    "3389"
+                                ],
+                                "direction": "Outbound",
+                                "name": "Allow-SshRdp-Outbound",
+                                "priority": 4096,
+                                "protocol": "*",
+                                "sourceAddressPrefixes": [ "*" ]
+                            }
+                        ]
+                    },
+                    {
+                        "auditLogAnalyticsWorkspaceName": "byteterrace",
+                        "name": "byteterrace.net",
+                        "securityRules": [
+                            {
+                                "access": "Allow",
+                                "destinationAddressPrefixes": [ "VirtualNetwork" ],
+                                "destinationPortRanges": [ "443" ],
+                                "direction": "Inbound",
+                                "name": "Allow-HdInsight.EastUs-Inbound",
+                                "priority": 4094,
+                                "protocol": "TCP",
+                                "sourceAddressPrefixes": [ "HDInsight.EastUS" ]
+                            },
+                            {
+                                "access": "Allow",
+                                "destinationAddressPrefixes": [ "VirtualNetwork" ],
+                                "destinationPortRanges": [ "443" ],
+                                "direction": "Inbound",
+                                "name": "Allow-HdInsight.SouthCentralUs-Inbound",
+                                "priority": 4095,
+                                "protocol": "TCP",
+                                "sourceAddressPrefixes": [ "HDInsight.SouthCentralUS" ]
+                            },
+                            {
+                                "access": "Allow",
+                                "destinationAddressPrefixes": [ "VirtualNetwork" ],
+                                "destinationPortRanges": [ "443" ],
+                                "direction": "Inbound",
+                                "name": "Allow-HdInsight.WestUs-Inbound",
+                                "priority": 4096,
+                                "protocol": "TCP",
+                                "sourceAddressPrefixes": [ "HDInsight.WestUS" ]
+                            }
+                        ]
+                    }
+                ],
+                "privateEndpoints": [
+                    {
+                        "groupIds": [
+                            "sites"
+                        ],
+                        "linkedResourcePath": "byteterrace",
+                        "linkedResourceType": "Microsoft.Web/sites",
+                        "name": "byteterrace",
+                        "subnetName": "byteterrace",
+                        "virtualNetworkName": "byteterrace.net"
+                    }
+                ],
+                "publicIpAddresses": [
+                    {
+                        "dnsPrefix": "byteterrace",
+                        "ipPrefixName": "byteterrace",
+                        "name": "byteterrace"
+                    }
+                ],
+                "publicIpPrefixes": [
+                    {
+                        "name": "byteterrace"
+                    }
+                ],
+                "routeTables": [
+                    {
+                        "name": "byteterrace.net"
+                    }
+                ],
+                "scripts": {
+                    "postDeploy": [
+                        {
+                            "name": "GoodbyeDeploy",
+                            "scriptContent": "Write-Host 'Goodbye deploy!';"
+                        }
+                    ],
+                    "preDeploy": [
+                        {
+                            "name": "HelloDeploy",
+                            "scriptContent": "Write-Host 'Hello deploy!';"
+                        }
+                    ]
+                },
+                "sqlServers": [
+                    {
+                        "auditLogAnalyticsWorkspaceName": "byteterrace",
+                        "databases": [
+                            {
+                                "name": "byteterrace"
+                            }
+                        ],
+                        "name": "byteterrace"
+                    }
+                ],
+                "storageAccounts": [
+                    {
+                        "isAllowTrustedMicrosoftServicesEnabled": true,
+                        "name": "byteterrace",
+                        "queueNames": [
+                            "default"
+                        ],
+                        "virtualNetworkRules": [
+                            {
+                                "subnetName": "byteterrace",
+                                "virtualNetworkName": "byteterrace.net"
+                            }
+                        ]
+                    }
+                ],
+                "virtualNetworks": [
+                    {
+                        "addressPrefixes": [
+                            "10.0.0.0/8"
+                        ],
+                        "name": "byteterrace.net",
+                        "subnets": [
+                            {
+                                "addressPrefix": "10.255.255.160/27",
+                                "isPrivateEndpointSupportEnabled": true,
+                                "name": "AzureBastionSubnet",
+                                "networkSecurityGroupName": "AzureBastionNetworkSecurityGroup",
+                                "serviceEndpoints": []
+                            },
+                            {
+                                "addressPrefix": "10.255.255.192/26",
+                                "isPrivateEndpointSupportEnabled": true,
+                                "name": "byteterrace",
+                                "networkSecurityGroupName": "byteterrace.net",
+                                "serviceEndpoints": [
+                                    {
+                                        "locations": [
+                                            "*"
+                                        ],
+                                        "service": "Microsoft.AzureCosmosDB"
+                                    },
+                                    {
+                                        "locations": [
+                                            "*"
+                                        ],
+                                        "service": "Microsoft.KeyVault"
+                                    },
+                                    {
+                                        "locations": [
+                                            "southcentralus"
+                                        ],
+                                        "service": "Microsoft.Sql"
+                                    },
+                                    {
+                                        "locations": [
+                                            "brazilsouth",
+                                            "northcentralus",
+                                            "southcentralus"
+                                        ],
+                                        "service": "Microsoft.Storage"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        "tags": {
+            "value": {}
+        }
+    }
+}

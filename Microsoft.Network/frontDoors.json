@@ -1,0 +1,233 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "auditLogAnalyticsWorkspaceName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Log Analytics workspace that the Azure Front Door audit feature will send its data to."
+            },
+            "type": "string"
+        },
+        "auditLogAnalyticsWorkspaceResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure Log Analytics workspace that the Azure Front Door audit feature will send its data to."
+            },
+            "type": "string"
+        },
+        "auditLogAnalyticsWorkspaceSubscriptionId": {
+            "defaultValue": "[subscription().subscriptionId]",
+            "metadata": {
+                "description": "Specifies the subscription id of the Azure Log Analytics workspace that the Azure Front Door audit feature will send its data to."
+            },
+            "type": "string"
+        },
+        "backendPools": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of backend address pools that will be created within the Azure Front Door."
+            },
+            "type": "array"
+        },
+        "frontendEndpoints": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of frontend endpoints that will be created within the Azure Front Door."
+            },
+            "type": "array"
+        },
+        "healthProbeSettings": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of health probe settings that will be created within the Azure Front Door."
+            },
+            "type": "array"
+        },
+        "loadBalancingSettings": {
+            "defaultValue": [],
+            "type": "array"
+        },
+        "name": {
+            "maxLength": 64,
+            "metadata": {
+                "description": "Specifies the name of the Azure Front Door."
+            },
+            "minLength": 5,
+            "type": "string"
+        },
+        "routingRules": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of routing rules that will be created within the Azure Front Door."
+            },
+            "type": "array"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Front Door."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "diagnosticSettings": "2017-05-01-preview",
+            "frontDoors": "2020-05-01"
+        },
+        "backendPoolDefaultProperties": {
+            "httpPort": 80,
+            "httpsPort": 443,
+            "weight": 1
+        },
+        "frontDoorResourceId": "[resourceId('Microsoft.Network/frontdoors', parameters('name'))]",
+        "frontendEndpointDefaultEntry": {
+            "hostName": "[format('{0}.azurefd.net', parameters('name'))]"
+        },
+        "frontendEndpointDefaultProperties": {
+            "sessionAffinityIsEnabled": false,
+            "sessionAffinityTimeToLiveInSeconds": 0
+        },
+        "frontendEndpoints": "[union(createArray(variables('frontendEndpointDefaultEntry')), parameters('frontendEndpoints'))]",
+        "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
+        "loadBalancingSettings": "[union(createArray(variables('loadBalancingSettingsDefaultEntry')), parameters('loadBalancingSettings'))]",
+        "loadBalancingSettingsDefaultEntry": {
+            "name": "default"
+        },
+        "loadBalancingSettingsDefaultProperties": {
+            "additionalLatencyMilliseconds": 0,
+            "sampleSize": 4,
+            "successfulSamplesRequired": 2
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').frontDoors]",
+            "location": "global",
+            "name": "[parameters('name')]",
+            "properties": {
+                "backendPoolsSettings": {
+                    "enforceCertificateNameCheck": "Enabled",
+                    "sendRecvTimeoutSeconds": 30
+                },
+                "copy": [
+                    {
+                        "count": "[length(parameters('backendPools'))]",
+                        "input": {
+                            "name": "[parameters('backendPools')[copyIndex('backendPools')].name]",
+                            "properties": {
+                                "backends": [
+                                    {
+                                        "address": "[parameters('backendPools')[copyIndex('backendPools')].httpAddress]",
+                                        "enabledState": "Enabled",
+                                        "httpPort": "[union(variables('backendPoolDefaultProperties'), parameters('backendPools')[copyIndex('backendPools')]).httpPort]",
+                                        "httpsPort": "[union(variables('backendPoolDefaultProperties'), parameters('backendPools')[copyIndex('backendPools')]).httpsPort]",
+                                        "priority": "[add(union(createObject('priority', copyIndex('backendPools')), parameters('backendPools')[copyIndex('backendPools')]).priority, 1)]",
+                                        "weight": "[union(variables('backendPoolDefaultProperties'), parameters('backendPools')[copyIndex('backendPools')]).weight]"
+                                    }
+                                ],
+                                "healthProbeSettings": {
+                                    "id": "[resourceId('Microsoft.Network/frontdoors/healthProbeSettings', parameters('name'), parameters('backendPools')[copyIndex('backendPools')].healthProbeSettingsName)]"
+                                },
+                                "loadBalancingSettings": {
+                                    "id": "[resourceId('Microsoft.Network/frontdoors/loadBalancingSettings', parameters('name'), parameters('backendPools')[copyIndex('backendPools')].loadBalancingSettingsName)]"
+                                }
+                            }
+                        },
+                        "name": "backendPools"
+                    },
+                    {
+                        "count": "[length(variables('frontendEndpoints'))]",
+                        "input": {
+                            "name": "[union(createObject('name', replace(variables('frontendEndpoints')[copyIndex('frontendEndpoints')].hostName, '.', '-')), variables('frontendEndpoints')[copyIndex('frontendEndpoints')]).name]",
+                            "properties": {
+                                "hostName": "[variables('frontendEndpoints')[copyIndex('frontendEndpoints')].hostName]",
+                                "sessionAffinityEnabledState": "[if(union(variables('frontendEndpointDefaultProperties'), variables('frontendEndpoints')[copyIndex('frontendEndpoints')]).sessionAffinityIsEnabled, 'Enabled', 'Disabled')]",
+                                "sessionAffinityTtlSeconds": "[union(variables('frontendEndpointDefaultProperties'), variables('frontendEndpoints')[copyIndex('frontendEndpoints')]).sessionAffinityTimeToLiveInSeconds]"
+                            }
+                        },
+                        "name": "frontendEndpoints"
+                    },
+                    {
+                        "count": "[length(parameters('healthProbeSettings'))]",
+                        "input": {
+                            "name": "[parameters('healthProbeSettings')[copyIndex('healthProbeSettings')].name]",
+                            "properties": {
+                                "enabledState": "Enabled",
+                                "healthProbeMethod": "[parameters('healthProbeSettings')[copyIndex('healthProbeSettings')].method]",
+                                "intervalInSeconds": "[parameters('healthProbeSettings')[copyIndex('healthProbeSettings')].intervalInSeconds]",
+                                "path": "[parameters('healthProbeSettings')[copyIndex('healthProbeSettings')].path]",
+                                "protocol": "[parameters('healthProbeSettings')[copyIndex('healthProbeSettings')].protocol]"
+                            }
+                        },
+                        "name": "healthProbeSettings"
+                    },
+                    {
+                        "count": "[length(variables('loadBalancingSettings'))]",
+                        "input": {
+                            "name": "[variables('loadBalancingSettings')[copyIndex('loadBalancingSettings')].name]",
+                            "properties": {
+                                "additionalLatencyMilliseconds": "[union(variables('loadBalancingSettingsDefaultProperties'), variables('loadBalancingSettings')[copyIndex('loadBalancingSettings')]).additionalLatencyMilliseconds]",
+                                "sampleSize": "[union(variables('loadBalancingSettingsDefaultProperties'), variables('loadBalancingSettings')[copyIndex('loadBalancingSettings')]).sampleSize]",
+                                "successfulSamplesRequired": "[union(variables('loadBalancingSettingsDefaultProperties'), variables('loadBalancingSettings')[copyIndex('loadBalancingSettings')]).successfulSamplesRequired]"
+                            }
+                        },
+                        "name": "loadBalancingSettings"
+                    },
+                    {
+                        "count": "[length(parameters('routingRules'))]",
+                        "input": {
+                            "name": "[parameters('routingRules')[copyIndex('routingRules')].name]",
+                            "properties":{
+                                "acceptedProtocols": "[parameters('routingRules')[copyIndex('routingRules')].acceptedProtocols]",
+                                "enabledState": "Enabled",
+                                "frontendEndpoints": "[json(replace(string(parameters('routingRules')[copyIndex('routingRules')].frontendEndpoints), '\"name\":\"', format('\"id\":\"/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/frontdoors/{2}/frontendEndpoints/', subscription().subscriptionId, resourceGroup().name, parameters('name'))))]",
+                                "patternsToMatch": "[parameters('routingRules')[copyIndex('routingRules')].patternsToMatch]",
+                                "routeConfiguration": {
+                                    "@odata.type": "#Microsoft.Azure.FrontDoor.Models.FrontdoorRedirectConfiguration",
+                                    "customHost": "[parameters('routingRules')[copyIndex('routingRules')].customHost]",
+                                    "customPath": "[parameters('routingRules')[copyIndex('routingRules')].customPath]",
+                                    "redirectProtocol": "[parameters('routingRules')[copyIndex('routingRules')].redirectProtocol]",
+                                    "redirectType": "[parameters('routingRules')[copyIndex('routingRules')].redirectType]"
+                                }
+                            }
+                        },
+                        "name": "routingRules"
+                    }
+                ]
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Network/frontdoors"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "dependsOn": [
+                "[variables('frontDoorResourceId')]"
+            ],
+            "location": "global",
+            "name": "[format('{0}/microsoft.insights/audit', parameters('name'))]",
+            "properties": {
+                "logs": [
+                    {
+                        "category": "FrontdoorAccessLog",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    },
+                    {
+                        "category": "FrontdoorWebApplicationFirewallLog",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    }
+                ],
+                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
+            },
+            "type": "Microsoft.Network/frontdoors/providers/diagnosticsettings"
+        }
+    ]
+}

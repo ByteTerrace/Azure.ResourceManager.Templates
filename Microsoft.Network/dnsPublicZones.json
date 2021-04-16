@@ -1,0 +1,200 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "aRecords": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of A records that will be created within the public Azure DNS zone."
+            },
+            "type": "array"
+        },
+        "cnameRecords": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of CNAME records that will be created within the public Azure DNS zone."
+            },
+            "type": "array"
+        },
+        "mxRecords": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of MX records that will be created within the public Azure DNS zone."
+            },
+            "type": "array"
+        },
+        "name": {
+            "maxLength": 63,
+            "metadata": {
+                "description": "Specifies the name of the public Azure DNS zone."
+            },
+            "minLength": 1,
+            "type": "string"
+        },
+        "nsRecords": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of NS records that will be created within the public Azure DNS zone."
+            },
+            "type": "array"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the public Azure DNS zone."
+            },
+            "type": "object"
+        },
+        "txtRecords": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of TXT records that will be created within the public Azure DNS zone."
+            },
+            "type": "array"
+        }
+    },
+    "variables":{
+        "aRecords": "[if(variables('aRecordsIsNotEmpty'), parameters('aRecords'), createArray(createObject('name', 'dummyA')))]",
+        "aRecordsCount": "[length(parameters('aRecords'))]",
+        "aRecordsDefaultProperties": {
+            "timeToLiveInSeconds": 3600
+        },
+        "aRecordsIsNotEmpty": "[greater(variables('aRecordsCount'), 0)]",
+        "cnameRecords": "[if(variables('cnameRecordsIsNotEmpty'), parameters('cnameRecords'), createArray(createObject('name', 'dummyCNAME')))]",
+        "cnameRecordsCount": "[length(parameters('cnameRecords'))]",
+        "cnameRecordsDefaultProperties": {
+            "timeToLiveInSeconds": 3600
+        },
+        "cnameRecordsIsNotEmpty": "[greater(variables('cnameRecordsCount'), 0)]",
+        "dnsZoneResourceId": "[resourceId('Microsoft.Network/dnszones', parameters('name'))]",
+        "mxRecords": "[if(variables('mxRecordsIsNotEmpty'), parameters('mxRecords'), createArray(createObject('name', 'dummyMX')))]",
+        "mxRecordsCount": "[length(parameters('mxRecords'))]",
+        "mxRecordsDefaultProperties": {
+            "timeToLiveInSeconds": 3600
+        },
+        "mxRecordsIsNotEmpty": "[greater(variables('mxRecordsCount'), 0)]",
+        "nsRecords": "[if(variables('nsRecordsIsNotEmpty'), parameters('nsRecords'), createArray(createObject('name', 'dummyNS')))]",
+        "nsRecordsCount": "[length(parameters('nsRecords'))]",
+        "nsRecordsDefaultProperties": {
+            "timeToLiveInSeconds": 3600
+        },
+        "nsRecordsIsNotEmpty": "[greater(variables('nsRecordsCount'), 0)]",
+        "txtRecords": "[if(variables('txtRecordsIsNotEmpty'), parameters('txtRecords'), createArray(createObject('name', 'dummyTXT')))]",
+        "txtRecordsCount": "[length(parameters('txtRecords'))]",
+        "txtRecordsDefaultProperties": {
+            "timeToLiveInSeconds": 3600
+        },
+        "txtRecordsIsNotEmpty": "[greater(variables('txtRecordsCount'), 0)]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2018-05-01",
+            "location": "global",
+            "name": "[parameters('name')]",
+            "properties": {
+                "registrationVirtualNetworks": [],
+                "resolutionVirtualNetworks": [],
+                "zoneType": "Public"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Network/dnsZones"
+        },
+        {
+            "apiVersion": "2018-05-01",
+            "condition": "[variables('aRecordsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('aRecordsCount')]",
+                "mode": "parallel",
+                "name": "aRecordsCopy"
+            },
+            "dependsOn": [
+                "[variables('dnsZoneResourceId')]"
+            ],
+            "name": "[format('{0}/{1}', parameters('name'), variables('aRecords')[copyIndex()].name)]",
+            "properties": {
+                "ARecords": "[variables('aRecords')[copyIndex()].ipAddresses]",
+                "targetResource": {},
+                "TTL": "[union(variables('aRecordsDefaultProperties'), variables('aRecords')[copyIndex()]).timeToLiveInSeconds]"
+            },
+            "type": "Microsoft.Network/dnszones/A"
+        },
+        {
+            "apiVersion": "2018-05-01",
+            "condition": "[variables('cnameRecordsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('cnameRecordsCount')]",
+                "mode": "parallel",
+                "name": "cnameRecordsCopy"
+            },
+            "dependsOn": [
+                "[variables('dnsZoneResourceId')]"
+            ],
+            "name": "[format('{0}/{1}', parameters('name'), variables('cnameRecords')[copyIndex()].name)]",
+            "properties": {
+                "CNAMERecord": {
+                    "cname": "[variables('cnameRecords')[copyIndex()].alias]"
+                },
+                "targetResource": {},
+                "TTL": "[union(variables('cnameRecordsDefaultProperties'), variables('cnameRecords')[copyIndex()]).timeToLiveInSeconds]"
+            },
+            "type": "Microsoft.Network/dnszones/CNAME"
+        },
+        {
+            "apiVersion": "2018-05-01",
+            "condition": "[variables('mxRecordsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('mxRecordsCount')]",
+                "mode": "parallel",
+                "name": "mxRecordsCopy"
+            },
+            "dependsOn": [
+                "[variables('dnsZoneResourceId')]"
+            ],
+            "name": "[format('{0}/{1}', parameters('name'), variables('mxRecords')[copyIndex()].name)]",
+            "properties": {
+                "MXRecords": "[variables('mxRecords')[copyIndex()].exchanges]",
+                "targetResource": {},
+                "TTL": "[union(variables('mxRecordsDefaultProperties'), variables('mxRecords')[copyIndex()]).timeToLiveInSeconds]"
+            },
+            "type": "Microsoft.Network/dnszones/MX"
+        },
+        {
+            "apiVersion": "2018-05-01",
+            "condition": "[variables('nsRecordsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('nsRecordsCount')]",
+                "mode": "parallel",
+                "name": "nsRecordsCopy"
+            },
+            "dependsOn": [
+                "[variables('dnsZoneResourceId')]"
+            ],
+            "name": "[format('{0}/{1}', parameters('name'), variables('nsRecords')[copyIndex()].name)]",
+            "properties": {
+                "NSRecords": "[variables('nsRecords')[copyIndex()].nameServers]",
+                "targetResource": {},
+                "TTL": "[union(variables('nsRecordsDefaultProperties'), variables('nsRecords')[copyIndex()]).timeToLiveInSeconds]"
+            },
+            "type": "Microsoft.Network/dnszones/NS"
+        },
+        {
+            "apiVersion": "2018-05-01",
+            "condition": "[variables('txtRecordsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('txtRecordsCount')]",
+                "mode": "parallel",
+                "name": "txtRecordsCopy"
+            },
+            "dependsOn": [
+                "[variables('dnsZoneResourceId')]"
+            ],
+            "name": "[format('{0}/{1}', parameters('name'), variables('txtRecords')[copyIndex()].name)]",
+            "properties": {
+                "targetResource": {},
+                "TTL": "[union(variables('txtRecordsDefaultProperties'), variables('txtRecords')[copyIndex()]).timeToLiveInSeconds]",
+                "TXTRecords": "[variables('txtRecords')[copyIndex()].values]"
+            },
+            "type": "Microsoft.Network/dnszones/TXT"
+        }
+    ]
+}

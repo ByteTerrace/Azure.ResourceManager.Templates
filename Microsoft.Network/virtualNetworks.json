@@ -1,0 +1,119 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "addressPrefixes": {
+            "metadata": {
+                "description": "An array of address prefixes, in CIDR notation, that should be reserved for the Azure Virtual Network."
+            },
+            "type": "array"
+        },
+        "ddosProtectionPlanName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the Azure DDoS Protection Plan that will be assigned to the Azure Virtual Network."
+            },
+            "type": "string"
+        },
+        "ddosProtectionPlanResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure DDoS Protection Plan that will be assigned to the Azure Virtual Network."
+            },
+            "type": "string"
+        },
+        "ddosProtectionPlanSubscriptionId": {
+            "defaultValue": "[subscription().subscriptionId]",
+            "metadata": {
+                "description": "Specifies the subscription id of the Azure DDoS Protection Plan that will be assigned to the Azure Virtual Network."
+            },
+            "type": "string"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Virtual Network resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 64,
+            "metadata": {
+                "description": "Specifies the name of the Azure Virtual Network."
+            },
+            "minLength": 2,
+            "type": "string"
+        },
+        "subnets": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of subnets that will be created within the Azure Virtual Network."
+            },
+            "type": "array"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Virtual Network."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "defaultResourceProperties": {
+            "subnet": {
+                "isPrivateEndpointSupportEnabled": false,
+                "isPrivateLinkServiceSupportEnabled": false,
+                "natGatewayName": "",
+                "natGatewayResourceGroupName": "[resourceGroup().name]",
+                "natGatewaySubscriptionId": "[subscription().subscriptionId]",
+                "networkSecurityGroupName": "",
+                "networkSecurityGroupResourceGroupName": "[resourceGroup().name]",
+                "networkSecurityGroupSubscriptionId": "[subscription().subscriptionId]",
+                "routeTableName": "",
+                "routeTableResourceGroupName": "[resourceGroup().name]",
+                "routeTableSubscriptionId": "[subscription().subscriptionId]",
+                "serviceEndpoints": []
+            }
+        },
+        "ddosProtectionPlanProperties": {
+            "id": "[if(variables('isDdosProtectionEnabled'), resourceId(parameters('ddosProtectionPlanSubscriptionId'), parameters('ddosProtectionPlanResourceGroupName'), 'Microsoft.Network/ddosProtectionPlans', parameters('ddosProtectionPlanName')), json('null'))]"
+        },
+        "isDdosProtectionEnabled": "[not(empty(parameters('ddosProtectionPlanName')))]",
+        "virtualNetworksApiVersion": "2020-07-01"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('virtualNetworksApiVersion')]",
+            "name": "[parameters('name')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[parameters('addressPrefixes')]"
+                },
+                "copy": [
+                    {
+                        "count": "[length(parameters('subnets'))]",
+                        "input": {
+                            "name": "[parameters('subnets')[copyIndex('subnets')].name]",
+                            "properties": {
+                                "addressPrefix": "[parameters('subnets')[copyIndex('subnets')].addressPrefix]",
+                                "natGateway": "[if(not(empty(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).natGatewayName)), createObject('id', resourceId(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).natGatewaySubscriptionId, union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).natGatewayResourceGroupName, 'Microsoft.Network/natGateways', union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).natGatewayName)), json('null'))]",
+                                "networkSecurityGroup": "[if(not(empty(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).networkSecurityGroupName)), createObject('id', resourceId(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).networkSecurityGroupSubscriptionId, union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).networkSecurityGroupResourceGroupName, 'Microsoft.Network/networkSecurityGroups', union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).networkSecurityGroupName)), json('null'))]",
+                                "privateEndpointNetworkPolicies": "[if(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).isPrivateEndpointSupportEnabled, 'Disabled', 'Enabled')]",
+                                "privateLinkServiceNetworkPolicies": "[if(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).isPrivateLinkServiceSupportEnabled, 'Disabled', 'Enabled')]",
+                                "routeTable": "[if(not(empty(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).routeTableName)), createObject('id', resourceId(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).routeTableSubscriptionId, union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).routeTableResourceGroupName, 'Microsoft.Network/routeTables', union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).routeTableName)), json('null'))]",
+                                "serviceEndpoints": "[union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).serviceEndpoints]"
+                            }
+                        },
+                        "name": "subnets"
+                    }
+                ],
+                "ddosProtectionPlan": "[if(variables('isDdosProtectionEnabled'), variables('ddosProtectionPlanProperties'), json('null'))]",
+                "enableDdosProtection": "[variables('isDdosProtectionEnabled')]",
+                "enableVmProtection": true
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Network/virtualNetworks"
+        }
+    ]
+}

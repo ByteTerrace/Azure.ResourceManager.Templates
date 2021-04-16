@@ -1,0 +1,103 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "isPerSiteScalingEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the feature that enables applications to scale independently is enabled on the Azure Web app service plan."
+            },
+            "type": "bool"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Web app service plan resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 40,
+            "metadata": {
+                "description": "Specifies the name of the Azure Web app service plan."
+            },
+            "minLength": 1,
+            "type": "string"
+        },
+        "operatingSystemName": {
+            "allowedValues": [
+                "Linux",
+                "Windows"
+            ],
+            "defaultValue": "Linux",
+            "metadata": {
+                "description": "Specifies the name of operating system that the Azure Web app service plan will run within."
+            },
+            "type": "string"
+        },
+        "serviceEnvironmentName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the environment that the Azure Web app service plan will be hosted within."
+            },
+            "type": "string"
+        },
+        "serviceEnvironmentResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the environment that the Azure Web app service plan will be hosted within."
+            },
+            "type": "string"
+        },
+        "serviceEnvironmentSubscriptionId": {
+            "defaultValue": "[subscription().subscriptionId]",
+            "metadata": {
+                "description": "Specifies the subscription id of the environment that the Azure Web app service plan will be hosted within."
+            },
+            "type": "string"
+        },
+        "skuName": {
+            "defaultValue": "P1v2",
+            "metadata": {
+                "description": "Specifies the SKU name of the Azure Web app service plan."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Web app service plan."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "serverFarms": "2020-09-01"
+        },
+        "hostingEnvironmentProfile": {
+            "id": "[resourceId(parameters('serviceEnvironmentSubscriptionId'), parameters('serviceEnvironmentResourceGroupName'), 'Microsoft.Web/hostingEnvironments/', if(not(empty(parameters('serviceEnvironmentName'))), parameters('serviceEnvironmentName'), 'dummyServiceEnvironment'))]"
+        },
+        "isDockerSupportEnabled": false,
+        "isHostingEnvironmentEnabled": "[not(empty(parameters('serviceEnvironmentName')))]",
+        "isLinuxOperatingSystem": "[equals('linux', toLower(parameters('operatingSystemName')))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').serverFarms]",
+            "kind": "[if(variables('isLinuxOperatingSystem'), 'linux', '')]",
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "hostingEnvironmentProfile": "[if(variables('isHostingEnvironmentEnabled'), variables('hostingEnvironmentProfile'), json('null'))]",
+                "hyperV": "[and(variables('isDockerSupportEnabled'), not(variables('isLinuxOperatingSystem')))]",
+                "perSiteScaling": "[parameters('isPerSiteScalingEnabled')]",
+                "reserved": "[variables('isLinuxOperatingSystem')]"
+            },
+            "sku": {
+                "name": "[parameters('skuName')]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Web/serverfarms"
+        }
+    ]
+}

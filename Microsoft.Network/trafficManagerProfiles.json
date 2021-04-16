@@ -1,0 +1,89 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "maxReturn": {
+            "defaultValue": 0,
+            "metadata": {
+                "description": "Specifies the maximum number of endpoints that can be returned when the 'MultiValue' routing type is used."
+            },
+            "type": "int"
+        },
+        "dnsRelativeName": {
+            "defaultValue": "[parameters('trafficManagerProfileName')]",
+            "metadata": {
+                "description": "Specifies the relative DNS name provided by the Azure Traffic Manager profile."
+            },
+            "type": "string"
+        },
+        "dnsTtl": {
+            "defaultValue": 60,
+            "metadata": {
+                "description": "Specifies how long to cache DNS responses provided by the Azure Traffic Manager profile."
+            },
+            "type": "int"
+        },
+        "monitorConfig": {
+            "defaultValue": {
+                "intervalInSeconds": 30,
+                "path": "/",
+                "port": "443",
+                "protocol": "https",
+                "timeoutInSeconds": 10,
+                "toleratedNumberOfFailures": 3
+            },
+            "metadata": {
+                "description": "An object that encapsulates the endpoint monitoring settings of the Azure Traffic Manager profile."
+            },
+            "type": "object"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Traffic Manager profile."
+            },
+            "type": "object"
+        },
+        "trafficManagerProfileName": {
+            "maxLength": 63,
+            "metadata": {
+                "description": "Specifies the name of the Azure Traffic Manager profile."
+            },
+            "minLength": 1,
+            "type": "string"
+        },
+        "trafficRoutingMethod": {
+            "defaultValue": "Performance",
+            "metadata": {
+                "description": "Specifies the traffic routing method of the Azure Traffic Manager profile."
+            },
+            "type": "string"
+        },
+        "trafficViewIsEnabled": {
+            "defaultValue": "Disabled",
+            "metadata": {
+                "description": "Indicates whether the traffic view feature is enabled on the Azure Traffic Manager profile."
+            },
+            "type": "bool"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2018-04-01",
+            "location": "global",
+            "name": "[parameters('trafficManagerProfileName')]",
+            "properties": {
+                "dnsConfig": {
+                    "relativeName": "[parameters('dnsRelativeName')]",
+                    "ttl": "[parameters('dnsTtl')]"
+                },
+                "maxReturn": "[parameters('maxReturn')]",
+                "monitorConfig": "[parameters('monitorConfig')]",
+                "trafficRoutingMethod": "[parameters('trafficRoutingMethod')]",
+                "trafficViewEnrollmentStatus": "[if(parameters('trafficViewIsEnabled'), 'Enabled', 'Disabled')]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Network/trafficManagerProfiles"
+        }
+    ]
+}

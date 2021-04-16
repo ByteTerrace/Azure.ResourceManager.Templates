@@ -1,0 +1,512 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "accessTier": {
+            "defaultValue": "Hot",
+            "metadata": {
+                "description": "Specifies the access tier of the Azure Storage account."
+            },
+            "type": "string"
+        },
+        "blobContainerNames": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of blob container names that will be deployed within the Azure Storage account."
+            },
+            "type": "array"
+        },
+        "blobCorsRules": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of blob CORS rules that will be deployed within the Azure Storage account."
+            },
+            "type": "array"
+        },
+        "blobSoftDeleteRetentionPeriodInDays": {
+            "defaultValue": 7,
+            "metadata": {
+                "description": "Specifies the amount of days to retain a soft-deleted blob; assuming the feature is enabled."
+            },
+            "type": "int"
+        },
+        "customerManagedEncryptionKeyName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
+        "customerManagedEncryptionKeyVaultName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the key vault that houses the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
+        "customerManagedEncryptionKeyVaultResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the key vault that houses the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
+        "customerManagedEncryptionKeyVaultSubscriptionId": {
+            "defaultValue": "[subscription().id]",
+            "metadata": {
+                "description": "Specifies the subscrioption id of the key vault that houses the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
+        "customerManagedEncryptionKeyVersion": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the version of the customer-managed data encryption key."
+            },
+            "type": "string"
+        },
+        "encryptionScopes": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of encryption scopes that will be assigned the Azure Storage account."
+            },
+            "type": "array"
+        },
+        "fileShareNames": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of file share names that will be deployed within the Azure Storage account."
+            },
+            "type": "array"
+        },
+        "fileShareSoftDeleteRetentionPeriodInDays": {
+            "defaultValue": 7,
+            "metadata": {
+                "description": "Specifies the amount of days to retain a soft-deleted file; assuming the feature is enabled."
+            },
+            "type": "int"
+        },
+        "firewallRules": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of firewall rules that will be assigned to the Azure Storage account."
+            },
+            "type": "array"
+        },
+        "isAdvancedThreatProtectionEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the advanced threat detection feature is enabled on the Azure Storage account."
+            },
+            "type": "bool"
+        },
+        "isAllowTrustedMicrosoftServicesEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether trusted Microsoft services are allowed to access the Azure Storage account."
+            },
+            "type": "bool"
+        },
+        "isChangeFeedEnabledForBlobs": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the change feed feature is enabled for blobs in the Azure Storage account."
+            },
+            "type": "bool"
+        },
+        "isHierarchicalNamespaceEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the hierarchical namespace feature is enabled on the Azure Storage account."
+            },
+            "type": "bool"
+        },
+        "isLargeFileSharesEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the large file shares feature is enabled on the Azure Storage account."
+            },
+            "type": "bool"
+        },
+        "isSoftDeleteEnabledForBlobs": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the soft-delete feature is enabled for blobs in the Azure Storage account."
+            },
+            "type": "bool"
+        },
+        "isSoftDeleteEnabledForFileShares": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the soft-delete feature is enabled for file shares in the Azure Storage account."
+            },
+            "type": "bool"
+        },
+        "isVersioningEnabledForBlobs": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the versioning feature is enabled for blobs in the Azure Storage account."
+            },
+            "type": "bool"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Storage resource(s) will be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 24,
+            "metadata": {
+                "description": "Specifies the name of the Azure Storage account."
+            },
+            "minLength": 3,
+            "type": "string"
+        },
+        "queueNames": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of queue names that will be deployed within the Azure Storage account."
+            },
+            "type": "array"
+        },
+        "skuName": {
+            "allowedValues": [
+                "Premium_LRS",
+                "Premium_ZRS",
+                "Standard_GRS",
+                "Standard_GZRS",
+                "Standard_LRS",
+                "Standard_RAGRS",
+                "Standard_RAGZRS",
+                "Standard_ZRS"
+            ],
+            "defaultValue": "Standard_LRS",
+            "metadata": {
+                "description": "Specifies the SKU name of the Azure Storage account."
+            },
+            "type": "string"
+        },
+        "storageAccountKind": {
+            "allowedValues": [
+                "FileStorage",
+                "BlobStorage",
+                "BlockBlobStorage",
+                "Storage",
+                "StorageV2"
+            ],
+            "defaultValue": "StorageV2",
+            "metadata": {
+                "description": "Specifies the kind of the Azure Storage account."
+            },
+            "type": "string"
+        },
+        "tableNames": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of table names that will be deployed within the Azure Storage account."
+            },
+            "type": "array"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Storage account."
+            },
+            "type": "object"
+        },
+        "virtualNetworkRules": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of virtual network rules that will be assigned to the Azure Storage account."
+            },
+            "type": "array"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "authorizationRoleAssignments": "2018-09-01-preview",
+            "deployments": "2019-10-01",
+            "keyVaults": "2019-09-01",
+            "storageAccountAdvancedThreatProtection": "2019-01-01",
+            "storageAccountBlobContainers": "2019-06-01",
+            "storageAccountBlobServices": "2019-06-01",
+            "storageAccountEncryptionScopes": "2019-06-01",
+            "storageAccountFileServices": "2019-06-01",
+            "storageAccountFileShares": "2019-06-01",
+            "storageAccountQueues": "2019-06-01",
+            "storageAccounts": "2019-06-01",
+            "storageAccountTables": "2019-06-01"
+        },
+        "blobContainerNames": "[if(variables('blobContainerNamesIsNotEmpty'), parameters('blobContainerNames'), createArray('dummyContainer'))]",
+        "blobContainerNamesCount": "[length(parameters('blobContainerNames'))]",
+        "blobContainerNamesIsNotEmpty": "[greater(variables('blobContainerNamesCount'), 0)]",
+        "customerManagedEncryptionIsEnabled": "[and(not(empty(parameters('customerManagedEncryptionKeyName'))), not(empty(parameters('customerManagedEncryptionKeyVaultName'))))]",
+        "customerManagedEncryptionKeyVaultAuthorizationName": "[format('{0}/Microsoft.Authorization/{1}', if(variables('customerManagedEncryptionIsEnabled'), parameters('customerManagedEncryptionKeyVaultName'), 'dummyKeyVault'), guid(subscription().subscriptionId, resourceGroup().name, parameters('name'), variables('resourceIds').keyVaultCryptoServiceEncryptionRoleDefinition))]",
+        "customerManagedEncryptionKeyVaultResourceGroupName": "[if(not(empty(parameters('customerManagedEncryptionKeyVaultResourceGroupName'))), parameters('customerManagedEncryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
+        "customerManagedEncryptionKeyVaultSubscriptionId": "[if(not(empty(parameters('customerManagedEncryptionKeyVaultSubscriptionId'))), parameters('customerManagedEncryptionKeyVaultSubscriptionId'), subscription().subscriptionId)]",
+        "customerManagedEncryptionPropertiesDeploymentName": "[format('{0}-{1}-CmeProperties', deployment().name, variables('storageAccountName'))]",
+        "encryptionScopes": "[if(variables('encryptionScopesIsNotEmpty'), parameters('encryptionScopes'), createArray(createObject('name', 'dummyEncryptionScope')))]",
+        "encryptionScopesCount": "[length(parameters('encryptionScopes'))]",
+        "encryptionScopesIsNotEmpty": "[greater(variables('encryptionScopesCount'), 0)]",
+        "fileShareNames": "[if(variables('fileShareNamesIsNotEmpty'), parameters('fileShareNames'), createArray('dummyFileShare'))]",
+        "fileShareNamesCount": "[length(parameters('fileShareNames'))]",
+        "fileShareNamesIsNotEmpty": "[greater(variables('fileShareNamesCount'), 0)]",
+        "hierarchicalNamespaceProperties": {
+            "isHnsEnabled": "[parameters('isHierarchicalNamespaceEnabled')]"
+        },
+        "queueNames": "[if(variables('queueNamesIsNotEmpty'), parameters('queueNames'), createArray('dummyQueue'))]",
+        "queueNamesCount": "[length(parameters('queueNames'))]",
+        "queueNamesIsNotEmpty": "[greater(variables('queueNamesCount'), 0)]",
+        "resourceIds": {
+            "keyVaultCryptoServiceEncryptionRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]",
+            "storageAccountCustomerManagedEncryptionKeyVault": "[if(variables('customerManagedEncryptionIsEnabled'), resourceId(variables('customerManagedEncryptionKeyVaultSubscriptionId'), variables('customerManagedEncryptionKeyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('customerManagedEncryptionKeyVaultName')), '')]",
+            "storageAccountCustomerManagedEncryptionPropertiesDeployment": "[resourceId('Microsoft.Resources/deployments', variables('customerManagedEncryptionPropertiesDeploymentName'))]",
+            "storageAccount": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+        },
+        "storageAccountName": "[toLower(parameters('name'))]",
+        "storageAccountProperties": {
+            "accessTier": "[parameters('accessTier')]",
+            "largeFileSharesState": "[if(parameters('isLargeFileSharesEnabled'), 'Enabled', 'Disabled')]",
+            "minimumTlsVersion": "TLS1_2",
+            "networkAcls": {
+                "bypass": "[if(parameters('isAllowTrustedMicrosoftServicesEnabled'), 'AzureServices', 'None')]",
+                "copy": [
+                    {
+                        "count": "[length(parameters('firewallRules'))]",
+                        "input": {
+                            "action": "Allow",
+                            "value": "[parameters('firewallRules')[copyIndex('ipRules')]]"
+                        },
+                        "name": "ipRules"
+                    },
+                    {
+                        "count": "[length(parameters('virtualNetworkRules'))]",
+                        "input": {
+                            "action": "Allow",
+                            "id": "[resourceId(union(variables('virtualNetworkRulesDefaultObject'), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subscriptionId, union(variables('virtualNetworkRulesDefaultObject'), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
+                        },
+                        "name": "virtualNetworkRules"
+                    }
+                ],
+                "defaultAction": "[if(or(greater(length(parameters('firewallRules')), 0), greater(length(parameters('virtualNetworkRules')), 0)), 'Deny', 'Allow')]"
+            },
+            "supportsHttpsTrafficOnly": true
+        },
+        "tableNames": "[if(variables('tableNamesIsNotEmpty'), parameters('tableNames'), createArray('dummyTable'))]",
+        "tableNamesCount": "[length(parameters('tableNames'))]",
+        "tableNamesIsNotEmpty": "[greater(variables('tableNamesCount'), 0)]",
+        "virtualNetworkRulesDefaultObject": {
+            "resourceGroupName": "[resourceGroup().name]",
+            "subscriptionId": "[subscription().subscriptionId]"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').storageAccounts]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "kind": "[parameters('storageAccountKind')]",
+            "location": "[parameters('location')]",
+            "name": "[variables('storageAccountName')]",
+            "properties": "[if(parameters('isHierarchicalNamespaceEnabled'), union(variables('storageAccountProperties'), variables('hierarchicalNamespaceProperties')), variables('storageAccountProperties'))]",
+            "sku": {
+                "name": "[parameters('skuName')]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Storage/storageAccounts"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').storageAccountAdvancedThreatProtection]",
+            "dependsOn": [
+                "[variables('resourceIds').storageAccount]"
+            ],
+            "name": "[format('{0}/Microsoft.Security/current', variables('storageAccountName'))]",
+            "properties": {
+                "isEnabled": "[parameters('isAdvancedThreatProtectionEnabled')]"
+            },
+            "type": "Microsoft.Storage/storageAccounts/providers/advancedThreatProtectionSettings"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').authorizationRoleAssignments]",
+            "condition": "[variables('customerManagedEncryptionIsEnabled')]",
+            "name": "[variables('customerManagedEncryptionKeyVaultAuthorizationName')]",
+            "properties": {
+                "canDelegate": false,
+                "principalId": "[reference(variables('resourceIds').storageAccount, variables('apiVersions').storageAccounts, 'Full').identity.principalId]",
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[variables('resourceIds').keyVaultCryptoServiceEncryptionRoleDefinition]"
+            },
+            "type": "Microsoft.KeyVault/vaults/providers/roleAssignments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "condition": "[variables('customerManagedEncryptionIsEnabled')]",
+            "dependsOn": [
+                "[variables('resourceIds').storageAccount]"
+            ],
+            "name": "[variables('customerManagedEncryptionPropertiesDeploymentName')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {},
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                        {
+                            "apiVersion": "[variables('apiVersions').storageAccounts]",
+                            "kind": "[parameters('storageAccountKind')]",
+                            "location": "[parameters('location')]",
+                            "name": "[variables('storageAccountName')]",
+                            "properties": {
+                                "encryption": {
+                                    "keyvaultproperties": {
+                                        "keyname": "[parameters('customerManagedEncryptionKeyName')]",
+                                        "keyvaulturi": "[if(variables('customerManagedEncryptionIsEnabled'), take(reference(variables('resourceIds').storageAccountCustomerManagedEncryptionKeyVault, variables('apiVersions').keyVaults).vaultUri, sub(length(reference(variables('resourceIds').storageAccountCustomerManagedEncryptionKeyVault, variables('apiVersions').keyVaults).vaultUri), 1)), json('null'))]",
+                                        "keyversion": "[if(not(empty(parameters('customerManagedEncryptionKeyVersion'))), parameters('customerManagedEncryptionKeyVersion'), json('null'))]"
+                                    },
+                                    "services": {
+                                        "blob": {
+                                            "enabled": true,
+                                            "keyType": "Account"
+                                        },
+                                        "file": {
+                                            "enabled": true,
+                                            "keyType": "Account"
+                                        }
+                                    },
+                                    "keySource": "Microsoft.Keyvault"
+                                }
+                            },
+                            "sku": {
+                                "name": "[parameters('skuName')]"
+                            },
+                            "type": "Microsoft.Storage/storageAccounts"
+                        }
+                    ]
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').storageAccountEncryptionScopes]",
+            "condition": "[variables('encryptionScopesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('encryptionScopesCount')]",
+                "mode": "parallel",
+                "name": "encryptionScopesCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').storageAccount]",
+                "[variables('resourceIds').storageAccountCustomerManagedEncryptionPropertiesDeployment]"
+            ],
+            "name": "[format('{0}/{1}', variables('storageAccountName'), variables('encryptionScopes')[copyIndex()].name)]",
+            "properties": {
+                "keyVaultProperties": {
+                    "keyUri": "[if(variables('encryptionScopesIsNotEmpty'), format('{0}keys/{1}{2}', reference(resourceId(union(createObject('subscriptionId', subscription().subscriptionId), variables('encryptionScopes')[copyIndex()]).subscriptionId, union(createObject('resourceGroupName', resourceGroup().name), variables('encryptionScopes')[copyIndex()]).resourceGroupName, 'Microsoft.KeyVault/vaults', variables('encryptionScopes')[copyIndex()].keyVaultName), variables('apiVersions').keyVaults).vaultUri, variables('encryptionScopes')[copyIndex()].keyName, if(not(empty(union(createObject('keyVersion', ''), variables('encryptionScopes')[copyIndex()]).keyVersion)), format('/{0}', variables('encryptionScopes')[copyIndex()].keyVersion), '')), json('null'))]"
+                },
+                "source": "Microsoft.KeyVault",
+                "state": "Enabled"
+            },
+            "type": "Microsoft.Storage/storageAccounts/encryptionScopes"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').storageAccountBlobServices]",
+            "dependsOn": [
+                "[variables('resourceIds').storageAccount]",
+                "[variables('resourceIds').storageAccountCustomerManagedEncryptionPropertiesDeployment]"
+            ],
+            "name": "[format('{0}/default', variables('storageAccountName'))]",
+            "properties": {
+                "changeFeed": {
+                    "enabled": "[parameters('isChangeFeedEnabledForBlobs')]"
+                },
+                "cors": {
+                    "corsRules": "[parameters('blobCorsRules')]"
+                },
+                "deleteRetentionPolicy": {
+                    "days": "[parameters('blobSoftDeleteRetentionPeriodInDays')]",
+                    "enabled": "[parameters('isSoftDeleteEnabledForBlobs')]"
+                },
+                "isVersioningEnabled": "[parameters('isVersioningEnabledForBlobs')]"
+            },
+            "type": "Microsoft.Storage/storageAccounts/blobServices"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').storageAccountFileServices]",
+            "dependsOn": [
+                "[variables('resourceIds').storageAccount]",
+                "[variables('resourceIds').storageAccountCustomerManagedEncryptionPropertiesDeployment]"
+            ],
+            "name": "[format('{0}/default', variables('storageAccountName'))]",
+            "properties": {
+                "shareDeleteRetentionPolicy": {
+                    "days": "[parameters('fileShareSoftDeleteRetentionPeriodInDays')]",
+                    "enabled": "[parameters('isSoftDeleteEnabledForFileShares')]"
+                }
+            },
+            "type": "Microsoft.Storage/storageAccounts/fileServices"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').storageAccountBlobContainers]",
+            "condition": "[variables('blobContainerNamesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('blobContainerNamesCount')]",
+                "mode": "parallel",
+                "name": "blobContainersCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').storageAccount]",
+                "[variables('resourceIds').storageAccountCustomerManagedEncryptionPropertiesDeployment]"
+            ],
+            "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('blobContainerNames')[copyIndex()])]",
+            "type": "Microsoft.Storage/storageAccounts/blobServices/containers"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').storageAccountFileShares]",
+            "condition": "[variables('fileShareNamesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('fileShareNamesCount')]",
+                "mode": "parallel",
+                "name": "fileSharesCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').storageAccount]",
+                "[variables('resourceIds').storageAccountCustomerManagedEncryptionPropertiesDeployment]"
+            ],
+            "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('fileShareNames')[copyIndex()])]",
+            "type": "Microsoft.Storage/storageAccounts/fileServices/shares"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').storageAccountQueues]",
+            "condition": "[variables('queueNamesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('queueNamesCount')]",
+                "mode": "parallel",
+                "name": "queuesCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').storageAccount]",
+                "[variables('resourceIds').storageAccountCustomerManagedEncryptionPropertiesDeployment]"
+            ],
+            "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('queueNames')[copyIndex()])]",
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').storageAccountTables]",
+            "condition": "[variables('tableNamesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('tableNamesCount')]",
+                "mode": "parallel",
+                "name": "tablesCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').storageAccount]",
+                "[variables('resourceIds').storageAccountCustomerManagedEncryptionPropertiesDeployment]"
+            ],
+            "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('tableNames')[copyIndex()])]",
+            "type": "Microsoft.Storage/storageAccounts/tableServices/tables"
+        }
+    ]
+}

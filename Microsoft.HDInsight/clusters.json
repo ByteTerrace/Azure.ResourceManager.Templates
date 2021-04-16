@@ -1,0 +1,177 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "clusterAdministratorUserName": {
+            "defaultValue": "[uniqueString(parameters('name'))]",
+            "metadata": {
+                "description": "Specifies the administrator user name of the Azure HDInsight cluster."
+            },
+            "type": "securestring"
+        },
+        "clusterAdministratorUserPassword": {
+            "defaultValue": "[format('{0}{1}', uniqueString(newGuid()), toUpper(uniqueString(newGuid())))]",
+            "metadata": {
+                "description": "Specifies the administrator user password of the Azure HDInsight cluster."
+            },
+            "type": "securestring"
+        },
+        "computeProfile": {
+            "metadata": {
+                "description": "Specifies the compute profile of the Azure HDInsight cluster."
+            },
+            "type": "object"
+        },
+        "configurationProfile": {
+            "metadata": {
+                "description": "Specifies the configuration profile of the Azure HDInsight cluster."
+            },
+            "type": "object"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure HDInsight cluster resource(s) will be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 59,
+            "metadata": {
+                "description": "Specifies the name of the Azure HDInsight cluster."
+            },
+            "minLength": 3,
+            "type": "string"
+        },
+        "operatingSystem": {
+            "defaultValue": "Linux",
+            "metadata": {
+                "description": "Specifies the operating system of the Azure HDInsight cluster."
+            },
+            "type": "string"
+        },
+        "sshPublicKey": {
+            "metadata": {
+                "description": "Specifies the public SSH key that will be used to setup the administrative login of the operating systems within the Azure HDInsight cluster."
+            },
+            "type": "securestring"
+        },
+        "sshUserName": {
+            "defaultValue": "[uniqueString(parameters('name'))]",
+            "metadata": {
+                "description": "Specifies the user name that will be used to setup the administrative login of the operating systems within the Azure HDInsight cluster."
+            },
+            "type": "securestring"
+        },
+        "storageProfile": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the storage profile of the Azure HDInsight cluster."
+            },
+            "type": "object"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure HDInsight cluster."
+            },
+            "type": "object"
+        },
+        "version": {
+            "allowedValues": [
+                "3.6",
+                "4.0"
+            ],
+            "defaultValue": "4.0",
+            "metadata": {
+                "description": "Specifies the version of the Azure HDInsight cluster."
+            },
+            "type": "string"
+        }
+    },
+    "variables": {
+        "defaultResourceProperties": {
+            "clusterDefinition": {
+                "configurations": {
+                    "gateway": {
+                        "restAuthCredential.isEnabled": true,
+                        "restAuthCredential.password": "[parameters('clusterAdministratorUserPassword')]",
+                        "restAuthCredential.username": "[parameters('clusterAdministratorUserName')]"
+                    }
+                }
+            },
+            "storageAccount": {
+                "containerName": "[parameters('name')]",
+                "isDefault": false,
+                "resourceGroupName": "[resourceGroup().name]",
+                "subscriptionId": "[subscription().subscriptionId]"
+            },
+            "storageProfile": {
+                "storageAccounts": []
+            },
+            "virtualNetwork": {
+                "name": "",
+                "resourceGroupName": "[resourceGroup().name]",
+                "subscriptionId": "[subscription().subscriptionId]"
+            }
+        },
+        "storageAccountsApiVersion": "2019-06-01",
+        "storageProfileProperties": "[union(variables('defaultResourceProperties').storageProfile, parameters('storageProfile'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2018-06-01-preview",
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "clusterDefinition": "[union(variables('defaultResourceProperties').clusterDefinition, parameters('configurationProfile'))]",
+                "clusterVersion": "[parameters('version')]",
+                "computeProfile": {
+                    "copy": [
+                        {
+                            "count": "[length(parameters('computeProfile').roles)]",
+                            "input": {
+                                "hardwareProfile": {
+                                    "vmSize": "[parameters('computeProfile').roles[copyIndex('roles')].vmSize]"
+                                },
+                                "name": "[parameters('computeProfile').roles[copyIndex('roles')].name]",
+                                "osProfile": {
+                                    "linuxOperatingSystemProfile": {
+                                        "sshProfile": {
+                                            "publicKeys": [
+                                                {
+                                                    "certificateData": "[parameters('sshPublicKey')]"
+                                                }
+                                            ]
+                                        },
+                                        "username": "[parameters('sshUserName')]"
+                                    }
+                                },
+                                "targetInstanceCount": "[parameters('computeProfile').roles[copyIndex('roles')].targetInstanceCount]",
+                                "virtualNetworkProfile": "[if(not(empty(union(variables('defaultResourceProperties'), parameters('computeProfile').roles[copyIndex('roles')]).virtualNetwork.name)), createObject('id', resourceId(union(variables('defaultResourceProperties'), parameters('computeProfile').roles[copyIndex('roles')]).virtualNetwork.subscriptionId, union(variables('defaultResourceProperties'), parameters('computeProfile').roles[copyIndex('roles')]).virtualNetwork.resourceGroupName, 'Microsoft.Network/virtualNetworks', parameters('computeProfile').roles[copyIndex('roles')].virtualNetwork.name), 'subnet', resourceId(union(variables('defaultResourceProperties'), parameters('computeProfile').roles[copyIndex('roles')]).virtualNetwork.subscriptionId, union(variables('defaultResourceProperties'), parameters('computeProfile').roles[copyIndex('roles')]).virtualNetwork.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('computeProfile').roles[copyIndex('roles')].virtualNetwork.name, parameters('computeProfile').roles[copyIndex('roles')].virtualNetwork.subnetName)), json('null'))]"
+                            },
+                            "name": "roles"
+                        }
+                    ]
+                },
+                "minSupportedTlsVersion": "1.2",
+                "osType": "[parameters('operatingSystem')]",
+                "storageProfile": {
+                    "copy": [
+                        {
+                            "count": "[length(variables('storageProfileProperties').storageAccounts)]",
+                            "input": {
+                                "container": "[union(variables('defaultResourceProperties').storageAccount, variables('storageProfileProperties').storageAccounts[copyIndex('storageaccounts')]).containerName]",
+                                "isDefault": "[if(equals(length(variables('storageProfileProperties').storageAccounts), 1), json('true'), union(variables('defaultResourceProperties').storageAccount, variables('storageProfileProperties').storageAccounts[copyIndex('storageaccounts')]).isDefault)]",
+                                "key": "[listKeys(resourceId(union(variables('defaultResourceProperties').storageAccount, variables('storageProfileProperties').storageAccounts[copyIndex('storageaccounts')]).subscriptionId, union(variables('defaultResourceProperties').storageAccount, variables('storageProfileProperties').storageAccounts[copyIndex('storageaccounts')]).resourceGroupName, 'Microsoft.Storage/storageAccounts', variables('storageProfileProperties').storageAccounts[copyIndex('storageaccounts')].name), variables('storageAccountsApiVersion')).keys[1].value]",
+                                "name": "[split(substring(reference(resourceId(union(variables('defaultResourceProperties').storageAccount, variables('storageProfileProperties').storageAccounts[copyIndex('storageaccounts')]).subscriptionId, union(variables('defaultResourceProperties').storageAccount, variables('storageProfileProperties').storageAccounts[copyIndex('storageaccounts')]).resourceGroupName, 'Microsoft.Storage/storageAccounts', variables('storageProfileProperties').storageAccounts[copyIndex('storageaccounts')].name), variables('storageAccountsApiVersion')).primaryEndpoints.blob, 8), '/')[0]]"
+                            },
+                            "name": "storageaccounts"
+                        }
+                    ]
+                }
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.HDInsight/clusters"
+        }
+    ]
+}
