@@ -4,7 +4,7 @@
     "parameters": {
         "resourceDefinitions": {
             "defaultValue": {},
-            "type": "secureobject"
+            "type": "secureObject"
         },
         "tags": {
             "defaultValue": {},
@@ -31,6 +31,7 @@
                 "eventSubscriptions": [],
                 "topics": []
             },
+            "firewalls": [],
             "frontDoors": [],
             "hdInsightClusters": [],
             "keyVaults": [],
@@ -141,6 +142,17 @@
                     "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]"
                 }
             },
+            "firewalls": {
+                "availabilityZones": [
+                    "1",
+                    "2",
+                    "3"
+                ],
+                "ipConfigurations": [],
+                "managementIpConfiguration": {},
+                "skuName": "AZFW_VNet",
+                "skuTier": "Standard"
+            },
             "frontDoor": {
                 "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
                 "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
@@ -209,6 +221,8 @@
             },
             "location": "[resourceGroup().location]",
             "natGateway": {
+                "availabilityZones": [],
+                "idleTimeoutInMinutes": 4,
                 "publicIpAddresses": [],
                 "publicIpPrefixes": [],
                 "skuName": "Standard"
@@ -226,7 +240,13 @@
             },
             "publicIpAddress": {
                 "allocationMethod": "Static",
+                "availabilityZones": [
+                    "1",
+                    "2",
+                    "3"
+                ],
                 "dnsPrefix": "",
+                "idleTimeoutInMinutes": 4,
                 "ipPrefixName": "",
                 "ipPrefixResourceGroupName": "[variables('resourceGroupName')]",
                 "ipPrefixSubscriptionId": "[variables('subscriptionId')]",
@@ -323,6 +343,7 @@
             "eventGridDomain": "[format('{0}-EventGridDomain', deployment().name)]",
             "eventGridEventSubscription": "[format('{0}-EventGridEventSub', deployment().name)]",
             "eventGridTopic": "[format('{0}-EventGridTopic', deployment().name)]",
+            "firewall": "[format('{0}-Firewall', deployment().name)]",
             "frontDoor": "[format('{0}-FrontDoor', deployment().name)]",
             "hdInsightCluster": "[format('{0}-HdInsightCluster', deployment().name)]",
             "keyVault": "[format('{0}-KeyVault', deployment().name)]",
@@ -554,8 +575,14 @@
                     "allocationMethod": {
                         "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).allocationMethod]"
                     },
+                    "availabilityZones": {
+                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).availabilityZones]"
+                    },
                     "dnsPrefix": {
                         "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).dnsPrefix]"
+                    },
+                    "idleTimeoutInMinutes": {
+                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).idleTimeoutInMinutes]"
                     },
                     "ipPrefixName": {
                         "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).ipPrefixName]"
@@ -611,6 +638,12 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "availabilityZones": {
+                        "value": "[union(variables('defaultResourceProperties').natGateway, variables('resourceDefinitions').natGateways[copyIndex()]).availabilityZones]"
+                    },
+                    "idleTimeoutInMinutes": {
+                        "value": "[union(variables('defaultResourceProperties').natGateway, variables('resourceDefinitions').natGateways[copyIndex()]).idleTimeoutInMinutes]"
+                    },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').natGateways[copyIndex()]).location]"
                     },
@@ -853,6 +886,60 @@
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/bastionHosts.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').firewalls))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').firewalls)]",
+                "mode": "parallel",
+                "name": "firewallsCopy"
+            },
+            "dependsOn": [
+                "bastionHostsCopy",
+                "logAnalyticsWorkspacesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "networkSecurityGroupsCopy",
+                "publicIpAddressesCopy",
+                "publicIpPrefixesCopy",
+                "scriptsPreDeployCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').firewall, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "availabilityZones": {
+                        "value": "[union(variables('defaultResourceProperties').firewalls, variables('resourceDefinitions').firewalls[copyIndex()]).availabilityZones]"
+                    },
+                    "ipConfigurations": {
+                        "value": "[union(variables('defaultResourceProperties').firewalls, variables('resourceDefinitions').firewalls[copyIndex()]).ipConfigurations]"
+                    },
+                    "managementIpConfiguration": {
+                        "value": "[union(variables('defaultResourceProperties').firewalls, variables('resourceDefinitions').firewalls[copyIndex()]).managementIpConfiguration]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').firewalls[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').firewalls[copyIndex()].name]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').firewalls, variables('resourceDefinitions').firewalls[copyIndex()]).skuName]"
+                    },
+                    "skuTier": {
+                        "value": "[union(variables('defaultResourceProperties').firewalls, variables('resourceDefinitions').firewalls[copyIndex()]).skuTier]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Network/azureFirewalls.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -2178,6 +2265,7 @@
                 "eventGridDomainsCopy",
                 "eventGridEventSubcriptionsCopy",
                 "eventGridTopicsCopy",
+                "firewallsCopy",
                 "frontDoorsCopy",
                 "hdInsightClustersCopy",
                 "keyVaultsCopy",

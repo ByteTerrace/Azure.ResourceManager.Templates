@@ -7,50 +7,68 @@
                 "Dynamic",
                 "Static"
             ],
-            "defaultValue": "Dynamic",
+            "defaultValue": "Static",
             "metadata": {
-                "description": "Specifies the allocation method of the Azure Public IP address."
+                "description": "Specifies the allocation method of the Azure Public IP Address."
             },
             "type": "string"
+        },
+        "availabilityZones": {
+            "defaultValue": [
+                "1",
+                "2",
+                "3"
+            ],
+            "metadata": {
+                "description": "Specifies an array of availability zones that the Azure Public IP Address will be deployed within."
+            },
+            "type": "array"
         },
         "dnsPrefix": {
             "defaultValue": "",
             "metadata": {
-                "description": "Specifies the DNS prefix to that will be assigned to the Azure Public IP address."
+                "description": "Specifies the DNS prefix to that will be assigned to the Azure Public IP Address."
             },
             "type": "string"
+        },
+        "idleTimeoutInMinutes": {
+            "defaultValue": 4,
+            "metadata": {
+                "description": "Specifies the idle timout of the Azure Public IP Address (in minutes)."
+            },
+            "type": "int"
         },
         "ipPrefixName": {
             "defaultValue": "",
             "metadata": {
-                "description": "Specifies the name of the the Azure Public IP prefix that this Azure Public IP address will be derived from."
+                "description": "Specifies the name of the the Azure Public IP prefix that this Azure Public IP Address will be derived from."
             },
             "type": "string"
         },
         "ipPrefixResourceGroupName": {
             "defaultValue": "[resourceGroup().name]",
             "metadata": {
-                "description": "Specifies the resource group name of the the Azure Public IP prefix that this Azure Public IP address will be derived from."
+                "description": "Specifies the resource group name of the the Azure Public IP prefix that this Azure Public IP Address will be derived from."
             },
             "type": "string"
         },
         "ipPrefixSubscriptionId": {
             "defaultValue": "[subscription().subscriptionId]",
             "metadata": {
-                "description": "Specifies the subscription id of the the Azure Public IP prefix that this Azure Public IP address will be derived from."
+                "description": "Specifies the subscription id of the the Azure Public IP prefix that this Azure Public IP Address will be derived from."
             },
             "type": "string"
         },
         "location": {
             "metadata": {
-                "description": "Specifies the location in which the Azure Public IP address resource(s) will be deployed."
+                "description": "Specifies the location in which the Azure Public IP Address resource(s) will be deployed."
             },
             "type": "string"
         },
         "name": {
             "maxLength": 80,
             "metadata": {
-                "description": "Specifies the name of the Azure Public IP address."
+                "description": "Specifies the name of the Azure Public IP Address."
             },
             "minLength": 1,
             "type": "string"
@@ -60,9 +78,9 @@
                 "Basic",
                 "Standard"
             ],
-            "defaultValue": "Basic",
+            "defaultValue": "Standard",
             "metadata": {
-                "description": "Specifies the SKU name of the Azure Public IP address."
+                "description": "Specifies the SKU name of the Azure Public IP Address."
             },
             "type": "string"
         },
@@ -73,14 +91,14 @@
             ],
             "defaultValue": "Regional",
             "metadata": {
-                "description": "Specifies the SKU tier of the Azure Public IP address."
+                "description": "Specifies the SKU tier of the Azure Public IP Address."
             },
             "type": "string"
         },
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Public IP address."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Public IP Address."
             },
             "type": "object"
         },
@@ -91,29 +109,30 @@
             ],
             "defaultValue": "IPv4",
             "metadata": {
-                "description": "Specifies the version of the Azure Public IP address."
+                "description": "Specifies the version of the Azure Public IP Address."
             },
             "type": "string"
         }
     },
     "resources": [
         {
-            "apiVersion": "2020-07-01",
+            "apiVersion": "2020-08-01",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
-                "dnsSettings": "[if(not(empty(parameters('dnsPrefix'))), createObject('domainNameLabel', parameters('dnsPrefix')), json('null'))]",
-                "idleTimeoutInMinutes": 4,
+                "dnsSettings": "[if(empty(parameters('dnsPrefix')), json('null'), createObject('domainNameLabel', parameters('dnsPrefix')))]",
+                "idleTimeoutInMinutes": "[parameters('idleTimeoutInMinutes')]",
                 "publicIPAddressVersion": "[parameters('version')]",
                 "publicIPAllocationMethod": "[parameters('allocationMethod')]",
-                "publicIPPrefix": "[if(not(empty(parameters('ipPrefixName'))), createObject('id', resourceId(parameters('ipPrefixSubscriptionId'), parameters('ipPrefixResourceGroupName'), 'Microsoft.Network/publicIPPrefixes', parameters('ipPrefixName'))), json('null'))]"
+                "publicIPPrefix": "[if(empty(parameters('ipPrefixName')), json('null'), createObject('id', resourceId(parameters('ipPrefixSubscriptionId'), parameters('ipPrefixResourceGroupName'), 'Microsoft.Network/publicIPPrefixes', parameters('ipPrefixName'))))]"
             },
             "sku": {
                 "name": "[parameters('skuName')]",
                 "tier": "[parameters('skuTier')]"
             },
             "tags": "[parameters('tags')]",
-            "type": "Microsoft.Network/publicIPAddresses"
+            "type": "Microsoft.Network/publicIPAddresses",
+            "zones": "[if(empty(parameters('availabilityZones')), json('null'), parameters('availabilityZones'))]"
         }
     ]
 }
