@@ -476,7 +476,7 @@
                             "sites"
                         ],
                         "linkedResourcePath": "byteterrace",
-                        "linkedResourceType": "Microsoft.Web/sites",
+                        "linkedResourceProviderName": "Microsoft.Web/sites",
                         "name": "byteterrace",
                         "subnetName": "byteterrace",
                         "virtualNetworkName": "byteterrace.net"

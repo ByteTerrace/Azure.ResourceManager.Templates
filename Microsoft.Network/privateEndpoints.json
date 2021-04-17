@@ -21,16 +21,16 @@
             },
             "type": "string"
         },
+        "linkedResourceProviderName": {
+            "metadata": {
+                "description": "Specifies the provider name of resource that will be associated with the Azure Private Endpoint."
+            },
+            "type": "string"
+        },
         "linkedResourceSubscriptionId": {
             "defaultValue": "[subscription().subscriptionId]",
             "metadata": {
                 "description": "Specifies the subscription id of the resource that will be associated with the Azure Private Endpoint."
-            },
-            "type": "string"
-        },
-        "linkedResourceType": {
-            "metadata": {
-                "description": "Specifies the type of resource that will be associated with the Azure Private Endpoint."
             },
             "type": "string"
         },
@@ -94,7 +94,7 @@
                         "name": "[parameters('name')]",
                         "properties": {
                             "groupIds": "[parameters('groupIds')]",
-                            "privateLinkServiceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/{2}/{3}', parameters('linkedResourceSubscriptionId'), parameters('linkedResourceGroupName'), parameters('linkedResourceType'), parameters('linkedResourcePath'))]"
+                            "privateLinkServiceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/{2}/{3}', parameters('linkedResourceSubscriptionId'), parameters('linkedResourceGroupName'), parameters('linkedResourceProviderName'), parameters('linkedResourcePath'))]"
                         }
                     }
                 ],

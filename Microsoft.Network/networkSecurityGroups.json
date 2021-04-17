@@ -58,7 +58,6 @@
                 "sourcePortRanges": [ "*" ]
             }
         },
-        "diagnosticSettingsApiVersion": "2017-05-01-preview",
         "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
         "networkSecurityGroupResourceId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('name'))]"
     },
@@ -98,7 +97,7 @@
             "type": "Microsoft.Network/networkSecurityGroups"
         },
         {
-            "apiVersion": "[variables('diagnosticSettingsApiVersion')]",
+            "apiVersion": "2017-05-01-preview",
             "dependsOn": [
                 "[variables('networkSecurityGroupResourceId')]"
             ],

@@ -13,6 +13,26 @@
             },
             "type": "string"
         },
+        "auditLogAnalyticsWorkspaceName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Log Analytics workspace that the Azure Public IP Address audit feature will send its data to."
+            },
+            "type": "string"
+        },
+        "auditLogAnalyticsWorkspaceResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure Log Analytics workspace that the Azure Public IP Address audit feature will send its data to."
+            },
+            "type": "string"
+        },
+        "auditLogAnalyticsWorkspaceSubscriptionId": {
+            "defaultValue": "[subscription().subscriptionId]",
+            "metadata": {
+                "description": "Specifies the subscription id of the Azure Log Analytics workspace that the Azure Public IP Address audit feature will send its data to."
+            },
+            "type": "string"
+        },
         "availabilityZones": {
             "defaultValue": [
                 "1",
@@ -114,6 +134,10 @@
             "type": "string"
         }
     },
+    "variables": {
+        "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
+        "publicIpAddressResourceId": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('name'))]"
+    },
     "resources": [
         {
             "apiVersion": "2020-08-01",
@@ -133,6 +157,44 @@
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "zones": "[if(empty(parameters('availabilityZones')), json('null'), parameters('availabilityZones'))]"
+        },
+        {
+            "apiVersion": "2017-05-01-preview",
+            "dependsOn": [
+                "[variables('publicIpAddressResourceId')]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/microsoft.insights/audit', parameters('name'))]",
+            "properties": {
+                "logs": [
+                    {
+                        "category": "DDoSMitigationFlowLogs",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    },
+                    {
+                        "category": "DDoSMitigationReports",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    },
+                    {
+                        "category": "DDoSProtectionNotifications",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    }
+                ],
+                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
+            },
+            "type": "Microsoft.Network/publicIPAddresses/providers/diagnosticsettings"
         }
     ]
 }

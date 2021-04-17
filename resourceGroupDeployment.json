@@ -217,7 +217,9 @@
                     "isPublicNetworkAccessForQueryEnabled": false,
                     "skuName": "pergb2018"
                 },
-                "privateLinkScope": {}
+                "privateLinkScope": {
+                    "scopedResources": []
+                }
             },
             "location": "[resourceGroup().location]",
             "natGateway": {
@@ -240,6 +242,8 @@
             },
             "publicIpAddress": {
                 "allocationMethod": "Static",
+                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
+                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
                 "availabilityZones": [
                     "1",
                     "2",
@@ -375,7 +379,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').scripts.preDeploy))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').scripts.preDeploy)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "scriptsPreDeployCopy"
             },
             "name": "[format('{0}_{1}', variables('deploymentNames').scriptPreDeploy, copyIndex())]",
@@ -410,7 +414,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').managedIdentities))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').managedIdentities)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "managedIdentitiesCopy"
             },
             "dependsOn": [
@@ -439,43 +443,13 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').monitor.privateLinkScopes))]",
-            "copy": {
-                "count": "[length(variables('resourceDefinitions').monitor.privateLinkScopes)]",
-                "mode": "parallel",
-                "name": "monitorPrivateLinkScopesCopy"
-            },
-            "dependsOn": [
-                "scriptsPreDeployCopy"
-            ],
-            "name": "[format('{0}_{1}', variables('deploymentNames').monitorPrivateLinkScope, copyIndex())]",
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "name": {
-                        "value": "[variables('resourceDefinitions').monitor.privateLinkScopes[copyIndex()].name]"
-                    },
-                    "tags": {
-                        "value": "[parameters('tags')]"
-                    }
-                },
-                "templateLink": {
-                    "contentVersion": "[variables('contentVersion')]",
-                    "relativePath": "./Microsoft.Insights/privateLinkScopes.json"
-                }
-            },
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[not(empty(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "logAnalyticsWorkspacesCopy"
             },
             "dependsOn": [
-                "monitorPrivateLinkScopesCopy",
                 "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').logAnalyticsWorkspace, copyIndex())]",
@@ -516,12 +490,11 @@
             "condition": "[not(empty(variables('resourceDefinitions').publicIpPrefixes))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').publicIpPrefixes)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "publicIpPrefixesCopy"
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').publicIpPrefix, copyIndex())]",
@@ -559,12 +532,11 @@
             "condition": "[not(empty(variables('resourceDefinitions').publicIpAddresses))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').publicIpAddresses)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "publicIpAddressesCopy"
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "publicIpPrefixesCopy",
                 "scriptsPreDeployCopy"
             ],
@@ -574,6 +546,15 @@
                 "parameters": {
                     "allocationMethod": {
                         "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).allocationMethod]"
+                    },
+                    "auditLogAnalyticsWorkspaceName": {
+                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).auditLogAnalyticsWorkspaceName]"
+                    },
+                    "auditLogAnalyticsWorkspaceResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
+                    },
+                    "auditLogAnalyticsWorkspaceSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
                     },
                     "availabilityZones": {
                         "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).availabilityZones]"
@@ -624,12 +605,10 @@
             "condition": "[not(empty(variables('resourceDefinitions').natGateways))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').natGateways)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "natGatewaysCopy"
             },
             "dependsOn": [
-                "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
                 "scriptsPreDeployCopy"
@@ -675,12 +654,11 @@
             "condition": "[not(empty(variables('resourceDefinitions').networkSecurityGroups))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').networkSecurityGroups)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "networkSecurityGroupsCopy"
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').networkSecurityGroup, copyIndex())]",
@@ -721,12 +699,10 @@
             "condition": "[not(empty(variables('resourceDefinitions').routeTables))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').routeTables)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "routeTablesCopy"
             },
             "dependsOn": [
-                "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').routeTable, copyIndex())]",
@@ -761,12 +737,11 @@
             "condition": "[not(empty(variables('resourceDefinitions').cdnProfiles))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').cdnProfiles)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "cdnProfilesCopy"
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').cdnProfile, copyIndex())]",
@@ -804,7 +779,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').virtualNetworks))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').virtualNetworks)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "virtualNetworksCopy"
             },
             "dependsOn": [
@@ -854,12 +829,11 @@
             "condition": "[not(empty(variables('resourceDefinitions').bastionHosts))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').bastionHosts)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "bastionHostsCopy"
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "networkSecurityGroupsCopy",
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
@@ -895,13 +869,12 @@
             "condition": "[not(empty(variables('resourceDefinitions').firewalls))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').firewalls)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "firewallsCopy"
             },
             "dependsOn": [
                 "bastionHostsCopy",
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "networkSecurityGroupsCopy",
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
@@ -949,12 +922,11 @@
             "condition": "[not(empty(variables('resourceDefinitions').dnsZones.private))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').dnsZones.private)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "privateDnsZonesCopy"
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "routeTablesCopy",
@@ -996,12 +968,11 @@
             "condition": "[not(empty(variables('resourceDefinitions').dnsZones.public))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').dnsZones.public)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "publicDnsZonesCopy"
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "routeTablesCopy",
@@ -1046,12 +1017,11 @@
             "condition": "[not(empty(variables('resourceDefinitions').eventGrid.domains))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').eventGrid.domains)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "eventGridDomainsCopy"
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "publicIpAddressesCopy",
@@ -1095,13 +1065,12 @@
             "condition": "[not(empty(variables('resourceDefinitions').eventGrid.topics))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').eventGrid.topics)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "eventGridTopicsCopy"
             },
             "dependsOn": [
                 "eventGridDomainsCopy",
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "publicIpAddressesCopy",
@@ -1145,14 +1114,13 @@
             "condition": "[not(empty(variables('resourceDefinitions').eventGrid.eventSubscriptions))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').eventGrid.eventSubscriptions)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "eventGridEventSubcriptionsCopy"
             },
             "dependsOn": [
                 "eventGridDomainsCopy",
                 "eventGridTopicsCopy",
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "publicIpAddressesCopy",
@@ -1190,12 +1158,11 @@
             "condition": "[not(empty(variables('resourceDefinitions').loadBalancers))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').loadBalancers)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "loadBalancersCopy"
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "publicIpAddressesCopy",
@@ -1257,12 +1224,11 @@
             "condition": "[not(empty(variables('resourceDefinitions').monitor.applicationInsightsComponents))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').monitor.applicationInsightsComponents)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "applicationInsightsComponentsCopy"
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "routeTablesCopy",
@@ -1304,15 +1270,52 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').monitor.privateLinkScopes))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').monitor.privateLinkScopes)]",
+                "mode": "Parallel",
+                "name": "monitorPrivateLinkScopesCopy"
+            },
+            "dependsOn": [
+                "applicationInsightsComponentsCopy",
+                "logAnalyticsWorkspacesCopy",
+                "natGatewaysCopy",
+                "networkSecurityGroupsCopy",
+                "routeTablesCopy",
+                "scriptsPreDeployCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').monitorPrivateLinkScope, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "name": {
+                        "value": "[variables('resourceDefinitions').monitor.privateLinkScopes[copyIndex()].name]"
+                    },
+                    "scopedResources": {
+                        "value": "[union(variables('defaultResourceProperties').monitor.privateLinkScope, variables('resourceDefinitions').monitor.privateLinkScopes[copyIndex()]).scopedResources]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Insights/privateLinkScopes.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[not(empty(variables('resourceDefinitions').keyVaults))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').keyVaults)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "keyVaultsCopy"
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "routeTablesCopy",
@@ -1390,7 +1393,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').communicationServices))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').communicationServices)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "communicationServicesCopy"
             },
             "dependsOn": [
@@ -1436,7 +1439,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').applicationConfigurationStores))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').applicationConfigurationStores)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "applicationConfigurationStoresCopy"
             },
             "dependsOn": [
@@ -1476,7 +1479,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').containerRegistries))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').containerRegistries)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "containerRegistriesCopy"
             },
             "dependsOn": [
@@ -1530,7 +1533,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').containerInstances))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').containerInstances)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "containerInstancesCopy"
             },
             "dependsOn": [
@@ -1597,7 +1600,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').storageAccounts))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').storageAccounts)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "storageAccountsCopy"
             },
             "dependsOn": [
@@ -1714,13 +1717,12 @@
             "condition": "[not(empty(variables('resourceDefinitions').sqlServers))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').sqlServers)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "sqlServersCopy"
             },
             "dependsOn": [
                 "keyVaultsCopy",
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
@@ -1815,13 +1817,12 @@
             "condition": "[not(empty(variables('resourceDefinitions').cosmosDbAccounts))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').cosmosDbAccounts)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "cosmosDbAccountsCopy"
             },
             "dependsOn": [
                 "keyVaultsCopy",
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
@@ -1881,7 +1882,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').kubernetesServiceClusters))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').kubernetesServiceClusters)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "kubernetesServiceClustersCopy"
             },
             "dependsOn": [
@@ -1924,7 +1925,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').hdInsightClusters))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').hdInsightClusters)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "hdInsightClustersCopy"
             },
             "dependsOn": [
@@ -1989,7 +1990,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').frontDoors))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').frontDoors)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "frontDoorsCopy"
             },
             "dependsOn": [
@@ -2051,7 +2052,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').applicationServicePlans))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').applicationServicePlans)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "applicationServicePlansCopy"
             },
             "dependsOn": [
@@ -2061,7 +2062,6 @@
                 "frontDoorsCopy",
                 "keyVaultsCopy",
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
@@ -2116,7 +2116,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').logic.applications))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').logic.applications)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "logicApplicationWorkflowsCopy"
             },
             "dependsOn": [
@@ -2126,7 +2126,6 @@
                 "frontDoorsCopy",
                 "keyVaultsCopy",
                 "logAnalyticsWorkspacesCopy",
-                "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
@@ -2175,7 +2174,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').privateEndpoints))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').privateEndpoints)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "privateEndpointsCopy"
             },
             "dependsOn": [
@@ -2209,11 +2208,11 @@
                     "linkedResourcePath": {
                         "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].linkedResourcePath]"
                     },
+                    "linkedResourceProviderName": {
+                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].linkedResourceProviderName]"
+                    },
                     "linkedResourceSubscriptionId": {
                         "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).linkedResourceSubscriptionId]"
-                    },
-                    "linkedResourceType": {
-                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].linkedResourceType]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').privateEndpoints[copyIndex()]).location]"

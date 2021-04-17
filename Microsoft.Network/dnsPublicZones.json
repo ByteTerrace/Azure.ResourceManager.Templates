@@ -104,7 +104,7 @@
             "condition": "[variables('aRecordsIsNotEmpty')]",
             "copy": {
                 "count": "[variables('aRecordsCount')]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "aRecordsCopy"
             },
             "dependsOn": [
@@ -123,7 +123,7 @@
             "condition": "[variables('cnameRecordsIsNotEmpty')]",
             "copy": {
                 "count": "[variables('cnameRecordsCount')]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "cnameRecordsCopy"
             },
             "dependsOn": [
@@ -144,7 +144,7 @@
             "condition": "[variables('mxRecordsIsNotEmpty')]",
             "copy": {
                 "count": "[variables('mxRecordsCount')]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "mxRecordsCopy"
             },
             "dependsOn": [
@@ -163,7 +163,7 @@
             "condition": "[variables('nsRecordsIsNotEmpty')]",
             "copy": {
                 "count": "[variables('nsRecordsCount')]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "nsRecordsCopy"
             },
             "dependsOn": [
@@ -182,7 +182,7 @@
             "condition": "[variables('txtRecordsIsNotEmpty')]",
             "copy": {
                 "count": "[variables('txtRecordsCount')]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "txtRecordsCopy"
             },
             "dependsOn": [

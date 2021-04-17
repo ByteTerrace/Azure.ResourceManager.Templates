@@ -10,6 +10,13 @@
             "minLength": 1,
             "type": "string"
         },
+        "scopedResources": {
+            "defaultValue": [],
+            "metadata": {
+                "description": ""
+            },
+            "type": "array"
+        },
         "tags": {
             "defaultValue": {},
             "metadata": {
@@ -17,6 +24,20 @@
             },
             "type": "object"
         }
+    },
+    "variables": {
+        "defaultResourceProperties": {
+            "linkedResource": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            }
+        },
+        "privateLinkScopeResourceId": "[resourceId('Microsoft.Insights/privateLinkScopes', parameters('name'))]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "scopedResources": "[if(variables('scopedResourcesIsNotEmpty'), parameters('scopedResources'), createArray(createObject('path', 'dummyResource', 'providerName', 'dummyProvider')))]",
+        "scopedResourcesIsNotEmpty": "[greater(variables('scopedResourcesLength'), 0)]",
+        "scopedResourcesLength": "[length(parameters('scopedResources'))]",
+        "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
         {
@@ -26,6 +47,23 @@
             "properties": {},
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Insights/privateLinkScopes"
+        },
+        {
+            "apiVersion": "2019-10-17-preview",
+            "condition": "[variables('scopedResourcesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('scopedResourcesLength')]",
+                "name": "scopedResourcesCopy",
+                "mode": "Parallel"
+            },
+            "dependsOn": [
+                "[variables('privateLinkScopeResourceId')]"
+            ],
+            "name": "[format('{0}/scope-{1}', parameters('name'), guid(format('/subscriptions/{0}/resourceGroups/{1}/providers/{2}/{3}', union(variables('defaultResourceProperties').linkedResource, variables('scopedResources')[copyIndex()]).subscriptionId, union(variables('defaultResourceProperties').linkedResource, variables('scopedResources')[copyIndex()]).resourceGroupName, variables('scopedResources')[copyIndex()].providerName, variables('scopedResources')[copyIndex()].path)))]",
+            "properties": {
+                "linkedResourceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/{2}/{3}', union(variables('defaultResourceProperties').linkedResource, variables('scopedResources')[copyIndex()]).subscriptionId, union(variables('defaultResourceProperties').linkedResource, variables('scopedResources')[copyIndex()]).resourceGroupName, variables('scopedResources')[copyIndex()].providerName, variables('scopedResources')[copyIndex()].path)]"
+            },
+            "type": "Microsoft.Insights/privateLinkScopes/scopedresources"
         }
     ]
 }

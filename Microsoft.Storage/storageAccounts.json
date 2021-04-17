@@ -394,7 +394,7 @@
             "condition": "[variables('encryptionScopesIsNotEmpty')]",
             "copy": {
                 "count": "[variables('encryptionScopesCount')]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "encryptionScopesCopy"
             },
             "dependsOn": [
@@ -453,7 +453,7 @@
             "condition": "[variables('blobContainerNamesIsNotEmpty')]",
             "copy": {
                 "count": "[variables('blobContainerNamesCount')]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "blobContainersCopy"
             },
             "dependsOn": [
@@ -468,7 +468,7 @@
             "condition": "[variables('fileShareNamesIsNotEmpty')]",
             "copy": {
                 "count": "[variables('fileShareNamesCount')]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "fileSharesCopy"
             },
             "dependsOn": [
@@ -483,7 +483,7 @@
             "condition": "[variables('queueNamesIsNotEmpty')]",
             "copy": {
                 "count": "[variables('queueNamesCount')]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "queuesCopy"
             },
             "dependsOn": [
@@ -498,7 +498,7 @@
             "condition": "[variables('tableNamesIsNotEmpty')]",
             "copy": {
                 "count": "[variables('tableNamesCount')]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "tablesCopy"
             },
             "dependsOn": [

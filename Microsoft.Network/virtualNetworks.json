@@ -64,27 +64,34 @@
                 "delegations": [],
                 "isPrivateEndpointSupportEnabled": false,
                 "isPrivateLinkServiceSupportEnabled": false,
-                "natGatewayName": "",
-                "natGatewayResourceGroupName": "[resourceGroup().name]",
-                "natGatewaySubscriptionId": "[subscription().subscriptionId]",
-                "networkSecurityGroupName": "",
-                "networkSecurityGroupResourceGroupName": "[resourceGroup().name]",
-                "networkSecurityGroupSubscriptionId": "[subscription().subscriptionId]",
-                "routeTableName": "",
-                "routeTableResourceGroupName": "[resourceGroup().name]",
-                "routeTableSubscriptionId": "[subscription().subscriptionId]",
+                "natGateway": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "networkSecurityGroup": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "routeTable": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
                 "serviceEndpoints": []
             }
         },
-        "ddosProtectionPlanProperties": {
+        "ddosProtectionPlan": {
             "id": "[if(variables('isDdosProtectionEnabled'), resourceId(parameters('ddosProtectionPlanSubscriptionId'), parameters('ddosProtectionPlanResourceGroupName'), 'Microsoft.Network/ddosProtectionPlans', parameters('ddosProtectionPlanName')), json('null'))]"
         },
         "isDdosProtectionEnabled": "[not(empty(parameters('ddosProtectionPlanName')))]",
-        "virtualNetworksApiVersion": "2020-07-01"
+        "resourceGroupName": "[resourceGroup().name]",
+        "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
         {
-            "apiVersion": "[variables('virtualNetworksApiVersion')]",
+            "apiVersion": "2020-07-01",
             "name": "[parameters('name')]",
             "location": "[parameters('location')]",
             "properties": {
@@ -99,18 +106,18 @@
                             "properties": {
                                 "addressPrefix": "[parameters('subnets')[copyIndex('subnets')].addressPrefix]",
                                 "delegations": "[union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).delegations]",
-                                "natGateway": "[if(not(empty(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).natGatewayName)), createObject('id', resourceId(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).natGatewaySubscriptionId, union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).natGatewayResourceGroupName, 'Microsoft.Network/natGateways', union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).natGatewayName)), json('null'))]",
-                                "networkSecurityGroup": "[if(not(empty(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).networkSecurityGroupName)), createObject('id', resourceId(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).networkSecurityGroupSubscriptionId, union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).networkSecurityGroupResourceGroupName, 'Microsoft.Network/networkSecurityGroups', union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).networkSecurityGroupName)), json('null'))]",
+                                "natGateway": "[if(not(empty(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).natGateway.name)), createObject('id', resourceId(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).natGateway.subscriptionId, union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).natGateway.resourceGroupName, 'Microsoft.Network/natGateways', union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).natGateway.name)), json('null'))]",
+                                "networkSecurityGroup": "[if(not(empty(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).networkSecurityGroup.name)), createObject('id', resourceId(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).networkSecurityGroup.subscriptionId, union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).networkSecurityGroup.resourceGroupName, 'Microsoft.Network/networkSecurityGroups', union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).networkSecurityGroup.name)), json('null'))]",
                                 "privateEndpointNetworkPolicies": "[if(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).isPrivateEndpointSupportEnabled, 'Disabled', 'Enabled')]",
                                 "privateLinkServiceNetworkPolicies": "[if(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).isPrivateLinkServiceSupportEnabled, 'Disabled', 'Enabled')]",
-                                "routeTable": "[if(not(empty(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).routeTableName)), createObject('id', resourceId(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).routeTableSubscriptionId, union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).routeTableResourceGroupName, 'Microsoft.Network/routeTables', union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).routeTableName)), json('null'))]",
+                                "routeTable": "[if(not(empty(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).routeTable.name)), createObject('id', resourceId(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).routeTable.subscriptionId, union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).routeTable.resourceGroupName, 'Microsoft.Network/routeTables', union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).routeTable.name)), json('null'))]",
                                 "serviceEndpoints": "[union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).serviceEndpoints]"
                             }
                         },
                         "name": "subnets"
                     }
                 ],
-                "ddosProtectionPlan": "[if(variables('isDdosProtectionEnabled'), variables('ddosProtectionPlanProperties'), json('null'))]",
+                "ddosProtectionPlan": "[if(variables('isDdosProtectionEnabled'), variables('ddosProtectionPlan'), json('null'))]",
                 "enableDdosProtection": "[variables('isDdosProtectionEnabled')]",
                 "enableVmProtection": true
             },

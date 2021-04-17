@@ -284,7 +284,7 @@
             "condition": "[variables('dnsAliasesIsNotEmpty')]",
             "copy": {
                 "count": "[length(variables('dnsAliases'))]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "dnsAliasCopy"
             },
             "dependsOn": [
@@ -311,7 +311,7 @@
             "condition": "[variables('firewallRulesIsNotEmpty')]",
             "copy": {
                 "count": "[length(variables('firewallRules'))]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "firewallRulesCopy"
             },
             "dependsOn": [
@@ -329,7 +329,7 @@
             "condition": "[variables('virtualNetworkRulesIsNotEmpty')]",
             "copy": {
                 "count": "[length(variables('virtualNetworkRules'))]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "virtualNetworkRulesCopy"
             },
             "dependsOn": [
@@ -434,7 +434,7 @@
             "condition": "[variables('databasesIsNotEmpty')]",
             "copy": {
                 "count": "[length(variables('databases'))]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "databasesCopy"
             },
             "dependsOn": [
