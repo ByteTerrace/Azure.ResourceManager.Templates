@@ -90,7 +90,11 @@
                     }
                 ],
                 "restartPolicy": "Always",
-                "skuName": "Standard"
+                "skuName": "Standard",
+                "subnetName": "",
+                "virtualNetworkName": "",
+                "virtualNetworkResourceGroupName": "[variables('resourceGroupName')]",
+                "virtualNetworkSubscriptionId": "[variables('subscriptionId')]"
             },
             "containerRegistry": {
                 "firewallRules": [],
@@ -1478,8 +1482,20 @@
                     "skuName": {
                         "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).skuName]"
                     },
+                    "subnetName": {
+                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).subnetName]"
+                    },
                     "tags": {
                         "value": "[parameters('tags')]"
+                    },
+                    "virtualNetworkName": {
+                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).virtualNetworkName]"
+                    },
+                    "virtualNetworkResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).virtualNetworkResourceGroupName]"
+                    },
+                    "virtualNetworkSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).virtualNetworkSubscriptionId]"
                     }
                 },
                 "templateLink": {

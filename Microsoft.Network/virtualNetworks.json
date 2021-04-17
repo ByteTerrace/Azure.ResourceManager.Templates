@@ -61,6 +61,7 @@
     "variables": {
         "defaultResourceProperties": {
             "subnet": {
+                "delegations": [],
                 "isPrivateEndpointSupportEnabled": false,
                 "isPrivateLinkServiceSupportEnabled": false,
                 "natGatewayName": "",
@@ -97,6 +98,7 @@
                             "name": "[parameters('subnets')[copyIndex('subnets')].name]",
                             "properties": {
                                 "addressPrefix": "[parameters('subnets')[copyIndex('subnets')].addressPrefix]",
+                                "delegations": "[union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).delegations]",
                                 "natGateway": "[if(not(empty(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).natGatewayName)), createObject('id', resourceId(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).natGatewaySubscriptionId, union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).natGatewayResourceGroupName, 'Microsoft.Network/natGateways', union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).natGatewayName)), json('null'))]",
                                 "networkSecurityGroup": "[if(not(empty(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).networkSecurityGroupName)), createObject('id', resourceId(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).networkSecurityGroupSubscriptionId, union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).networkSecurityGroupResourceGroupName, 'Microsoft.Network/networkSecurityGroups', union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).networkSecurityGroupName)), json('null'))]",
                                 "privateEndpointNetworkPolicies": "[if(union(variables('defaultResourceProperties').subnet, parameters('subnets')[copyIndex('subnets')]).isPrivateEndpointSupportEnabled, 'Disabled', 'Enabled')]",
