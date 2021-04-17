@@ -686,6 +686,7 @@
                 "name": "publicIpAddressesCopy"
             },
             "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
                 "publicIpPrefixesCopy",
                 "scriptsPreDeployCopy"
             ],
@@ -2217,8 +2218,11 @@
             },
             "dependsOn": [
                 "applicationServicePlansCopy",
+                "logAnalyticsWorkspacesCopy",
                 "logicApplicationWorkflowsCopy",
                 "monitorPrivateLinkScopesCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
                 "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],

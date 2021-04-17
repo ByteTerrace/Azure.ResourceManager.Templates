@@ -126,6 +126,9 @@
         {
             "apiVersion": "2020-07-01",
             "condition": "[greater(variables('dnsZonesLength'), 0)]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', parameters('name'))]"
+            ],
             "location": "[parameters('location')]",
             "name": "[format('{0}/default', parameters('name'))]",
             "properties": {
