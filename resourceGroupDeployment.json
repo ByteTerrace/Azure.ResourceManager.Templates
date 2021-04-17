@@ -216,7 +216,6 @@
                     "isPublicNetworkAccessForIngestionEnabled": false,
                     "isPublicNetworkAccessForQueryEnabled": false,
                     "linkedStorageAccountResourceGroupName": "[variables('resourceGroupName')]",
-                    "linkedStorageAccountSubscriptionId": "[variables('subscriptionId')]",
                     "skuName": "pergb2018"
                 },
                 "privateLinkScope": {
@@ -494,13 +493,75 @@
             "copy": {
                 "count": "[length(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces)]",
                 "mode": "Parallel",
-                "name": "logAnalyticsWorkspacesLinkedStorageCopy"
+                "name": "logAnalyticsWorkspacesLinkedStorageRbacCopy"
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
                 "storageAccountsCopy"
             ],
-            "name": "[format('{0}_{1}-LinkedStorage', variables('deploymentNames').logAnalyticsWorkspace, copyIndex())]",
+            "name": "[format('{0}_{1}-LsRbac', variables('deploymentNames').logAnalyticsWorkspace, copyIndex())]",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "storageAccountName": {
+                        "value": "[variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()].linkedStorageAccountName]"
+                    },
+                    "storageAccountResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).linkedStorageAccountResourceGroupName]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "storageAccountName": {
+                            "type": "string"
+                        },
+                        "storageAccountResourceGroupName": {
+                            "type": "string"
+                        }
+                    },
+                    "variables": {
+                        "resourceIds": {
+                            "diagnosticServicesTrustedStorageAccess": "dbc2e23f-cd5b-4d87-b528-852e3ca02f5a",
+                            "storageAccountBlobContributorRole": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+                            "storageAccount": "[resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "apiVersion": "2020-04-01-preview",
+                            "name": "[guid(variables('resourceIds').diagnosticServicesTrustedStorageAccess, variables('resourceIds').storageAccountBlobContributorRole, variables('resourceIds').storageAccount)]",
+                            "properties": {
+                                "principalId": "[variables('resourceIds').diagnosticServicesTrustedStorageAccess]",
+                                "roleDefinitionId": "[variables('resourceIds').storageAccountBlobContributorRole]"
+                            },
+                            "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storageAccountName'))]",
+                            "type": "Microsoft.Authorization/roleAssignments"
+                        }
+                    ]
+                }
+            },
+            "resourceGroup": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).linkedStorageAccountResourceGroupName]",
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces)]",
+                "mode": "Parallel",
+                "name": "logAnalyticsWorkspacesLinkedStorageJoinCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "logAnalyticsWorkspacesLinkedStorageRbacCopy",
+                "storageAccountsCopy"
+            ],
+            "name": "[format('{0}_{1}-LsJoin', variables('deploymentNames').logAnalyticsWorkspace, copyIndex())]",
             "properties": {
                 "expressionEvaluationOptions": {
                     "scope": "inner"
@@ -515,9 +576,6 @@
                     },
                     "storageAccountResourceGroupName": {
                         "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).linkedStorageAccountResourceGroupName]"
-                    },
-                    "storageAccountSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).linkedStorageAccountSubscriptionId]"
                     }
                 },
                 "template": {
@@ -532,42 +590,43 @@
                         },
                         "storageAccountResourceGroupName": {
                             "type": "string"
-                        },
-                        "storageAccountSubscriptionId": {
-                            "type": "string"
                         }
                     },
                     "variables": {
-                        "linkedStorageAccountsApiVersion": "2020-08-01",
-                        "storageAccountResourceId": "[resourceId(parameters('storageAccountSubscriptionId'), parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+                        "apiVersions": {
+                            "linkedStorageAccounts": "2020-08-01"
+                        },
+                        "resourceIds": {
+                            "storageAccount": "[resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+                        }
                     },
                     "resources": [
                         {
-                            "apiVersion": "[variables('linkedStorageAccountsApiVersion')]",
+                            "apiVersion": "[variables('apiVersions').linkedStorageAccounts]",
                             "name": "[format('{0}/alerts', parameters('logAnalyticsWorkspaceName'))]",
                             "properties": {
                                 "storageAccountIds": [
-                                    "[variables('storageAccountResourceId')]"
+                                    "[variables('resourceIds').storageAccount]"
                                 ]
                             },
                             "type": "Microsoft.OperationalInsights/workspaces/linkedStorageAccounts"
                         },
                         {
-                            "apiVersion": "[variables('linkedStorageAccountsApiVersion')]",
+                            "apiVersion": "[variables('apiVersions').linkedStorageAccounts]",
                             "name": "[format('{0}/customlogs', parameters('logAnalyticsWorkspaceName'))]",
                             "properties": {
                                 "storageAccountIds": [
-                                    "[variables('storageAccountResourceId')]"
+                                    "[variables('resourceIds').storageAccount]"
                                 ]
                             },
                             "type": "Microsoft.OperationalInsights/workspaces/linkedStorageAccounts"
                         },
                         {
-                            "apiVersion": "[variables('linkedStorageAccountsApiVersion')]",
+                            "apiVersion": "[variables('apiVersions').linkedStorageAccounts]",
                             "name": "[format('{0}/query', parameters('logAnalyticsWorkspaceName'))]",
                             "properties": {
                                 "storageAccountIds": [
-                                    "[variables('storageAccountResourceId')]"
+                                    "[variables('resourceIds').storageAccount]"
                                 ]
                             },
                             "type": "Microsoft.OperationalInsights/workspaces/linkedStorageAccounts"
@@ -2210,6 +2269,79 @@
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/privateEndpoints.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').scripts.postDeploy))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').scripts.postDeploy)]",
+                "mode": "parallel",
+                "name": "scriptsPostDeployCopy"
+            },
+            "dependsOn": [
+                "applicationConfigurationStoresCopy",
+                "applicationInsightsComponentsCopy",
+                "applicationServicePlansCopy",
+                "bastionHostsCopy",
+                "cdnProfilesCopy",
+                "communicationServicesCopy",
+                "containerInstancesCopy",
+                "containerRegistriesCopy",
+                "cosmosDbAccountsCopy",
+                "eventGridDomainsCopy",
+                "eventGridEventSubcriptionsCopy",
+                "eventGridTopicsCopy",
+                "firewallsCopy",
+                "frontDoorsCopy",
+                "hdInsightClustersCopy",
+                "keyVaultsCopy",
+                "kubernetesServiceClustersCopy",
+                "loadBalancersCopy",
+                "logAnalyticsWorkspacesCopy",
+                "logAnalyticsWorkspacesLinkedStorageJoinCopy",
+                "logAnalyticsWorkspacesLinkedStorageRbacCopy",
+                "logicApplicationWorkflowsCopy",
+                "managedIdentitiesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
+                "networkSecurityGroupsCopy",
+                "privateDnsZonesCopy",
+                "privateEndpointsCopy",
+                "publicDnsZonesCopy",
+                "publicIpAddressesCopy",
+                "publicIpPrefixesCopy",
+                "routeTablesCopy",
+                "scriptsPreDeployCopy",
+                "sqlServersCopy",
+                "storageAccountsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').scriptPostDeploy, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "kind": {
+                        "value": "[union(variables('defaultResourceProperties').script, variables('resourceDefinitions').scripts.postDeploy[copyIndex()]).kind]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').scripts.postDeploy[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').scripts.postDeploy[copyIndex()].name]"
+                    },
+                    "scriptContent": {
+                        "value": "[variables('resourceDefinitions').scripts.postDeploy[copyIndex()].scriptContent]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "relativePath": "./Microsoft.Resources/deploymentScripts.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
