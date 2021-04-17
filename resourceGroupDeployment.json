@@ -215,6 +215,8 @@
                     "dataRetentionInDays": 30,
                     "isPublicNetworkAccessForIngestionEnabled": false,
                     "isPublicNetworkAccessForQueryEnabled": false,
+                    "linkedStorageAccountResourceGroupName": "[variables('resourceGroupName')]",
+                    "linkedStorageAccountSubscriptionId": "[variables('subscriptionId')]",
                     "skuName": "pergb2018"
                 },
                 "privateLinkScope": {
@@ -488,6 +490,95 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces)]",
+                "mode": "Parallel",
+                "name": "logAnalyticsWorkspacesLinkedStorageCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "storageAccountsCopy"
+            ],
+            "name": "[format('{0}_{1}-LinkedStorage', variables('deploymentNames').logAnalyticsWorkspace, copyIndex())]",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "logAnalyticsWorkspaceName": {
+                        "value": "[variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()].name]"
+                    },
+                    "storageAccountName": {
+                        "value": "[variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()].linkedStorageAccountName]"
+                    },
+                    "storageAccountResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).linkedStorageAccountResourceGroupName]"
+                    },
+                    "storageAccountSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).linkedStorageAccountSubscriptionId]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "logAnalyticsWorkspaceName": {
+                            "type": "string"
+                        },
+                        "storageAccountName": {
+                            "type": "string"
+                        },
+                        "storageAccountResourceGroupName": {
+                            "type": "string"
+                        },
+                        "storageAccountSubscriptionId": {
+                            "type": "string"
+                        }
+                    },
+                    "variables": {
+                        "linkedStorageAccountsApiVersion": "2020-08-01",
+                        "storageAccountResourceId": "[resourceId(parameters('storageAccountSubscriptionId'), parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+                    },
+                    "resources": [
+                        {
+                            "apiVersion": "[variables('linkedStorageAccountsApiVersion')]",
+                            "name": "[format('{0}/alerts', parameters('logAnalyticsWorkspaceName'))]",
+                            "properties": {
+                                "storageAccountIds": [
+                                    "[variables('storageAccountResourceId')]"
+                                ]
+                            },
+                            "type": "Microsoft.OperationalInsights/workspaces/linkedStorageAccounts"
+                        },
+                        {
+                            "apiVersion": "[variables('linkedStorageAccountsApiVersion')]",
+                            "name": "[format('{0}/customlogs', parameters('logAnalyticsWorkspaceName'))]",
+                            "properties": {
+                                "storageAccountIds": [
+                                    "[variables('storageAccountResourceId')]"
+                                ]
+                            },
+                            "type": "Microsoft.OperationalInsights/workspaces/linkedStorageAccounts"
+                        },
+                        {
+                            "apiVersion": "[variables('linkedStorageAccountsApiVersion')]",
+                            "name": "[format('{0}/query', parameters('logAnalyticsWorkspaceName'))]",
+                            "properties": {
+                                "storageAccountIds": [
+                                    "[variables('storageAccountResourceId')]"
+                                ]
+                            },
+                            "type": "Microsoft.OperationalInsights/workspaces/linkedStorageAccounts"
+                        }
+                    ]
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[not(empty(variables('resourceDefinitions').publicIpPrefixes))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').publicIpPrefixes)]",
@@ -495,7 +586,6 @@
                 "name": "publicIpPrefixesCopy"
             },
             "dependsOn": [
-                "logAnalyticsWorkspacesCopy",
                 "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').publicIpPrefix, copyIndex())]",
@@ -537,7 +627,6 @@
                 "name": "publicIpAddressesCopy"
             },
             "dependsOn": [
-                "logAnalyticsWorkspacesCopy",
                 "publicIpPrefixesCopy",
                 "scriptsPreDeployCopy"
             ],
@@ -834,8 +923,6 @@
                 "name": "bastionHostsCopy"
             },
             "dependsOn": [
-                "logAnalyticsWorkspacesCopy",
-                "networkSecurityGroupsCopy",
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
                 "scriptsPreDeployCopy",
@@ -874,9 +961,6 @@
                 "name": "firewallsCopy"
             },
             "dependsOn": [
-                "bastionHostsCopy",
-                "logAnalyticsWorkspacesCopy",
-                "networkSecurityGroupsCopy",
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
                 "scriptsPreDeployCopy",
@@ -927,10 +1011,6 @@
                 "name": "privateDnsZonesCopy"
             },
             "dependsOn": [
-                "logAnalyticsWorkspacesCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
@@ -973,10 +1053,6 @@
                 "name": "publicDnsZonesCopy"
             },
             "dependsOn": [
-                "logAnalyticsWorkspacesCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
@@ -1023,13 +1099,7 @@
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "publicIpAddressesCopy",
-                "publicIpPrefixesCopy",
-                "routeTablesCopy",
-                "scriptsPreDeployCopy",
-                "virtualNetworksCopy"
+                "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').eventGridDomain, copyIndex())]",
             "properties": {
@@ -1072,13 +1142,7 @@
             "dependsOn": [
                 "eventGridDomainsCopy",
                 "logAnalyticsWorkspacesCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "publicIpAddressesCopy",
-                "publicIpPrefixesCopy",
-                "routeTablesCopy",
-                "scriptsPreDeployCopy",
-                "virtualNetworksCopy"
+                "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').eventGridTopic, copyIndex())]",
             "properties": {
@@ -1121,14 +1185,7 @@
             "dependsOn": [
                 "eventGridDomainsCopy",
                 "eventGridTopicsCopy",
-                "logAnalyticsWorkspacesCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "publicIpAddressesCopy",
-                "publicIpPrefixesCopy",
-                "routeTablesCopy",
-                "scriptsPreDeployCopy",
-                "virtualNetworksCopy"
+                "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').eventGridEventSubscription, copyIndex())]",
             "properties": {
@@ -1163,12 +1220,8 @@
                 "name": "loadBalancersCopy"
             },
             "dependsOn": [
-                "logAnalyticsWorkspacesCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
-                "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
@@ -1230,11 +1283,7 @@
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "routeTablesCopy",
-                "scriptsPreDeployCopy",
-                "virtualNetworksCopy"
+                "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').applicationInsightsComponent, copyIndex())]",
             "properties": {
@@ -1280,11 +1329,7 @@
             "dependsOn": [
                 "applicationInsightsComponentsCopy",
                 "logAnalyticsWorkspacesCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "routeTablesCopy",
-                "scriptsPreDeployCopy",
-                "virtualNetworksCopy"
+                "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').monitorPrivateLinkScope, copyIndex())]",
             "properties": {
@@ -1317,9 +1362,6 @@
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
@@ -1398,12 +1440,8 @@
                 "name": "communicationServicesCopy"
             },
             "dependsOn": [
-                "keyVaultsCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "routeTablesCopy",
-                "scriptsPreDeployCopy",
-                "virtualNetworksCopy"
+                "logAnalyticsWorkspacesCopy",
+                "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').communicationService, copyIndex())]",
             "properties": {
@@ -1445,11 +1483,7 @@
             },
             "dependsOn": [
                 "keyVaultsCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "routeTablesCopy",
-                "scriptsPreDeployCopy",
-                "virtualNetworksCopy"
+                "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').applicationConfigurationStore, copyIndex())]",
             "properties": {
@@ -1484,12 +1518,6 @@
                 "name": "containerRegistriesCopy"
             },
             "dependsOn": [
-                "keyVaultsCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "privateDnsZonesCopy",
-                "publicDnsZonesCopy",
-                "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
@@ -1539,12 +1567,6 @@
             },
             "dependsOn": [
                 "containerRegistriesCopy",
-                "keyVaultsCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "privateDnsZonesCopy",
-                "publicDnsZonesCopy",
-                "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
@@ -1605,12 +1627,6 @@
                 "name": "storageAccountsCopy"
             },
             "dependsOn": [
-                "keyVaultsCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "privateDnsZonesCopy",
-                "publicDnsZonesCopy",
-                "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
@@ -1724,11 +1740,8 @@
             "dependsOn": [
                 "keyVaultsCopy",
                 "logAnalyticsWorkspacesCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
-                "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
@@ -1823,14 +1836,7 @@
             },
             "dependsOn": [
                 "keyVaultsCopy",
-                "logAnalyticsWorkspacesCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "privateDnsZonesCopy",
-                "publicDnsZonesCopy",
-                "routeTablesCopy",
                 "scriptsPreDeployCopy",
-                "sqlServersCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').cosmosDbAccount, copyIndex())]",
@@ -1887,14 +1893,9 @@
                 "name": "kubernetesServiceClustersCopy"
             },
             "dependsOn": [
-                "keyVaultsCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
-                "routeTablesCopy",
                 "scriptsPreDeployCopy",
-                "storageAccountsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').kubernetesServiceCluster, copyIndex())]",
@@ -1930,12 +1931,6 @@
                 "name": "hdInsightClustersCopy"
             },
             "dependsOn": [
-                "keyVaultsCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "privateDnsZonesCopy",
-                "publicDnsZonesCopy",
-                "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "sqlServersCopy",
                 "storageAccountsCopy",
@@ -2062,12 +2057,8 @@
                 "containerRegistriesCopy",
                 "frontDoorsCopy",
                 "keyVaultsCopy",
-                "logAnalyticsWorkspacesCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
-                "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "sqlServersCopy",
                 "storageAccountsCopy",
@@ -2121,21 +2112,8 @@
                 "name": "logicApplicationWorkflowsCopy"
             },
             "dependsOn": [
-                "applicationInsightsComponentsCopy",
-                "cdnProfilesCopy",
-                "containerRegistriesCopy",
-                "frontDoorsCopy",
-                "keyVaultsCopy",
                 "logAnalyticsWorkspacesCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "privateDnsZonesCopy",
-                "publicDnsZonesCopy",
-                "routeTablesCopy",
-                "scriptsPreDeployCopy",
-                "sqlServersCopy",
-                "storageAccountsCopy",
-                "virtualNetworksCopy"
+                "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').logicApplicationWorkflow, copyIndex())]",
             "properties": {
@@ -2179,21 +2157,10 @@
                 "name": "privateEndpointsCopy"
             },
             "dependsOn": [
-                "applicationInsightsComponentsCopy",
                 "applicationServicePlansCopy",
-                "containerRegistriesCopy",
-                "keyVaultsCopy",
-                "logAnalyticsWorkspacesCopy",
                 "logicApplicationWorkflowsCopy",
                 "monitorPrivateLinkScopesCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "privateDnsZonesCopy",
-                "publicDnsZonesCopy",
-                "routeTablesCopy",
                 "scriptsPreDeployCopy",
-                "sqlServersCopy",
-                "storageAccountsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').privateEndpoint, copyIndex())]",
@@ -2243,77 +2210,6 @@
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/privateEndpoints.json"
-                }
-            },
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').scripts.postDeploy))]",
-            "copy": {
-                "count": "[length(variables('resourceDefinitions').scripts.postDeploy)]",
-                "mode": "parallel",
-                "name": "scriptsPostDeployCopy"
-            },
-            "dependsOn": [
-                "applicationConfigurationStoresCopy",
-                "applicationInsightsComponentsCopy",
-                "applicationServicePlansCopy",
-                "bastionHostsCopy",
-                "cdnProfilesCopy",
-                "communicationServicesCopy",
-                "containerInstancesCopy",
-                "containerRegistriesCopy",
-                "cosmosDbAccountsCopy",
-                "eventGridDomainsCopy",
-                "eventGridEventSubcriptionsCopy",
-                "eventGridTopicsCopy",
-                "firewallsCopy",
-                "frontDoorsCopy",
-                "hdInsightClustersCopy",
-                "keyVaultsCopy",
-                "kubernetesServiceClustersCopy",
-                "loadBalancersCopy",
-                "logAnalyticsWorkspacesCopy",
-                "logicApplicationWorkflowsCopy",
-                "managedIdentitiesCopy",
-                "monitorPrivateLinkScopesCopy",
-                "natGatewaysCopy",
-                "networkSecurityGroupsCopy",
-                "privateDnsZonesCopy",
-                "privateEndpointsCopy",
-                "publicDnsZonesCopy",
-                "publicIpAddressesCopy",
-                "publicIpPrefixesCopy",
-                "routeTablesCopy",
-                "scriptsPreDeployCopy",
-                "sqlServersCopy",
-                "storageAccountsCopy",
-                "virtualNetworksCopy"
-            ],
-            "name": "[format('{0}_{1}', variables('deploymentNames').scriptPostDeploy, copyIndex())]",
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "kind": {
-                        "value": "[union(variables('defaultResourceProperties').script, variables('resourceDefinitions').scripts.postDeploy[copyIndex()]).kind]"
-                    },
-                    "location": {
-                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').scripts.postDeploy[copyIndex()]).location]"
-                    },
-                    "name": {
-                        "value": "[variables('resourceDefinitions').scripts.postDeploy[copyIndex()].name]"
-                    },
-                    "scriptContent": {
-                        "value": "[variables('resourceDefinitions').scripts.postDeploy[copyIndex()].scriptContent]"
-                    },
-                    "tags": {
-                        "value": "[parameters('tags')]"
-                    }
-                },
-                "templateLink": {
-                    "contentVersion": "1.0.0.0",
-                    "relativePath": "./Microsoft.Resources/deploymentScripts.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
