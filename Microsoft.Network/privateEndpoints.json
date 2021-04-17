@@ -2,6 +2,13 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "dnsZones": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of DNS zones that will be associated with the Azure Private Endpoint."
+            },
+            "type": "array"
+        },
         "groupIds": {
             "metadata": {
                 "description": "An array of group ids that the the Azure Private Endpoint should connect to."
@@ -82,6 +89,17 @@
             "type": "string"
         }
     },
+    "variables": {
+        "defaultResourceProperties": {
+            "dnsZone": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            }
+        },
+        "dnsZonesLength": "[length(parameters('dnsZones'))]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "subscriptionId": "[subscription().subscriptionId]"
+    },
     "resources": [
         {
             "apiVersion": "2020-07-01",
@@ -104,6 +122,27 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Network/privateEndpoints"
+        },
+        {
+            "apiVersion": "2020-07-01",
+            "condition": "[greater(variables('dnsZonesLength'), 0)]",
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/default', parameters('name'))]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[variables('dnsZonesLength')]",
+                        "input": {
+                            "name": "[replace(parameters('dnsZones')[copyIndex('privateDnsZoneConfigs')].name, '.', '-')]",
+                            "properties": {
+                                "privateDnsZoneId": "[resourceId(union(variables('defaultResourceProperties').dnsZone, parameters('dnsZones')[copyIndex('privateDnsZoneConfigs')]).subscriptionId, union(variables('defaultResourceProperties').dnsZone, parameters('dnsZones')[copyIndex('privateDnsZoneConfigs')]).resourceGroupName, 'Microsoft.Network/privateDnsZones', parameters('dnsZones')[copyIndex('privateDnsZoneConfigs')].name)]"
+                            }
+                        },
+                        "name": "privateDnsZoneConfigs"
+                    }
+                ]
+            },
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups"
         }
     ]
 }

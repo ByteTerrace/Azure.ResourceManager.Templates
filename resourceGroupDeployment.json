@@ -235,6 +235,7 @@
                 "securityRules": []
             },
             "privateEndpoint": {
+                "dnsZones": [],
                 "linkedResourceGroupName": "[variables('resourceGroupName')]",
                 "linkedResourceSubscriptionId": "[variables('subscriptionId')]",
                 "virtualNetworkResourceGroupName": "[variables('resourceGroupName')]",
@@ -2199,6 +2200,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "dnsZones": {
+                        "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).dnsZones]"
+                    },
                     "groupIds": {
                         "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].groupIds]"
                     },
