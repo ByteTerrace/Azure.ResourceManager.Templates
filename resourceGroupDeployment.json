@@ -119,7 +119,8 @@
                     "aRecords": [],
                     "cnameRecords": [],
                     "mxRecords": [],
-                    "txtRecords": []
+                    "txtRecords": [],
+                    "virtualNetworkLinks": []
                 },
                 "public": {
                     "aRecords": [],
@@ -1071,8 +1072,7 @@
                 "name": "privateDnsZonesCopy"
             },
             "dependsOn": [
-                "scriptsPreDeployCopy",
-                "virtualNetworksCopy"
+                "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').dnsPrivateZone, copyIndex())]",
             "properties": {
@@ -1095,6 +1095,9 @@
                     },
                     "txtRecords": {
                         "value": "[union(variables('defaultResourceProperties').dnsZone.private, variables('resourceDefinitions').dnsZones.private[copyIndex()]).txtRecords]"
+                    },
+                    "virtualNetworkLinks": {
+                        "value": "[union(variables('defaultResourceProperties').dnsZone.private, variables('resourceDefinitions').dnsZones.private[copyIndex()]).virtualNetworkLinks]"
                     }
                 },
                 "templateLink": {
@@ -1113,8 +1116,7 @@
                 "name": "publicDnsZonesCopy"
             },
             "dependsOn": [
-                "scriptsPreDeployCopy",
-                "virtualNetworksCopy"
+                "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').dnsPublicZone, copyIndex())]",
             "properties": {
