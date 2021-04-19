@@ -2500,6 +2500,7 @@
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "scriptsPreDeployCopy",
+                "sqlServersCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').privateEndpoint, copyIndex())]",

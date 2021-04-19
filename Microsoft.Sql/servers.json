@@ -191,27 +191,19 @@
     },
     "variables": {
         "apiVersions": {
-            "databases": "2019-06-01-preview",
-            "deployments": "2020-10-01",
             "diagnosticSettings": "2017-05-01-preview",
             "keyVaults": "2019-09-01",
-            "sqlAdministrators": "2019-06-01-preview",
-            "sqlAuditingSettings": "2017-03-01-preview",
+            "sqlAdministrators": "2020-11-01-preview",
+            "sqlAuditingSettings": "2020-11-01-preview",
+            "sqlAzureAdOnlyAuthentications": "2020-11-01-preview",
             "sqlConnectionPolicies": "2014-04-01",
-            "sqlDnsAliases": "2017-03-01-preview",
-            "sqlEncryptionProtectors": "2015-05-01-preview",
-            "sqlFirewallRules": "2015-05-01-preview",
-            "sqlKeys": "2015-05-01-preview",
-            "sqlServers": "2019-06-01-preview",
-            "sqlVirtualNetworkRules": "2015-05-01-preview"
-        },
-        "auditingSettingsProperties": {
-            "auditActionsAndGroups": "[parameters('auditActionsAndGroups')]",
-            "isAzureMonitorTargetEnabled": "[variables('isAuditingEnabled')]",
-            "isDevopsAuditEnabled": "[variables('isAuditingEnabled')]",
-            "retentionDays": 0,
-            "state": "[if(variables('isAuditingEnabled'), 'Enabled', 'Disabled')]",
-            "storageAccountSubscriptionId": "00000000-0000-0000-0000-000000000000"
+            "sqlDatabases": "2020-11-01-preview",
+            "sqlDnsAliases": "2020-11-01-preview",
+            "sqlEncryptionProtectors": "2020-11-01-preview",
+            "sqlFirewallRules": "2020-11-01-preview",
+            "sqlKeys": "2020-11-01-preview",
+            "sqlServers": "2020-11-01-preview",
+            "sqlVirtualNetworkRules": "2020-11-01-preview"
         },
         "customerManagedEncryptionProperties": {
             "isEnabled": "[and(not(empty(parameters('customerManagedEncryptionKeyVaultName'))), not(empty(parameters('customerManagedEncryptionKeyName'))), not(empty(parameters('customerManagedEncryptionKeyVersion'))))]",
@@ -220,13 +212,22 @@
             "subscriptionId": "[if(not(empty(parameters('customerManagedEncryptionKeyVaultSubscriptionId'))), parameters('customerManagedEncryptionKeyVaultSubscriptionId'), subscription().subscriptionId)]"
         },
         "databases": "[if(variables('databasesIsNotEmpty'), parameters('databases'), createArray(createObject('name', 'dummyDatabase')))]",
-        "databasesDefaultProperties": {
-            "catalogCollation": "DATABASE_DEFAULT",
-            "defaultCollation": "SQL_Latin1_General_CP1_CI_AS",
-            "isAzureHybridBenefitEnabled": false,
-            "skuName": "Basic"
-        },
         "databasesIsNotEmpty": "[greater(length(parameters('databases')), 0)]",
+        "defaultResourceProperties": {
+            "databases": {
+                "catalogCollation": "DATABASE_DEFAULT",
+                "defaultCollation": "SQL_Latin1_General_CP1_CI_AS",
+                "isAzureHybridBenefitEnabled": false,
+                "skuName": "Basic"
+            },
+            "virtualNetworkRules": {
+                "ignoreMissingVnetServiceEndpoint": true,
+                "subnet": {
+                    "resourceGroupName": "[resourceGroup().name]",
+                    "subscriptionId": "[subscription().subscriptionId]"
+                }
+            }
+        },
         "dnsAliases": "[if(variables('dnsAliasesIsNotEmpty'), parameters('dnsAliases'), createArray('dummyDnsAlias'))]",
         "dnsAliasesIsNotEmpty": "[greater(length(parameters('dnsAliases')), 0)]",
         "firewallRules": "[if(variables('firewallRulesIsNotEmpty'), parameters('firewallRules'), createArray(createObject('endIpAddress', '0.0.0.0', 'name', 'dummyRule', 'startIpAddress', '0.0.0.0')))]",
@@ -241,19 +242,7 @@
             "sqlServer": "[resourceId('Microsoft.Sql/servers', variables('serverName'))]"
         },
         "serverName": "[toLower(parameters('name'))]",
-        "serverProperties": {
-            "administratorLogin": "[parameters('sqlAdministratorUserName')]",
-            "administratorLoginPassword": "[parameters('sqlAdministratorUserPassword')]",
-            "minimalTlsVersion": "1.2",
-            "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]",
-            "version": "[parameters('serverVersion')]"
-        },
         "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), parameters('virtualNetworkRules'), createArray(createObject('name', 'dummyRule')))]",
-        "virtualNetworkRulesDefaultProperties": {
-            "ignoreMissingVnetServiceEndpoint": false,
-            "resourceGroupName": "[resourceGroup().name]",
-            "subscriptionId": "[subscription().subscriptionId]"
-        },
         "virtualNetworkRulesIsNotEmpty": "[greater(length(parameters('virtualNetworkRules')), 0)]"
     },
     "resources": [
@@ -264,7 +253,13 @@
             },
             "location": "[parameters('location')]",
             "name": "[variables('serverName')]",
-            "properties": "[variables('serverProperties')]",
+            "properties": {
+                "administratorLogin": "[parameters('sqlAdministratorUserName')]",
+                "administratorLoginPassword": "[parameters('sqlAdministratorUserPassword')]",
+                "minimalTlsVersion": "1.2",
+                "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]",
+                "version": "[parameters('serverVersion')]"
+            },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Sql/servers"
         },
@@ -295,7 +290,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').sqlFirewallRules]",
-            "condition": "[parameters('isTrustedMicrosoftResourceAccessEnabled')]",
+            "condition": "[and(parameters('isPublicNetworkAccessEnabled'), parameters('isTrustedMicrosoftResourceAccessEnabled'))]",
             "dependsOn": [
                 "[variables('resourceIds').sqlServer]"
             ],
@@ -308,7 +303,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').sqlFirewallRules]",
-            "condition": "[variables('firewallRulesIsNotEmpty')]",
+            "condition": "[and(parameters('isPublicNetworkAccessEnabled'), variables('firewallRulesIsNotEmpty'))]",
             "copy": {
                 "count": "[length(variables('firewallRules'))]",
                 "mode": "Parallel",
@@ -326,19 +321,20 @@
         },
         {
             "apiVersion": "[variables('apiVersions').sqlVirtualNetworkRules]",
-            "condition": "[variables('virtualNetworkRulesIsNotEmpty')]",
+            "condition": "[and(parameters('isPublicNetworkAccessEnabled'), variables('virtualNetworkRulesIsNotEmpty'))]",
             "copy": {
                 "count": "[length(variables('virtualNetworkRules'))]",
                 "mode": "Parallel",
                 "name": "virtualNetworkRulesCopy"
             },
             "dependsOn": [
+                "firewallRulesCopy",
                 "[variables('resourceIds').sqlServer]"
             ],
             "name": "[format('{0}/{1}', variables('serverName'), variables('virtualNetworkRules')[copyIndex()].name)]",
             "properties": {
-                "ignoreMissingVnetServiceEndpoint": "[union(variables('virtualNetworkRulesDefaultProperties'), variables('virtualNetworkRules')[copyIndex()]).ignoreMissingVnetServiceEndpoint]",
-                "virtualNetworkSubnetId": "[resourceId(union(variables('virtualNetworkRulesDefaultProperties'), variables('virtualNetworkRules')[copyIndex()]).subscriptionId, union(variables('virtualNetworkRulesDefaultProperties'), variables('virtualNetworkRules')[copyIndex()]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkRules')[copyIndex()].virtualNetworkName, variables('virtualNetworkRules')[copyIndex()].subnetName)]"
+                "ignoreMissingVnetServiceEndpoint": "[union(variables('defaultResourceProperties').virtualNetworkRules, variables('virtualNetworkRules')[copyIndex()]).ignoreMissingVnetServiceEndpoint]",
+                "virtualNetworkSubnetId": "[resourceId(union(variables('defaultResourceProperties').virtualNetworkRules, variables('virtualNetworkRules')[copyIndex()]).subnet.subscriptionId, union(variables('defaultResourceProperties').virtualNetworkRules, variables('virtualNetworkRules')[copyIndex()]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkRules')[copyIndex()].subnet.virtualNetworkName, variables('virtualNetworkRules')[copyIndex()].subnet.name)]"
             },
             "type": "Microsoft.Sql/servers/virtualNetworkRules"
         },
@@ -353,9 +349,22 @@
                 "administratorType": "ActiveDirectory",
                 "login": "[parameters('activeDirectoryAdministratorUserName')]",
                 "sid": "[parameters('activeDirectoryAdministratorObjectId')]",
-                "tenantId": "[if(not(empty(parameters('activeDirectoryAdministratorTenantId'))), parameters('activeDirectoryAdministratorTenantId'), subscription().tenantId)]"
+                "tenantId": "[if(empty(parameters('activeDirectoryAdministratorTenantId')), subscription().tenantId, parameters('activeDirectoryAdministratorTenantId'))]"
             },
             "type": "Microsoft.Sql/servers/administrators"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').sqlAzureAdOnlyAuthentications]",
+            "condition": "[variables('isActiveDirectoryAdministratorEnabled')]",
+            "dependsOn": [
+                "[variables('resourceIds').sqlAdministrator]",
+                "[variables('resourceIds').sqlServer]"
+            ],
+            "name": "[format('{0}/default', variables('serverName'))]",
+            "properties": {
+                "azureADOnlyAuthentication": true
+            },
+            "type": "Microsoft.Sql/servers/azureADOnlyAuthentications"
         },
         {
             "apiVersion": "[variables('apiVersions').sqlKeys]",
@@ -383,6 +392,7 @@
             "kind": "AzureKeyVault",
             "name": "[format('{0}/current', variables('serverName'))]",
             "properties": {
+                "autoRotationEnabled": true,
                 "serverKeyName": "[variables('customerManagedEncryptionProperties').keyName]",
                 "serverKeyType": "AzureKeyVault"
             },
@@ -395,7 +405,14 @@
                 "[variables('resourceIds').sqlServer]"
             ],
             "name": "[format('{0}/default', variables('serverName'))]",
-            "properties": "[variables('auditingSettingsProperties')]",
+            "properties": {
+                "auditActionsAndGroups": "[parameters('auditActionsAndGroups')]",
+                "isAzureMonitorTargetEnabled": "[variables('isAuditingEnabled')]",
+                "isDevopsAuditEnabled": "[variables('isAuditingEnabled')]",
+                "retentionDays": 0,
+                "state": "[if(variables('isAuditingEnabled'), 'Enabled', 'Disabled')]",
+                "storageAccountSubscriptionId": "00000000-0000-0000-0000-000000000000"
+            },
             "type": "Microsoft.Sql/servers/auditingSettings"
         },
         {
@@ -425,12 +442,12 @@
                         }
                     }
                 ],
-                "workspaceId": "[if(variables('auditingSettingsProperties').isAzureMonitorTargetEnabled, resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
+                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
             },
             "type": "Microsoft.Sql/servers/databases/providers/diagnosticSettings"
         },
         {
-            "apiVersion": "[variables('apiVersions').databases]",
+            "apiVersion": "[variables('apiVersions').sqlDatabases]",
             "condition": "[variables('databasesIsNotEmpty')]",
             "copy": {
                 "count": "[length(variables('databases'))]",
@@ -438,19 +455,21 @@
                 "name": "databasesCopy"
             },
             "dependsOn": [
+                "firewallRulesCopy",
+                "virtualNetworkRulesCopy",
                 "[variables('resourceIds').sqlAdministrator]",
                 "[variables('resourceIds').sqlServer]"
             ],
             "location": "[parameters('location')]",
             "name": "[format('{0}/{1}', variables('serverName'), variables('databases')[copyIndex()].name)]",
             "properties": {
-                "catalogCollation": "[union(variables('databasesDefaultProperties'), variables('databases')[copyIndex()]).catalogCollation]",
-                "collation": "[union(variables('databasesDefaultProperties'), variables('databases')[copyIndex()]).defaultCollation]",
+                "catalogCollation": "[union(variables('defaultResourceProperties').databases, variables('databases')[copyIndex()]).catalogCollation]",
+                "collation": "[union(variables('defaultResourceProperties').databases, variables('databases')[copyIndex()]).defaultCollation]",
                 "createMode": "Default",
-                "licenseType": "[if(union(variables('databasesDefaultProperties'), variables('databases')[copyIndex()]).isAzureHybridBenefitEnabled, 'BasePrice', 'LicenseIncluded')]"
+                "licenseType": "[if(union(variables('defaultResourceProperties').databases, variables('databases')[copyIndex()]).isAzureHybridBenefitEnabled, 'BasePrice', 'LicenseIncluded')]"
             },
             "sku": {
-                "name": "[union(variables('databasesDefaultProperties'), variables('databases')[copyIndex()]).skuName]"
+                "name": "[union(variables('defaultResourceProperties').databases, variables('databases')[copyIndex()]).skuName]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Sql/servers/databases"

@@ -2,17 +2,17 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "administratorPassword": {
-            "defaultValue": "[format('{0}{1}', newGuid(), newGuid())]",
-            "metadata": {
-                "description": "Specifies the password of the Azure Virtual Machine administrator account."
-            },
-            "type": "securestring"
-        },
         "administratorUserName": {
             "defaultValue": "[uniqueString(parameters('name'))]",
             "metadata": {
                 "description": "Specifies the user name of the Azure Virtual Machine administrator account."
+            },
+            "type": "securestring"
+        },
+        "administratorUserPassword": {
+            "defaultValue": "[base64(replace(format('{0}{1}', newGuid(), newGuid()), '-', ''))]",
+            "metadata": {
+                "description": "Specifies the password of the Azure Virtual Machine administrator account."
             },
             "type": "securestring"
         },
@@ -29,6 +29,13 @@
                 "description": "Specifies the name of the Azure Availability Set that the Azure Virtual Machine will be deployed within."
             },
             "type": "string"
+        },
+        "dataDisks": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of data disks that will be assigned to the Azure Virtual Machine."
+            },
+            "type": "array"
         },
         "diskEncryptionSetName": {
             "defaultValue": "",
@@ -110,10 +117,23 @@
     },
     "variables": {
         "apiVersions": {
+            "disks": "2020-12-01",
             "networkInterfaces": "2020-07-01",
             "virtualMachines": "2020-12-01"
         },
         "copy": [
+            {
+                "count": "[variables('dataDisksCount')]",
+                "input": {
+                    "caching": "ReadOnly",
+                    "createOption": "Attach",
+                    "lun": "[copyIndex('dataDisksByResourceId')]",
+                    "managedDisk": {
+                        "id": "[resourceId('Microsoft.Compute/disks', union(createObject('name', format('{0}-vmdatadisk-{1}', parameters('name'), copyIndex('dataDisksByResourceId'))), parameters('dataDisks')[copyIndex('dataDisksByResourceId')]).name)]"
+                    }
+                },
+                "name": "dataDisksByResourceId"
+            },
             {
                 "count": "[variables('networkInterfaceCardsCount')]",
                 "input": {
@@ -122,7 +142,11 @@
                 "name": "networkInterfacesByResourceId"
             }
         ],
+        "dataDisksCount": "[length(parameters('dataDisks'))]",
         "defaultResourceProperties": {
+            "dataDisk": {
+                "caching": "ReadOnly"
+            },
             "networkInterfaceCard": {
                 "dnsServers": [],
                 "ipConfiguration": {
@@ -197,8 +221,29 @@
             "type": "Microsoft.Network/networkInterfaces"
         },
         {
+            "apiVersion": "[variables('apiVersions').disks]",
+            "copy": {
+                "count": "[variables('dataDisksCount')]",
+                "mode": "Parallel",
+                "name": "dataDisksCopy"
+            },
+            "location": "[parameters('location')]",
+            "name": "[union(createObject('name', format('{0}-vmdatadisk-{1}', parameters('name'), copyIndex())), union(createArray(createObject('name', 'dummyDisk')), parameters('dataDisks'))[copyIndex()]).name]",
+            "properties": {
+                "burstingEnabled": true,
+                "diskSizeGB": 128,
+                "securityProfile": "[json('null')]"
+            },
+            "sku": {
+                "name": "Premium_LRS"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Compute/disks"
+        },
+        {
             "apiVersion": "[variables('apiVersions').virtualMachines]",
             "dependsOn": [
+                "dataDisksCopy",
                 "networkInterfaceCardsCopy"
             ],
             "identity": {
@@ -231,7 +276,7 @@
                 },
                 "osProfile": {
                     "adminUsername": "[parameters('administratorUserName')]",
-                    "adminPassword": "[parameters('administratorPassword')]",
+                    "adminPassword": "[parameters('administratorUserPassword')]",
                     "allowExtensionOperations": true,
                     "computerName": "[parameters('name')]",
                     "customData": "[json('null')]",
@@ -256,7 +301,7 @@
                     "uefiSettings": "[json('null')]"
                 },
                 "storageProfile": {
-                    "dataDisks": [],
+                    "dataDisks": "[variables('dataDisksByResourceId')]",
                     "imageReference": "[parameters('imageReference')]",
                     "osDisk": {
                         "caching": "ReadWrite",
