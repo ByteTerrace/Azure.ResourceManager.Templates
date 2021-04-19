@@ -1,0 +1,104 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "isDoubleEncryptionAtRestEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the double-encryption at rest feature is enabled on the Azure Disk Encryption Set."
+            },
+            "type": "bool"
+        },
+        "keyName": {
+            "metadata": {
+                "description": "Specifies the name of the key that the Azure Disk Encryption Set will get from the Azure Key Vault."
+            },
+            "type": "string"
+        },
+        "keyVaultName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Key Vault that the Azure Disk Encryption Set will get its encryption key from."
+            },
+            "type": "string"
+        },
+        "keyVaultResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure Key Vault that the Azure Disk Encryption Set will get its encryption key from."
+            },
+            "type": "string"
+        },
+        "keyVersion": {
+            "metadata": {
+                "description": "Specifies the version of the key that the Azure Disk Encryption Set will get from the Azure Key Vault."
+            },
+            "type": "string"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Disk Encryption Set resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Disk Encryption Set."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Disk Encryption Set."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "diagnosticSettings": "2020-04-01-preview",
+            "diskEncryptionSets": "2020-12-01",
+            "keyVaults": "2019-09-01"
+        },
+        "resourceIds": {
+            "diskEncryptionSet": "[resourceId('Microsoft.Compute/diskEncryptionSets', parameters('name'))]",
+            "keyVaultCryptoServiceEncryptionUserRole": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]",
+            "keyVault": "[resourceId(parameters('keyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').diskEncryptionSets]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "activeKey": {
+                    "keyUrl": "[format('https://byteterrace.vault.azure.net/keys/{1}/{2}', reference(variables('resourceIds').keyVault, variables('apiVersions').keyVaults).vaultUri, parameters('keyName'), parameters('keyVersion'))]",
+                    "sourceVault": {
+                        "id": "[variables('resourceIds').keyVault]"
+                    }
+                },
+                "encryptionType": "[if(parameters('isDoubleEncryptionAtRestEnabled'), 'EncryptionAtRestWithPlatformAndCustomerKeys', 'EncryptionAtRestWithCustomerKey')]",
+                "rotationToLatestKeyVersionEnabled": true
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Compute/diskEncryptionSets"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "dependsOn": [
+                "[variables('resourceIds').diskEncryptionSet]"
+            ],
+            "name": "[guid(variables('resourceIds').diskEncryptionSet, variables('resourceIds').keyVaultCryptoServiceEncryptionUserRole, variables('resourceIds').keyVault)]",
+            "properties": {
+                "principalId": "[reference(variables('resourceIds').diskEncryptionSet, variables('apiVersions').diskEncryptionSets, 'Full').identity.principalId]",
+                "roleDefinitionId": "[variables('resourceIds').keyVaultCryptoServiceEncryptionUserRole]"
+            },
+            "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
+            "type": "Microsoft.Authorization/roleAssignments"
+        }
+    ]
+}

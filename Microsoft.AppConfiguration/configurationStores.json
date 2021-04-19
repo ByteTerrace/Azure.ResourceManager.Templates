@@ -2,19 +2,33 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "isPublicNetworkAccessEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the Azure Application Configuration Store is accessible from the internet."
+            },
+            "type": "bool"
+        },
         "location": {
             "metadata": {
-                "description": "Specifies the location in which the Azure Application Configuration resource(s) should be deployed."
+                "description": "Specifies the location in which the Azure Application Configuration Store resource(s) should be deployed."
             },
             "type": "string"
         },
         "name": {
             "maxLength": 50,
             "metadata": {
-                "description": "Specifies the name of the Azure Application Configuration store."
+                "description": "Specifies the name of the Azure Application Configuration Store."
             },
             "type": "string",
             "minLength": 5
+        },
+        "settings": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the array of settings that will be housed within the Azure Application Configuration Store."
+            },
+            "type": "secureObject"
         },
         "skuName": {
             "allowedValues": [
@@ -23,32 +37,65 @@
             ],
             "defaultValue": "Standard",
             "metadata": {
-                "description": "Specifies the SKU name of the Azure Application Configuration store."
+                "description": "Specifies the SKU name of the Azure Application Configuration Store."
             },
             "type": "string"
         },
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Application Configuration store."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Application Configuration Store."
             },
             "type": "object"
         }
     },
+    "variables": {
+        "configurationStoreResourceId": "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('name'))]",
+        "defaultResourceProperties": {
+            "setting": {
+                "contentType": "",
+                "tags": {}
+            }
+        },
+        "settings": "[if(variables('settingsIsNotEmpty'), parameters('settings').array, createArray(createObject('name', 'dummySetting')))]",
+        "settingsCount": "[length(union(createObject('array', createArray()), parameters('settings')).array)]",
+        "settingsIsNotEmpty": "[greater(variables('settingsCount'), 0)]"
+    },
     "resources": [
         {
-            "apiVersion": "2020-06-01",
+            "apiVersion": "2020-07-01-preview",
             "identity": {
                 "type": "SystemAssigned"
             },
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
-            "properties": {},
+            "properties": {
+                "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]"
+            },
             "sku": {
                 "name": "[parameters('skuName')]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.AppConfiguration/configurationStores"
+        },
+        {
+            "apiVersion": "2020-07-01-preview",
+            "condition": "[variables('settingsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('settingsCount')]",
+                "mode": "Parallel",
+                "name": "settingsCopy"
+            },
+            "dependsOn": [
+                "[variables('configurationStoreResourceId')]"
+            ],
+            "name": "[format('{0}/{1}', parameters('name'), variables('settings')[copyIndex()].name)]",
+            "properties": {
+                "contentType": "[union(variables('defaultResourceProperties').setting, variables('settings')[copyIndex()]).contentType]",
+                "tags": "[union(variables('defaultResourceProperties').setting, variables('settings')[copyIndex()]).tags]",
+                "value": "[variables('settings')[copyIndex()].value]"
+            },
+            "type": "Microsoft.AppConfiguration/configurationStores/keyValues"
         }
     ]
 }

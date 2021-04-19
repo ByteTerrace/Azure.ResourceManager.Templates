@@ -1,0 +1,276 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "administratorPassword": {
+            "defaultValue": "[format('{0}{1}', newGuid(), newGuid())]",
+            "metadata": {
+                "description": "Specifies the password of the Azure Virtual Machine administrator account."
+            },
+            "type": "securestring"
+        },
+        "administratorUserName": {
+            "defaultValue": "[uniqueString(parameters('name'))]",
+            "metadata": {
+                "description": "Specifies the user name of the Azure Virtual Machine administrator account."
+            },
+            "type": "securestring"
+        },
+        "availabilitySetName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the Azure Availability Set that the Azure Virtual Machine will be deployed within."
+            },
+            "type": "string"
+        },
+        "availabilitySetResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the name of the Azure Availability Set that the Azure Virtual Machine will be deployed within."
+            },
+            "type": "string"
+        },
+        "diskEncryptionSetName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the Azure Disk Encryption Set that the Azure Virtual Machine will be deployed within."
+            },
+            "type": "string"
+        },
+        "diskEncryptionSetResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the name of the Azure Disk Encryption Set that the Azure Virtual Machine will be deployed within."
+            },
+            "type": "string"
+        },
+        "imageReference": {
+            "defaultValue": {
+                "offer": "Windows-10",
+                "publisher": "MicrosoftWindowsDesktop",
+                "sku": "20h2-pro-g2",
+                "version": "latest"
+            },
+            "metadata": {
+                "description": "Specifies the properties of the image that will be used to provision the Azure Virtual Machine."
+            },
+            "type": "object"
+        },
+        "licenseType": {
+            "defaultValue": "Windows_Client",
+            "metadata": {
+                "description": "Specifies the type of license that will be applied to the Azure Virtual Machine."
+            },
+            "type": "string"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Virtual Machine resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Virtual Machine."
+            },
+            "type": "string"
+        },
+        "networkInterfaceCards": {
+            "metadata": {
+                "description": "An array of network interface cards that will be assigned to the Azure Virtual Machine."
+            },
+            "type": "array"
+        },
+        "priority": {
+            "allowedValues": [
+                "Low",
+                "Regular",
+                "Spot"
+            ],
+            "defaultValue": "Regular",
+            "metadata": {
+                "description": "Specifies the priority of the Azure Virtual Machine."
+            },
+            "type": "string"
+        },
+        "size": {
+            "defaultValue": "Standard_D4s_v4",
+            "metadata": {
+                "description": "Specifies the size of the Azure Virtual Machine."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Virtual Machine."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "networkInterfaces": "2020-07-01",
+            "virtualMachines": "2020-12-01"
+        },
+        "copy": [
+            {
+                "count": "[variables('networkInterfaceCardsCount')]",
+                "input": {
+                    "id": "[resourceId('Microsoft.Network/networkInterfaces', union(createObject('name', format('{0}-vmnic-{1}', parameters('name'), copyIndex('networkInterfacesByResourceId'))), parameters('networkInterfaceCards')[copyIndex('networkInterfacesByResourceId')]).name)]"
+                },
+                "name": "networkInterfacesByResourceId"
+            }
+        ],
+        "defaultResourceProperties": {
+            "networkInterfaceCard": {
+                "dnsServers": [],
+                "ipConfiguration": {
+                    "addressVersion": "IPv4 ",
+                    "allocationMethod": "Dynamic",
+                    "applicationSecurityGroup": {
+                        "resourceGroupName": "[variables('resourceGroupName')]"
+                    },
+                    "loadBalancer": {
+                        "backendAddressPoolName": "",
+                        "inboundNatRuleName": "",
+                        "name": "",
+                        "resourceGroupName": "[variables('resourceGroupName')]"
+                    },
+                    "subnet": {
+                        "resourceGroupName": "[variables('resourceGroupName')]"
+                    }
+                },
+                "isAcceleratedNetworkingEnabled": false,
+                "isIpForwardingEnabled": false,
+                "networkSecurityGroup": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]"
+                }
+            }
+        },
+        "isSpotVirtualMachine": "[equals(toLower(parameters('priority')), 'spot')]",
+        "networkInterfaceCardsCount": "[length(parameters('networkInterfaceCards'))]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "subscriptionId": "[subscription().subscriptionId]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').networkInterfaces]",
+            "copy": {
+                "count": "[variables('networkInterfaceCardsCount')]",
+                "mode": "Parallel",
+                "name": "networkInterfaceCardsCopy"
+            },
+            "location": "[parameters('location')]",
+            "name": "[union(createObject('name', format('{0}-vmnic-{1}', parameters('name'), copyIndex())), parameters('networkInterfaceCards')[copyIndex()]).name]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(parameters('networkInterfaceCards')[copyIndex()].ipConfigurations)]",
+                        "input": {
+                            "name": "[parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].name]",
+                            "properties": {
+                                "applicationSecurityGroups": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).applicationSecurityGroup.name), json('null'), createArray(createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).applicationSecurityGroup.resourceGroupName, 'Microsoft.Network/applicationSecurityGroups', union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).applicationSecurityGroup.name))))]",
+                                "loadBalancerBackendAddressPools": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.backendAddressPoolName), json('null'), createArray(createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.resourceGroupName, 'Microsoft.Network/loadBalancers/backendAddressPools', union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.name, union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.backendAddressPoolName))))]",
+                                "loadBalancerInboundNatRules": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.inboundNatRuleName), json('null'), createArray(createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.resourceGroupName, 'Microsoft.Network/loadBalancers/backendAddressPools', union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.name, union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.inboundNatRuleName))))]",
+                                "primary": "[if(equals(length(parameters('networkInterfaceCards')[copyIndex()].ipConfigurations), 1), json('true'), parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].isPrimary)]",
+                                "privateIPAddressVersion": "[union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).addressVersion]",
+                                "privateIPAllocationMethod": "[union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).allocationMethod]",
+                                "subnet": {
+                                    "id": "[resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].subnet.virtualNetworkName, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].subnet.name)]"
+                                }
+                            }
+                        },
+                        "name": "ipConfigurations"
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": "[union(variables('defaultResourceProperties').networkInterfaceCard, parameters('networkInterfaceCards')[copyIndex()]).dnsServers]",
+                    "internalDnsNameLabel": "[json('null')]"
+                },
+                "enableAcceleratedNetworking": "[union(variables('defaultResourceProperties').networkInterfaceCard, parameters('networkInterfaceCards')[copyIndex()]).isAcceleratedNetworkingEnabled]",
+                "enableIPForwarding": "[union(variables('defaultResourceProperties').networkInterfaceCard, parameters('networkInterfaceCards')[copyIndex()]).isIpForwardingEnabled]",
+                "networkSecurityGroup": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard, parameters('networkInterfaceCards')[copyIndex()]).networkSecurityGroup.name), json('null'), createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard, parameters('networkInterfaceCards')[copyIndex()]).networkSecurityGroup.resourceGroupName, 'Microsoft.Network/networkSecurityGroups', union(variables('defaultResourceProperties').networkInterfaceCard, parameters('networkInterfaceCards')[copyIndex()]).networkSecurityGroup.name)))]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Network/networkInterfaces"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').virtualMachines]",
+            "dependsOn": [
+                "networkInterfaceCardsCopy"
+            ],
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "additionalCapabilities": {
+                    "ultraSSDEnabled": false
+                },
+                "availabilitySet": "[if(empty(parameters('availabilitySetName')), json('null'), createObject('id', resourceId(parameters('availabilitySetResourceGroupName'), 'Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))))]",
+                "billingProfile": {
+                    "maxPrice": "[if(variables('isSpotVirtualMachine'), -1, json('null'))]"
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": false,
+                        "storageUri": "[json('null')]"
+                    }
+                },
+                "extensionsTimeBudget": "PT15M",
+                "evictionPolicy": "[if(variables('isSpotVirtualMachine'), 'Deallocate', json('null'))]",
+                "hardwareProfile": {
+                    "vmSize": "[parameters('size')]"
+                },
+                "licenseType": "[parameters('licenseType')]",
+                "networkProfile": {
+                    "networkInterfaces": "[variables('networkInterfacesByResourceId')]"
+                },
+                "osProfile": {
+                    "adminUsername": "[parameters('administratorUserName')]",
+                    "adminPassword": "[parameters('administratorPassword')]",
+                    "allowExtensionOperations": true,
+                    "computerName": "[parameters('name')]",
+                    "customData": "[json('null')]",
+                    "linuxConfiguration": "[json('null')]",
+                    "secrets": [],
+                    "windowsConfiguration": {
+                        "additionalUnattendContent": "[json('null')]",
+                        "enableAutomaticUpdates": true,
+                        "patchSettings": {
+                            "enableHotpatching": false,
+                            "patchMode": "AutomaticByOS"
+                        },
+                        "provisionVmAgent": true,
+                        "timeZone": "UTC",
+                        "winRM": "[json('null')]"
+                    }
+                },
+                "priority": "[parameters('priority')]",
+                "securityProfile": {
+                    "encryptionAtHost": true,
+                    "securityType": "[json('null')]",
+                    "uefiSettings": "[json('null')]"
+                },
+                "storageProfile": {
+                    "dataDisks": [],
+                    "imageReference": "[parameters('imageReference')]",
+                    "osDisk": {
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "diskEncryptionSet": "[if(empty(parameters('diskEncryptionSetName')), json('null'), createObject('id', resourceId(parameters('diskEncryptionSetResourceGroupName'), 'Microsoft.Compute/diskEncryptionSets', parameters('diskEncryptionSetName'))))]",
+                            "storageAccountType": "Premium_LRS"
+                        },
+                        "name": "[format('{0}-vmosdisk', parameters('name'))]",
+                        "writeAcceleratorEnabled": false
+                    }
+                }
+            },
+            "type": "Microsoft.Compute/virtualMachines"
+        }
+    ]
+}

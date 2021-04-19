@@ -2,22 +2,42 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "auditLogAnalyticsWorkspaceName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Log Analytics workspace that the Azure Bastion Host audit feature will send its data to."
+            },
+            "type": "string"
+        },
+        "auditLogAnalyticsWorkspaceResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure Log Analytics workspace that the Azure Bastion Host audit feature will send its data to."
+            },
+            "type": "string"
+        },
+        "auditLogAnalyticsWorkspaceSubscriptionId": {
+            "defaultValue": "[subscription().subscriptionId]",
+            "metadata": {
+                "description": "Specifies the subscription id of the Azure Log Analytics workspace that the Azure Bastion Host audit feature will send its data to."
+            },
+            "type": "string"
+        },
         "ipConfigurations": {
             "metadata": {
-                "description": "An array of IP configurations that will be created within the Azure Bastion host."
+                "description": "An array of IP configurations that will be created within the Azure Bastion Host."
             },
             "type": "array"
         },
         "location": {
             "metadata": {
-                "description": "Specifies the location in which the Azure Bastion host resource(s) will be deployed."
+                "description": "Specifies the location in which the Azure Bastion Host resource(s) will be deployed."
             },
             "type": "string"
         },
         "name": {
             "maxLength": 80,
             "metadata": {
-                "description": "Specifies the name of the Azure Bastion host."
+                "description": "Specifies the name of the Azure Bastion Host."
             },
             "minLength": 1,
             "type": "string"
@@ -25,12 +45,17 @@
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Bastion host."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Bastion Host."
             },
             "type": "object"
         }
     },
     "variables": {
+        "apiVersions": {
+            "bastionHosts": "2020-07-01",
+            "diagnosticSettings": "2017-05-01-preview"
+        },
+        "bastionHostResourceId": "[resourceId('Microsoft.Network/bastionHosts', parameters('name'))]",
         "defaultResourceProperties": {
             "privateIpAllocationMethod": "Dynamic",
             "publicIpAddress": {
@@ -41,11 +66,12 @@
                 "resourceGroupName": "[resourceGroup().name]",
                 "subscriptionId": "[subscription().subscriptionId]"
             }
-        }
+        },
+        "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]"
     },
     "resources": [
         {
-            "apiVersion": "2020-07-01",
+            "apiVersion": "[variables('apiVersions').bastionHosts]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
@@ -70,6 +96,28 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Network/bastionHosts"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "dependsOn": [
+                "[variables('bastionHostResourceId')]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/microsoft.insights/audit', parameters('name'))]",
+            "properties": {
+                "logs": [
+                    {
+                        "category": "BastionAuditLogs",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "enabled": false,
+                            "days": 0
+                        }
+                    }
+                ],
+                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
+            },
+            "type": "Microsoft.Network/bastionHosts/providers/diagnosticsettings"
         }
     ]
 }

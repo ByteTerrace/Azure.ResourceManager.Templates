@@ -1,0 +1,84 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Availability Set resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Availability Set."
+            },
+            "type": "string"
+        },
+        "numberOfFaultDomains": {
+            "metadata": {
+                "description": "Specifies the number of fault domains that the Azure Availability Set will support."
+            },
+            "type": "int"
+        },
+        "numberOfUpdateDomains": {
+            "metadata": {
+                "description": "Specifies the number of update domains that the Azure Availability Set will support."
+            },
+            "type": "int"
+        },
+        "proximityPlacementGroupName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the Azure Proximity Placement Group that will the the Azure Availability Set will be assigned to."
+            },
+            "type": "string"
+        },
+        "proximityPlacementGroupResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure Proximity Placement Group that will the the Azure Availability Set will be assigned to."
+            },
+            "type": "string"
+        },
+        "skuName": {
+            "allowedValues": [
+                "Aligned",
+                "Classic"
+            ],
+            "defaultValue": "Aligned",
+            "metadata": {
+                "description": "Specifies the SKU name of the Azure Availability Set."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Availability Set."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "availabilitySets": "2020-12-01"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').availabilitySets]",
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "platformFaultDomainCount": "[parameters('numberOfFaultDomains')]",
+                "platformUpdateDomainCount": "[parameters('numberOfUpdateDomains')]",
+                "proximityPlacementGroup": "[if(empty(parameters('proximityPlacementGroupName')), json('null'), createObject('id', resourceId(parameters('proximityPlacementGroupResourceGroupName'), 'Microsoft.Compute/proximityPlacementGroups', parameters('proximityPlacementGroupName'))))]"
+            },
+            "sku": {
+                "name": "[parameters('skuName')]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Compute/availabilitySets"
+        }
+    ]
+}
