@@ -22,6 +22,38 @@
             },
             "type": "string"
         },
+        "isDoubleEncryptionAtRestEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the double-encryption at rest feature is enabled on the Azure Recovery Services Vault."
+            },
+            "type": "bool"
+        },
+        "keyName": {
+            "metadata": {
+                "description": "Specifies the name of the key that the Azure Recovery Services Vault will get from the Azure Key Vault."
+            },
+            "type": "string"
+        },
+        "keyVaultName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Key Vault that the Azure Recovery Services Vault will get its encryption key from."
+            },
+            "type": "string"
+        },
+        "keyVaultResourceGroupName": {
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Specifies the resource group name of the Azure Key Vault that the Azure Recovery Services Vault will get its encryption key from."
+            },
+            "type": "string"
+        },
+        "keyVersion": {
+            "metadata": {
+                "description": "Specifies the version of the key that the Azure Recovery Services Vault will get from the Azure Key Vault."
+            },
+            "type": "string"
+        },
         "location": {
             "metadata": {
                 "description": "Specifies the location in which the Azure Recovery Services Vault resource(s) should be deployed."
@@ -44,9 +76,16 @@
     },
     "variables": {
         "apiVersions": {
-            "recoveryServicesVaults": "2016-06-01"
+            "diagnosticSettings": "2017-05-01-preview",
+            "keyVaults": "2019-09-01",
+            "recoveryServicesVaults": "2016-06-01",
+            "roleAssignments": "2020-04-01-preview"
         },
-        "recoveryServicesVaultResourceId": "[resourceId('Microsoft.RecoveryServices/vaults', parameters('name'))]",
+        "resourceIds": {
+            "keyVaultCryptoServiceEncryptionUserRole": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]",
+            "keyVault": "[resourceId(parameters('keyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+            "recoveryServicesVault": "[resourceId('Microsoft.RecoveryServices/vaults', parameters('name'))]"
+        },
         "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]"
     },
     "resources": [
@@ -58,7 +97,15 @@
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
-                "upgradeDetails": {}
+                "encryption": {
+                    "infrastructureEncryption": "[if(parameters('isDoubleEncryptionAtRestEnabled'), 'Enabled', 'Disabled')]",
+                    "kekIdentity": {
+                        "useSystemAssignedIdentity": true
+                    },
+                    "keyVaultProperties": {
+                        "keyUri": "[format('{0}/keys/{1}/{2}', reference(variables('resourceIds').keyVault, variables('apiVersions').keyVaults).vaultUri, parameters('keyName'), parameters('keyVersion'))]"
+                    }
+                }
             },
             "sku": {
                 "name": "RS0",
@@ -68,21 +115,22 @@
             "type": "Microsoft.RecoveryServices/vaults"
         },
         {
-            "apiVersion": "2020-10-01",
-            "location": "string",
-            "name": "backupResourceEncryptionConfig",
+            "apiVersion": "[variables('apiVersions').roleAssignments]",
+            "dependsOn": [
+                "[variables('resourceIds').recoveryServicesVault]"
+            ],
+            "name": "[guid(variables('resourceIds').recoveryServicesVault, variables('resourceIds').keyVaultCryptoServiceEncryptionUserRole, variables('resourceIds').keyVault)]",
             "properties": {
-                "encryptionAtRestType": "string",
-                "keyUri": "string",
-                "subscriptionId": "string"
+                "principalId": "[reference(variables('resourceIds').recoveryServicesVault, variables('apiVersions').recoveryServicesVaults, 'Full').identity.principalId]",
+                "roleDefinitionId": "[variables('resourceIds').keyVaultCryptoServiceEncryptionUserRole]"
             },
-            "tags": {},
-            "type": "Microsoft.RecoveryServices/vaults/backupEncryptionConfigs"
+            "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
+            "type": "Microsoft.Authorization/roleAssignments"
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
             "dependsOn": [
-                "[variables('recoveryServicesVaultResourceId')]"
+                "[variables('resourceIds').recoveryServicesVault]"
             ],
             "location": "[parameters('location')]",
             "name": "[format('{0}/microsoft.insights/audit', parameters('name'))]",

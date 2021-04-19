@@ -56,9 +56,9 @@
     },
     "variables": {
         "apiVersions": {
-            "diagnosticSettings": "2020-04-01-preview",
             "diskEncryptionSets": "2020-12-01",
-            "keyVaults": "2019-09-01"
+            "keyVaults": "2019-09-01",
+            "roleAssignments": "2020-04-01-preview"
         },
         "resourceIds": {
             "diskEncryptionSet": "[resourceId('Microsoft.Compute/diskEncryptionSets', parameters('name'))]",
@@ -76,7 +76,7 @@
             "name": "[parameters('name')]",
             "properties": {
                 "activeKey": {
-                    "keyUrl": "[format('https://byteterrace.vault.azure.net/keys/{1}/{2}', reference(variables('resourceIds').keyVault, variables('apiVersions').keyVaults).vaultUri, parameters('keyName'), parameters('keyVersion'))]",
+                    "keyUrl": "[format('{0}/keys/{1}/{2}', reference(variables('resourceIds').keyVault, variables('apiVersions').keyVaults).vaultUri, parameters('keyName'), parameters('keyVersion'))]",
                     "sourceVault": {
                         "id": "[variables('resourceIds').keyVault]"
                     }
@@ -88,7 +88,7 @@
             "type": "Microsoft.Compute/diskEncryptionSets"
         },
         {
-            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "apiVersion": "[variables('apiVersions').roleAssignments]",
             "dependsOn": [
                 "[variables('resourceIds').diskEncryptionSet]"
             ],
