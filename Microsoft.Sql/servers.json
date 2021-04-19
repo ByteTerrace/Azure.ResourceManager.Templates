@@ -264,81 +264,6 @@
             "type": "Microsoft.Sql/servers"
         },
         {
-            "apiVersion": "[variables('apiVersions').sqlConnectionPolicies]",
-            "dependsOn": [
-                "[variables('resourceIds').sqlServer]"
-            ],
-            "name": "[format('{0}/default', variables('serverName'))]",
-            "properties": {
-                "connectionType": "[parameters('connectionPolicy')]"
-            },
-            "type": "Microsoft.Sql/servers/connectionPolicies"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').sqlDnsAliases]",
-            "condition": "[variables('dnsAliasesIsNotEmpty')]",
-            "copy": {
-                "count": "[length(variables('dnsAliases'))]",
-                "mode": "Parallel",
-                "name": "dnsAliasCopy"
-            },
-            "dependsOn": [
-                "[variables('resourceIds').sqlServer]"
-            ],
-            "name": "[format('{0}/{1}', variables('serverName'), toLower(variables('dnsAliases')[copyIndex()]))]",
-            "type": "Microsoft.Sql/servers/dnsAliases"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').sqlFirewallRules]",
-            "condition": "[and(parameters('isPublicNetworkAccessEnabled'), parameters('isTrustedMicrosoftResourceAccessEnabled'))]",
-            "dependsOn": [
-                "[variables('resourceIds').sqlServer]"
-            ],
-            "name": "[format('{0}/AllowAllWindowsAzureIps', variables('serverName'))]",
-            "properties": {
-                "endIpAddress": "0.0.0.0",
-                "startIpAddress": "0.0.0.0"
-            },
-            "type": "Microsoft.Sql/servers/firewallRules"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').sqlFirewallRules]",
-            "condition": "[and(parameters('isPublicNetworkAccessEnabled'), variables('firewallRulesIsNotEmpty'))]",
-            "copy": {
-                "count": "[length(variables('firewallRules'))]",
-                "mode": "Parallel",
-                "name": "firewallRulesCopy"
-            },
-            "dependsOn": [
-                "[variables('resourceIds').sqlServer]"
-            ],
-            "name": "[format('{0}/{1}', variables('serverName'), variables('firewallRules')[copyIndex()].name)]",
-            "properties": {
-                "endIpAddress": "[variables('firewallRules')[copyIndex()].endIpAddress]",
-                "startIpAddress": "[variables('firewallRules')[copyIndex()].startIpAddress]"
-            },
-            "type": "Microsoft.Sql/servers/firewallRules"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').sqlVirtualNetworkRules]",
-            "condition": "[and(parameters('isPublicNetworkAccessEnabled'), variables('virtualNetworkRulesIsNotEmpty'))]",
-            "copy": {
-                "count": "[length(variables('virtualNetworkRules'))]",
-                "mode": "Parallel",
-                "name": "virtualNetworkRulesCopy"
-            },
-            "dependsOn": [
-                "firewallRulesCopy",
-                "[variables('resourceIds').sqlServer]"
-            ],
-            "name": "[format('{0}/{1}', variables('serverName'), variables('virtualNetworkRules')[copyIndex()].name)]",
-            "properties": {
-                "ignoreMissingVnetServiceEndpoint": "[union(variables('defaultResourceProperties').virtualNetworkRules, variables('virtualNetworkRules')[copyIndex()]).ignoreMissingVnetServiceEndpoint]",
-                "virtualNetworkSubnetId": "[resourceId(union(variables('defaultResourceProperties').virtualNetworkRules, variables('virtualNetworkRules')[copyIndex()]).subnet.subscriptionId, union(variables('defaultResourceProperties').virtualNetworkRules, variables('virtualNetworkRules')[copyIndex()]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkRules')[copyIndex()].subnet.virtualNetworkName, variables('virtualNetworkRules')[copyIndex()].subnet.name)]"
-            },
-            "type": "Microsoft.Sql/servers/virtualNetworkRules"
-        },
-        {
             "apiVersion": "[variables('apiVersions').sqlAdministrators]",
             "condition": "[variables('isActiveDirectoryAdministratorEnabled')]",
             "dependsOn": [
@@ -367,9 +292,90 @@
             "type": "Microsoft.Sql/servers/azureADOnlyAuthentications"
         },
         {
+            "apiVersion": "[variables('apiVersions').sqlConnectionPolicies]",
+            "dependsOn": [
+                "[variables('resourceIds').sqlAdministrator]",
+                "[variables('resourceIds').sqlServer]"
+            ],
+            "name": "[format('{0}/default', variables('serverName'))]",
+            "properties": {
+                "connectionType": "[parameters('connectionPolicy')]"
+            },
+            "type": "Microsoft.Sql/servers/connectionPolicies"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').sqlDnsAliases]",
+            "condition": "[variables('dnsAliasesIsNotEmpty')]",
+            "copy": {
+                "count": "[length(variables('dnsAliases'))]",
+                "mode": "Parallel",
+                "name": "dnsAliasCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').sqlAdministrator]",
+                "[variables('resourceIds').sqlServer]"
+            ],
+            "name": "[format('{0}/{1}', variables('serverName'), toLower(variables('dnsAliases')[copyIndex()]))]",
+            "type": "Microsoft.Sql/servers/dnsAliases"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').sqlFirewallRules]",
+            "condition": "[and(parameters('isPublicNetworkAccessEnabled'), parameters('isTrustedMicrosoftResourceAccessEnabled'))]",
+            "dependsOn": [
+                "[variables('resourceIds').sqlServer]"
+            ],
+            "name": "[format('{0}/AllowAllWindowsAzureIps', variables('serverName'))]",
+            "properties": {
+                "endIpAddress": "0.0.0.0",
+                "startIpAddress": "0.0.0.0"
+            },
+            "type": "Microsoft.Sql/servers/firewallRules"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').sqlFirewallRules]",
+            "condition": "[and(parameters('isPublicNetworkAccessEnabled'), variables('firewallRulesIsNotEmpty'))]",
+            "copy": {
+                "count": "[length(variables('firewallRules'))]",
+                "mode": "Parallel",
+                "name": "firewallRulesCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').sqlAdministrator]",
+                "[variables('resourceIds').sqlServer]"
+            ],
+            "name": "[format('{0}/{1}', variables('serverName'), variables('firewallRules')[copyIndex()].name)]",
+            "properties": {
+                "endIpAddress": "[variables('firewallRules')[copyIndex()].endIpAddress]",
+                "startIpAddress": "[variables('firewallRules')[copyIndex()].startIpAddress]"
+            },
+            "type": "Microsoft.Sql/servers/firewallRules"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').sqlVirtualNetworkRules]",
+            "condition": "[and(parameters('isPublicNetworkAccessEnabled'), variables('virtualNetworkRulesIsNotEmpty'))]",
+            "copy": {
+                "count": "[length(variables('virtualNetworkRules'))]",
+                "mode": "Parallel",
+                "name": "virtualNetworkRulesCopy"
+            },
+            "dependsOn": [
+                "firewallRulesCopy",
+                "[variables('resourceIds').sqlAdministrator]",
+                "[variables('resourceIds').sqlServer]"
+            ],
+            "name": "[format('{0}/{1}', variables('serverName'), variables('virtualNetworkRules')[copyIndex()].name)]",
+            "properties": {
+                "ignoreMissingVnetServiceEndpoint": "[union(variables('defaultResourceProperties').virtualNetworkRules, variables('virtualNetworkRules')[copyIndex()]).ignoreMissingVnetServiceEndpoint]",
+                "virtualNetworkSubnetId": "[resourceId(union(variables('defaultResourceProperties').virtualNetworkRules, variables('virtualNetworkRules')[copyIndex()]).subnet.subscriptionId, union(variables('defaultResourceProperties').virtualNetworkRules, variables('virtualNetworkRules')[copyIndex()]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkRules')[copyIndex()].subnet.virtualNetworkName, variables('virtualNetworkRules')[copyIndex()].subnet.name)]"
+            },
+            "type": "Microsoft.Sql/servers/virtualNetworkRules"
+        },
+        {
             "apiVersion": "[variables('apiVersions').sqlKeys]",
             "condition": "[variables('customerManagedEncryptionProperties').isEnabled]",
             "dependsOn": [
+                "firewallRulesCopy",
+                "virtualNetworkRulesCopy",
                 "[variables('resourceIds').sqlAdministrator]",
                 "[variables('resourceIds').sqlServer]"
             ],
@@ -385,6 +391,8 @@
             "apiVersion": "[variables('apiVersions').sqlEncryptionProtectors]",
             "condition": "[variables('customerManagedEncryptionProperties').isEnabled]",
             "dependsOn": [
+                "firewallRulesCopy",
+                "virtualNetworkRulesCopy",
                 "[variables('resourceIds').sqlAdministrator]",
                 "[variables('resourceIds').sqlCustomerManagedEncryptionServerKey]",
                 "[variables('resourceIds').sqlServer]"
@@ -401,6 +409,8 @@
         {
             "apiVersion": "[variables('apiVersions').sqlAuditingSettings]",
             "dependsOn": [
+                "firewallRulesCopy",
+                "virtualNetworkRulesCopy",
                 "[variables('resourceIds').sqlAdministrator]",
                 "[variables('resourceIds').sqlServer]"
             ],
@@ -418,6 +428,8 @@
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
             "dependsOn": [
+                "firewallRulesCopy",
+                "virtualNetworkRulesCopy",
                 "[variables('resourceIds').sqlAdministrator]",
                 "[variables('resourceIds').sqlAuditingSettings]",
                 "[variables('resourceIds').sqlServer]"
@@ -458,6 +470,7 @@
                 "firewallRulesCopy",
                 "virtualNetworkRulesCopy",
                 "[variables('resourceIds').sqlAdministrator]",
+                "[variables('resourceIds').sqlAuditingSettings]",
                 "[variables('resourceIds').sqlServer]"
             ],
             "location": "[parameters('location')]",

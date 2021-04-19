@@ -349,6 +349,7 @@
             "virtualMachine": {
                 "availabilitySetName": "",
                 "availabilitySetResourceGroupName": "[variables('resourceGroupName')]",
+                "dataDisks": [],
                 "diskEncryptionSetName": "",
                 "diskEncryptionSetResourceGroupName": "[variables('resourceGroupName')]",
                 "imageReference": {
@@ -1859,6 +1860,9 @@
                     },
                     "availabilitySetResourceGroupName": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).availabilitySetResourceGroupName]"
+                    },
+                    "dataDisks": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).dataDisks]"
                     },
                     "diskEncryptionSetName": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).diskEncryptionSetName]"

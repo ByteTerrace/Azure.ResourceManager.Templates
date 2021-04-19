@@ -125,9 +125,9 @@
             {
                 "count": "[variables('dataDisksCount')]",
                 "input": {
-                    "caching": "ReadOnly",
+                    "caching": "[union(variables('defaultResourceProperties').dataDisk, parameters('dataDisks')[copyIndex('dataDisksByResourceId')]).cachingMode]",
                     "createOption": "Attach",
-                    "lun": "[copyIndex('dataDisksByResourceId')]",
+                    "lun": "[union(createObject('lun', copyIndex('dataDisksByResourceId')), parameters('dataDisks')[copyIndex('dataDisksByResourceId')]).lun]",
                     "managedDisk": {
                         "id": "[resourceId('Microsoft.Compute/disks', union(createObject('name', format('{0}-vmdatadisk-{1}', parameters('name'), copyIndex('dataDisksByResourceId'))), parameters('dataDisks')[copyIndex('dataDisksByResourceId')]).name)]"
                     }
@@ -145,7 +145,10 @@
         "dataDisksCount": "[length(parameters('dataDisks'))]",
         "defaultResourceProperties": {
             "dataDisk": {
-                "caching": "ReadOnly"
+                "cachingMode": "ReadOnly",
+                "createOption": "Empty",
+                "networkAccessPolicy": "AllowAll",
+                "skuName": "Premium_LRS"
             },
             "networkInterfaceCard": {
                 "dnsServers": [],
@@ -228,14 +231,19 @@
                 "name": "dataDisksCopy"
             },
             "location": "[parameters('location')]",
-            "name": "[union(createObject('name', format('{0}-vmdatadisk-{1}', parameters('name'), copyIndex())), union(createArray(createObject('name', 'dummyDisk')), parameters('dataDisks'))[copyIndex()]).name]",
+            "name": "[union(union(createArray(createObject('name', 'dummyDisk')), parameters('dataDisks'))[copyIndex()], createObject('name', format('{0}-vmdatadisk-{1}', parameters('name'), copyIndex()))).name]",
             "properties": {
-                "burstingEnabled": true,
-                "diskSizeGB": 128,
+                "creationData": {
+                    "createOption": "[union(variables('defaultResourceProperties').dataDisk, parameters('dataDisks')[copyIndex()]).createOption]"
+                },
+                "diskSizeGB": "[parameters('dataDisks')[copyIndex()].diskSizeInGigabytes]",
+                "encryption": "[if(empty(parameters('diskEncryptionSetName')), json('null'), createObject('diskEncryptionSetId', resourceId(parameters('diskEncryptionSetResourceGroupName'), 'Microsoft.Compute/diskEncryptionSets', parameters('diskEncryptionSetName'))))]",
+                "encryptionSettingsCollection": "[json('null')]",
+                "networkAccessPolicy": "[union(variables('defaultResourceProperties').dataDisk, parameters('dataDisks')[copyIndex()]).networkAccessPolicy]",
                 "securityProfile": "[json('null')]"
             },
             "sku": {
-                "name": "Premium_LRS"
+                "name": "[union(variables('defaultResourceProperties').dataDisk, parameters('dataDisks')[copyIndex()]).skuName]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Compute/disks"
