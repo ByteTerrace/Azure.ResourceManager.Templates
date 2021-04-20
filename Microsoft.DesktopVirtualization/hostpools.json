@@ -1,0 +1,112 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "applicationGroups": {
+            "defaultValue": [
+                {
+                    "description": "Users have access to the full desktop.",
+                    "name": "desktop",
+                    "type": "Desktop"
+                }
+            ],
+            "metadata": {
+                "description": "An array of application groups that will be assigned to the Azure Virtual Desktop Host."
+            },
+            "type": "array"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Virtual Desktop Host Pool resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Virtual Desktop Host Pool."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Virtual Desktop Host Pool."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "desktopVirtualizationApplicationGroups": "2021-02-01-preview",
+            "desktopVirtualizationHostPools": "2021-02-01-preview",
+            "desktopVirtualizationWorkspaces": "2021-02-01-preview"
+        },
+        "applicationGroupsCount": "[length(parameters('applicationGroups'))]",
+        "copy": [
+            {
+                "count": "[variables('applicationGroupsCount')]",
+                "input": "[resourceId('Microsoft.DesktopVirtualization/applicationgroups', format('{0}-{1}', parameters('name'), parameters('applicationGroups')[copyIndex('applicationGroupsByResourceId')].name))]",
+                "name": "applicationGroupsByResourceId"
+            }
+        ],
+        "resourceIds": {
+            "hostPool": "[resourceId('Microsoft.DesktopVirtualization/hostpools', parameters('name'))]"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').desktopVirtualizationHostPools]",
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "customRdpProperty": "[json('null')]",
+                "description": "[json('null')]",
+                "friendlyName": "[parameters('name')]",
+                "hostpoolType": "Personal",
+                "loadBalancerType": "Persistent",
+                "maxSessionLimit": 99999,
+                "personalDesktopAssignmentType": "Automatic",
+                "preferredAppGroupType": "Desktop",
+                "startVMOnConnect": false,
+                "validationEnvironment": false,
+                "vmTemplate": "[json('null')]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.DesktopVirtualization/hostpools"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').desktopVirtualizationApplicationGroups]",
+            "copy": {
+                "count": "[variables('applicationGroupsCount')]",
+                "mode": "Parallel",
+                "name": "applicationGroupsCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').hostPool]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}-{1}', parameters('name'), parameters('applicationGroups')[copyIndex()].name)]",
+            "properties": {
+                "applicationGroupType": "[parameters('applicationGroups')[copyIndex()].type]",
+                "description": "[parameters('applicationGroups')[copyIndex()].description]",
+                "friendlyName": "[union(createObject('friendlyName', parameters('applicationGroups')[copyIndex()].name), parameters('applicationGroups')[copyIndex()]).friendlyName]",
+                "hostpoolarmpath": "[resourceId('Microsoft.DesktopVirtualization/hostpools', parameters('name'))]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.DesktopVirtualization/applicationgroups"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').desktopVirtualizationWorkspaces]",
+            "dependsOn": [
+                "applicationGroupsCopy",
+                "[variables('resourceIds').hostPool]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}-workspace', parameters('name'))]",
+            "properties": {
+                "applicationGroupReferences": "[variables('applicationGroupsByResourceId')]"
+            },
+            "type": "Microsoft.DesktopVirtualization/workspaces"
+        }
+    ]
+}

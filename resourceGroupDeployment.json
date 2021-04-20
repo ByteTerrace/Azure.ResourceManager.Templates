@@ -60,6 +60,7 @@
                 "postDeploy": [],
                 "preDeploy": []
             },
+            "sharedImageGalleries": [],
             "sqlServers": [],
             "storageAccounts": [],
             "virtualMachines": [],
@@ -118,7 +119,8 @@
                 "isAdministratorAccountEnabled": false,
                 "isPublicNetworkAccessEnabled": true,
                 "isTrustedMicrosoftResourceAccessEnabled": false,
-                "skuName": "Standard"
+                "skuName": "Standard",
+                "virtualNetworkRules": []
             },
             "cosmosDbAccount": {
                 "consistencyPolicy": {},
@@ -293,6 +295,9 @@
             "script": {
                 "kind": "AzurePowerShell"
             },
+            "sharedImageGallery": {
+                "description": ""
+            },
             "sqlServer": {
                 "activeDirectoryAdministratorObjectId": "",
                 "activeDirectoryAdministratorTenantId": "[subscription().tenantId]",
@@ -372,7 +377,7 @@
         },
         "deploymentApiVersion": "2020-10-01",
         "deploymentNames": {
-            "applicationConfigurationStore": "[format('{0}-AppConfigStore', deployment().name)]",
+            "applicationConfigurationStore": "[format('{0}-AppConfigurationStore', deployment().name)]",
             "applicationInsightsComponent": "[format('{0}-AppInsightsComponent', deployment().name)]",
             "applicationSecurityGroup": "[format('{0}-AppSecurityGroup', deployment().name)]",
             "applicationServicePlan": "[format('{0}-AppServicePlan', deployment().name)]",
@@ -408,6 +413,7 @@
             "routeTable": "[format('{0}-RouteTable', deployment().name)]",
             "scriptPostDeploy": "[format('{0}-ScriptPostDeploy', deployment().name)]",
             "scriptPreDeploy": "[format('{0}-ScriptPreDeploy', deployment().name)]",
+            "sharedImageGallery": "[format('{0}-SharedImageGallery', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
             "virtualMachine": "[format('{0}-VirtualMachine', deployment().name)]",
@@ -1698,11 +1704,49 @@
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
+                    },
+                    "virtualNetworkRules": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).virtualNetworkRules]"
                     }
                 },
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.ContainerRegistry/registries.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').sharedImageGalleries))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').sharedImageGalleries)]",
+                "mode": "Parallel",
+                "name": "sharedImageGalleriesCopy"
+            },
+            "dependsOn": [
+                "scriptsPreDeployCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').sharedImageGallery, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "description": {
+                        "value": "[union(variables('defaultResourceProperties').sharedImageGallery, variables('resourceDefinitions').availabilitySets[copyIndex()]).description]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').sharedImageGalleries[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').sharedImageGalleries[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Compute/galleries.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -1849,6 +1893,7 @@
                 "diskEncryptionSetsCopy",
                 "loadBalancersCopy",
                 "scriptsPreDeployCopy",
+                "sharedImageGalleriesCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').virtualMachine, copyIndex())]",
@@ -2604,6 +2649,7 @@
                 "publicIpPrefixesCopy",
                 "routeTablesCopy",
                 "scriptsPreDeployCopy",
+                "sharedImageGalleriesCopy",
                 "sqlServersCopy",
                 "storageAccountsCopy",
                 "virtualMachinesCopy",

@@ -5,58 +5,70 @@
         "firewallRules": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of firewall rules that will be assigned to the Azure Container registry."
+                "description": "An array of firewall rules that will be assigned to the Azure Container Registry."
             },
             "type": "array"
         },
         "isAdministratorAccountEnabled": {
             "defaultValue": false,
             "metadata": {
-                "description": "Indicates whether the Azure Container registry administrator user account is enabled."
+                "description": "Indicates whether the Azure Container Registry administrator user account is enabled."
             },
             "type": "bool"
         },
         "isPublicNetworkAccessEnabled": {
             "defaultValue": true,
             "metadata": {
-                "description": "Indicates whether the Azure Container registry is accessible from the internet."
+                "description": "Indicates whether the Azure Container Registry is accessible from the internet."
             },
             "type": "bool"
         },
         "isTrustedMicrosoftResourceAccessEnabled": {
             "defaultValue": false,
             "metadata": {
-                "description": "Indicates whether trusted Azure services and resources are allowed to access the Azure Container registry."
+                "description": "Indicates whether trusted Azure services and resources are allowed to access the Azure Container Registry."
             },
             "type": "bool"
         },
         "location": {
             "metadata": {
-                "description": "Specifies the location in which the Azure Container registry resource(s) should be deployed."
+                "description": "Specifies the location in which the Azure Container Registry resource(s) should be deployed."
             },
             "type": "string"
         },
         "name": {
             "maxLength": 50,
             "metadata": {
-                "description": "Specifies the name of the Azure Container registry."
+                "description": "Specifies the name of the Azure Container Registry."
             },
             "minLength": 5,
             "type": "string"
         },
         "skuName": {
+            "allowedValues": [
+                "Basic",
+                "Premium",
+                "Standard"
+            ],
             "defaultValue": "Standard",
             "metadata": {
-                "description": "Specifies the SKU name of the Azure Container registry."
+                "description": "Specifies the SKU name of the Azure Container Registry."
             },
             "type": "string"
         },
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Container registry."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Container Registry."
             },
             "type": "object"
+        },
+        "virtualNetworkRules": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of virtual network rules that will be assigned to the Azure Container Registry."
+            },
+            "type": "array"
         }
     },
     "variables": {
@@ -68,13 +80,31 @@
                     "value": "[parameters('firewallRules')[copyIndex('ipRules')]]"
                 },
                 "name": "ipRules"
+            },
+            {
+                "count": "[length(parameters('virtualNetworkRules'))]",
+                "input": {
+                    "action": "Allow",
+                    "id": "[resourceId(union(variables('defaultResourceProperties').virtualNetworkRules, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnet.virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnet.name)]"
+                },
+                "name": "virtualNetworkRules"
             }
         ],
+        "defaultResourceProperties": {
+            "virtualNetworkRules": {
+                "subnet": {
+                    "resourceGroupName": "[resourceGroup().name]",
+                    "subscriptionId": "[subscription().subscriptionId]"
+                }
+            }
+        },
         "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
         "networkRuleSetProperties": {
-            "defaultAction": "[if(variables('firewallRulesIsNotEmpty'), 'Deny', 'Allow')]",
-            "ipRules": "[variables('ipRules')]"
-        }
+            "defaultAction": "[if(or(variables('firewallRulesIsNotEmpty'), variables('virtualNetworkRulesIsNotEmpty')), 'Deny', 'Allow')]",
+            "ipRules": "[variables('ipRules')]",
+            "virtualNetworkRules": "[variables('virtualNetworkRules')]"
+        },
+        "virtualNetworkRulesIsNotEmpty": "[greater(length(parameters('virtualNetworkRules')), 0)]"
     },
     "resources": [
         {

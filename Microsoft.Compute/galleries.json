@@ -1,0 +1,49 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "description": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the description of the Azure Shared Image Gallery."
+            },
+            "type": "string"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Shared Image Gallery resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Shared Image Gallery."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Shared Image Gallery."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "galleries": "2019-12-01"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').galleries]",
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "description": "[if(empty(parameters('description')), json('null'), parameters('description'))]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Compute/galleries"
+        }
+    ]
+}

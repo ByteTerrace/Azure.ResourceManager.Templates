@@ -81,12 +81,12 @@
             "recoveryServicesVaults": "2016-06-01",
             "roleAssignments": "2020-04-01-preview"
         },
+        "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
         "resourceIds": {
-            "keyVaultCryptoServiceEncryptionUserRole": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]",
             "keyVault": "[resourceId(parameters('keyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+            "keyVaultCryptoServiceEncryptionUserRole": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]",
             "recoveryServicesVault": "[resourceId('Microsoft.RecoveryServices/vaults', parameters('name'))]"
-        },
-        "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]"
+        }
     },
     "resources": [
         {
@@ -103,7 +103,7 @@
                         "useSystemAssignedIdentity": true
                     },
                     "keyVaultProperties": {
-                        "keyUri": "[format('{0}/keys/{1}/{2}', reference(variables('resourceIds').keyVault, variables('apiVersions').keyVaults).vaultUri, parameters('keyName'), parameters('keyVersion'))]"
+                        "keyUri": "[format('{0}keys/{1}/{2}', reference(variables('resourceIds').keyVault, variables('apiVersions').keyVaults).vaultUri, parameters('keyName'), parameters('keyVersion'))]"
                     }
                 }
             },
