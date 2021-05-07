@@ -51,7 +51,6 @@
             },
             "natGateways": [],
             "networkSecurityGroups": [],
-            "privateEndpoints": [],
             "proximityPlacementGroups": [],
             "publicIpAddresses": [],
             "publicIpPrefixes": [],
@@ -69,6 +68,7 @@
         "defaultResourceProperties": {
             "applicationConfigurationStore": {
                 "isPublicNetworkAccessEnabled": true,
+                "privateEndpoints": [],
                 "settings": {},
                 "skuName": "Standard"
             },
@@ -119,6 +119,7 @@
                 "isAdministratorAccountEnabled": false,
                 "isPublicNetworkAccessEnabled": true,
                 "isTrustedMicrosoftResourceAccessEnabled": false,
+                "privateEndpoints": [],
                 "skuName": "Standard",
                 "virtualNetworkRules": []
             },
@@ -196,10 +197,12 @@
                 "firewallRules": [],
                 "isAllowTrustedMicrosoftServicesEnabled": false,
                 "isDiskEncryptionEnabled": false,
+                "isPublicNetworkAccessEnabled": true,
                 "isPurgeProtectionEnabled": true,
                 "isRbacAuthorizationEnabled": true,
                 "isTemplateDeploymentEnabled": false,
                 "isVirtualMachineDeploymentEnabled": false,
+                "privateEndpoints": [],
                 "secrets": {},
                 "skuName": "Premium",
                 "softDeleteRetentionInDays": 14,
@@ -242,6 +245,7 @@
                     "skuName": "pergb2018"
                 },
                 "privateLinkScope": {
+                    "privateEndpoints": [],
                     "scopedResources": []
                 }
             },
@@ -257,13 +261,6 @@
                 "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
                 "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
                 "securityRules": []
-            },
-            "privateEndpoint": {
-                "dnsZones": [],
-                "linkedResourceGroupName": "[variables('resourceGroupName')]",
-                "linkedResourceSubscriptionId": "[variables('subscriptionId')]",
-                "virtualNetworkResourceGroupName": "[variables('resourceGroupName')]",
-                "virtualNetworkSubscriptionId": "[variables('subscriptionId')]"
             },
             "publicIpAddress": {
                 "allocationMethod": "Static",
@@ -310,45 +307,35 @@
                 "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
                 "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
                 "connectionPolicy": "Default",
-                "customerManagedEncryptionKeyName": "",
-                "customerManagedEncryptionKeyVaultName": "",
-                "customerManagedEncryptionKeyVaultResourceGroupName": "[variables('resourceGroupName')]",
-                "customerManagedEncryptionKeyVaultSubscriptionId": "[variables('subscriptionId')]",
-                "customerManagedEncryptionKeyVersion": "",
+                "customerManagedEncryption": {},
                 "databases": [],
                 "dnsAliases": [],
                 "firewallRules": [],
                 "isPublicNetworkAccessEnabled": true,
                 "isTrustedMicrosoftResourceAccessEnabled": false,
+                "privateEndpoints": [],
                 "serverVersion": "12.0",
                 "virtualNetworkRules": []
             },
             "storageAccount": {
                 "accessTier": "Hot",
-                "blobContainerNames": [],
-                "blobCorsRules": [],
-                "blobSoftDeleteRetentionPeriodInDays": 7,
-                "customerManagedEncryptionKeyName": "",
-                "customerManagedEncryptionKeyVaultName": "",
-                "customerManagedEncryptionKeyVaultResourceGroupName": "[variables('resourceGroupName')]",
-                "customerManagedEncryptionKeyVaultSubscriptionId": "[variables('subscriptionId')]",
-                "customerManagedEncryptionKeyVersion": "",
+                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
+                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
+                "blobServices": {},
+                "customerManagedEncryption": {},
+                "dataLake": {},
                 "encryptionScopes": [],
-                "fileShareNames": [],
-                "fileShareSoftDeleteRetentionPeriodInDays": 7,
+                "fileServices": {},
                 "firewallRules": [],
                 "isAdvancedThreatProtectionEnabled": false,
                 "isAllowTrustedMicrosoftServicesEnabled": false,
-                "isChangeFeedEnabledForBlobs": false,
-                "isHierarchicalNamespaceEnabled": false,
-                "isLargeFileSharesEnabled": false,
-                "isSoftDeleteEnabledForBlobs": false,
-                "isSoftDeleteEnabledForFileShares": false,
-                "isVersioningEnabledForBlobs": false,
-                "queueNames": [],
+                "isPublicNetworkAccessEnabled": true,
+                "isSharedKeyAccessEnabled": false,
+                "kind": "StorageV2",
+                "queueServices": {},
                 "skuName": "Standard_LRS",
-                "storageAccountKind": "StorageV2",
-                "tableNames": [],
+                "staticWebsite": {},
+                "tableServices": {},
                 "virtualNetworkRules": []
             },
             "virtualMachine": {
@@ -375,7 +362,7 @@
                 "subnets": []
             }
         },
-        "deploymentApiVersion": "2020-10-01",
+        "deploymentApiVersion": "2021-04-01",
         "deploymentNames": {
             "applicationConfigurationStore": "[format('{0}-AppConfigurationStore', deployment().name)]",
             "applicationInsightsComponent": "[format('{0}-AppInsightsComponent', deployment().name)]",
@@ -1160,7 +1147,8 @@
                 "name": "privateDnsZonesCopy"
             },
             "dependsOn": [
-                "scriptsPreDeployCopy"
+                "scriptsPreDeployCopy",
+                "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').dnsPrivateZone, copyIndex())]",
             "properties": {
@@ -1488,6 +1476,9 @@
                     "name": {
                         "value": "[variables('resourceDefinitions').monitor.privateLinkScopes[copyIndex()].name]"
                     },
+                    "privateEndpoints": {
+                        "value": "[union(variables('defaultResourceProperties').monitor.privateLinkScope, variables('resourceDefinitions').monitor.privateLinkScopes[copyIndex()]).privateEndpoints]"
+                    },
                     "scopedResources": {
                         "value": "[union(variables('defaultResourceProperties').monitor.privateLinkScope, variables('resourceDefinitions').monitor.privateLinkScopes[copyIndex()]).scopedResources]"
                     },
@@ -1537,6 +1528,9 @@
                     "isDiskEncryptionEnabled": {
                         "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).isDiskEncryptionEnabled]"
                     },
+                    "isPublicNetworkAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).isPublicNetworkAccessEnabled]"
+                    },
                     "isPurgeProtectionEnabled": {
                         "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).isPurgeProtectionEnabled]"
                     },
@@ -1554,6 +1548,9 @@
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').keyVaults[copyIndex()].name]"
+                    },
+                    "privateEndpoints": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).privateEndpoints]"
                     },
                     "secrets": {
                         "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).secrets]"
@@ -1648,6 +1645,9 @@
                     "name": {
                         "value": "[variables('resourceDefinitions').applicationConfigurationStores[copyIndex()].name]"
                     },
+                    "privateEndpoints": {
+                        "value": "[union(variables('defaultResourceProperties').applicationConfigurationStore, variables('resourceDefinitions').applicationConfigurationStores[copyIndex()]).privateEndpoints]"
+                    },
                     "settings": {
                         "value": "[union(variables('defaultResourceProperties').applicationConfigurationStore, variables('resourceDefinitions').applicationConfigurationStores[copyIndex()]).settings]"
                     },
@@ -1698,6 +1698,9 @@
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').containerRegistries[copyIndex()].name]"
+                    },
+                    "privateEndpoints": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).privateEndpoints]"
                     },
                     "skuName": {
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).skuName]"
@@ -2017,6 +2020,7 @@
                 "name": "storageAccountsCopy"
             },
             "dependsOn": [
+                "keyVaultsCopy",
                 "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
@@ -2027,38 +2031,29 @@
                     "accessTier": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).accessTier]"
                     },
-                    "blobContainerNames": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).blobContainerNames]"
+                    "auditLogAnalyticsWorkspaceName": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).auditLogAnalyticsWorkspaceName]"
                     },
-                    "blobCorsRules": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).blobCorsRules]"
+                    "auditLogAnalyticsWorkspaceResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
                     },
-                    "blobSoftDeleteRetentionPeriodInDays": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).blobSoftDeleteRetentionPeriodInDays]"
+                    "auditLogAnalyticsWorkspaceSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
                     },
-                    "customerManagedEncryptionKeyName": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).customerManagedEncryptionKeyName]"
+                    "blobServices": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).blobServices]"
                     },
-                    "customerManagedEncryptionKeyVaultName": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).customerManagedEncryptionKeyVaultName]"
+                    "customerManagedEncryption": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).customerManagedEncryption]"
                     },
-                    "customerManagedEncryptionKeyVaultResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).customerManagedEncryptionKeyVaultResourceGroupName]"
-                    },
-                    "customerManagedEncryptionKeyVaultSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).customerManagedEncryptionKeyVaultSubscriptionId]"
-                    },
-                    "customerManagedEncryptionKeyVersion": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).customerManagedEncryptionKeyVersion]"
+                    "dataLake": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).dataLake]"
                     },
                     "encryptionScopes": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).encryptionScopes]"
                     },
-                    "fileShareNames": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).fileShareNames]"
-                    },
-                    "fileShareSoftDeleteRetentionPeriodInDays": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).fileShareSoftDeleteRetentionPeriodInDays]"
+                    "fileServices": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).fileServices]"
                     },
                     "firewallRules": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).firewallRules]"
@@ -2069,23 +2064,14 @@
                     "isAllowTrustedMicrosoftServicesEnabled": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
                     },
-                    "isChangeFeedEnabledForBlobs": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isChangeFeedEnabledForBlobs]"
+                    "isPublicNetworkAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isPublicNetworkAccessEnabled]"
                     },
-                    "isHierarchicalNamespaceEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isHierarchicalNamespaceEnabled]"
+                    "isSharedKeyAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isSharedKeyAccessEnabled]"
                     },
-                    "isLargeFileSharesEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isLargeFileSharesEnabled]"
-                    },
-                    "isSoftDeleteEnabledForBlobs": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isSoftDeleteEnabledForBlobs]"
-                    },
-                    "isSoftDeleteEnabledForFileShares": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isSoftDeleteEnabledForFileShares]"
-                    },
-                    "isVersioningEnabledForBlobs": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isVersioningEnabledForBlobs]"
+                    "kind": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).kind]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').storageAccounts[copyIndex()]).location]"
@@ -2093,17 +2079,17 @@
                     "name": {
                         "value": "[variables('resourceDefinitions').storageAccounts[copyIndex()].name]"
                     },
-                    "queueNames": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).queueNames]"
+                    "queueServices": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).queueServices]"
                     },
                     "skuName": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).skuName]"
                     },
-                    "storageAccountKind": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).storageAccountKind]"
+                    "staticWebsite": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).staticWebsite]"
                     },
-                    "tableNames": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).tableNames]"
+                    "tableServices": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).tableServices]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
@@ -2163,20 +2149,8 @@
                     "connectionPolicy": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).connectionPolicy]"
                     },
-                    "customerManagedEncryptionKeyName": {
-                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).customerManagedEncryptionKeyName]"
-                    },
-                    "customerManagedEncryptionKeyVaultName": {
-                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).customerManagedEncryptionKeyVaultName]"
-                    },
-                    "customerManagedEncryptionKeyVaultResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).customerManagedEncryptionKeyVaultResourceGroupName]"
-                    },
-                    "customerManagedEncryptionKeyVaultSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).customerManagedEncryptionKeyVaultSubscriptionId]"
-                    },
-                    "customerManagedEncryptionKeyVersion": {
-                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).customerManagedEncryptionKeyVersion]"
+                    "customerManagedEncryption": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).customerManagedEncryption]"
                     },
                     "databases": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).databases]"
@@ -2198,6 +2172,9 @@
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').sqlServers[copyIndex()].name]"
+                    },
+                    "privateEndpoints": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).privateEndpoints]"
                     },
                     "serverVersion": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).serverVersion]"
@@ -2534,77 +2511,6 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').privateEndpoints))]",
-            "copy": {
-                "count": "[length(variables('resourceDefinitions').privateEndpoints)]",
-                "mode": "Parallel",
-                "name": "privateEndpointsCopy"
-            },
-            "dependsOn": [
-                "applicationConfigurationStoresCopy",
-                "applicationServicePlansCopy",
-                "logAnalyticsWorkspacesCopy",
-                "logicApplicationWorkflowsCopy",
-                "monitorPrivateLinkScopesCopy",
-                "privateDnsZonesCopy",
-                "publicDnsZonesCopy",
-                "scriptsPreDeployCopy",
-                "sqlServersCopy",
-                "virtualNetworksCopy"
-            ],
-            "name": "[format('{0}_{1}', variables('deploymentNames').privateEndpoint, copyIndex())]",
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "dnsZones": {
-                        "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).dnsZones]"
-                    },
-                    "groupIds": {
-                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].groupIds]"
-                    },
-                    "linkedResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).linkedResourceGroupName]"
-                    },
-                    "linkedResourcePath": {
-                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].linkedResourcePath]"
-                    },
-                    "linkedResourceProviderName": {
-                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].linkedResourceProviderName]"
-                    },
-                    "linkedResourceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).linkedResourceSubscriptionId]"
-                    },
-                    "location": {
-                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').privateEndpoints[copyIndex()]).location]"
-                    },
-                    "name": {
-                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].name]"
-                    },
-                    "subnetName": {
-                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].subnetName]"
-                    },
-                    "tags": {
-                        "value": "[parameters('tags')]"
-                    },
-                    "virtualNetworkName": {
-                        "value": "[variables('resourceDefinitions').privateEndpoints[copyIndex()].virtualNetworkName]"
-                    },
-                    "virtualNetworkResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).virtualNetworkResourceGroupName]"
-                    },
-                    "virtualNetworkSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').privateEndpoint, variables('resourceDefinitions').privateEndpoints[copyIndex()]).virtualNetworkSubscriptionId]"
-                    }
-                },
-                "templateLink": {
-                    "contentVersion": "[variables('contentVersion')]",
-                    "relativePath": "./Microsoft.Network/privateEndpoints.json"
-                }
-            },
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[not(empty(variables('resourceDefinitions').scripts.postDeploy))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').scripts.postDeploy)]",
@@ -2642,7 +2548,6 @@
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "privateDnsZonesCopy",
-                "privateEndpointsCopy",
                 "proximityPlacementGroupsCopy",
                 "publicDnsZonesCopy",
                 "publicIpAddressesCopy",

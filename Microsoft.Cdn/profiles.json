@@ -31,6 +31,11 @@
             "type": "string"
         },
         "skuName": {
+            "allowedValues": [
+                "Standard_AzureFrontDoor",
+                "Standard_Microsoft",
+                "Premium_AzureFrontDoor"
+            ],
             "defaultValue": "Standard_Microsoft",
             "metadata": {
                 "description": "Specifies the SKU name of the Azure CDN profile."
@@ -49,6 +54,44 @@
         "apiVersions": {
             "cdnProfiles": "2020-09-01",
             "diagnosticSettings": "2017-05-01-preview"
+        },
+        "defaultResourceProperties": {
+            "frontDoorDiagnosticsLogs": [
+                {
+                    "category": "FrontDoorAccessLog",
+                    "enabled": true,
+                    "retentionPolicy": {
+                        "enabled": false,
+                        "days": 0
+                    }
+                },
+                {
+                    "category": "FrontDoorHealthProbeLog",
+                    "enabled": true,
+                    "retentionPolicy": {
+                        "enabled": false,
+                        "days": 0
+                    }
+                },
+                {
+                    "category": "FrontDoorWebApplicationFirewallLog",
+                    "enabled": true,
+                    "retentionPolicy": {
+                        "enabled": false,
+                        "days": 0
+                    }
+                }
+            ],
+            "microsoftDiagnosticsLogs": [
+                {
+                    "category": "AzureCdnAccessLog",
+                    "enabled": true,
+                    "retentionPolicy": {
+                        "enabled": false,
+                        "days": 0
+                    }
+                }
+            ]
         },
         "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
         "resourceIds": {
@@ -75,16 +118,7 @@
             "location": "global",
             "name": "[format('{0}/microsoft.insights/audit', parameters('name'))]",
             "properties": {
-                "logs": [
-                    {
-                        "category": "AzureCdnAccessLog",
-                        "enabled": true,
-                        "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
-                        }
-                    }
-                ],
+                "logs": "[if(endsWith(parameters('skuName'), 'AzureFrontDoor'), variables('defaultResourceProperties').frontDoorDiagnosticsLogs, variables('defaultResourceProperties').microsoftDiagnosticsLogs)]",
                 "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
             },
             "type": "Microsoft.Cdn/profiles/providers/diagnosticsettings"

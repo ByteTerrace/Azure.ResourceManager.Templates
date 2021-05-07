@@ -23,6 +23,13 @@
             "type": "string",
             "minLength": 5
         },
+        "privateEndpoints": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of private endpoints that will be linked with the Azure Application Configuration Store."
+            },
+            "type": "array"
+        },
         "settings": {
             "defaultValue": {},
             "metadata": {
@@ -50,20 +57,41 @@
         }
     },
     "variables": {
+        "apiVersions": {
+            "configurationStores": "2020-07-01-preview",
+            "configurationStoresKeyValues": "2020-07-01-preview",
+            "privateEndpoints": "2020-07-01",
+            "privateEndpointsPrivateDnsZoneGroups": "2020-07-01"
+        },
         "configurationStoreResourceId": "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('name'))]",
         "defaultResourceProperties": {
+            "privateEndpoint": {
+                "dnsZone": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "subnet": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
+            },
             "setting": {
                 "contentType": "",
                 "tags": {}
             }
         },
+        "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('name', 'dummyEndpoint')))]",
+        "privateEndpointsCount": "[length(parameters('privateEndpoints'))]",
+        "privateEndpointsIsNotEmpty": "[greater(variables('privateEndpointsCount'), 0)]",
+        "resourceGroupName": "[resourceGroup().name]",
         "settings": "[if(variables('settingsIsNotEmpty'), parameters('settings').array, createArray(createObject('name', 'dummySetting')))]",
         "settingsCount": "[length(union(createObject('array', createArray()), parameters('settings')).array)]",
-        "settingsIsNotEmpty": "[greater(variables('settingsCount'), 0)]"
+        "settingsIsNotEmpty": "[greater(variables('settingsCount'), 0)]",
+        "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
         {
-            "apiVersion": "2020-07-01-preview",
+            "apiVersion": "[variables('apiVersions').configurationStores]",
             "identity": {
                 "type": "SystemAssigned"
             },
@@ -79,7 +107,69 @@
             "type": "Microsoft.AppConfiguration/configurationStores"
         },
         {
-            "apiVersion": "2020-07-01-preview",
+            "apiVersion": "[variables('apiVersions').privateEndpoints]",
+            "condition": "[variables('privateEndpointsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('privateEndpointsCount')]",
+                "mode": "Parallel",
+                "name": "privateEndpointsCopy"
+            },
+            "dependsOn": [
+                "[variables('configurationStoreResourceId')]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[variables('privateEndpoints')[copyIndex()].name]",
+            "properties": {
+                "customDnsConfigs": [],
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('privateEndpoints')[copyIndex()].name]",
+                        "properties": {
+                            "groupIds": [
+                                "configurationStores"
+                            ],
+                            "privateLinkServiceId": "[variables('configurationStoreResourceId')]"
+                        }
+                    }
+                ],
+                "subnet": {
+                    "id": "[resourceId(union(variables('defaultResourceProperties').privateEndpoint, variables('privateEndpoints')[copyIndex()]).subnet.subscriptionId, union(variables('defaultResourceProperties').privateEndpoint, variables('privateEndpoints')[copyIndex()]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('privateEndpoints')[copyIndex()].subnet.virtualNetworkName, variables('privateEndpoints')[copyIndex()].subnet.name)]"
+                }
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Network/privateEndpoints"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').privateEndpointsPrivateDnsZoneGroups]",
+            "condition": "[variables('privateEndpointsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('privateEndpointsCount')]",
+                "mode": "Parallel",
+                "name": "privateDnsZoneGroupsCopy"
+            },
+            "dependsOn": [
+                "privateEndpointsCopy"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/default', variables('privateEndpoints')[copyIndex()].name)]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(variables('privateEndpoints')[copyIndex()].dnsZones)]",
+                        "input": {
+                            "name": "[replace(variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')].name, '.', '-')]",
+                            "properties": {
+                                "privateDnsZoneId": "[resourceId(union(variables('defaultResourceProperties').privateEndpoint.dnsZone, variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')]).subscriptionId, union(variables('defaultResourceProperties').privateEndpoint.dnsZone, variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')]).resourceGroupName, 'Microsoft.Network/privateDnsZones', variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')].name)]"
+                            }
+                        },
+                        "name": "privateDnsZoneConfigs"
+                    }
+                ]
+            },
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').configurationStoresKeyValues]",
             "condition": "[variables('settingsIsNotEmpty')]",
             "copy": {
                 "count": "[variables('settingsCount')]",

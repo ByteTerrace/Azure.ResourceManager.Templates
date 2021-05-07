@@ -10,10 +10,17 @@
             "minLength": 1,
             "type": "string"
         },
+        "privateEndpoints": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of private endpoints that will be linked with the Azure Monitor Private Link Scope."
+            },
+            "type": "array"
+        },
         "scopedResources": {
             "defaultValue": [],
             "metadata": {
-                "description": ""
+                "description": "An array of resources that will be associated with the Azure Monitor Private Link Scope."
             },
             "type": "array"
         },
@@ -26,12 +33,31 @@
         }
     },
     "variables": {
+        "apiVersions": {
+            "privateEndpoints": "2020-07-01",
+            "privateEndpointsPrivateDnsZoneGroups": "2020-07-01",
+            "privateLinkScopes": "2019-10-17-preview",
+            "privateLinkScopesResources": "2019-10-17-preview"
+        },
         "defaultResourceProperties": {
             "linkedResource": {
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "privateEndpoint": {
+                "dnsZone": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "subnet": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
             }
         },
+        "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('name', 'dummyEndpoint')))]",
+        "privateEndpointsCount": "[length(parameters('privateEndpoints'))]",
+        "privateEndpointsIsNotEmpty": "[greater(variables('privateEndpointsCount'), 0)]",
         "privateLinkScopeResourceId": "[resourceId('Microsoft.Insights/privateLinkScopes', parameters('name'))]",
         "resourceGroupName": "[resourceGroup().name]",
         "scopedResources": "[if(variables('scopedResourcesIsNotEmpty'), parameters('scopedResources'), createArray(createObject('path', 'dummyResource', 'providerName', 'dummyProvider')))]",
@@ -41,7 +67,7 @@
     },
     "resources": [
         {
-            "apiVersion": "2019-10-17-preview",
+            "apiVersion": "[variables('apiVersions').privateLinkScopes]",
             "location": "global",
             "name": "[parameters('name')]",
             "properties": {},
@@ -49,7 +75,7 @@
             "type": "Microsoft.Insights/privateLinkScopes"
         },
         {
-            "apiVersion": "2019-10-17-preview",
+            "apiVersion": "[variables('apiVersions').privateLinkScopesResources]",
             "condition": "[variables('scopedResourcesIsNotEmpty')]",
             "copy": {
                 "count": "[variables('scopedResourcesLength')]",
@@ -64,6 +90,68 @@
                 "linkedResourceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/{2}/{3}', union(variables('defaultResourceProperties').linkedResource, variables('scopedResources')[copyIndex()]).subscriptionId, union(variables('defaultResourceProperties').linkedResource, variables('scopedResources')[copyIndex()]).resourceGroupName, variables('scopedResources')[copyIndex()].providerName, variables('scopedResources')[copyIndex()].path)]"
             },
             "type": "Microsoft.Insights/privateLinkScopes/scopedresources"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').privateEndpoints]",
+            "condition": "[variables('privateEndpointsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('privateEndpointsCount')]",
+                "mode": "Parallel",
+                "name": "privateEndpointsCopy"
+            },
+            "dependsOn": [
+                "[variables('privateLinkScopeResourceId')]"
+            ],
+            "location": "[resourceGroup().location]",
+            "name": "[variables('privateEndpoints')[copyIndex()].name]",
+            "properties": {
+                "customDnsConfigs": [],
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('privateEndpoints')[copyIndex()].name]",
+                        "properties": {
+                            "groupIds": [
+                                "azuremonitor"
+                            ],
+                            "privateLinkServiceId": "[variables('privateLinkScopeResourceId')]"
+                        }
+                    }
+                ],
+                "subnet": {
+                    "id": "[resourceId(union(variables('defaultResourceProperties').privateEndpoint, variables('privateEndpoints')[copyIndex()]).subnet.subscriptionId, union(variables('defaultResourceProperties').privateEndpoint, variables('privateEndpoints')[copyIndex()]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('privateEndpoints')[copyIndex()].subnet.virtualNetworkName, variables('privateEndpoints')[copyIndex()].subnet.name)]"
+                }
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Network/privateEndpoints"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').privateEndpointsPrivateDnsZoneGroups]",
+            "condition": "[variables('privateEndpointsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('privateEndpointsCount')]",
+                "mode": "Parallel",
+                "name": "privateDnsZoneGroupsCopy"
+            },
+            "dependsOn": [
+                "privateEndpointsCopy"
+            ],
+            "location": "[resourceGroup().location]",
+            "name": "[format('{0}/default', variables('privateEndpoints')[copyIndex()].name)]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(variables('privateEndpoints')[copyIndex()].dnsZones)]",
+                        "input": {
+                            "name": "[replace(variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')].name, '.', '-')]",
+                            "properties": {
+                                "privateDnsZoneId": "[resourceId(union(variables('defaultResourceProperties').privateEndpoint.dnsZone, variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')]).subscriptionId, union(variables('defaultResourceProperties').privateEndpoint.dnsZone, variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')]).resourceGroupName, 'Microsoft.Network/privateDnsZones', variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')].name)]"
+                            }
+                        },
+                        "name": "privateDnsZoneConfigs"
+                    }
+                ]
+            },
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups"
         }
     ]
 }

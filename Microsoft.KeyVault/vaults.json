@@ -43,6 +43,13 @@
             },
             "type": "bool"
         },
+        "isPublicNetworkAccessEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the Azure Key Vault is accessible from the internet."
+            },
+            "type": "bool"
+        },
         "isPurgeProtectionEnabled": {
             "defaultValue": true,
             "metadata": {
@@ -84,6 +91,13 @@
             },
             "minLength": 3,
             "type": "string"
+        },
+        "privateEndpoints": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of private endpoints that will be linked with the Azure Key Vault."
+            },
+            "type": "array"
         },
         "secrets": {
             "defaultValue": {},
@@ -136,7 +150,9 @@
         "apiVersions": {
             "diagnosticSettings": "2017-05-01-preview",
             "keyVaults": "2019-09-01",
-            "keyVaultSecretsApiVersion": "2019-09-01"
+            "keyVaultSecretsApiVersion": "2019-09-01",
+            "privateEndpoints": "2020-07-01",
+            "privateEndpointsPrivateDnsZoneGroups": "2020-07-01"
         },
         "copy": [
             {
@@ -149,24 +165,41 @@
             {
                 "count": "[length(parameters('virtualNetworkRules'))]",
                 "input": {
-                    "id": "[resourceId(union(variables('virtualNetworkRulesDefaultObject'), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subscriptionId, union(variables('virtualNetworkRulesDefaultObject'), parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
+                    "id": "[resourceId(union(variables('defaultResourceProperties').virtualNetworkRules, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subscriptionId, union(variables('defaultResourceProperties').virtualNetworkRules, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
                 },
                 "name": "virtualNetworkRules"
             }
         ],
-        "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
+        "defaultResourceProperties": {
+            "privateEndpoint": {
+                "dnsZone": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "subnet": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
+            },
+            "virtualNetworkRules": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            }
+        },
         "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
-        "keyVaultResourceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('name'))]",
+        "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('name', 'dummyEndpoint')))]",
+        "privateEndpointsCount": "[length(parameters('privateEndpoints'))]",
+        "privateEndpointsIsNotEmpty": "[greater(variables('privateEndpointsCount'), 0)]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "resourceIds": {
+            "keyVault": "[resourceId('Microsoft.KeyVault/vaults', parameters('name'))]"
+        },
         "secretsArrayCount": "[length(union(variables('secretsDefaultObject'), parameters('secrets')).array)]",
         "secretsArrayIsNotEmpty": "[greater(variables('secretsArrayCount'), 0)]",
         "secretsDefaultObject": {
             "array": []
         },
-        "virtualNetworkRulesDefaultObject": {
-            "resourceGroupName": "[resourceGroup().name]",
-            "subscriptionId": "[subscription().subscriptionId]"
-        },
-        "virtualNetworkRulesIsNotEmpty": "[greater(length(parameters('virtualNetworkRules')), 0)]"
+        "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
         {
@@ -183,9 +216,9 @@
                 "enableSoftDelete": true,
                 "networkAcls": {
                     "bypass": "[if(parameters('isAllowTrustedMicrosoftServicesEnabled'), 'AzureServices', 'None')]",
-                    "defaultAction": "[if(or(variables('firewallRulesIsNotEmpty'), variables('virtualNetworkRulesIsNotEmpty')), 'Deny', 'Allow')]",
-                    "ipRules": "[if(variables('firewallRulesIsNotEmpty'), variables('firewallRules'), json('null'))]",
-                    "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), variables('virtualNetworkRules'), json('null'))]"
+                    "defaultAction": "[if(parameters('isPublicNetworkAccessEnabled'), 'Allow', 'Deny')]",
+                    "ipRules": "[variables('firewallRules')]",
+                    "virtualNetworkRules": "[variables('virtualNetworkRules')]"
                 },
                 "sku": {
                     "family": "A",
@@ -198,9 +231,71 @@
             "type": "Microsoft.KeyVault/vaults"
         },
         {
+            "apiVersion": "[variables('apiVersions').privateEndpoints]",
+            "condition": "[variables('privateEndpointsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('privateEndpointsCount')]",
+                "mode": "Parallel",
+                "name": "privateEndpointsCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').keyVault]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[variables('privateEndpoints')[copyIndex()].name]",
+            "properties": {
+                "customDnsConfigs": [],
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('privateEndpoints')[copyIndex()].name]",
+                        "properties": {
+                            "groupIds": [
+                                "vault"
+                            ],
+                            "privateLinkServiceId": "[variables('resourceIds').keyVault]"
+                        }
+                    }
+                ],
+                "subnet": {
+                    "id": "[resourceId(union(variables('defaultResourceProperties').privateEndpoint, variables('privateEndpoints')[copyIndex()]).subnet.subscriptionId, union(variables('defaultResourceProperties').privateEndpoint, variables('privateEndpoints')[copyIndex()]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('privateEndpoints')[copyIndex()].subnet.virtualNetworkName, variables('privateEndpoints')[copyIndex()].subnet.name)]"
+                }
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Network/privateEndpoints"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').privateEndpointsPrivateDnsZoneGroups]",
+            "condition": "[variables('privateEndpointsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('privateEndpointsCount')]",
+                "mode": "Parallel",
+                "name": "privateDnsZoneGroupsCopy"
+            },
+            "dependsOn": [
+                "privateEndpointsCopy"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/default', variables('privateEndpoints')[copyIndex()].name)]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(variables('privateEndpoints')[copyIndex()].dnsZones)]",
+                        "input": {
+                            "name": "[replace(variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')].name, '.', '-')]",
+                            "properties": {
+                                "privateDnsZoneId": "[resourceId(union(variables('defaultResourceProperties').privateEndpoint.dnsZone, variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')]).subscriptionId, union(variables('defaultResourceProperties').privateEndpoint.dnsZone, variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')]).resourceGroupName, 'Microsoft.Network/privateDnsZones', variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')].name)]"
+                            }
+                        },
+                        "name": "privateDnsZoneConfigs"
+                    }
+                ]
+            },
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups"
+        },
+        {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
             "dependsOn": [
-                "[variables('keyVaultResourceId')]"
+                "[variables('resourceIds').keyVault]"
             ],
             "location": "[parameters('location')]",
             "name": "[format('{0}/microsoft.insights/audit', parameters('name'))]",
@@ -227,7 +322,7 @@
                 "name": "secretsCopy"
             },
             "dependsOn": [
-                "[variables('keyVaultResourceId')]"
+                "[variables('resourceIds').keyVault]"
             ],
             "name": "[format('{0}/{1}', parameters('name'), if(variables('secretsArrayIsNotEmpty'), parameters('secrets').array[copyIndex()].name, 'dummySecret'))]",
             "properties": {

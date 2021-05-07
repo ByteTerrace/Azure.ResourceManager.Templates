@@ -5,21 +5,21 @@
         "activeDirectoryAdministratorObjectId": {
             "defaultValue": "",
             "metadata": {
-                "description": "Specifies the Active Directory administrator object ID that will be assigned to the Azure SQL server."
+                "description": "Specifies the Active Directory administrator object ID that will be assigned to the Azure SQL Server."
             },
             "type": "string"
         },
         "activeDirectoryAdministratorTenantId": {
             "defaultValue": "[subscription().tenantId]",
             "metadata": {
-                "description": "Specifies the Active Directory administrator tenant ID that will be assigned to the Azure SQL server."
+                "description": "Specifies the Active Directory administrator tenant ID that will be assigned to the Azure SQL Server."
             },
             "type": "string"
         },
         "activeDirectoryAdministratorUserName": {
             "defaultValue": "",
             "metadata": {
-                "description": "Specifies the Active Directory administrator user name that will be assigned to the Azure SQL server."
+                "description": "Specifies the Active Directory administrator user name that will be assigned to the Azure SQL Server."
             },
             "type": "string"
         },
@@ -30,27 +30,27 @@
                 "SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP"
             ],
             "metadata": {
-                "description": "An array of Azure SQL server actions and groups that will be audited."
+                "description": "An array of Azure SQL Server actions and groups that will be audited."
             },
             "type": "array"
         },
         "auditLogAnalyticsWorkspaceName": {
             "metadata": {
-                "description": "Specifies the name of the Azure Log Analytics workspace that the Azure SQL server audit feature will send its data to."
+                "description": "Specifies the name of the Azure Log Analytics workspace that the Azure SQL Server audit feature will send its data to."
             },
             "type": "string"
         },
         "auditLogAnalyticsWorkspaceResourceGroupName": {
             "defaultValue": "[resourceGroup().name]",
             "metadata": {
-                "description": "Specifies the resource group name of the Azure Log Analytics workspace that the Azure SQL server audit feature will send its data to."
+                "description": "Specifies the resource group name of the Azure Log Analytics workspace that the Azure SQL Server audit feature will send its data to."
             },
             "type": "string"
         },
         "auditLogAnalyticsWorkspaceSubscriptionId": {
             "defaultValue": "[subscription().subscriptionId]",
             "metadata": {
-                "description": "Specifies the subscription id of the Azure Log Analytics workspace that the Azure SQL server audit feature will send its data to."
+                "description": "Specifies the subscription id of the Azure Log Analytics workspace that the Azure SQL Server audit feature will send its data to."
             },
             "type": "string"
         },
@@ -62,93 +62,72 @@
             ],
             "defaultValue": "Default",
             "metadata": {
-                "description": "Specifies how clients will connect to the Azure SQL server."
+                "description": "Specifies how clients will connect to the Azure SQL Server."
             },
             "type": "string"
         },
-        "customerManagedEncryptionKeyName": {
-            "defaultValue": "",
+        "customerManagedEncryption": {
+            "defaultValue": {},
             "metadata": {
-                "description": "Specifies the name of the customer-managed data encryption key."
+                "description": "An object that encapsulates the customer-managed encryption settings that will be applied to the Azure SQL Server."
             },
-            "type": "string"
-        },
-        "customerManagedEncryptionKeyVaultName": {
-            "defaultValue": "",
-            "metadata": {
-                "description": "Specifies the name of the key vault that houses the customer-managed data encryption key."
-            },
-            "type": "string"
-        },
-        "customerManagedEncryptionKeyVaultResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Specifies the resource group name of the key vault that houses the customer-managed data encryption key."
-            },
-            "type": "string"
-        },
-        "customerManagedEncryptionKeyVaultSubscriptionId": {
-            "defaultValue": "[subscription().subscriptionId]",
-            "metadata": {
-                "description": "Specifies the subscrioption id of the key vault that houses the customer-managed data encryption key."
-            },
-            "type": "string"
-        },
-        "customerManagedEncryptionKeyVersion": {
-            "defaultValue": "",
-            "metadata": {
-                "description": "Specifies the version of the customer-managed data encryption key."
-            },
-            "type": "string"
+            "type": "object"
         },
         "databases": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of databases that will be created within the Azure SQL server."
+                "description": "An array of databases that will be created within the Azure SQL Server."
             },
             "type": "array"
         },
         "dnsAliases": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of dns aliases that will be assigned to the Azure SQL server."
+                "description": "An array of dns aliases that will be assigned to the Azure SQL Server."
             },
             "type": "array"
         },
         "firewallRules": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of firewall rules that will be assigned to the Azure SQL server."
+                "description": "An array of firewall rules that will be assigned to the Azure SQL Server."
             },
             "type": "array"
         },
         "isPublicNetworkAccessEnabled": {
             "defaultValue": true,
             "metadata": {
-                "description": "Indicates whether the Azure SQL server is accessible from the internet."
+                "description": "Indicates whether the Azure SQL Server is accessible from the internet."
             },
             "type": "bool"
         },
         "isTrustedMicrosoftResourceAccessEnabled": {
             "defaultValue": false,
             "metadata": {
-                "description": "Indicates whether trusted Azure services and resources are allowed to access the Azure SQL server."
+                "description": "Indicates whether trusted Azure services and resources are allowed to access the Azure SQL Server."
             },
             "type": "bool"
         },
         "location": {
             "metadata": {
-                "description": "Specifies the location in which the Azure SQL server resource(s) will be deployed."
+                "description": "Specifies the location in which the Azure SQL Server resource(s) will be deployed."
             },
             "type": "string"
         },
         "name": {
             "maxLength": 63,
             "metadata": {
-                "description": "Specifies the name of the Azure SQL server."
+                "description": "Specifies the name of the Azure SQL Server."
             },
             "type": "string",
             "minLength": 1
+        },
+        "privateEndpoints": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of private endpoints that will be linked with the Azure SQL Server."
+            },
+            "type": "array"
         },
         "serverVersion": {
             "allowedValues": [
@@ -156,75 +135,93 @@
             ],
             "defaultValue": "12.0",
             "metadata": {
-                "description": "Specifies the version of the Azure SQL server."
+                "description": "Specifies the version of the Azure SQL Server."
             },
             "type": "string"
         },
         "sqlAdministratorUserName": {
             "defaultValue": "[uniqueString(toLower(parameters('name')))]",
             "metadata": {
-                "description": "Specifies the default SQL administrator user name that will be assigned to the Azure SQL server."
+                "description": "Specifies the default SQL administrator user name that will be assigned to the Azure SQL Server."
             },
             "type": "securestring"
         },
         "sqlAdministratorUserPassword": {
             "defaultValue": "[base64(replace(format('{0}{1}', newGuid(), newGuid()), '-', ''))]",
             "metadata": {
-                "description": "Specifies the default SQL administrator user password that will be assigned to the Azure SQL server."
+                "description": "Specifies the default SQL administrator user password that will be assigned to the Azure SQL Server."
             },
             "type": "securestring"
         },
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure SQL server."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure SQL Server."
             },
             "type": "object"
         },
         "virtualNetworkRules": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of virtual network rules that will be assigned to the Azure SQL server."
+                "description": "An array of virtual network rules that will be assigned to the Azure SQL Server."
             },
             "type": "array"
         }
     },
     "variables": {
         "apiVersions": {
+            "deployments": "2021-04-01",
             "diagnosticSettings": "2017-05-01-preview",
             "keyVaults": "2019-09-01",
-            "sqlAdministrators": "2020-11-01-preview",
-            "sqlAuditingSettings": "2020-11-01-preview",
-            "sqlAzureAdOnlyAuthentications": "2020-11-01-preview",
-            "sqlConnectionPolicies": "2014-04-01",
-            "sqlDatabases": "2020-11-01-preview",
-            "sqlDnsAliases": "2020-11-01-preview",
-            "sqlEncryptionProtectors": "2020-11-01-preview",
-            "sqlFirewallRules": "2020-11-01-preview",
-            "sqlKeys": "2020-11-01-preview",
+            "privateEndpoints": "2020-07-01",
+            "privateEndpointsPrivateDnsZoneGroups": "2020-07-01",
+            "roleAssignments": "2020-04-01-preview",
             "sqlServers": "2020-11-01-preview",
-            "sqlVirtualNetworkRules": "2020-11-01-preview"
+            "sqlServersAdministrators": "2020-11-01-preview",
+            "sqlServersAuditingSettings": "2020-11-01-preview",
+            "sqlServersAzureAdOnlyAuthentications": "2020-11-01-preview",
+            "sqlServersConnectionPolicies": "2014-04-01",
+            "sqlServersDatabases": "2020-11-01-preview",
+            "sqlServersDnsAliases": "2020-11-01-preview",
+            "sqlServersEncryptionProtectors": "2020-11-01-preview",
+            "sqlServersFirewallRules": "2020-11-01-preview",
+            "sqlServersKeys": "2020-11-01-preview",
+            "sqlServersVirtualNetworkRules": "2020-11-01-preview"
         },
-        "customerManagedEncryptionProperties": {
-            "isEnabled": "[and(not(empty(parameters('customerManagedEncryptionKeyVaultName'))), not(empty(parameters('customerManagedEncryptionKeyName'))), not(empty(parameters('customerManagedEncryptionKeyVersion'))))]",
-            "keyName": "[format('{0}_{1}_{2}', if(not(empty(parameters('customerManagedEncryptionKeyVaultName'))), parameters('customerManagedEncryptionKeyVaultName'), 'dummyVault'), if(not(empty(parameters('customerManagedEncryptionKeyName'))), parameters('customerManagedEncryptionKeyName'), 'dummyKey'), if(not(empty(parameters('customerManagedEncryptionKeyVersion'))), parameters('customerManagedEncryptionKeyVersion'), 'dummyVersion'))]",
-            "resourceGroupName": "[if(not(empty(parameters('customerManagedEncryptionKeyVaultResourceGroupName'))), parameters('customerManagedEncryptionKeyVaultResourceGroupName'), resourceGroup().name)]",
-            "subscriptionId": "[if(not(empty(parameters('customerManagedEncryptionKeyVaultSubscriptionId'))), parameters('customerManagedEncryptionKeyVaultSubscriptionId'), subscription().subscriptionId)]"
-        },
+        "customerManagedEncryption": "[union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption'))]",
         "databases": "[if(variables('databasesIsNotEmpty'), parameters('databases'), createArray(createObject('name', 'dummyDatabase')))]",
         "databasesIsNotEmpty": "[greater(length(parameters('databases')), 0)]",
         "defaultResourceProperties": {
+            "customerManagedEncryption": {
+                "keyName": "",
+                "keyVault": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "keyVersion": ""
+            },
             "databases": {
                 "catalogCollation": "DATABASE_DEFAULT",
                 "defaultCollation": "SQL_Latin1_General_CP1_CI_AS",
                 "isAzureHybridBenefitEnabled": false,
                 "skuName": "Basic"
             },
+            "privateEndpoint": {
+                "dnsZone": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "subnet": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
+            },
             "virtualNetworkRules": {
                 "ignoreMissingVnetServiceEndpoint": true,
                 "subnet": {
-                    "resourceGroupName": "[resourceGroup().name]",
-                    "subscriptionId": "[subscription().subscriptionId]"
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
                 }
             }
         },
@@ -234,14 +231,24 @@
         "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
         "isActiveDirectoryAdministratorEnabled": "[or(not(empty(parameters('activeDirectoryAdministratorObjectId'))), not(empty(parameters('activeDirectoryAdministratorUserName'))))]",
         "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
+        "isCustomerManagedEncryptionEnabled": "[not(empty(variables('customerManagedEncryption').keyName))]",
+        "keyName": "[format('{0}_{1}_{2}', if(empty(variables('customerManagedEncryption').keyVault.name), 'dummyVault', variables('customerManagedEncryption').keyVault.name), if(empty(variables('customerManagedEncryption').keyName), 'dummyKey', variables('customerManagedEncryption').keyName), if(empty(variables('customerManagedEncryption').keyVersion), 'dummyVersion', variables('customerManagedEncryption').keyVersion))]",
+        "keyVaultRbacDeploymentName": "[format('{0}-KvRbac', deployment().name)]",
+        "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('name', 'dummyEndpoint')))]",
+        "privateEndpointsCount": "[length(parameters('privateEndpoints'))]",
+        "privateEndpointsIsNotEmpty": "[greater(variables('privateEndpointsCount'), 0)]",
+        "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
-            "sqlAdministrator": "[resourceId('Microsoft.Sql/servers/administrators', variables('serverName'), 'activeDirectory')]",
-            "sqlAuditingSettings": "[resourceId('Microsoft.Sql/servers/auditingSettings', variables('serverName'), 'default')]",
-            "sqlCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryptionProperties').subscriptionId, variables('customerManagedEncryptionProperties').resourceGroupName, 'Microsoft.KeyVault/vaults', parameters('customerManagedEncryptionKeyVaultName'))]",
-            "sqlCustomerManagedEncryptionServerKey": "[resourceId('Microsoft.Sql/servers/keys', variables('serverName'), variables('customerManagedEncryptionProperties').keyName)]",
-            "sqlServer": "[resourceId('Microsoft.Sql/servers', variables('serverName'))]"
+            "keyVaultCryptoServiceEncryptionUserRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]",
+            "keyVaultRbacDeployment": "[resourceId('Microsoft.Resources/deployments', variables('keyVaultRbacDeploymentName'))]",
+            "sqlServer": "[resourceId('Microsoft.Sql/servers', variables('serverName'))]",
+            "sqlServerAdministrator": "[resourceId('Microsoft.Sql/servers/administrators', variables('serverName'), 'activeDirectory')]",
+            "sqlServerAuditingSettings": "[resourceId('Microsoft.Sql/servers/auditingSettings', variables('serverName'), 'default')]",
+            "sqlServerCustomerManagedEncryptionKey": "[resourceId('Microsoft.Sql/servers/keys', variables('serverName'), variables('keyName'))]",
+            "sqlServerCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', union(createObject('name', 'dummyKeyVault'), variables('customerManagedEncryption').keyVault).name)]"
         },
         "serverName": "[toLower(parameters('name'))]",
+        "subscriptionId": "[subscription().subscriptionId]",
         "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), parameters('virtualNetworkRules'), createArray(createObject('name', 'dummyRule')))]",
         "virtualNetworkRulesIsNotEmpty": "[greater(length(parameters('virtualNetworkRules')), 0)]"
     },
@@ -264,7 +271,80 @@
             "type": "Microsoft.Sql/servers"
         },
         {
-            "apiVersion": "[variables('apiVersions').sqlAdministrators]",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "condition": "[variables('isCustomerManagedEncryptionEnabled')]",
+            "dependsOn": [
+                "[variables('resourceIds').sqlServer]"
+            ],
+            "name": "[variables('keyVaultRbacDeploymentName')]",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "keyVaultCryptoServiceEncryptionUserRoleDefinitionId": {
+                        "value": "[variables('resourceIds').keyVaultCryptoServiceEncryptionUserRoleDefinition]"
+                    },
+                    "keyVaultName": {
+                        "value": "[variables('customerManagedEncryption').keyVault.name]"
+                    },
+                    "keyVaultResourceId": {
+                        "value": "[variables('resourceIds').sqlServerCustomerManagedEncryptionKeyVault]"
+                    },
+                    "roleAssignmentsApiVersion": {
+                        "value": "[variables('apiVersions').roleAssignments]"
+                    },
+                    "sqlServerApiVersion": {
+                        "value": "[variables('apiVersions').sqlServers]"
+                    },
+                    "sqlServerId": {
+                        "value": "[variables('resourceIds').sqlServer]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "keyVaultCryptoServiceEncryptionUserRoleDefinitionId": {
+                            "type": "string"
+                        },
+                        "keyVaultName": {
+                            "type": "string"
+                        },
+                        "keyVaultResourceId": {
+                            "type": "string"
+                        },
+                        "roleAssignmentsApiVersion":{
+                            "type": "string"
+                        },
+                        "sqlServerApiVersion": {
+                            "type": "string"
+                        },
+                        "sqlServerId": {
+                            "type": "string"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "apiVersion": "[parameters('roleAssignmentsApiVersion')]",
+                            "name": "[guid(parameters('sqlServerId'), parameters('keyVaultCryptoServiceEncryptionUserRoleDefinitionId'), parameters('keyVaultResourceId'))]",
+                            "properties": {
+                                "principalId": "[reference(parameters('sqlServerId'), parameters('sqlServerApiVersion'), 'Full').identity.principalId]",
+                                "roleDefinitionId": "[parameters('keyVaultCryptoServiceEncryptionUserRoleDefinitionId')]"
+                            },
+                            "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
+                            "type": "Microsoft.Authorization/roleAssignments"
+                        }
+                    ]
+                }
+            },
+            "resourceGroup": "[variables('customerManagedEncryption').keyVault.resourceGroupName]",
+            "subscriptionId": "[variables('customerManagedEncryption').keyVault.subscriptionId]",
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').sqlServersAdministrators]",
             "condition": "[variables('isActiveDirectoryAdministratorEnabled')]",
             "dependsOn": [
                 "[variables('resourceIds').sqlServer]"
@@ -279,11 +359,11 @@
             "type": "Microsoft.Sql/servers/administrators"
         },
         {
-            "apiVersion": "[variables('apiVersions').sqlAzureAdOnlyAuthentications]",
-            "condition": "[variables('isActiveDirectoryAdministratorEnabled')]",
+            "apiVersion": "[variables('apiVersions').sqlServersAzureAdOnlyAuthentications]",
+            "condition": false,
             "dependsOn": [
-                "[variables('resourceIds').sqlAdministrator]",
-                "[variables('resourceIds').sqlServer]"
+                "[variables('resourceIds').sqlServer]",
+                "[variables('resourceIds').sqlServerAdministrator]"
             ],
             "name": "[format('{0}/default', variables('serverName'))]",
             "properties": {
@@ -292,10 +372,10 @@
             "type": "Microsoft.Sql/servers/azureADOnlyAuthentications"
         },
         {
-            "apiVersion": "[variables('apiVersions').sqlConnectionPolicies]",
+            "apiVersion": "[variables('apiVersions').sqlServersConnectionPolicies]",
             "dependsOn": [
-                "[variables('resourceIds').sqlAdministrator]",
-                "[variables('resourceIds').sqlServer]"
+                "[variables('resourceIds').sqlServer]",
+                "[variables('resourceIds').sqlServerAdministrator]"
             ],
             "name": "[format('{0}/default', variables('serverName'))]",
             "properties": {
@@ -304,7 +384,7 @@
             "type": "Microsoft.Sql/servers/connectionPolicies"
         },
         {
-            "apiVersion": "[variables('apiVersions').sqlDnsAliases]",
+            "apiVersion": "[variables('apiVersions').sqlServersDnsAliases]",
             "condition": "[variables('dnsAliasesIsNotEmpty')]",
             "copy": {
                 "count": "[length(variables('dnsAliases'))]",
@@ -312,17 +392,81 @@
                 "name": "dnsAliasCopy"
             },
             "dependsOn": [
-                "[variables('resourceIds').sqlAdministrator]",
-                "[variables('resourceIds').sqlServer]"
+                "[variables('resourceIds').sqlServer]",
+                "[variables('resourceIds').sqlServerAdministrator]"
             ],
             "name": "[format('{0}/{1}', variables('serverName'), toLower(variables('dnsAliases')[copyIndex()]))]",
             "type": "Microsoft.Sql/servers/dnsAliases"
         },
         {
-            "apiVersion": "[variables('apiVersions').sqlFirewallRules]",
+            "apiVersion": "[variables('apiVersions').privateEndpoints]",
+            "condition": "[variables('privateEndpointsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('privateEndpointsCount')]",
+                "mode": "Parallel",
+                "name": "privateEndpointsCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').sqlServer]",
+                "[variables('resourceIds').sqlServerAdministrator]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[variables('privateEndpoints')[copyIndex()].name]",
+            "properties": {
+                "customDnsConfigs": [],
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('privateEndpoints')[copyIndex()].name]",
+                        "properties": {
+                            "groupIds": [
+                                "sqlServer"
+                            ],
+                            "privateLinkServiceId": "[variables('resourceIds').sqlServer]"
+                        }
+                    }
+                ],
+                "subnet": {
+                    "id": "[resourceId(union(variables('defaultResourceProperties').privateEndpoint, variables('privateEndpoints')[copyIndex()]).subnet.subscriptionId, union(variables('defaultResourceProperties').privateEndpoint, variables('privateEndpoints')[copyIndex()]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('privateEndpoints')[copyIndex()].subnet.virtualNetworkName, variables('privateEndpoints')[copyIndex()].subnet.name)]"
+                }
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Network/privateEndpoints"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').privateEndpointsPrivateDnsZoneGroups]",
+            "condition": "[variables('privateEndpointsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('privateEndpointsCount')]",
+                "mode": "Parallel",
+                "name": "privateDnsZoneGroupsCopy"
+            },
+            "dependsOn": [
+                "privateEndpointsCopy"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/default', variables('privateEndpoints')[copyIndex()].name)]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(variables('privateEndpoints')[copyIndex()].dnsZones)]",
+                        "input": {
+                            "name": "[replace(variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')].name, '.', '-')]",
+                            "properties": {
+                                "privateDnsZoneId": "[resourceId(union(variables('defaultResourceProperties').privateEndpoint.dnsZone, variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')]).subscriptionId, union(variables('defaultResourceProperties').privateEndpoint.dnsZone, variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')]).resourceGroupName, 'Microsoft.Network/privateDnsZones', variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')].name)]"
+                            }
+                        },
+                        "name": "privateDnsZoneConfigs"
+                    }
+                ]
+            },
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').sqlServersFirewallRules]",
             "condition": "[and(parameters('isPublicNetworkAccessEnabled'), parameters('isTrustedMicrosoftResourceAccessEnabled'))]",
             "dependsOn": [
-                "[variables('resourceIds').sqlServer]"
+                "[variables('resourceIds').sqlServer]",
+                "[variables('resourceIds').sqlServerAdministrator]"
             ],
             "name": "[format('{0}/AllowAllWindowsAzureIps', variables('serverName'))]",
             "properties": {
@@ -332,7 +476,7 @@
             "type": "Microsoft.Sql/servers/firewallRules"
         },
         {
-            "apiVersion": "[variables('apiVersions').sqlFirewallRules]",
+            "apiVersion": "[variables('apiVersions').sqlServersFirewallRules]",
             "condition": "[and(parameters('isPublicNetworkAccessEnabled'), variables('firewallRulesIsNotEmpty'))]",
             "copy": {
                 "count": "[length(variables('firewallRules'))]",
@@ -340,8 +484,8 @@
                 "name": "firewallRulesCopy"
             },
             "dependsOn": [
-                "[variables('resourceIds').sqlAdministrator]",
-                "[variables('resourceIds').sqlServer]"
+                "[variables('resourceIds').sqlServer]",
+                "[variables('resourceIds').sqlServerAdministrator]"
             ],
             "name": "[format('{0}/{1}', variables('serverName'), variables('firewallRules')[copyIndex()].name)]",
             "properties": {
@@ -351,7 +495,7 @@
             "type": "Microsoft.Sql/servers/firewallRules"
         },
         {
-            "apiVersion": "[variables('apiVersions').sqlVirtualNetworkRules]",
+            "apiVersion": "[variables('apiVersions').sqlServersVirtualNetworkRules]",
             "condition": "[and(parameters('isPublicNetworkAccessEnabled'), variables('virtualNetworkRulesIsNotEmpty'))]",
             "copy": {
                 "count": "[length(variables('virtualNetworkRules'))]",
@@ -360,8 +504,8 @@
             },
             "dependsOn": [
                 "firewallRulesCopy",
-                "[variables('resourceIds').sqlAdministrator]",
-                "[variables('resourceIds').sqlServer]"
+                "[variables('resourceIds').sqlServer]",
+                "[variables('resourceIds').sqlServerAdministrator]"
             ],
             "name": "[format('{0}/{1}', variables('serverName'), variables('virtualNetworkRules')[copyIndex()].name)]",
             "properties": {
@@ -371,48 +515,45 @@
             "type": "Microsoft.Sql/servers/virtualNetworkRules"
         },
         {
-            "apiVersion": "[variables('apiVersions').sqlKeys]",
-            "condition": "[variables('customerManagedEncryptionProperties').isEnabled]",
+            "apiVersion": "[variables('apiVersions').sqlServersKeys]",
+            "condition": "[variables('isCustomerManagedEncryptionEnabled')]",
             "dependsOn": [
                 "firewallRulesCopy",
                 "virtualNetworkRulesCopy",
-                "[variables('resourceIds').sqlAdministrator]",
-                "[variables('resourceIds').sqlServer]"
+                "[variables('resourceIds').keyVaultRbacDeployment]",
+                "[variables('resourceIds').sqlServer]",
+                "[variables('resourceIds').sqlServerAdministrator]"
             ],
             "kind": "AzureKeyVault",
-            "name": "[format('{0}/{1}', variables('serverName'), variables('customerManagedEncryptionProperties').keyName)]",
+            "name": "[format('{0}/{1}', variables('serverName'), variables('keyName'))]",
             "properties": {
                 "serverKeyType": "AzureKeyVault",
-                "uri": "[if(variables('customerManagedEncryptionProperties').isEnabled, format('{0}keys/{1}/{2}', reference(variables('resourceIds').sqlCustomerManagedEncryptionKeyVault, variables('apiVersions').keyVaults).vaultUri, parameters('customerManagedEncryptionKeyName'), parameters('customerManagedEncryptionKeyVersion')), json('null'))]"
+                "uri": "[if(variables('isCustomerManagedEncryptionEnabled'), format('{0}keys/{1}/{2}', reference(variables('resourceIds').sqlServerCustomerManagedEncryptionKeyVault, variables('apiVersions').keyVaults).vaultUri, variables('customerManagedEncryption').keyName, variables('customerManagedEncryption').keyVersion), json('null'))]"
             },
             "type": "Microsoft.Sql/servers/keys"
         },
         {
-            "apiVersion": "[variables('apiVersions').sqlEncryptionProtectors]",
-            "condition": "[variables('customerManagedEncryptionProperties').isEnabled]",
+            "apiVersion": "[variables('apiVersions').sqlServersEncryptionProtectors]",
+            "condition": "[variables('isCustomerManagedEncryptionEnabled')]",
             "dependsOn": [
-                "firewallRulesCopy",
-                "virtualNetworkRulesCopy",
-                "[variables('resourceIds').sqlAdministrator]",
-                "[variables('resourceIds').sqlCustomerManagedEncryptionServerKey]",
-                "[variables('resourceIds').sqlServer]"
+                "[variables('resourceIds').sqlServerCustomerManagedEncryptionKey]"
             ],
             "kind": "AzureKeyVault",
             "name": "[format('{0}/current', variables('serverName'))]",
             "properties": {
                 "autoRotationEnabled": true,
-                "serverKeyName": "[variables('customerManagedEncryptionProperties').keyName]",
+                "serverKeyName": "[variables('keyName')]",
                 "serverKeyType": "AzureKeyVault"
             },
             "type": "Microsoft.Sql/servers/encryptionProtector"
         },
         {
-            "apiVersion": "[variables('apiVersions').sqlAuditingSettings]",
+            "apiVersion": "[variables('apiVersions').sqlServersAuditingSettings]",
             "dependsOn": [
                 "firewallRulesCopy",
                 "virtualNetworkRulesCopy",
-                "[variables('resourceIds').sqlAdministrator]",
-                "[variables('resourceIds').sqlServer]"
+                "[variables('resourceIds').sqlServer]",
+                "[variables('resourceIds').sqlServerAdministrator]"
             ],
             "name": "[format('{0}/default', variables('serverName'))]",
             "properties": {
@@ -430,15 +571,39 @@
             "dependsOn": [
                 "firewallRulesCopy",
                 "virtualNetworkRulesCopy",
-                "[variables('resourceIds').sqlAdministrator]",
-                "[variables('resourceIds').sqlAuditingSettings]",
-                "[variables('resourceIds').sqlServer]"
+                "[variables('resourceIds').sqlServer]",
+                "[variables('resourceIds').sqlServerAdministrator]",
+                "[variables('resourceIds').sqlServerAuditingSettings]"
             ],
             "name": "[format('{0}/master/microsoft.insights/audit', variables('serverName'))]",
             "properties": {
                 "logs": [
                     {
+                        "category": "Blocks",
+                        "enabled": "[variables('isAuditingEnabled')]",
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "Deadlocks",
+                        "enabled": "[variables('isAuditingEnabled')]",
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
                         "category": "DevOpsOperationsAudit",
+                        "enabled": "[variables('isAuditingEnabled')]",
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "Errors",
                         "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "days": 0,
@@ -452,6 +617,14 @@
                             "days": 0,
                             "enabled": false
                         }
+                    },
+                    {
+                        "category": "Timeouts",
+                        "enabled": "[variables('isAuditingEnabled')]",
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
                     }
                 ],
                 "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
@@ -459,7 +632,7 @@
             "type": "Microsoft.Sql/servers/databases/providers/diagnosticSettings"
         },
         {
-            "apiVersion": "[variables('apiVersions').sqlDatabases]",
+            "apiVersion": "[variables('apiVersions').sqlServersDatabases]",
             "condition": "[variables('databasesIsNotEmpty')]",
             "copy": {
                 "count": "[length(variables('databases'))]",
@@ -469,9 +642,9 @@
             "dependsOn": [
                 "firewallRulesCopy",
                 "virtualNetworkRulesCopy",
-                "[variables('resourceIds').sqlAdministrator]",
-                "[variables('resourceIds').sqlAuditingSettings]",
-                "[variables('resourceIds').sqlServer]"
+                "[variables('resourceIds').sqlServer]",
+                "[variables('resourceIds').sqlServerAdministrator]",
+                "[variables('resourceIds').sqlServerAuditingSettings]"
             ],
             "location": "[parameters('location')]",
             "name": "[format('{0}/{1}', variables('serverName'), variables('databases')[copyIndex()].name)]",
@@ -486,6 +659,56 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Sql/servers/databases"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "copy": {
+                "count": "[length(variables('databases'))]",
+                "mode": "Parallel",
+                "name": "databasesDiagnosticsCopy"
+            },
+            "dependsOn": [
+                "databasesCopy"
+            ],
+            "name": "[format('{0}/{1}/microsoft.insights/audit', variables('serverName'), variables('databases')[copyIndex()].name)]",
+            "properties": {
+                "logs": [
+                    {
+                        "category": "Blocks",
+                        "enabled": "[variables('isAuditingEnabled')]",
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "Deadlocks",
+                        "enabled": "[variables('isAuditingEnabled')]",
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "Errors",
+                        "enabled": "[variables('isAuditingEnabled')]",
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "Timeouts",
+                        "enabled": "[variables('isAuditingEnabled')]",
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    }
+                ],
+                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
+            },
+            "type": "Microsoft.Sql/servers/databases/providers/diagnosticSettings"
         }
     ]
 }

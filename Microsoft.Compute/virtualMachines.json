@@ -178,8 +178,7 @@
         },
         "isSpotVirtualMachine": "[equals(toLower(parameters('priority')), 'spot')]",
         "networkInterfaceCardsCount": "[length(parameters('networkInterfaceCards'))]",
-        "resourceGroupName": "[resourceGroup().name]",
-        "subscriptionId": "[subscription().subscriptionId]"
+        "resourceGroupName": "[resourceGroup().name]"
     },
     "resources": [
         {
