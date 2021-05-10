@@ -303,7 +303,7 @@
                 "logs": [
                     {
                         "category": "AuditEvent",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0

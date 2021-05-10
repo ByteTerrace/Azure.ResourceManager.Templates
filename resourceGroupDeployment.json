@@ -54,6 +54,7 @@
             "proximityPlacementGroups": [],
             "publicIpAddresses": [],
             "publicIpPrefixes": [],
+            "recoveryServicesVaults": [],
             "routeTables": [],
             "scripts": {
                 "postDeploy": [],
@@ -135,7 +136,8 @@
             },
             "diskEncryptionSet": {
                 "isDoubleEncryptionAtRestEnabled": true,
-                "keyVaultResourceGroupName": "[variables('resourceGroupName')]"
+                "keyVaultResourceGroupName": "[variables('resourceGroupName')]",
+                "keyVaultSubscriptionId": "[variables('subscriptionId')]"
             },
             "dnsZone": {
                 "private": {
@@ -260,6 +262,8 @@
             "networkSecurityGroup": {
                 "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
                 "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
+                "flowLogStorageAccountResourceGroupName": "[variables('resourceGroupName')]",
+                "flowLogStorageAccountSubscriptionId": "[variables('subscriptionId')]",
                 "securityRules": []
             },
             "publicIpAddress": {
@@ -284,6 +288,12 @@
                 "ipVersion": "IPv4",
                 "size": 28,
                 "skuTier": "Regional"
+            },
+            "recoveryServicesVault": {
+                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
+                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
+                "backup": {},
+                "customerManagedEncryption": {}
             },
             "routeTable": {
                 "isBgpRoutePropagationEnabled": false,
@@ -315,7 +325,8 @@
                 "isTrustedMicrosoftResourceAccessEnabled": false,
                 "privateEndpoints": [],
                 "serverVersion": "12.0",
-                "virtualNetworkRules": []
+                "virtualNetworkRules": [],
+                "vulnerabilityAssessment": {}
             },
             "storageAccount": {
                 "accessTier": "Hot",
@@ -339,18 +350,18 @@
                 "virtualNetworkRules": []
             },
             "virtualMachine": {
+                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
+                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
                 "availabilitySetName": "",
                 "availabilitySetResourceGroupName": "[variables('resourceGroupName')]",
+                "backup": {},
                 "dataDisks": [],
                 "diskEncryptionSetName": "",
                 "diskEncryptionSetResourceGroupName": "[variables('resourceGroupName')]",
-                "imageReference": {
-                    "offer": "Windows-10",
-                    "publisher": "MicrosoftWindowsDesktop",
-                    "sku": "20h2-pro-g2",
-                    "version": "latest"
-                },
+                "imageReference": {},
+                "isEncryptionAtHostEnabled": true,
                 "licenseType": "Windows_Client",
+                "osDisk": {},
                 "priority": "Regular",
                 "size": "Standard_D4s_v4"
             },
@@ -397,6 +408,7 @@
             "privateEndpoint": "[format('{0}-PrivateEndpoint', deployment().name)]",
             "publicIpAddress": "[format('{0}-PublicIpAddress', deployment().name)]",
             "publicIpPrefix": "[format('{0}-PublicIpPrefix', deployment().name)]",
+            "recoveryServicesVault": "[format('{0}-RecoveryServicesVault', deployment().name)]",
             "routeTable": "[format('{0}-RouteTable', deployment().name)]",
             "scriptPostDeploy": "[format('{0}-ScriptPostDeploy', deployment().name)]",
             "scriptPreDeploy": "[format('{0}-ScriptPreDeploy', deployment().name)]",
@@ -406,6 +418,9 @@
             "virtualMachine": "[format('{0}-VirtualMachine', deployment().name)]",
             "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]"
         },
+        "logAnalyticsWorkspaces": "[if(variables('logAnalyticsWorkspacesIsNotEmpty'), variables('resourceDefinitions').monitor.logAnalyticsWorkspaces, createArray(createObject('name', 'dummyLogAnalyticsWorkspace')))]",
+        "logAnalyticsWorkspacesCount": "[length(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces)]",
+        "logAnalyticsWorkspacesIsNotEmpty": "[greater(variables('logAnalyticsWorkspacesCount'), 0)]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceDefinitions": "[union(variables('defaultResourceDefinitions'), parameters('resourceDefinitions'))]",
         "subscriptionId": "[subscription().subscriptionId]"
@@ -480,9 +495,9 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces))]",
+            "condition": "[variables('logAnalyticsWorkspacesIsNotEmpty')]",
             "copy": {
-                "count": "[length(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces)]",
+                "count": "[variables('logAnalyticsWorkspacesCount')]",
                 "mode": "Parallel",
                 "name": "logAnalyticsWorkspacesCopy"
             },
@@ -494,22 +509,22 @@
                 "mode": "Incremental",
                 "parameters": {
                     "dataRetentionInDays": {
-                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).dataRetentionInDays]"
+                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('logAnalyticsWorkspaces')[copyIndex()]).dataRetentionInDays]"
                     },
                     "isPublicNetworkAccessForIngestionEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForIngestionEnabled]"
+                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('logAnalyticsWorkspaces')[copyIndex()]).isPublicNetworkAccessForIngestionEnabled]"
                     },
                     "isPublicNetworkAccessForQueryEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).isPublicNetworkAccessForQueryEnabled]"
+                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('logAnalyticsWorkspaces')[copyIndex()]).isPublicNetworkAccessForQueryEnabled]"
                     },
                     "location": {
-                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).location]"
+                        "value": "[union(variables('defaultResourceProperties'), variables('logAnalyticsWorkspaces')[copyIndex()]).location]"
                     },
                     "name": {
-                        "value": "[variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()].name]"
+                        "value": "[variables('logAnalyticsWorkspaces')[copyIndex()].name]"
                     },
                     "skuName": {
-                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).skuName]"
+                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('logAnalyticsWorkspaces')[copyIndex()]).skuName]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
@@ -524,9 +539,9 @@
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces))]",
+            "condition": "[variables('logAnalyticsWorkspacesIsNotEmpty')]",
             "copy": {
-                "count": "[length(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces)]",
+                "count": "[variables('logAnalyticsWorkspacesCount')]",
                 "mode": "Parallel",
                 "name": "logAnalyticsWorkspacesLinkedStorageRbacCopy"
             },
@@ -542,10 +557,10 @@
                 "mode": "Incremental",
                 "parameters": {
                     "storageAccountName": {
-                        "value": "[variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()].linkedStorageAccountName]"
+                        "value": "[variables('logAnalyticsWorkspaces')[copyIndex()].linkedStorageAccountName]"
                     },
                     "storageAccountResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).linkedStorageAccountResourceGroupName]"
+                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('logAnalyticsWorkspaces')[copyIndex()]).linkedStorageAccountResourceGroupName]"
                     }
                 },
                 "template": {
@@ -562,17 +577,17 @@
                     "variables": {
                         "resourceIds": {
                             "diagnosticServicesTrustedStorageAccess": "dbc2e23f-cd5b-4d87-b528-852e3ca02f5a",
-                            "storageAccountBlobContributorRole": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+                            "storageAccountBlobContributorRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
                             "storageAccount": "[resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
                         }
                     },
                     "resources": [
                         {
                             "apiVersion": "2020-04-01-preview",
-                            "name": "[guid(variables('resourceIds').diagnosticServicesTrustedStorageAccess, variables('resourceIds').storageAccountBlobContributorRole, variables('resourceIds').storageAccount)]",
+                            "name": "[guid(variables('resourceIds').diagnosticServicesTrustedStorageAccess, variables('resourceIds').storageAccountBlobContributorRoleDefinition, variables('resourceIds').storageAccount)]",
                             "properties": {
                                 "principalId": "[variables('resourceIds').diagnosticServicesTrustedStorageAccess]",
-                                "roleDefinitionId": "[variables('resourceIds').storageAccountBlobContributorRole]"
+                                "roleDefinitionId": "[variables('resourceIds').storageAccountBlobContributorRoleDefinition]"
                             },
                             "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storageAccountName'))]",
                             "type": "Microsoft.Authorization/roleAssignments"
@@ -580,14 +595,14 @@
                     ]
                 }
             },
-            "resourceGroup": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).linkedStorageAccountResourceGroupName]",
+            "resourceGroup": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('logAnalyticsWorkspaces')[copyIndex()]).linkedStorageAccountResourceGroupName]",
             "type": "Microsoft.Resources/deployments"
         },
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces))]",
+            "condition": "[variables('logAnalyticsWorkspacesIsNotEmpty')]",
             "copy": {
-                "count": "[length(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces)]",
+                "count": "[variables('logAnalyticsWorkspacesCount')]",
                 "mode": "Parallel",
                 "name": "logAnalyticsWorkspacesLinkedStorageJoinCopy"
             },
@@ -604,13 +619,13 @@
                 "mode": "Incremental",
                 "parameters": {
                     "logAnalyticsWorkspaceName": {
-                        "value": "[variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()].name]"
+                        "value": "[variables('logAnalyticsWorkspaces')[copyIndex()].name]"
                     },
                     "storageAccountName": {
-                        "value": "[variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()].linkedStorageAccountName]"
+                        "value": "[variables('logAnalyticsWorkspaces')[copyIndex()].linkedStorageAccountName]"
                     },
                     "storageAccountResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('resourceDefinitions').monitor.logAnalyticsWorkspaces[copyIndex()]).linkedStorageAccountResourceGroupName]"
+                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('logAnalyticsWorkspaces')[copyIndex()]).linkedStorageAccountResourceGroupName]"
                     }
                 },
                 "template": {
@@ -858,6 +873,15 @@
                     },
                     "auditLogAnalyticsWorkspaceSubscriptionId": {
                         "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    },
+                    "flowLogStorageAccountName": {
+                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).flowLogStorageAccountName]"
+                    },
+                    "flowLogStorageAccountResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).flowLogStorageAccountResourceGroupName]"
+                    },
+                    "flowLogStorageAccountSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).flowLogStorageAccountSubscriptionId]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).location]"
@@ -1467,7 +1491,8 @@
             "dependsOn": [
                 "applicationInsightsComponentsCopy",
                 "logAnalyticsWorkspacesCopy",
-                "scriptsPreDeployCopy"
+                "scriptsPreDeployCopy",
+                "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').monitorPrivateLinkScope, copyIndex())]",
             "properties": {
@@ -1630,7 +1655,8 @@
             },
             "dependsOn": [
                 "keyVaultsCopy",
-                "scriptsPreDeployCopy"
+                "scriptsPreDeployCopy",
+                "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').applicationConfigurationStore, copyIndex())]",
             "properties": {
@@ -1661,6 +1687,56 @@
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.AppConfiguration/configurationStores.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "condition": "[not(empty(variables('resourceDefinitions').recoveryServicesVaults))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').recoveryServicesVaults)]",
+                "mode": "Parallel",
+                "name": "recoveryServicesVaultsCopy"
+            },
+            "dependsOn": [
+                "keyVaultsCopy",
+                "logAnalyticsWorkspacesCopy",
+                "scriptsPreDeployCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').recoveryServicesVault, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "auditLogAnalyticsWorkspaceName": {
+                        "value": "[union(variables('defaultResourceProperties').recoveryServicesVault, variables('resourceDefinitions').recoveryServicesVaults[copyIndex()]).auditLogAnalyticsWorkspaceName]"
+                    },
+                    "auditLogAnalyticsWorkspaceResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').recoveryServicesVault, variables('resourceDefinitions').recoveryServicesVaults[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
+                    },
+                    "auditLogAnalyticsWorkspaceSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').recoveryServicesVault, variables('resourceDefinitions').recoveryServicesVaults[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    },
+                    "backup": {
+                        "value": "[union(variables('defaultResourceProperties').recoveryServicesVault, variables('resourceDefinitions').recoveryServicesVaults[copyIndex()]).backup]"
+                    },
+                    "customerManagedEncryption": {
+                        "value": "[union(variables('defaultResourceProperties').recoveryServicesVault, variables('resourceDefinitions').recoveryServicesVaults[copyIndex()]).customerManagedEncryption]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').recoveryServicesVaults[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').recoveryServicesVaults[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.RecoveryServices/vaults.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -1862,6 +1938,9 @@
                     "keyVaultResourceGroupName": {
                         "value": "[union(variables('defaultResourceProperties').diskEncryptionSet, variables('resourceDefinitions').diskEncryptionSets[copyIndex()]).keyVaultResourceGroupName]"
                     },
+                    "keyVaultSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').diskEncryptionSet, variables('resourceDefinitions').diskEncryptionSets[copyIndex()]).keyVaultSubscriptionId]"
+                    },
                     "keyVersion": {
                         "value": "[variables('resourceDefinitions').diskEncryptionSets[copyIndex()].keyVersion]"
                     },
@@ -1895,6 +1974,7 @@
                 "availabilitySetsCopy",
                 "diskEncryptionSetsCopy",
                 "loadBalancersCopy",
+                "recoveryServicesVaultsCopy",
                 "scriptsPreDeployCopy",
                 "sharedImageGalleriesCopy",
                 "virtualNetworksCopy"
@@ -1903,11 +1983,23 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "auditLogAnalyticsWorkspaceName": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).auditLogAnalyticsWorkspaceName]"
+                    },
+                    "auditLogAnalyticsWorkspaceResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
+                    },
+                    "auditLogAnalyticsWorkspaceSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    },
                     "availabilitySetName": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).availabilitySetName]"
                     },
                     "availabilitySetResourceGroupName": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).availabilitySetResourceGroupName]"
+                    },
+                    "backup": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).backup]"
                     },
                     "dataDisks": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).dataDisks]"
@@ -1921,6 +2013,9 @@
                     "imageReference": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).imageReference]"
                     },
+                    "isEncryptionAtHostEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isEncryptionAtHostEnabled]"
+                    },
                     "licenseType": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).licenseType]"
                     },
@@ -1932,6 +2027,9 @@
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').virtualMachines[copyIndex()].name]"
+                    },
+                    "osDisk": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).osDisk]"
                     },
                     "priority": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).priority]"
@@ -2184,6 +2282,9 @@
                     },
                     "virtualNetworkRules": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).virtualNetworkRules]"
+                    },
+                    "vulnerabilityAssessment": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).vulnerabilityAssessment]"
                     }
                 },
                 "templateLink": {
@@ -2552,6 +2653,7 @@
                 "publicDnsZonesCopy",
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
+                "recoveryServicesVaultsCopy",
                 "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "sharedImageGalleriesCopy",

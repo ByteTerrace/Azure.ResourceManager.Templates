@@ -59,7 +59,7 @@
             "frontDoorDiagnosticsLogs": [
                 {
                     "category": "FrontDoorAccessLog",
-                    "enabled": true,
+                    "enabled": "[variables('isAuditingEnabled')]",
                     "retentionPolicy": {
                         "enabled": false,
                         "days": 0
@@ -67,7 +67,7 @@
                 },
                 {
                     "category": "FrontDoorHealthProbeLog",
-                    "enabled": true,
+                    "enabled": "[variables('isAuditingEnabled')]",
                     "retentionPolicy": {
                         "enabled": false,
                         "days": 0
@@ -75,7 +75,7 @@
                 },
                 {
                     "category": "FrontDoorWebApplicationFirewallLog",
-                    "enabled": true,
+                    "enabled": "[variables('isAuditingEnabled')]",
                     "retentionPolicy": {
                         "enabled": false,
                         "days": 0
@@ -85,7 +85,7 @@
             "microsoftDiagnosticsLogs": [
                 {
                     "category": "AzureCdnAccessLog",
-                    "enabled": true,
+                    "enabled": "[variables('isAuditingEnabled')]",
                     "retentionPolicy": {
                         "enabled": false,
                         "days": 0

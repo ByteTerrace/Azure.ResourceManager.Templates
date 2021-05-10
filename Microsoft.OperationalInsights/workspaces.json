@@ -57,6 +57,7 @@
     "variables": {
         "apiVersions": {
             "diagnosticSettings": "2017-05-01-preview",
+            "insightsDataCollectionRules": "2019-11-01-preview",
             "workspaceSolutions": "2015-11-01-preview",
             "workspaceViews": "2017-03-03-preview",
             "workspaces": "2020-08-01"
@@ -64,10 +65,12 @@
         "resourceIds": {
             "sqlAccessToSensitiveDataView": "[resourceId('Microsoft.OperationalInsights/workspaces/views', parameters('name'), 'SQLAccessToSensitiveData')]",
             "sqlSecurityInsightsView": "[resourceId('Microsoft.OperationalInsights/workspaces/views', parameters('name'), 'SQLSecurityInsights')]",
+            "vmInsightsSolution": "[resourceId('Microsoft.OperationsManagement/solutions', variables('vmInsightsSolutionName'))]",
             "workspace": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
         },
         "sqlNavigationQueryFieldsList": "bin(event_time_t, 1ms), SubscriptionId, ResourceGroup, server_instance_name_s, database_name_s, is_server_level_audit_s, statement_s, succeeded_s, duration_milliseconds_d, response_rows_d, affected_rows_d, action_name_s, class_type_description_s, client_ip_s, server_principal_name_s, database_principal_name_s, application_name_s, sequence_group_id_g, additional_information_s, data_sensitivity_information_s",
-        "sqlNavigationQueryFilters": "Category == 'SQLSecurityAuditEvents' and ${Subscription ID} and ${Resource group name} and ${Server name} and ${Database name}"
+        "sqlNavigationQueryFilters": "Category == 'SQLSecurityAuditEvents' and ${Subscription ID} and ${Resource group name} and ${Server name} and ${Database name}",
+        "vmInsightsSolutionName": "[format('VMInsights({0})', parameters('name'))]"
     },
     "resources": [
         {
@@ -1029,6 +1032,101 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.OperationsManagement/solutions"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').workspaceSolutions]",
+            "dependsOn": [
+                "[variables('resourceIds').workspace]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[variables('vmInsightsSolutionName')]",
+            "plan": {
+                "name": "[variables('vmInsightsSolutionName')]",
+                "product": "OMSGallery/VMInsights",
+                "promotionCode": "",
+                "publisher": "Microsoft"
+            },
+            "properties": {
+                "workspaceResourceId": "[variables('resourceIds').workspace]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.OperationsManagement/solutions"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').insightsDataCollectionRules]",
+            "dependsOn": [
+                "[variables('resourceIds').vmInsightsSolution]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('Microsoft-VMInsights-Health-{0}', parameters('name'))]",
+            "properties": {
+                "description": "Data collection rule for VM Insights health.",
+                "dataFlows": [
+                    {
+                        "destinations": [
+                            "Microsoft-HealthStateChange-Dest"
+                        ],
+                        "streams": [
+                            "Microsoft-HealthStateChange"
+                        ]
+                    }
+                ],
+                "dataSources": {
+                    "extensions": [
+                        {
+                            "extensionName": "HealthExtension",
+                            "extensionSettings": {
+                                "contentVersion": "",
+                                "healthRuleOverrides": [
+                                    {
+                                        "scopes": [
+                                            "*"
+                                        ],
+                                        "monitors": [
+                                            "root"
+                                        ],
+                                        "alertConfiguration": {
+                                            "isEnabled": true
+                                        }
+                                    }
+                                ],
+                                "schemaVersion": "1.0"
+                            },
+                            "name": "Microsoft-VMInsights-Health",
+                            "inputDataSources": [
+                                "VMHealthPerfCounters"
+                            ],
+                            "streams": [
+                                "Microsoft-HealthStateChange"
+                            ]
+                        }
+                    ],
+                    "performanceCounters": [
+                        {
+                            "counterSpecifiers": [
+                                "\\LogicalDisk(*)\\% Free Space",
+                                "\\Memory\\Available Bytes",
+                                "\\Processor(_Total)\\% Processor Time"
+                            ],
+                            "name": "VMHealthPerfCounters",
+                            "samplingFrequencyInSeconds": 60,
+                            "scheduledTransferPeriod": "PT1M",
+                            "streams": [
+                                "Microsoft-Perf"
+                            ]
+                        }
+                    ]
+                },
+                "destinations": {
+                    "logAnalytics": [
+                        {
+                            "name": "Microsoft-HealthStateChange-Dest",
+                            "workspaceResourceId": "[variables('resourceIds').workspace]"
+                        }
+                    ]
+                }
+            },
+            "type": "Microsoft.Insights/dataCollectionRules"
         }
     ]
 }

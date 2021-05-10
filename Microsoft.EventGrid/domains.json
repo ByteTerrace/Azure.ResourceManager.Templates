@@ -79,7 +79,7 @@
                 "logs": [
                     {
                         "category": "DeliveryFailures",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0
@@ -87,7 +87,7 @@
                     },
                     {
                         "category": "PublishFailures",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0

@@ -405,11 +405,11 @@
                     "keyVaultCryptoServiceEncryptionUserRoleDefinitionId": {
                         "value": "[variables('resourceIds').keyVaultCryptoServiceEncryptionUserRoleDefinition]"
                     },
+                    "keyVaultId": {
+                        "value": "[resourceId(variables('keyVaults')[copyIndex()].subscriptionId, variables('keyVaults')[copyIndex()].resourceGroupName, 'Microsoft.KeyVault/vaults', variables('keyVaults')[copyIndex()].name)]"
+                    },
                     "keyVaultName": {
                         "value": "[variables('keyVaults')[copyIndex()].name]"
-                    },
-                    "keyVaultResourceId": {
-                        "value": "[resourceId(variables('keyVaults')[copyIndex()].subscriptionId, variables('keyVaults')[copyIndex()].resourceGroupName, 'Microsoft.KeyVault/vaults', variables('keyVaults')[copyIndex()].name)]"
                     },
                     "roleAssignmentsApiVersion": {
                         "value": "[variables('apiVersions').roleAssignments]"
@@ -428,10 +428,10 @@
                         "keyVaultCryptoServiceEncryptionUserRoleDefinitionId": {
                             "type": "string"
                         },
-                        "keyVaultName": {
+                        "keyVaultId": {
                             "type": "string"
                         },
-                        "keyVaultResourceId": {
+                        "keyVaultName": {
                             "type": "string"
                         },
                         "roleAssignmentsApiVersion":{
@@ -447,7 +447,7 @@
                     "resources": [
                         {
                             "apiVersion": "[parameters('roleAssignmentsApiVersion')]",
-                            "name": "[guid(parameters('userAssignedIdentityId'), parameters('keyVaultCryptoServiceEncryptionUserRoleDefinitionId'), parameters('keyVaultResourceId'))]",
+                            "name": "[guid(parameters('userAssignedIdentityId'), parameters('keyVaultCryptoServiceEncryptionUserRoleDefinitionId'), parameters('keyVaultId'))]",
                             "properties": {
                                 "principalId": "[reference(parameters('userAssignedIdentityId'), parameters('userAssignedIdentitiesApiVersion'), 'Full').properties.principalId]",
                                 "roleDefinitionId": "[parameters('keyVaultCryptoServiceEncryptionUserRoleDefinitionId')]"
@@ -547,7 +547,6 @@
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
-            "condition": "[variables('isAuditingEnabled')]",
             "dependsOn": [
                 "[variables('resourceIds').storageAccount]"
             ],
@@ -556,7 +555,7 @@
                 "metrics": [
                     {
                         "category": "Transaction",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0
@@ -1061,7 +1060,6 @@
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
-            "condition": "[variables('isAuditingEnabled')]",
             "dependsOn": [
                 "[variables('resourceIds').storageAccountBlobServices]"
             ],
@@ -1071,7 +1069,7 @@
                 "logs": [
                     {
                         "category": "StorageDelete",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0
@@ -1123,7 +1121,6 @@
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
-            "condition": "[variables('isAuditingEnabled')]",
             "dependsOn": [
                 "[variables('resourceIds').storageAccountFileServices]"
             ],
@@ -1133,7 +1130,7 @@
                 "logs": [
                     {
                         "category": "StorageDelete",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0
@@ -1176,7 +1173,6 @@
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
-            "condition": "[variables('isAuditingEnabled')]",
             "dependsOn": [
                 "[variables('resourceIds').storageAccountQueueServices]"
             ],
@@ -1186,7 +1182,7 @@
                 "logs": [
                     {
                         "category": "StorageDelete",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0
@@ -1226,7 +1222,6 @@
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
-            "condition": "[variables('isAuditingEnabled')]",
             "dependsOn": [
                 "[variables('resourceIds').storageAccountTableServices]"
             ],
@@ -1236,7 +1231,7 @@
                 "logs": [
                     {
                         "category": "StorageDelete",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0

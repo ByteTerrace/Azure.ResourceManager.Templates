@@ -108,7 +108,7 @@
                 "logs": [
                     {
                         "category": "BastionAuditLogs",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0

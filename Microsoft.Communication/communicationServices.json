@@ -75,7 +75,7 @@
                 "logs": [
                     {
                         "category": "AuthOperational",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0
@@ -83,7 +83,7 @@
                     },
                     {
                         "category": "ChatOperational",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0
@@ -91,7 +91,7 @@
                     },
                     {
                         "category": "SMSOperational",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0
@@ -99,7 +99,7 @@
                     },
                     {
                         "category": "Usage",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0

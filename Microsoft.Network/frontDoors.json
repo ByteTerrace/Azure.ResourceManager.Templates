@@ -210,7 +210,7 @@
                 "logs": [
                     {
                         "category": "FrontdoorAccessLog",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0
@@ -218,7 +218,7 @@
                     },
                     {
                         "category": "FrontdoorWebApplicationFirewallLog",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0

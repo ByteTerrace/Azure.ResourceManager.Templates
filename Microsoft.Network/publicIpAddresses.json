@@ -169,7 +169,7 @@
                 "logs": [
                     {
                         "category": "DDoSMitigationFlowLogs",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0
@@ -177,7 +177,7 @@
                     },
                     {
                         "category": "DDoSMitigationReports",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0
@@ -185,7 +185,7 @@
                     },
                     {
                         "category": "DDoSProtectionNotifications",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0

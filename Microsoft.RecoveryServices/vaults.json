@@ -22,37 +22,19 @@
             },
             "type": "string"
         },
-        "isDoubleEncryptionAtRestEnabled": {
-            "defaultValue": true,
+        "backup": {
+            "defaultValue": {},
             "metadata": {
-                "description": "Indicates whether the double-encryption at rest feature is enabled on the Azure Recovery Services Vault."
+                "description": "An object that encapsulates the backup settings that will be applied to the Azure Recovery Services Vault."
             },
-            "type": "bool"
+            "type": "object"
         },
-        "keyName": {
+        "customerManagedEncryption": {
+            "defaultValue": {},
             "metadata": {
-                "description": "Specifies the name of the key that the Azure Recovery Services Vault will get from the Azure Key Vault."
+                "description": "An object that encapsulates the customer-managed encryption settings that will be applied to the Azure Recovery Services Vault."
             },
-            "type": "string"
-        },
-        "keyVaultName": {
-            "metadata": {
-                "description": "Specifies the name of the Azure Key Vault that the Azure Recovery Services Vault will get its encryption key from."
-            },
-            "type": "string"
-        },
-        "keyVaultResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Specifies the resource group name of the Azure Key Vault that the Azure Recovery Services Vault will get its encryption key from."
-            },
-            "type": "string"
-        },
-        "keyVersion": {
-            "metadata": {
-                "description": "Specifies the version of the key that the Azure Recovery Services Vault will get from the Azure Key Vault."
-            },
-            "type": "string"
+            "type": "object"
         },
         "location": {
             "metadata": {
@@ -76,17 +58,65 @@
     },
     "variables": {
         "apiVersions": {
+            "deployments": "2021-04-01",
             "diagnosticSettings": "2017-05-01-preview",
             "keyVaults": "2019-09-01",
+            "privateEndpoints": "2020-07-01",
+            "privateEndpointsPrivateDnsZoneGroups": "2020-07-01",
             "recoveryServicesVaults": "2016-06-01",
+            "resourceGroups": "2021-04-01",
             "roleAssignments": "2020-04-01-preview"
         },
+        "backupPrivateEndpoints": "[union(variables('defaultResourceProperties').backup, parameters('backup')).privateEndpoints]",
+        "backupPrivateEndpointsCount": "[length(variables('backupPrivateEndpoints'))]",
+        "backupPrivateEndpointsIsNotEmpty": "[greater(variables('backupPrivateEndpointsCount'), 0)]",
+        "copy": [
+            {
+                "count": "[variables('backupPrivateEndpointsCount')]",
+                "input": {
+                    "name": "[union(variables('defaultResourceProperties').privateEndpoint, variables('backupPrivateEndpoints')[copyIndex('privateEndpointResourceGroups')]).subnet.resourceGroupName]",
+                    "subscriptionId": "[union(variables('defaultResourceProperties').privateEndpoint, variables('backupPrivateEndpoints')[copyIndex('privateEndpointResourceGroups')]).subnet.subscriptionId]"
+                },
+                "name": "privateEndpointResourceGroups"
+            }
+        ],
+        "customerManagedEncryption": "[union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption'))]",
+        "defaultResourceProperties": {
+            "backup": {
+                "privateEndpoints": []
+            },
+            "customerManagedEncryption": {
+                "isDoubleEncryptionAtRestEnabled": true,
+                "keyName": "",
+                "keyVault": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "keyVersion": ""
+            },
+            "privateEndpoint": {
+                "dnsZone": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "subnet": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
+            }
+        },
         "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
+        "isCustomerManagedEncryptionEnabled": "[not(empty(variables('customerManagedEncryption').keyName))]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "resourceGroups": "[union(variables('privateEndpointResourceGroups'), createArray())]",
         "resourceIds": {
-            "keyVault": "[resourceId(parameters('keyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
-            "keyVaultCryptoServiceEncryptionUserRole": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]",
-            "recoveryServicesVault": "[resourceId('Microsoft.RecoveryServices/vaults', parameters('name'))]"
-        }
+            "contributorRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+            "keyVaultCryptoServiceEncryptionUserRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]",
+            "recoveryServicesVault": "[resourceId('Microsoft.RecoveryServices/vaults', parameters('name'))]",
+            "recoveryServicesVaultCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', union(createObject('name', 'dummyKeyVault'), variables('customerManagedEncryption').keyVault).name)]"
+        },
+        "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
         {
@@ -97,15 +127,7 @@
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
-                "encryption": {
-                    "infrastructureEncryption": "[if(parameters('isDoubleEncryptionAtRestEnabled'), 'Enabled', 'Disabled')]",
-                    "kekIdentity": {
-                        "useSystemAssignedIdentity": true
-                    },
-                    "keyVaultProperties": {
-                        "keyUri": "[format('{0}keys/{1}/{2}', reference(variables('resourceIds').keyVault, variables('apiVersions').keyVaults).vaultUri, parameters('keyName'), parameters('keyVersion'))]"
-                    }
-                }
+                "encryption": "[if(variables('isCustomerManagedEncryptionEnabled'), createObject('infrastructureEncryption', if(variables('customerManagedEncryption').isDoubleEncryptionAtRestEnabled, 'Enabled', 'Disabled'), 'kekIdentity', createObject('useSystemAssignedIdentity', json('true')), 'keyVaultProperties', createObject('keyUri', format('{0}keys/{1}/{2}', reference(variables('resourceIds').recoveryServicesVaultCustomerManagedEncryptionKeyVault, variables('apiVersions').keyVaults).vaultUri, variables('customerManagedEncryption').keyName, variables('customerManagedEncryption').keyVersion))), json('null'))]"
             },
             "sku": {
                 "name": "RS0",
@@ -115,17 +137,210 @@
             "type": "Microsoft.RecoveryServices/vaults"
         },
         {
-            "apiVersion": "[variables('apiVersions').roleAssignments]",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "condition": "[variables('isCustomerManagedEncryptionEnabled')]",
             "dependsOn": [
                 "[variables('resourceIds').recoveryServicesVault]"
             ],
-            "name": "[guid(variables('resourceIds').recoveryServicesVault, variables('resourceIds').keyVaultCryptoServiceEncryptionUserRole, variables('resourceIds').keyVault)]",
+            "name": "[format('{0}-KvRbac', deployment().name)]",
             "properties": {
-                "principalId": "[reference(variables('resourceIds').recoveryServicesVault, variables('apiVersions').recoveryServicesVaults, 'Full').identity.principalId]",
-                "roleDefinitionId": "[variables('resourceIds').keyVaultCryptoServiceEncryptionUserRole]"
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "keyVaultCryptoServiceEncryptionUserRoleDefinitionId": {
+                        "value": "[variables('resourceIds').keyVaultCryptoServiceEncryptionUserRoleDefinition]"
+                    },
+                    "keyVaultName": {
+                        "value": "[variables('customerManagedEncryption').keyVault.name]"
+                    },
+                    "keyVaultResourceId": {
+                        "value": "[variables('resourceIds').recoveryServicesVaultCustomerManagedEncryptionKeyVault]"
+                    },
+                    "recoveryServicesVaultApiVersion": {
+                        "value": "[variables('apiVersions').recoveryServicesVaults]"
+                    },
+                    "recoveryServicesVaultId": {
+                        "value": "[variables('resourceIds').recoveryServicesVault]"
+                    },
+                    "roleAssignmentsApiVersion": {
+                        "value": "[variables('apiVersions').roleAssignments]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "keyVaultCryptoServiceEncryptionUserRoleDefinitionId": {
+                            "type": "string"
+                        },
+                        "keyVaultName": {
+                            "type": "string"
+                        },
+                        "keyVaultResourceId": {
+                            "type": "string"
+                        },
+                        "recoveryServicesVaultApiVersion": {
+                            "type": "string"
+                        },
+                        "recoveryServicesVaultId": {
+                            "type": "string"
+                        },
+                        "roleAssignmentsApiVersion":{
+                            "type": "string"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "apiVersion": "[parameters('roleAssignmentsApiVersion')]",
+                            "name": "[guid(parameters('recoveryServicesVaultId'), parameters('keyVaultCryptoServiceEncryptionUserRoleDefinitionId'), parameters('keyVaultResourceId'))]",
+                            "properties": {
+                                "principalId": "[reference(parameters('recoveryServicesVaultId'), parameters('recoveryServicesVaultApiVersion'), 'Full').identity.principalId]",
+                                "roleDefinitionId": "[parameters('keyVaultCryptoServiceEncryptionUserRoleDefinitionId')]"
+                            },
+                            "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
+                            "type": "Microsoft.Authorization/roleAssignments"
+                        }
+                    ]
+                }
             },
-            "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
-            "type": "Microsoft.Authorization/roleAssignments"
+            "resourceGroup": "[variables('customerManagedEncryption').keyVault.resourceGroupName]",
+            "subscriptionId": "[variables('customerManagedEncryption').keyVault.subscriptionId]",
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "condition": "[variables('backupPrivateEndpointsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('backupPrivateEndpointsCount')]",
+                "mode": "Parallel",
+                "name": "resourceGroupsRbacCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').recoveryServicesVault]"
+            ],
+            "name": "[format('{0}-RgRbac_{1}', deployment().name, copyIndex())]",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "contributorRoleDefinitionId": {
+                        "value": "[variables('resourceIds').contributorRoleDefinition]"
+                    },
+                    "resourceGroupId": {
+                        "value": "[subscriptionResourceId(variables('resourceGroups')[copyIndex()].subscriptionId, 'Microsoft.Resources/resourceGroups', variables('resourceGroups')[copyIndex()].name)]"
+                    },
+                    "roleAssignmentsApiVersion": {
+                        "value": "[variables('apiVersions').roleAssignments]"
+                    },
+                    "recoveryServicesVaultsApiVersion": {
+                        "value": "[variables('apiVersions').recoveryServicesVaults]"
+                    },
+                    "recoveryServicesVaultId": {
+                        "value": "[variables('resourceIds').recoveryServicesVault]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "contributorRoleDefinitionId": {
+                            "type": "string"
+                        },
+                        "resourceGroupId": {
+                            "type": "string"
+                        },
+                        "roleAssignmentsApiVersion":{
+                            "type": "string"
+                        },
+                        "recoveryServicesVaultsApiVersion": {
+                            "type": "string"
+                        },
+                        "recoveryServicesVaultId": {
+                            "type": "string"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "apiVersion": "[parameters('roleAssignmentsApiVersion')]",
+                            "name": "[guid(parameters('recoveryServicesVaultId'), parameters('contributorRoleDefinitionId'), parameters('resourceGroupId'))]",
+                            "properties": {
+                                "principalId": "[reference(parameters('recoveryServicesVaultId'), parameters('recoveryServicesVaultsApiVersion'), 'Full').identity.principalId]",
+                                "roleDefinitionId": "[parameters('contributorRoleDefinitionId')]"
+                            },
+                            "type": "Microsoft.Authorization/roleAssignments"
+                        }
+                    ]
+                }
+            },
+            "resourceGroup": "[if(variables('backupPrivateEndpointsIsNotEmpty'), variables('resourceGroups')[copyIndex()].name, variables('resourceGroupName'))]",
+            "subscriptionId": "[if(variables('backupPrivateEndpointsIsNotEmpty'), variables('resourceGroups')[copyIndex()].subscriptionId, variables('subscriptionId'))]",
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').privateEndpoints]",
+            "condition": "[variables('backupPrivateEndpointsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('backupPrivateEndpointsCount')]",
+                "mode": "Parallel",
+                "name": "backupPrivateEndpointsCopy"
+            },
+            "dependsOn": [
+                "resourceGroupsRbacCopy"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[if(variables('backupPrivateEndpointsIsNotEmpty'), variables('backupPrivateEndpoints'), createArray(createObject('name', 'dummyBackupPrivateEndpoint')))[copyIndex()].name]",
+            "properties": {
+                "customDnsConfigs": [],
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('backupPrivateEndpoints')[copyIndex()].name]",
+                        "properties": {
+                            "groupIds": [
+                                "AzureBackup"
+                            ],
+                            "privateLinkServiceId": "[variables('resourceIds').recoveryServicesVault]"
+                        }
+                    }
+                ],
+                "subnet": {
+                    "id": "[resourceId(union(variables('defaultResourceProperties').privateEndpoint, variables('backupPrivateEndpoints')[copyIndex()]).subnet.subscriptionId, union(variables('defaultResourceProperties').privateEndpoint, variables('backupPrivateEndpoints')[copyIndex()]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('backupPrivateEndpoints')[copyIndex()].subnet.virtualNetworkName, variables('backupPrivateEndpoints')[copyIndex()].subnet.name)]"
+                }
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Network/privateEndpoints"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').privateEndpointsPrivateDnsZoneGroups]",
+            "condition": "[variables('backupPrivateEndpointsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('backupPrivateEndpointsCount')]",
+                "mode": "Parallel",
+                "name": "backupPrivateDnsZoneGroupsCopy"
+            },
+            "dependsOn": [
+                "backupPrivateEndpointsCopy"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/default', if(variables('backupPrivateEndpointsIsNotEmpty'), variables('backupPrivateEndpoints'), createArray(createObject('name', 'dummyBlobServicesPrivateDnsZoneGroup')))[copyIndex()].name)]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(union(variables('backupPrivateEndpoints'), createArray(createObject('dnsZones', createArray())))[copyIndex()].dnsZones)]",
+                        "input": {
+                            "name": "[replace(variables('backupPrivateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')].name, '.', '-')]",
+                            "properties": {
+                                "privateDnsZoneId": "[resourceId(union(variables('defaultResourceProperties').privateEndpoint.dnsZone, variables('backupPrivateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')]).subscriptionId, union(variables('defaultResourceProperties').privateEndpoint.dnsZone, variables('backupPrivateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')]).resourceGroupName, 'Microsoft.Network/privateDnsZones', variables('backupPrivateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')].name)]"
+                            }
+                        },
+                        "name": "privateDnsZoneConfigs"
+                    }
+                ]
+            },
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups"
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
@@ -138,7 +353,7 @@
                 "logs": [
                     {
                         "category": "AddonAzureBackupAlerts",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0
@@ -146,7 +361,7 @@
                     },
                     {
                         "category": "AddonAzureBackupJobs",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0
@@ -154,7 +369,7 @@
                     },
                     {
                         "category": "AddonAzureBackupPolicy",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0
@@ -162,7 +377,7 @@
                     },
                     {
                         "category": "AddonAzureBackupProtectedInstance",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0
@@ -170,7 +385,7 @@
                     },
                     {
                         "category": "AddonAzureBackupStorage",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0
@@ -178,7 +393,7 @@
                     },
                     {
                         "category": "CoreAzureBackup",
-                        "enabled": true,
+                        "enabled": "[variables('isAuditingEnabled')]",
                         "retentionPolicy": {
                             "enabled": false,
                             "days": 0
