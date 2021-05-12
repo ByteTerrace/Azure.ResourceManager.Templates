@@ -2,25 +2,12 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "auditLogAnalyticsWorkspaceName": {
+        "audit": {
+            "defaultValue": {},
             "metadata": {
-                "description": "Specifies the name of the Azure Log Analytics workspace that the Azure Event Grid Topic audit feature will send its data to."
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure Event Grid Topic."
             },
-            "type": "string"
-        },
-        "auditLogAnalyticsWorkspaceResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Specifies the resource group name of the Azure Log Analytics workspace that the Azure Event Grid Topic audit feature will send its data to."
-            },
-            "type": "string"
-        },
-        "auditLogAnalyticsWorkspaceSubscriptionId": {
-            "defaultValue": "[subscription().subscriptionId]",
-            "metadata": {
-                "description": "Specifies the subscription id of the Azure Log Analytics workspace that the Azure Event Grid Topic audit feature will send its data to."
-            },
-            "type": "string"
+            "type": "object"
         },
         "location": {
             "metadata": {
@@ -49,8 +36,33 @@
             "diagnosticSettings": "2017-05-01-preview",
             "eventGridTopics": "2020-10-15-preview"
         },
-        "eventGridDomainResourceId": "[resourceId('Microsoft.EventGrid/topics', parameters('name'))]",
-        "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]"
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "defaultResourceProperties": {
+            "audit": {
+                "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "logNames": [
+                    "DeliveryFailures",
+                    "PublishFailures"
+                ],
+                "retentionPolicy": {
+                    "days": 137,
+                    "isEnabled": true
+                }
+            }
+        },
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "resourceIds": {
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
+            "eventGridTopic": "[resourceId('Microsoft.EventGrid/topics', parameters('name'))]"
+        },
+        "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
         {
@@ -69,31 +81,28 @@
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
             "dependsOn": [
-                "[variables('eventGridDomainResourceId')]"
+                "[variables('resourceIds').eventGridTopic]"
             ],
             "location": "[parameters('location')]",
-            "name": "[format('{0}/microsoft.insights/audit', parameters('name'))]",
+            "name": "[format('{0}/Microsoft.Insights/audit', parameters('name'))]",
             "properties": {
-                "logs": [
+                "copy": [
                     {
-                        "category": "DeliveryFailures",
-                        "enabled": "[variables('isAuditingEnabled')]",
-                        "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
-                        }
-                    },
-                    {
-                        "category": "PublishFailures",
-                        "enabled": "[variables('isAuditingEnabled')]",
-                        "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
-                        }
+                        "count": "[length(variables('audit').logNames)]",
+                        "input": {
+                            "category": "[variables('audit').logNames[copyIndex('logs')]]",
+                            "enabled": "[variables('isAuditEnabled')]",
+                            "retentionPolicy": {
+                                "days": "[variables('audit').retentionPolicy.days]",
+                                "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                            }
+                        },
+                        "name": "logs"
                     }
                 ],
-                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
             "type": "Microsoft.EventGrid/topics/providers/diagnosticsettings"
         }

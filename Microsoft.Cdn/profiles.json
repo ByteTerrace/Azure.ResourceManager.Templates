@@ -2,30 +2,17 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "auditLogAnalyticsWorkspaceName": {
+        "audit": {
+            "defaultValue": {},
             "metadata": {
-                "description": "Specifies the name of the Azure Log Analytics workspace that the Azure CDN profile audit feature will send its data to."
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure CDN Profile."
             },
-            "type": "string"
-        },
-        "auditLogAnalyticsWorkspaceResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Specifies the resource group name of the Azure Log Analytics workspace that the Azure CDN profile audit feature will send its data to."
-            },
-            "type": "string"
-        },
-        "auditLogAnalyticsWorkspaceSubscriptionId": {
-            "defaultValue": "[subscription().subscriptionId]",
-            "metadata": {
-                "description": "Specifies the subscription id of the Azure Log Analytics workspace that the Azure CDN profile audit feature will send its data to."
-            },
-            "type": "string"
+            "type": "object"
         },
         "name": {
             "maxLength": 260,
             "metadata": {
-                "description": "Specifies the name of the Azure CDN profile."
+                "description": "Specifies the name of the Azure CDN Profile."
             },
             "minLength": 1,
             "type": "string"
@@ -38,14 +25,14 @@
             ],
             "defaultValue": "Standard_Microsoft",
             "metadata": {
-                "description": "Specifies the SKU name of the Azure CDN profile."
+                "description": "Specifies the SKU name of the Azure CDN Profile."
             },
             "type": "string"
         },
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure CDN profile."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure CDN Profile."
             },
             "type": "object"
         }
@@ -55,48 +42,65 @@
             "cdnProfiles": "2020-09-01",
             "diagnosticSettings": "2017-05-01-preview"
         },
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
         "defaultResourceProperties": {
-            "frontDoorDiagnosticsLogs": [
-                {
-                    "category": "FrontDoorAccessLog",
-                    "enabled": "[variables('isAuditingEnabled')]",
-                    "retentionPolicy": {
-                        "enabled": false,
-                        "days": 0
-                    }
+            "audit": {
+                "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
                 },
-                {
-                    "category": "FrontDoorHealthProbeLog",
-                    "enabled": "[variables('isAuditingEnabled')]",
-                    "retentionPolicy": {
-                        "enabled": false,
-                        "days": 0
-                    }
-                },
-                {
-                    "category": "FrontDoorWebApplicationFirewallLog",
-                    "enabled": "[variables('isAuditingEnabled')]",
-                    "retentionPolicy": {
-                        "enabled": false,
-                        "days": 0
-                    }
+                "retentionPolicy": {
+                    "days": 137,
+                    "isEnabled": true
                 }
-            ],
-            "microsoftDiagnosticsLogs": [
-                {
-                    "category": "AzureCdnAccessLog",
-                    "enabled": "[variables('isAuditingEnabled')]",
-                    "retentionPolicy": {
-                        "enabled": false,
-                        "days": 0
-                    }
-                }
-            ]
+            }
         },
-        "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
+        "frontDoorDiagnosticsLogs": [
+            {
+                "category": "FrontDoorAccessLog",
+                "enabled": "[variables('isAuditEnabled')]",
+                "retentionPolicy": {
+                    "days": "[variables('audit').retentionPolicy.days]",
+                    "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                }
+            },
+            {
+                "category": "FrontDoorHealthProbeLog",
+                "enabled": "[variables('isAuditEnabled')]",
+                "retentionPolicy": {
+                    "days": "[variables('audit').retentionPolicy.days]",
+                    "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                }
+            },
+            {
+                "category": "FrontDoorWebApplicationFirewallLog",
+                "enabled": "[variables('isAuditEnabled')]",
+                "retentionPolicy": {
+                    "days": "[variables('audit').retentionPolicy.days]",
+                    "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                }
+            }
+        ],
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "microsoftDiagnosticsLogs": [
+            {
+                "category": "AzureCdnAccessLog",
+                "enabled": "[variables('isAuditEnabled')]",
+                "retentionPolicy": {
+                    "days": "[variables('audit').retentionPolicy.days]",
+                    "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                }
+            }
+        ],
+        "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
             "cdnProfile": "[resourceId('Microsoft.Cdn/profiles', parameters('name'))]"
-        }
+        },
+        "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
         {
@@ -112,14 +116,15 @@
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
             "dependsOn": [
                 "[variables('resourceIds').cdnProfile]"
             ],
             "location": "global",
-            "name": "[format('{0}/microsoft.insights/audit', parameters('name'))]",
+            "name": "[format('{0}/Microsoft.Insights/audit', parameters('name'))]",
             "properties": {
-                "logs": "[if(endsWith(parameters('skuName'), 'AzureFrontDoor'), variables('defaultResourceProperties').frontDoorDiagnosticsLogs, variables('defaultResourceProperties').microsoftDiagnosticsLogs)]",
-                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
+                "logs": "[if(endsWith(parameters('skuName'), 'AzureFrontDoor'), variables('frontDoorDiagnosticsLogs'), variables('microsoftDiagnosticsLogs'))]",
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
             "type": "Microsoft.Cdn/profiles/providers/diagnosticsettings"
         }

@@ -13,25 +13,12 @@
             },
             "type": "string"
         },
-        "auditLogAnalyticsWorkspaceName": {
+        "audit": {
+            "defaultValue": {},
             "metadata": {
-                "description": "Specifies the name of the Azure Log Analytics workspace that the Azure Storage Account audit feature will send its data to."
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure Storage Account."
             },
-            "type": "string"
-        },
-        "auditLogAnalyticsWorkspaceResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Specifies the resource group name of the Azure Log Analytics workspace that the Azure Storage Account audit feature will send its data to."
-            },
-            "type": "string"
-        },
-        "auditLogAnalyticsWorkspaceSubscriptionId": {
-            "defaultValue": "[subscription().subscriptionId]",
-            "metadata": {
-                "description": "Specifies the subscription id of the Azure Log Analytics workspace that the Azure Storage Account audit feature will send its data to."
-            },
-            "type": "string"
+            "type": "object"
         },
         "blobServices": {
             "defaultValue": {},
@@ -76,7 +63,7 @@
             "type": "array"
         },
         "isAdvancedThreatProtectionEnabled": {
-            "defaultValue": false,
+            "defaultValue": true,
             "metadata": {
                 "description": "Indicates whether the advanced threat detection feature is enabled on the Azure Storage Account."
             },
@@ -90,7 +77,7 @@
             "type": "bool"
         },
         "isPublicNetworkAccessEnabled": {
-            "defaultValue": true,
+            "defaultValue": false,
             "metadata": {
                 "description": "Indicates whether the Azure Storage Account is accessible from the internet."
             },
@@ -207,6 +194,7 @@
             "storageAccountsTableServicesTables": "2021-02-01",
             "userAssignedIdentities": "2018-11-30"
         },
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
         "blobContainerCollection": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).containers.collection]",
         "blobContainerCollectionCount": "[length(variables('blobContainerCollection'))]",
         "blobContainerCollectionIsNotEmpty": "[greater(variables('blobContainerCollectionCount'), 0)]",
@@ -229,6 +217,18 @@
         "dataLakePrivateEndpointsCount": "[length(variables('dataLakePrivateEndpoints'))]",
         "dataLakePrivateEndpointsIsNotEmpty": "[greater(variables('dataLakePrivateEndpointsCount'), 0)]",
         "defaultResourceProperties": {
+            "audit": {
+                "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "retentionPolicy": {
+                    "days": 137,
+                    "isEnabled": true
+                }
+            },
             "blobContainer": {
                 "metadata": {},
                 "publicAccessType": "None"
@@ -251,6 +251,7 @@
             },
             "customerManagedEncryption": {
                 "isDoubleEncryptionAtRestEnabled": true,
+                "isEnabled": true,
                 "keyName": "",
                 "keyVault": {
                     "name": "",
@@ -337,8 +338,9 @@
         "fileShareCollectionCount": "[length(variables('fileShareCollection'))]",
         "fileShareCollectionIsNotEmpty": "[greater(variables('fileShareCollectionCount'), 0)]",
         "firewallRulesCount": "[length(parameters('firewallRules'))]",
-        "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
-        "isCustomerManagedEncryptionEnabled": "[not(empty(variables('customerManagedEncryption').keyName))]",
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "isCustomerManagedEncryptionEnabled": "[variables('customerManagedEncryption').isEnabled]",
         "keyVaults": "[union(variables('encryptionScopesKeyVaults'), if(variables('isCustomerManagedEncryptionEnabled'), createArray(variables('customerManagedEncryption').keyVault), createArray()))]",
         "keyVaultsCount": "[length(variables('keyVaults'))]",
         "keyVaultsIsNotEmpty": "[greater(variables('keyVaultsCount'), 0)]",
@@ -350,11 +352,12 @@
         "queueServicesPrivateEndpointsIsNotEmpty": "[greater(variables('queueServicesPrivateEndpointsCount'), 0)]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
             "keyVaultCryptoServiceEncryptionUserRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]",
             "ownerRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8e3af657-a8ff-443c-a75c-2fe8c4bcb635')]",
             "storageAccount": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
             "storageAccountBlobServices": "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]",
-            "storageAccountCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', union(createObject('name', 'dummyKeyVault'), variables('customerManagedEncryption').keyVault).name)]",
+            "storageAccountCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', if(variables('isCustomerManagedEncryptionEnabled'), variables('customerManagedEncryption').keyVault.name, '<NULL>'))]",
             "storageAccountFileServices": "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('storageAccountName'), 'default')]",
             "storageAccountManagedIdentity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('storageAccountManagedIdentityName'))]",
             "storageAccountQueueServices": "[resourceId('Microsoft.Storage/storageAccounts/queueServices', variables('storageAccountName'), 'default')]",
@@ -547,6 +550,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
             "dependsOn": [
                 "[variables('resourceIds').storageAccount]"
             ],
@@ -555,14 +559,14 @@
                 "metrics": [
                     {
                         "category": "Transaction",
-                        "enabled": "[variables('isAuditingEnabled')]",
+                        "enabled": "[variables('isAuditEnabled')]",
                         "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
+                            "days": "[variables('audit').retentionPolicy.days]",
+                            "enabled": "[variables('audit').retentionPolicy.isEnabled]"
                         }
                     }
                 ],
-                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
             "type": "Microsoft.Storage/storageAccounts/providers/diagnosticsettings"
         },
@@ -613,7 +617,245 @@
             "type": "Microsoft.Storage/storageAccounts/providers/advancedThreatProtectionSettings"
         },
         {
+            "apiVersion": "[variables('apiVersions').storageAccountsBlobServices]",
+            "dependsOn": [
+                "[variables('resourceIds').storageAccount]"
+            ],
+            "name": "[format('{0}/default', variables('storageAccountName'))]",
+            "properties": {
+                "changeFeed": {
+                    "enabled": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).isChangeFeedEnabled]"
+                },
+                "containerDeleteRetentionPolicy": {
+                    "days": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).containers.softDeleteRetentionPeriodInDays]",
+                    "enabled": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).containers.isSoftDeleteEnabled]"
+                },
+                "cors": {
+                    "corsRules": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).corsRules]"
+                },
+                "deleteRetentionPolicy": {
+                    "days": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).softDeleteRetentionPeriodInDays]",
+                    "enabled": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).isSoftDeleteEnabled]"
+                },
+                "isVersioningEnabled": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).isVersioningEnabled]",
+                "lastAccessTimeTrackingPolicy": "[json('null')]",
+                "restorePolicy": {
+                    "days": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).pointInTimeRestoreRetentionPeriodInDays]",
+                    "enabled": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).isPointInTimeRestoreEnabled]"
+                }
+            },
+            "type": "Microsoft.Storage/storageAccounts/blobServices"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').storageAccountsBlobServicesContainers]",
+            "condition": "[variables('blobContainerCollectionIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('blobContainerCollectionCount')]",
+                "mode": "Parallel",
+                "name": "blobContainersCopy"
+            },
+            "dependsOn": [
+                "encryptionScopesCopy",
+                "[variables('resourceIds').storageAccountBlobServices]"
+            ],
+            "name": "[format('{0}/default/{1}', variables('storageAccountName'), if(variables('blobContainerCollectionIsNotEmpty'), variables('blobContainerCollection'), createArray(createObject('name', 'dummyContainer')))[copyIndex()].name)]",
+            "properties": {
+                "metadata": "[union(variables('defaultResourceProperties').blobContainer, variables('blobContainerCollection')[copyIndex()]).metadata]",
+                "publicAccess": "[union(variables('defaultResourceProperties').blobContainer, variables('blobContainerCollection')[copyIndex()]).publicAccessType]"
+            },
+            "type": "Microsoft.Storage/storageAccounts/blobServices/containers"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
+            "dependsOn": [
+                "[variables('resourceIds').storageAccountBlobServices]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/default/Microsoft.Insights/audit', parameters('name'))]",
+            "properties": {
+                "logs": [
+                    {
+                        "category": "StorageDelete",
+                        "enabled": "[variables('isAuditEnabled')]",
+                        "retentionPolicy": {
+                            "days": "[variables('audit').retentionPolicy.days]",
+                            "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                        }
+                    }
+                ],
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
+            },
+            "type": "Microsoft.Storage/storageAccounts/blobServices/providers/diagnosticsettings"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').storageAccountsFileServices]",
+            "dependsOn": [
+                "[variables('resourceIds').storageAccountBlobServices]"
+            ],
+            "name": "[format('{0}/default', variables('storageAccountName'))]",
+            "properties": {
+                "cors": {
+                    "corsRules": "[union(variables('defaultResourceProperties').fileService, parameters('fileServices')).corsRules]"
+                },
+                "protocolSettings": "[json('null')]",
+                "shareDeleteRetentionPolicy": {
+                    "days": "[union(variables('defaultResourceProperties').fileService, parameters('fileServices')).shares.softDeleteRetentionPeriodInDays]",
+                    "enabled": "[union(variables('defaultResourceProperties').fileService, parameters('fileServices')).shares.isSoftDeleteEnabled]"
+                }
+            },
+            "type": "Microsoft.Storage/storageAccounts/fileServices"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').storageAccountsFileServicesShares]",
+            "condition": "[variables('fileShareCollectionIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('fileShareCollectionCount')]",
+                "mode": "Parallel",
+                "name": "fileSharesCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').storageAccountFileServices]"
+            ],
+            "name": "[format('{0}/default/{1}', variables('storageAccountName'), if(variables('fileShareCollectionIsNotEmpty'), variables('fileShareCollection'), createArray(createObject('name', 'dummyShare')))[copyIndex()].name)]",
+            "properties": {
+                "accessTier": "[union(variables('defaultResourceProperties').fileShare, variables('fileShareCollection')[copyIndex()]).accessTier]",
+                "enabledProtocols": "[union(variables('defaultResourceProperties').fileShare, variables('fileShareCollection')[copyIndex()]).enabledProtocols]",
+                "metadata": "[union(variables('defaultResourceProperties').fileShare, variables('fileShareCollection')[copyIndex()]).metadata]",
+                "rootSquash": "[union(variables('defaultResourceProperties').fileShare, variables('fileShareCollection')[copyIndex()]).rootSquash]",
+                "shareQuota": "[union(variables('defaultResourceProperties').fileShare, variables('fileShareCollection')[copyIndex()]).quotaInGigabytes]"
+            },
+            "type": "Microsoft.Storage/storageAccounts/fileServices/shares"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
+            "dependsOn": [
+                "[variables('resourceIds').storageAccountFileServices]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/default/Microsoft.Insights/audit', parameters('name'))]",
+            "properties": {
+                "logs": [
+                    {
+                        "category": "StorageDelete",
+                        "enabled": "[variables('isAuditEnabled')]",
+                        "retentionPolicy": {
+                            "days": "[variables('audit').retentionPolicy.days]",
+                            "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                        }
+                    }
+                ],
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
+            },
+            "type": "Microsoft.Storage/storageAccounts/fileServices/providers/diagnosticsettings"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').storageAccountsQueueServices]",
+            "dependsOn": [
+                "[variables('resourceIds').storageAccountFileServices]"
+            ],
+            "name": "[format('{0}/default', variables('storageAccountName'))]",
+            "properties": {
+                "cors": {
+                    "corsRules": "[union(variables('defaultResourceProperties').queueService, parameters('queueServices')).corsRules]"
+                }
+            },
+            "type": "Microsoft.Storage/storageAccounts/queueServices"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').storageAccountsQueueServicesQueues]",
+            "condition": "[variables('queueCollectionIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('queueCollectionCount')]",
+                "mode": "Parallel",
+                "name": "queuesCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').storageAccountQueueServices]"
+            ],
+            "name": "[format('{0}/default/{1}', variables('storageAccountName'), if(variables('queueCollectionIsNotEmpty'), variables('queueCollection'), createArray(createObject('name', 'dummyQueue')))[copyIndex()].name)]",
+            "properties": {
+                "metadata": "[union(variables('defaultResourceProperties').queue, variables('queueCollection')[copyIndex()]).metadata]"
+            },
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
+            "dependsOn": [
+                "[variables('resourceIds').storageAccountQueueServices]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/default/Microsoft.Insights/audit', parameters('name'))]",
+            "properties": {
+                "logs": [
+                    {
+                        "category": "StorageDelete",
+                        "enabled": "[variables('isAuditEnabled')]",
+                        "retentionPolicy": {
+                            "days": "[variables('audit').retentionPolicy.days]",
+                            "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                        }
+                    }
+                ],
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
+            },
+            "type": "Microsoft.Storage/storageAccounts/queueServices/providers/diagnosticsettings"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').storageAccountsTableServices]",
+            "dependsOn": [
+                "[variables('resourceIds').storageAccountQueueServices]"
+            ],
+            "name": "[format('{0}/default', variables('storageAccountName'))]",
+            "properties": {
+                "cors": {
+                    "corsRules": "[union(variables('defaultResourceProperties').tableService, parameters('tableServices')).corsRules]"
+                }
+            },
+            "type": "Microsoft.Storage/storageAccounts/tableServices"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').storageAccountsTableServicesTables]",
+            "condition": "[variables('tableCollectionIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('tableCollectionCount')]",
+                "mode": "Parallel",
+                "name": "tablesCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').storageAccountTableServices]"
+            ],
+            "name": "[format('{0}/default/{1}', variables('storageAccountName'), if(variables('tableCollectionIsNotEmpty'), variables('tableCollection'), createArray(createObject('name', 'dummyTable')))[copyIndex()].name)]",
+            "type": "Microsoft.Storage/storageAccounts/tableServices/tables"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
+            "dependsOn": [
+                "[variables('resourceIds').storageAccountTableServices]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/default/Microsoft.Insights/audit', parameters('name'))]",
+            "properties": {
+                "logs": [
+                    {
+                        "category": "StorageDelete",
+                        "enabled": "[variables('isAuditEnabled')]",
+                        "retentionPolicy": {
+                            "days": "[variables('audit').retentionPolicy.days]",
+                            "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                        }
+                    }
+                ],
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
+            },
+            "type": "Microsoft.Storage/storageAccounts/tableServices/providers/diagnosticsettings"
+        },
+        {
             "apiVersion": "[variables('apiVersions').deploymentScripts]",
+            "condition": false,
             "dependsOn": [
                 "[variables('resourceIds').storageAccount]"
             ],
@@ -646,7 +888,7 @@
                 "name": "blobServicesPrivateEndpointsCopy"
             },
             "dependsOn": [
-                "[variables('resourceIds').storageAccount]"
+                "[variables('resourceIds').storageAccountTableServices]"
             ],
             "location": "[parameters('location')]",
             "name": "[if(variables('blobServicesPrivateEndpointsIsNotEmpty'), variables('blobServicesPrivateEndpoints'), createArray(createObject('name', 'dummyBlobServicesEndpoint')))[copyIndex()].name]",
@@ -708,7 +950,7 @@
                 "name": "fileServicesPrivateEndpointsCopy"
             },
             "dependsOn": [
-                "[variables('resourceIds').storageAccount]"
+                "[variables('resourceIds').storageAccountTableServices]"
             ],
             "location": "[parameters('location')]",
             "name": "[if(variables('fileServicesPrivateEndpointsIsNotEmpty'), variables('fileServicesPrivateEndpoints'), createArray(createObject('name', 'dummyFileServicesEndpoint')))[copyIndex()].name]",
@@ -770,7 +1012,7 @@
                 "name": "queueServicesPrivateEndpointsCopy"
             },
             "dependsOn": [
-                "[variables('resourceIds').storageAccount]"
+                "[variables('resourceIds').storageAccountTableServices]"
             ],
             "location": "[parameters('location')]",
             "name": "[if(variables('queueServicesPrivateEndpointsIsNotEmpty'), variables('queueServicesPrivateEndpoints'), createArray(createObject('name', 'dummyQueueServicesEndpoint')))[copyIndex()].name]",
@@ -832,7 +1074,7 @@
                 "name": "tableServicesPrivateEndpointsCopy"
             },
             "dependsOn": [
-                "[variables('resourceIds').storageAccount]"
+                "[variables('resourceIds').storageAccountTableServices]"
             ],
             "location": "[parameters('location')]",
             "name": "[if(variables('tableServicesPrivateEndpointsIsNotEmpty'), variables('tableServicesPrivateEndpoints'), createArray(createObject('name', 'dummyTableServicesEndpoint')))[copyIndex()].name]",
@@ -894,7 +1136,7 @@
                 "name": "dataLakePrivateEndpointsCopy"
             },
             "dependsOn": [
-                "[variables('resourceIds').storageAccount]"
+                "[variables('resourceIds').storageAccountTableServices]"
             ],
             "location": "[parameters('location')]",
             "name": "[if(variables('dataLakePrivateEndpointsIsNotEmpty'), variables('dataLakePrivateEndpoints'), createArray(createObject('name', 'dummyDataLakeEndpoint')))[copyIndex()].name]",
@@ -956,7 +1198,7 @@
                 "name": "staticWebsitePrivateEndpointsCopy"
             },
             "dependsOn": [
-                "[variables('resourceIds').storageAccount]"
+                "[variables('resourceIds').storageAccountTableServices]"
             ],
             "location": "[parameters('location')]",
             "name": "[if(variables('staticWebsitePrivateEndpointsIsNotEmpty'), variables('staticWebsitePrivateEndpoints'), createArray(createObject('name', 'dummyStaticWebsiteEndpoint')))[copyIndex()].name]",
@@ -1008,239 +1250,6 @@
                 ]
             },
             "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').storageAccountsBlobServices]",
-            "dependsOn": [
-                "[variables('resourceIds').storageAccount]"
-            ],
-            "name": "[format('{0}/default', variables('storageAccountName'))]",
-            "properties": {
-                "changeFeed": {
-                    "enabled": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).isChangeFeedEnabled]"
-                },
-                "containerDeleteRetentionPolicy": {
-                    "days": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).containers.softDeleteRetentionPeriodInDays]",
-                    "enabled": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).containers.isSoftDeleteEnabled]"
-                },
-                "cors": {
-                    "corsRules": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).corsRules]"
-                },
-                "deleteRetentionPolicy": {
-                    "days": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).softDeleteRetentionPeriodInDays]",
-                    "enabled": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).isSoftDeleteEnabled]"
-                },
-                "isVersioningEnabled": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).isVersioningEnabled]",
-                "lastAccessTimeTrackingPolicy": "[json('null')]",
-                "restorePolicy": {
-                    "days": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).pointInTimeRestoreRetentionPeriodInDays]",
-                    "enabled": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).isPointInTimeRestoreEnabled]"
-                }
-            },
-            "type": "Microsoft.Storage/storageAccounts/blobServices"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').storageAccountsBlobServicesContainers]",
-            "condition": "[variables('blobContainerCollectionIsNotEmpty')]",
-            "copy": {
-                "count": "[variables('blobContainerCollectionCount')]",
-                "mode": "Parallel",
-                "name": "blobContainersCopy"
-            },
-            "dependsOn": [
-                "encryptionScopesCopy",
-                "[variables('resourceIds').storageAccountBlobServices]"
-            ],
-            "name": "[format('{0}/default/{1}', variables('storageAccountName'), if(variables('blobContainerCollectionIsNotEmpty'), variables('blobContainerCollection'), createArray(createObject('name', 'dummyContainer')))[copyIndex()].name)]",
-            "properties": {
-                "metadata": "[union(variables('defaultResourceProperties').blobContainer, variables('blobContainerCollection')[copyIndex()]).metadata]",
-                "publicAccess": "[union(variables('defaultResourceProperties').blobContainer, variables('blobContainerCollection')[copyIndex()]).publicAccessType]"
-            },
-            "type": "Microsoft.Storage/storageAccounts/blobServices/containers"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
-            "dependsOn": [
-                "[variables('resourceIds').storageAccountBlobServices]"
-            ],
-            "location": "[parameters('location')]",
-            "name": "[format('{0}/default/microsoft.insights/audit', parameters('name'))]",
-            "properties": {
-                "logs": [
-                    {
-                        "category": "StorageDelete",
-                        "enabled": "[variables('isAuditingEnabled')]",
-                        "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
-                        }
-                    }
-                ],
-                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
-            },
-            "type": "Microsoft.Storage/storageAccounts/blobServices/providers/diagnosticsettings"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').storageAccountsFileServices]",
-            "dependsOn": [
-                "[variables('resourceIds').storageAccount]"
-            ],
-            "name": "[format('{0}/default', variables('storageAccountName'))]",
-            "properties": {
-                "cors": {
-                    "corsRules": "[union(variables('defaultResourceProperties').fileService, parameters('fileServices')).corsRules]"
-                },
-                "protocolSettings": "[json('null')]",
-                "shareDeleteRetentionPolicy": {
-                    "days": "[union(variables('defaultResourceProperties').fileService, parameters('fileServices')).shares.softDeleteRetentionPeriodInDays]",
-                    "enabled": "[union(variables('defaultResourceProperties').fileService, parameters('fileServices')).shares.isSoftDeleteEnabled]"
-                }
-            },
-            "type": "Microsoft.Storage/storageAccounts/fileServices"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').storageAccountsFileServicesShares]",
-            "condition": "[variables('fileShareCollectionIsNotEmpty')]",
-            "copy": {
-                "count": "[variables('fileShareCollectionCount')]",
-                "mode": "Parallel",
-                "name": "fileSharesCopy"
-            },
-            "dependsOn": [
-                "[variables('resourceIds').storageAccountFileServices]"
-            ],
-            "name": "[format('{0}/default/{1}', variables('storageAccountName'), if(variables('fileShareCollectionIsNotEmpty'), variables('fileShareCollection'), createArray(createObject('name', 'dummyShare')))[copyIndex()].name)]",
-            "properties": {
-                "accessTier": "[union(variables('defaultResourceProperties').fileShare, variables('fileShareCollection')[copyIndex()]).accessTier]",
-                "enabledProtocols": "[union(variables('defaultResourceProperties').fileShare, variables('fileShareCollection')[copyIndex()]).enabledProtocols]",
-                "metadata": "[union(variables('defaultResourceProperties').fileShare, variables('fileShareCollection')[copyIndex()]).metadata]",
-                "rootSquash": "[union(variables('defaultResourceProperties').fileShare, variables('fileShareCollection')[copyIndex()]).rootSquash]",
-                "shareQuota": "[union(variables('defaultResourceProperties').fileShare, variables('fileShareCollection')[copyIndex()]).quotaInGigabytes]"
-            },
-            "type": "Microsoft.Storage/storageAccounts/fileServices/shares"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
-            "dependsOn": [
-                "[variables('resourceIds').storageAccountFileServices]"
-            ],
-            "location": "[parameters('location')]",
-            "name": "[format('{0}/default/microsoft.insights/audit', parameters('name'))]",
-            "properties": {
-                "logs": [
-                    {
-                        "category": "StorageDelete",
-                        "enabled": "[variables('isAuditingEnabled')]",
-                        "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
-                        }
-                    }
-                ],
-                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
-            },
-            "type": "Microsoft.Storage/storageAccounts/fileServices/providers/diagnosticsettings"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').storageAccountsQueueServices]",
-            "dependsOn": [
-                "[variables('resourceIds').storageAccount]"
-            ],
-            "name": "[format('{0}/default', variables('storageAccountName'))]",
-            "properties": {
-                "cors": {
-                    "corsRules": "[union(variables('defaultResourceProperties').queueService, parameters('queueServices')).corsRules]"
-                }
-            },
-            "type": "Microsoft.Storage/storageAccounts/queueServices"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').storageAccountsQueueServicesQueues]",
-            "condition": "[variables('queueCollectionIsNotEmpty')]",
-            "copy": {
-                "count": "[variables('queueCollectionCount')]",
-                "mode": "Parallel",
-                "name": "queuesCopy"
-            },
-            "dependsOn": [
-                "[variables('resourceIds').storageAccountQueueServices]"
-            ],
-            "name": "[format('{0}/default/{1}', variables('storageAccountName'), if(variables('queueCollectionIsNotEmpty'), variables('queueCollection'), createArray(createObject('name', 'dummyQueue')))[copyIndex()].name)]",
-            "properties": {
-                "metadata": "[union(variables('defaultResourceProperties').queue, variables('queueCollection')[copyIndex()]).metadata]"
-            },
-            "type": "Microsoft.Storage/storageAccounts/queueServices/queues"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
-            "dependsOn": [
-                "[variables('resourceIds').storageAccountQueueServices]"
-            ],
-            "location": "[parameters('location')]",
-            "name": "[format('{0}/default/microsoft.insights/audit', parameters('name'))]",
-            "properties": {
-                "logs": [
-                    {
-                        "category": "StorageDelete",
-                        "enabled": "[variables('isAuditingEnabled')]",
-                        "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
-                        }
-                    }
-                ],
-                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
-            },
-            "type": "Microsoft.Storage/storageAccounts/queueServices/providers/diagnosticsettings"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').storageAccountsTableServices]",
-            "dependsOn": [
-                "[variables('resourceIds').storageAccount]"
-            ],
-            "name": "[format('{0}/default', variables('storageAccountName'))]",
-            "properties": {
-                "cors": {
-                    "corsRules": "[union(variables('defaultResourceProperties').tableService, parameters('tableServices')).corsRules]"
-                }
-            },
-            "type": "Microsoft.Storage/storageAccounts/tableServices"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').storageAccountsTableServicesTables]",
-            "condition": "[variables('tableCollectionIsNotEmpty')]",
-            "copy": {
-                "count": "[variables('tableCollectionCount')]",
-                "mode": "Parallel",
-                "name": "tablesCopy"
-            },
-            "dependsOn": [
-                "[variables('resourceIds').storageAccountTableServices]"
-            ],
-            "name": "[format('{0}/default/{1}', variables('storageAccountName'), if(variables('tableCollectionIsNotEmpty'), variables('tableCollection'), createArray(createObject('name', 'dummyTable')))[copyIndex()].name)]",
-            "type": "Microsoft.Storage/storageAccounts/tableServices/tables"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
-            "dependsOn": [
-                "[variables('resourceIds').storageAccountTableServices]"
-            ],
-            "location": "[parameters('location')]",
-            "name": "[format('{0}/default/microsoft.insights/audit', parameters('name'))]",
-            "properties": {
-                "logs": [
-                    {
-                        "category": "StorageDelete",
-                        "enabled": "[variables('isAuditingEnabled')]",
-                        "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
-                        }
-                    }
-                ],
-                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
-            },
-            "type": "Microsoft.Storage/storageAccounts/tableServices/providers/diagnosticsettings"
         }
     ]
 }

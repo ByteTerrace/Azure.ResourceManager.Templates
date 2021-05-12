@@ -2,25 +2,12 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "auditLogAnalyticsWorkspaceName": {
+        "audit": {
+            "defaultValue": {},
             "metadata": {
-                "description": "Specifies the name of the Azure Log Analytics workspace that the Azure Key Vault audit feature will send its data to."
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure Key Vault."
             },
-            "type": "string"
-        },
-        "auditLogAnalyticsWorkspaceResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Specifies the resource group name of the Azure Log Analytics workspace that the Azure Key Vault audit feature will send its data to."
-            },
-            "type": "string"
-        },
-        "auditLogAnalyticsWorkspaceSubscriptionId": {
-            "defaultValue": "[subscription().subscriptionId]",
-            "metadata": {
-                "description": "Specifies the subscription id of the Azure Log Analytics workspace that the Azure Key Vault audit feature will send its data to."
-            },
-            "type": "string"
+            "type": "object"
         },
         "firewallRules": {
             "defaultValue": [],
@@ -154,6 +141,7 @@
             "privateEndpoints": "2020-07-01",
             "privateEndpointsPrivateDnsZoneGroups": "2020-07-01"
         },
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
         "copy": [
             {
                 "count": "[length(parameters('firewallRules'))]",
@@ -171,6 +159,21 @@
             }
         ],
         "defaultResourceProperties": {
+            "audit": {
+                "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "logNames": [
+                    "AuditEvent"
+                ],
+                "retentionPolicy": {
+                    "days": 137,
+                    "isEnabled": true
+                }
+            },
             "privateEndpoint": {
                 "dnsZone": {
                     "resourceGroupName": "[variables('resourceGroupName')]",
@@ -186,18 +189,20 @@
                 "subscriptionId": "[variables('subscriptionId')]"
             }
         },
-        "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
-        "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('name', 'dummyEndpoint')))]",
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('dnsZones', createArray(), 'name', 'dummyEndpoint')))]",
         "privateEndpointsCount": "[length(parameters('privateEndpoints'))]",
         "privateEndpointsIsNotEmpty": "[greater(variables('privateEndpointsCount'), 0)]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
             "keyVault": "[resourceId('Microsoft.KeyVault/vaults', parameters('name'))]"
         },
-        "secretsArrayCount": "[length(union(variables('secretsDefaultObject'), parameters('secrets')).array)]",
-        "secretsArrayIsNotEmpty": "[greater(variables('secretsArrayCount'), 0)]",
+        "secretsCollectionCount": "[length(union(variables('secretsDefaultObject'), parameters('secrets')).collection)]",
+        "secretsCollectionIsNotEmpty": "[greater(variables('secretsCollectionCount'), 0)]",
         "secretsDefaultObject": {
-            "array": []
+            "collection": []
         },
         "subscriptionId": "[subscription().subscriptionId]"
     },
@@ -294,39 +299,44 @@
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
             "dependsOn": [
                 "[variables('resourceIds').keyVault]"
             ],
             "location": "[parameters('location')]",
-            "name": "[format('{0}/microsoft.insights/audit', parameters('name'))]",
+            "name": "[format('{0}/Microsoft.Insights/audit', parameters('name'))]",
             "properties": {
-                "logs": [
+                "copy": [
                     {
-                        "category": "AuditEvent",
-                        "enabled": "[variables('isAuditingEnabled')]",
-                        "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
-                        }
+                        "count": "[length(variables('audit').logNames)]",
+                        "input": {
+                            "category": "[variables('audit').logNames[copyIndex('logs')]]",
+                            "enabled": "[variables('isAuditEnabled')]",
+                            "retentionPolicy": {
+                                "days": "[variables('audit').retentionPolicy.days]",
+                                "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                            }
+                        },
+                        "name": "logs"
                     }
                 ],
-                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
             "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings"
         },
         {
             "apiVersion": "[variables('apiVersions').keyVaultSecretsApiVersion]",
-            "condition": "[variables('secretsArrayIsNotEmpty')]",
+            "condition": "[variables('secretsCollectionIsNotEmpty')]",
             "copy": {
-                "count": "[variables('secretsArrayCount')]",
+                "count": "[variables('secretsCollectionCount')]",
                 "name": "secretsCopy"
             },
             "dependsOn": [
                 "[variables('resourceIds').keyVault]"
             ],
-            "name": "[format('{0}/{1}', parameters('name'), if(variables('secretsArrayIsNotEmpty'), parameters('secrets').array[copyIndex()].name, 'dummySecret'))]",
+            "name": "[format('{0}/{1}', parameters('name'), if(variables('secretsCollectionIsNotEmpty'), parameters('secrets').collection[copyIndex()].name, 'dummySecret'))]",
             "properties": {
-                "value": "[parameters('secrets').array[copyIndex()].value]"
+                "value": "[parameters('secrets').collection[copyIndex()].value]"
             },
             "type": "Microsoft.KeyVault/vaults/secrets"
         }

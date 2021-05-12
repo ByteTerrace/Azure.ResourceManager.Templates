@@ -2,6 +2,9 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "diagnosticServicesTrustedStorageAccessObjectId": {
+            "type": "string"
+        },
         "resourceDefinitions": {
             "defaultValue": {},
             "type": "secureObject"
@@ -12,6 +15,24 @@
         }
     },
     "variables": {
+        "apiVersions": {
+            "deployment": "2021-04-01",
+            "networkWatchersFlowLogs": "2020-07-01",
+            "roleAssignments": "2020-04-01-preview",
+            "workspacesLinkedStorageAccounts": "2020-08-01"
+        },
+        "audit": {
+            "isEnabled": true,
+            "logAnalyticsWorkspace": {
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "retentionPolicy": {
+                "days": 137,
+                "isEnabled": true
+            }
+        },
         "contentVersion": "[deployment().properties.template.contentVersion]",
         "defaultResourceDefinitions": {
             "applicationConfigurationStores": [],
@@ -35,7 +56,6 @@
                 "topics": []
             },
             "firewalls": [],
-            "frontDoors": [],
             "hdInsightClusters": [],
             "keyVaults": [],
             "kubernetesServiceClusters": [],
@@ -68,6 +88,7 @@
         },
         "defaultResourceProperties": {
             "applicationConfigurationStore": {
+                "customerManagedEncryption": {},
                 "isPublicNetworkAccessEnabled": true,
                 "privateEndpoints": [],
                 "settings": {},
@@ -87,17 +108,14 @@
                 "skuName": "Aligned"
             },
             "bastionHost": {
-                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
-                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]"
+                "audit": "[variables('audit')]"
             },
             "cdnProfile": {
-                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
-                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
+                "audit": "[variables('audit')]",
                 "skuName": "Standard_Microsoft"
             },
             "communicationService": {
-                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
-                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
+                "audit": "[variables('audit')]",
                 "dataLocation": "United States"
             },
             "containerInstance": {
@@ -116,6 +134,7 @@
                 "virtualNetworkSubscriptionId": "[variables('subscriptionId')]"
             },
             "containerRegistry": {
+                "customerManagedEncryption": {},
                 "firewallRules": [],
                 "isAdministratorAccountEnabled": false,
                 "isPublicNetworkAccessEnabled": true,
@@ -157,15 +176,13 @@
             },
             "eventGrid": {
                 "domain": {
-                    "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
-                    "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]"
+                    "audit": "[variables('audit')]"
                 },
                 "eventSubscription": {
                     "eventDeliverySchema": "EventGridSchema"
                 },
                 "topic": {
-                    "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
-                    "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]"
+                    "audit": "[variables('audit')]"
                 }
             },
             "firewalls": {
@@ -180,8 +197,7 @@
                 "skuTier": "Standard"
             },
             "frontDoor": {
-                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
-                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
+                "audit": "[variables('audit')]",
                 "backendPools": [],
                 "frontendEndpoints": [],
                 "healthProbeSettings": [],
@@ -194,10 +210,9 @@
                 "version": "4.0"
             },
             "keyVault": {
-                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
-                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
+                "audit": "[variables('audit')]",
                 "firewallRules": [],
-                "isAllowTrustedMicrosoftServicesEnabled": false,
+                "isAllowTrustedMicrosoftServicesEnabled": true,
                 "isDiskEncryptionEnabled": false,
                 "isPublicNetworkAccessEnabled": true,
                 "isPurgeProtectionEnabled": true,
@@ -225,6 +240,7 @@
                 "skuName": "Standard",
                 "skuTier": "Regional"
             },
+            "location": "[resourceGroup().location]",
             "logic": {
                 "application": {
                     "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
@@ -251,7 +267,6 @@
                     "scopedResources": []
                 }
             },
-            "location": "[resourceGroup().location]",
             "natGateway": {
                 "availabilityZones": [],
                 "idleTimeoutInMinutes": 4,
@@ -260,16 +275,12 @@
                 "skuName": "Standard"
             },
             "networkSecurityGroup": {
-                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
-                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
-                "flowLogStorageAccountResourceGroupName": "[variables('resourceGroupName')]",
-                "flowLogStorageAccountSubscriptionId": "[variables('subscriptionId')]",
+                "audit": "[union(createObject('flowLogStorageAccount', createObject('name', '', 'resourceGroupName', variables('resourceGroupName'), 'subscriptionId', variables('subscriptionId'))), variables('audit'))]",
                 "securityRules": []
             },
             "publicIpAddress": {
                 "allocationMethod": "Static",
-                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
-                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
+                "audit": "[variables('audit')]",
                 "availabilityZones": [
                     "1",
                     "2",
@@ -290,8 +301,7 @@
                 "skuTier": "Regional"
             },
             "recoveryServicesVault": {
-                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
-                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
+                "audit": "[variables('audit')]",
                 "backup": {},
                 "customerManagedEncryption": {}
             },
@@ -309,13 +319,7 @@
                 "activeDirectoryAdministratorObjectId": "",
                 "activeDirectoryAdministratorTenantId": "[subscription().tenantId]",
                 "activeDirectoryAdministratorUserName": "",
-                "auditActionsAndGroups": [
-                    "BATCH_COMPLETED_GROUP",
-                    "FAILED_DATABASE_AUTHENTICATION_GROUP",
-                    "SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP"
-                ],
-                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
-                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
+                "audit": "[variables('audit')]",
                 "connectionPolicy": "Default",
                 "customerManagedEncryption": {},
                 "databases": [],
@@ -330,16 +334,15 @@
             },
             "storageAccount": {
                 "accessTier": "Hot",
-                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
-                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
+                "audit": "[variables('audit')]",
                 "blobServices": {},
                 "customerManagedEncryption": {},
                 "dataLake": {},
                 "encryptionScopes": [],
                 "fileServices": {},
                 "firewallRules": [],
-                "isAdvancedThreatProtectionEnabled": false,
-                "isAllowTrustedMicrosoftServicesEnabled": false,
+                "isAdvancedThreatProtectionEnabled": true,
+                "isAllowTrustedMicrosoftServicesEnabled": true,
                 "isPublicNetworkAccessEnabled": true,
                 "isSharedKeyAccessEnabled": false,
                 "kind": "StorageV2",
@@ -350,8 +353,7 @@
                 "virtualNetworkRules": []
             },
             "virtualMachine": {
-                "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
-                "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
+                "audit": "[variables('audit')]",
                 "availabilitySetName": "",
                 "availabilitySetResourceGroupName": "[variables('resourceGroupName')]",
                 "backup": {},
@@ -373,7 +375,6 @@
                 "subnets": []
             }
         },
-        "deploymentApiVersion": "2021-04-01",
         "deploymentNames": {
             "applicationConfigurationStore": "[format('{0}-AppConfigurationStore', deployment().name)]",
             "applicationInsightsComponent": "[format('{0}-AppInsightsComponent', deployment().name)]",
@@ -393,7 +394,6 @@
             "eventGridEventSubscription": "[format('{0}-EventGridEventSub', deployment().name)]",
             "eventGridTopic": "[format('{0}-EventGridTopic', deployment().name)]",
             "firewall": "[format('{0}-Firewall', deployment().name)]",
-            "frontDoor": "[format('{0}-FrontDoor', deployment().name)]",
             "hdInsightCluster": "[format('{0}-HdInsightCluster', deployment().name)]",
             "keyVault": "[format('{0}-KeyVault', deployment().name)]",
             "kubernetesServiceCluster": "[format('{0}-KubernetesServiceCluster', deployment().name)]",
@@ -427,7 +427,7 @@
     },
     "resources": [
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').scripts.preDeploy))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').scripts.preDeploy)]",
@@ -462,7 +462,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').managedIdentities))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').managedIdentities)]",
@@ -494,7 +494,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[variables('logAnalyticsWorkspacesIsNotEmpty')]",
             "copy": {
                 "count": "[variables('logAnalyticsWorkspacesCount')]",
@@ -538,7 +538,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[variables('logAnalyticsWorkspacesIsNotEmpty')]",
             "copy": {
                 "count": "[variables('logAnalyticsWorkspacesCount')]",
@@ -556,6 +556,12 @@
                 },
                 "mode": "Incremental",
                 "parameters": {
+                    "diagnosticServicesTrustedStorageAccessObjectId": {
+                        "value": "[parameters('diagnosticServicesTrustedStorageAccessObjectId')]"
+                    },
+                    "roleAssignmentsApiVersion": {
+                        "value": "[variables('apiVersions').roleAssignments]"
+                    },
                     "storageAccountName": {
                         "value": "[variables('logAnalyticsWorkspaces')[copyIndex()].linkedStorageAccountName]"
                     },
@@ -567,6 +573,12 @@
                     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
                     "contentVersion": "1.0.0.0",
                     "parameters": {
+                        "diagnosticServicesTrustedStorageAccessObjectId": {
+                            "type": "string"
+                        },
+                        "roleAssignmentsApiVersion": {
+                            "type": "string"
+                        },
                         "storageAccountName": {
                             "type": "string"
                         },
@@ -576,17 +588,16 @@
                     },
                     "variables": {
                         "resourceIds": {
-                            "diagnosticServicesTrustedStorageAccess": "dbc2e23f-cd5b-4d87-b528-852e3ca02f5a",
                             "storageAccountBlobContributorRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
                             "storageAccount": "[resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
                         }
                     },
                     "resources": [
                         {
-                            "apiVersion": "2020-04-01-preview",
-                            "name": "[guid(variables('resourceIds').diagnosticServicesTrustedStorageAccess, variables('resourceIds').storageAccountBlobContributorRoleDefinition, variables('resourceIds').storageAccount)]",
+                            "apiVersion": "[parameters('roleAssignmentsApiVersion')]",
+                            "name": "[guid(parameters('diagnosticServicesTrustedStorageAccessObjectId'), variables('resourceIds').storageAccountBlobContributorRoleDefinition, variables('resourceIds').storageAccount)]",
                             "properties": {
-                                "principalId": "[variables('resourceIds').diagnosticServicesTrustedStorageAccess]",
+                                "principalId": "[parameters('diagnosticServicesTrustedStorageAccessObjectId')]",
                                 "roleDefinitionId": "[variables('resourceIds').storageAccountBlobContributorRoleDefinition]"
                             },
                             "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storageAccountName'))]",
@@ -599,7 +610,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[variables('logAnalyticsWorkspacesIsNotEmpty')]",
             "copy": {
                 "count": "[variables('logAnalyticsWorkspacesCount')]",
@@ -626,6 +637,9 @@
                     },
                     "storageAccountResourceGroupName": {
                         "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('logAnalyticsWorkspaces')[copyIndex()]).linkedStorageAccountResourceGroupName]"
+                    },
+                    "workspacesLinkedStorageAccountsApiVersion": {
+                        "value": "[variables('apiVersions').workspacesLinkedStorageAccounts]"
                     }
                 },
                 "template": {
@@ -640,19 +654,19 @@
                         },
                         "storageAccountResourceGroupName": {
                             "type": "string"
+                        },
+                        "workspacesLinkedStorageAccountsApiVersion": {
+                            "type": "string"
                         }
                     },
                     "variables": {
-                        "apiVersions": {
-                            "linkedStorageAccounts": "2020-08-01"
-                        },
                         "resourceIds": {
                             "storageAccount": "[resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
                         }
                     },
                     "resources": [
                         {
-                            "apiVersion": "[variables('apiVersions').linkedStorageAccounts]",
+                            "apiVersion": "[parameters('workspacesLinkedStorageAccountsApiVersion')]",
                             "name": "[format('{0}/alerts', parameters('logAnalyticsWorkspaceName'))]",
                             "properties": {
                                 "storageAccountIds": [
@@ -662,7 +676,7 @@
                             "type": "Microsoft.OperationalInsights/workspaces/linkedStorageAccounts"
                         },
                         {
-                            "apiVersion": "[variables('apiVersions').linkedStorageAccounts]",
+                            "apiVersion": "[parameters('workspacesLinkedStorageAccountsApiVersion')]",
                             "name": "[format('{0}/customlogs', parameters('logAnalyticsWorkspaceName'))]",
                             "properties": {
                                 "storageAccountIds": [
@@ -672,7 +686,7 @@
                             "type": "Microsoft.OperationalInsights/workspaces/linkedStorageAccounts"
                         },
                         {
-                            "apiVersion": "[variables('apiVersions').linkedStorageAccounts]",
+                            "apiVersion": "[parameters('workspacesLinkedStorageAccountsApiVersion')]",
                             "name": "[format('{0}/query', parameters('logAnalyticsWorkspaceName'))]",
                             "properties": {
                                 "storageAccountIds": [
@@ -687,7 +701,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').publicIpPrefixes))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').publicIpPrefixes)]",
@@ -728,7 +742,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').publicIpAddresses))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').publicIpAddresses)]",
@@ -747,14 +761,8 @@
                     "allocationMethod": {
                         "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).allocationMethod]"
                     },
-                    "auditLogAnalyticsWorkspaceName": {
-                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).auditLogAnalyticsWorkspaceName]"
-                    },
-                    "auditLogAnalyticsWorkspaceResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
-                    },
-                    "auditLogAnalyticsWorkspaceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).audit]"
                     },
                     "availabilityZones": {
                         "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).availabilityZones]"
@@ -801,7 +809,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').natGateways))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').natGateways)]",
@@ -850,7 +858,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').networkSecurityGroups))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').networkSecurityGroups)]",
@@ -865,23 +873,8 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "auditLogAnalyticsWorkspaceName": {
-                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).auditLogAnalyticsWorkspaceName]"
-                    },
-                    "auditLogAnalyticsWorkspaceResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
-                    },
-                    "auditLogAnalyticsWorkspaceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
-                    },
-                    "flowLogStorageAccountName": {
-                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).flowLogStorageAccountName]"
-                    },
-                    "flowLogStorageAccountResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).flowLogStorageAccountResourceGroupName]"
-                    },
-                    "flowLogStorageAccountSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).flowLogStorageAccountSubscriptionId]"
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).audit]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).location]"
@@ -904,7 +897,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').applicationSecurityGroups))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').applicationSecurityGroups)]",
@@ -936,7 +929,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').routeTables))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').routeTables)]",
@@ -974,7 +967,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').cdnProfiles))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').cdnProfiles)]",
@@ -989,14 +982,8 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "auditLogAnalyticsWorkspaceName": {
-                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).auditLogAnalyticsWorkspaceName]"
-                    },
-                    "auditLogAnalyticsWorkspaceResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
-                    },
-                    "auditLogAnalyticsWorkspaceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).audit]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').cdnProfiles[copyIndex()].name]"
@@ -1016,7 +1003,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').virtualNetworks))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').virtualNetworks)]",
@@ -1066,7 +1053,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').bastionHosts))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').bastionHosts)]",
@@ -1083,14 +1070,8 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "auditLogAnalyticsWorkspaceName": {
-                        "value": "[union(variables('defaultResourceProperties').bastionHost, variables('resourceDefinitions').bastionHosts[copyIndex()]).auditLogAnalyticsWorkspaceName]"
-                    },
-                    "auditLogAnalyticsWorkspaceResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').bastionHost, variables('resourceDefinitions').bastionHosts[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
-                    },
-                    "auditLogAnalyticsWorkspaceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').bastionHost, variables('resourceDefinitions').bastionHosts[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').bastionHost, variables('resourceDefinitions').bastionHosts[copyIndex()]).audit]"
                     },
                     "ipConfigurations": {
                         "value": "[variables('resourceDefinitions').bastionHosts[copyIndex()].ipConfigurations]"
@@ -1113,7 +1094,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').firewalls))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').firewalls)]",
@@ -1163,7 +1144,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').dnsZones.private))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').dnsZones.private)]",
@@ -1208,7 +1189,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').dnsZones.public))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').dnsZones.public)]",
@@ -1252,7 +1233,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').eventGrid.domains))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').eventGrid.domains)]",
@@ -1267,14 +1248,8 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "auditLogAnalyticsWorkspaceName": {
-                        "value": "[union(variables('defaultResourceProperties').eventGrid.domain, variables('resourceDefinitions').eventGrid.domains[copyIndex()]).auditLogAnalyticsWorkspaceName]"
-                    },
-                    "auditLogAnalyticsWorkspaceResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').eventGrid.domain, variables('resourceDefinitions').eventGrid.domains[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
-                    },
-                    "auditLogAnalyticsWorkspaceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').eventGrid.domain, variables('resourceDefinitions').eventGrid.domains[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.domain, variables('resourceDefinitions').eventGrid.domains[copyIndex()]).audit]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').eventGrid.domains[copyIndex()]).location]"
@@ -1294,7 +1269,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').eventGrid.topics))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').eventGrid.topics)]",
@@ -1310,14 +1285,8 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "auditLogAnalyticsWorkspaceName": {
-                        "value": "[union(variables('defaultResourceProperties').eventGrid.topic, variables('resourceDefinitions').eventGrid.topics[copyIndex()]).auditLogAnalyticsWorkspaceName]"
-                    },
-                    "auditLogAnalyticsWorkspaceResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').eventGrid.topic, variables('resourceDefinitions').eventGrid.topics[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
-                    },
-                    "auditLogAnalyticsWorkspaceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').eventGrid.topic, variables('resourceDefinitions').eventGrid.topics[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.topic, variables('resourceDefinitions').eventGrid.topics[copyIndex()]).audit]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').eventGrid.topics[copyIndex()]).location]"
@@ -1337,7 +1306,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').eventGrid.eventSubscriptions))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').eventGrid.eventSubscriptions)]",
@@ -1374,7 +1343,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').loadBalancers))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').loadBalancers)]",
@@ -1436,7 +1405,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').monitor.applicationInsightsComponents))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').monitor.applicationInsightsComponents)]",
@@ -1481,7 +1450,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').monitor.privateLinkScopes))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').monitor.privateLinkScopes)]",
@@ -1519,7 +1488,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').keyVaults))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').keyVaults)]",
@@ -1535,14 +1504,8 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "auditLogAnalyticsWorkspaceName": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).auditLogAnalyticsWorkspaceName]"
-                    },
-                    "auditLogAnalyticsWorkspaceResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
-                    },
-                    "auditLogAnalyticsWorkspaceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).audit]"
                     },
                     "firewallRules": {
                         "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).firewallRules]"
@@ -1604,7 +1567,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').communicationServices))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').communicationServices)]",
@@ -1619,14 +1582,8 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "auditLogAnalyticsWorkspaceName": {
-                        "value": "[union(variables('defaultResourceProperties').communicationService, variables('resourceDefinitions').communicationServices[copyIndex()]).auditLogAnalyticsWorkspaceName]"
-                    },
-                    "auditLogAnalyticsWorkspaceResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').communicationService, variables('resourceDefinitions').communicationServices[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
-                    },
-                    "auditLogAnalyticsWorkspaceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').communicationService, variables('resourceDefinitions').communicationServices[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').communicationService, variables('resourceDefinitions').communicationServices[copyIndex()]).audit]"
                     },
                     "dataLocation": {
                         "value": "[union(variables('defaultResourceProperties').communicationService, variables('resourceDefinitions').communicationServices[copyIndex()]).dataLocation]"
@@ -1646,7 +1603,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').applicationConfigurationStores))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').applicationConfigurationStores)]",
@@ -1662,6 +1619,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "customerManagedEncryption": {
+                        "value": "[union(variables('defaultResourceProperties').applicationConfigurationStore, variables('resourceDefinitions').applicationConfigurationStores[copyIndex()]).customerManagedEncryption]"
+                    },
                     "isPublicNetworkAccessEnabled": {
                         "value": "[union(variables('defaultResourceProperties').applicationConfigurationStore, variables('resourceDefinitions').applicationConfigurationStores[copyIndex()]).isPublicNetworkAccessEnabled]"
                     },
@@ -1692,7 +1652,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').recoveryServicesVaults))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').recoveryServicesVaults)]",
@@ -1709,14 +1669,8 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "auditLogAnalyticsWorkspaceName": {
-                        "value": "[union(variables('defaultResourceProperties').recoveryServicesVault, variables('resourceDefinitions').recoveryServicesVaults[copyIndex()]).auditLogAnalyticsWorkspaceName]"
-                    },
-                    "auditLogAnalyticsWorkspaceResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').recoveryServicesVault, variables('resourceDefinitions').recoveryServicesVaults[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
-                    },
-                    "auditLogAnalyticsWorkspaceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').recoveryServicesVault, variables('resourceDefinitions').recoveryServicesVaults[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').recoveryServicesVault, variables('resourceDefinitions').recoveryServicesVaults[copyIndex()]).audit]"
                     },
                     "backup": {
                         "value": "[union(variables('defaultResourceProperties').recoveryServicesVault, variables('resourceDefinitions').recoveryServicesVaults[copyIndex()]).backup]"
@@ -1742,7 +1696,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').containerRegistries))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').containerRegistries)]",
@@ -1757,6 +1711,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "customerManagedEncryption": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).customerManagedEncryption]"
+                    },
                     "firewallRules": {
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).firewallRules]"
                     },
@@ -1796,7 +1753,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').sharedImageGalleries))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').sharedImageGalleries)]",
@@ -1831,7 +1788,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').proximityPlacementGroups))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').proximityPlacementGroups)]",
@@ -1863,7 +1820,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').availabilitySets))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').availabilitySets)]",
@@ -1911,7 +1868,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').diskEncryptionSets))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').diskEncryptionSets)]",
@@ -1962,7 +1919,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').virtualMachines))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').virtualMachines)]",
@@ -1983,14 +1940,8 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "auditLogAnalyticsWorkspaceName": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).auditLogAnalyticsWorkspaceName]"
-                    },
-                    "auditLogAnalyticsWorkspaceResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
-                    },
-                    "auditLogAnalyticsWorkspaceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).audit]"
                     },
                     "availabilitySetName": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).availabilitySetName]"
@@ -2049,7 +2000,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').containerInstances))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').containerInstances)]",
@@ -2110,7 +2061,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').storageAccounts))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').storageAccounts)]",
@@ -2129,14 +2080,8 @@
                     "accessTier": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).accessTier]"
                     },
-                    "auditLogAnalyticsWorkspaceName": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).auditLogAnalyticsWorkspaceName]"
-                    },
-                    "auditLogAnalyticsWorkspaceResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
-                    },
-                    "auditLogAnalyticsWorkspaceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).audit]"
                     },
                     "blobServices": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).blobServices]"
@@ -2204,7 +2149,160 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').networkSecurityGroups))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').networkSecurityGroups)]",
+                "mode": "Parallel",
+                "name": "networkSecurityGroupsFlowLogsCopy"
+            },
+            "dependsOn": [
+                "networkSecurityGroupsCopy",
+                "storageAccountsCopy"
+            ],
+            "name": "[format('{0}_{1}-FlowLog', variables('deploymentNames').networkSecurityGroup, copyIndex())]",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "isEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).audit.isEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).location]"
+                    },
+                    "logAnalyticsWorkspaceName": {
+                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).audit.logAnalyticsWorkspace.name]"
+                    },
+                    "logAnalyticsWorkspaceResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).audit.logAnalyticsWorkspace.resourceGroupName]"
+                    },
+                    "logAnalyticsWorkspaceSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).audit.logAnalyticsWorkspace.subscriptionId]"
+                    },
+                    "networkSecurityGroupName": {
+                        "value": "[variables('resourceDefinitions').networkSecurityGroups[copyIndex()].name]"
+                    },
+                    "networkSecurityGroupResourceGroupName": {
+                        "value": "[variables('resourceGroupName')]"
+                    },
+                    "networkSecurityGroupSubscriptionId": {
+                        "value": "[variables('subscriptionId')]"
+                    },
+                    "networkWatcherName": {
+                        "value": "[format('Networkwatcher_{0}', toLower(replace(union(variables('defaultResourceProperties'), variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).location, ' ', '')))]"
+                    },
+                    "retentionPolicy": {
+                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).audit.retentionPolicy]"
+                    },
+                    "storageAccountName": {
+                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).audit.flowLogStorageAccount.name]"
+                    },
+                    "storageAccountResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).audit.flowLogStorageAccount.resourceGroupName]"
+                    },
+                    "storageAccountSubscriptionId": {
+                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).audit.flowLogStorageAccount.subscriptionId]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "isEnabled": {
+                            "type": "bool"
+                        },
+                        "location": {
+                            "type": "string"
+                        },
+                        "logAnalyticsWorkspaceName": {
+                            "type": "string"
+                        },
+                        
+                        "logAnalyticsWorkspaceResourceGroupName": {
+                            "type": "string"
+                        },
+                        
+                        "logAnalyticsWorkspaceSubscriptionId": {
+                            "type": "string"
+                        },
+                        "networkSecurityGroupName": {
+                            "type": "string"
+                        },
+                        "networkSecurityGroupResourceGroupName": {
+                            "type": "string"
+                        },
+                        "networkSecurityGroupSubscriptionId": {
+                            "type": "string"
+                        },
+                        "networkWatcherName": {
+                            "type": "string"
+                        },
+                        "retentionPolicy": {
+                            "type": "object"
+                        },
+                        "storageAccountName": {
+                            "type": "string"
+                        },
+                        "storageAccountResourceGroupName": {
+                            "type": "string"
+                        },
+                        "storageAccountSubscriptionId": {
+                            "type": "string"
+                        },
+                        "tags": {
+                            "type": "object"
+                        }
+                    },
+                    "variables": {
+                        "resourceIds": {
+                            "logAnalyticsWorkspace": "[resourceId(parameters('logAnalyticsWorkspaceSubscriptionId'), parameters('logAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]",
+                            "networkSecurityGroup": "[resourceId(parameters('networkSecurityGroupSubscriptionId'), parameters('networkSecurityGroupResourceGroupName'), 'Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
+                            "storageAccount": "[resourceId(parameters('storageAccountSubscriptionId'), parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "apiVersion": "2020-06-01",
+                            "name": "[format('{0}/{1}-{2}-flowlog', parameters('networkWatcherName'), parameters('networkSecurityGroupName'), parameters('networkSecurityGroupResourceGroupName'))]",
+                            "location": "[parameters('location')]",
+                            "properties": {
+                                "enabled": "[parameters('isEnabled')]",
+                                "flowAnalyticsConfiguration": {
+                                    "networkWatcherFlowAnalyticsConfiguration": {
+                                        "enabled": "[parameters('isEnabled')]",
+                                        "trafficAnalyticsInterval": 60,
+                                        "workspaceResourceId": "[variables('resourceIds').logAnalyticsWorkspace]"
+                                    }
+                                },
+                                "format": {
+                                    "type": "JSON",
+                                    "version": "2"
+                                },
+                                "retentionPolicy": {
+                                    "days": "[parameters('retentionPolicy').days]",
+                                    "enabled": "[parameters('retentionPolicy').isEnabled]"
+                                },
+                                "storageId": "[variables('resourceIds').storageAccount]",
+                                "targetResourceId": "[variables('resourceIds').networkSecurityGroup]"
+                            },
+                            "tags": "[parameters('tags')]",
+                            "type": "Microsoft.Network/networkWatchers/flowLogs"
+                        }
+                    ]
+                }
+            },
+            "resourceGroup": "NetworkWatcherRG",
+            "subscriptionId": "[subscription().subscriptionId]",
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').sqlServers))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').sqlServers)]",
@@ -2232,17 +2330,8 @@
                     "activeDirectoryAdministratorUserName": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).activeDirectoryAdministratorUserName]"
                     },
-                    "auditActionsAndGroups": {
-                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).auditActionsAndGroups]"
-                    },
-                    "auditLogAnalyticsWorkspaceName": {
-                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).auditLogAnalyticsWorkspaceName]"
-                    },
-                    "auditLogAnalyticsWorkspaceResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
-                    },
-                    "auditLogAnalyticsWorkspaceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).audit]"
                     },
                     "connectionPolicy": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).connectionPolicy]"
@@ -2295,7 +2384,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').cosmosDbAccounts))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').cosmosDbAccounts)]",
@@ -2353,7 +2442,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').kubernetesServiceClusters))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').kubernetesServiceClusters)]",
@@ -2391,7 +2480,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').hdInsightClusters))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').hdInsightClusters)]",
@@ -2450,63 +2539,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
-            "condition": "[not(empty(variables('resourceDefinitions').frontDoors))]",
-            "copy": {
-                "count": "[length(variables('resourceDefinitions').frontDoors)]",
-                "mode": "Parallel",
-                "name": "frontDoorsCopy"
-            },
-            "dependsOn": [
-                "privateDnsZonesCopy",
-                "publicDnsZonesCopy",
-                "scriptsPreDeployCopy",
-                "virtualNetworksCopy"
-            ],
-            "name": "[format('{0}_{1}', variables('deploymentNames').frontDoor, copyIndex())]",
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "auditLogAnalyticsWorkspaceName": {
-                        "value": "[union(variables('defaultResourceProperties').frontDoor, variables('resourceDefinitions').frontDoors[copyIndex()]).auditLogAnalyticsWorkspaceName]"
-                    },
-                    "auditLogAnalyticsWorkspaceResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').frontDoor, variables('resourceDefinitions').frontDoors[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
-                    },
-                    "auditLogAnalyticsWorkspaceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').frontDoor, variables('resourceDefinitions').frontDoors[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
-                    },
-                    "backendPools": {
-                        "value": "[union(variables('defaultResourceProperties').frontDoor, variables('resourceDefinitions').frontDoors[copyIndex()]).backendPools]"
-                    },
-                    "frontendEndpoints": {
-                        "value": "[union(variables('defaultResourceProperties').frontDoor, variables('resourceDefinitions').frontDoors[copyIndex()]).frontendEndpoints]"
-                    },
-                    "healthProbeSettings": {
-                        "value": "[union(variables('defaultResourceProperties').frontDoor, variables('resourceDefinitions').frontDoors[copyIndex()]).healthProbeSettings]"
-                    },
-                    "loadBalancingSettings": {
-                        "value": "[union(variables('defaultResourceProperties').frontDoor, variables('resourceDefinitions').frontDoors[copyIndex()]).loadBalancingSettings]"
-                    },
-                    "name": {
-                        "value": "[variables('resourceDefinitions').frontDoors[copyIndex()].name]"
-                    },
-                    "routingRules": {
-                        "value": "[union(variables('defaultResourceProperties').frontDoor, variables('resourceDefinitions').frontDoors[copyIndex()]).routingRules]"
-                    },
-                    "tags": {
-                        "value": "[parameters('tags')]"
-                    }
-                },
-                "templateLink": {
-                    "contentVersion": "[variables('contentVersion')]",
-                    "relativePath": "./Microsoft.Network/frontDoors.json"
-                }
-            },
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').applicationServicePlans))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').applicationServicePlans)]",
@@ -2517,7 +2550,6 @@
                 "applicationInsightsComponentsCopy",
                 "cdnProfilesCopy",
                 "containerRegistriesCopy",
-                "frontDoorsCopy",
                 "keyVaultsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
@@ -2566,7 +2598,7 @@
             "type": "Microsoft.Resources/deployments"
         },
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').logic.applications))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').logic.applications)]",
@@ -2581,14 +2613,8 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "auditLogAnalyticsWorkspaceName": {
-                        "value": "[union(variables('defaultResourceProperties').logic.application, variables('resourceDefinitions').logic.applications[copyIndex()]).auditLogAnalyticsWorkspaceName]"
-                    },
-                    "auditLogAnalyticsWorkspaceResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').logic.application, variables('resourceDefinitions').logic.applications[copyIndex()]).auditLogAnalyticsWorkspaceResourceGroupName]"
-                    },
-                    "auditLogAnalyticsWorkspaceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').logic.application, variables('resourceDefinitions').logic.applications[copyIndex()]).auditLogAnalyticsWorkspaceSubscriptionId]"
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').logic.application, variables('resourceDefinitions').logic.applications[copyIndex()]).audit]"
                     },
                     "isEnabled": {
                         "value": "[union(variables('defaultResourceProperties').logic.application, variables('resourceDefinitions').logic.applications[copyIndex()]).isEnabled]"
@@ -2635,7 +2661,6 @@
                 "eventGridEventSubcriptionsCopy",
                 "eventGridTopicsCopy",
                 "firewallsCopy",
-                "frontDoorsCopy",
                 "hdInsightClustersCopy",
                 "keyVaultsCopy",
                 "kubernetesServiceClustersCopy",
@@ -2648,6 +2673,7 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "networkSecurityGroupsFlowLogsCopy",
                 "privateDnsZonesCopy",
                 "proximityPlacementGroupsCopy",
                 "publicDnsZonesCopy",

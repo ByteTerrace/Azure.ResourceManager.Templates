@@ -16,25 +16,12 @@
             },
             "type": "securestring"
         },
-        "auditLogAnalyticsWorkspaceName": {
+        "audit": {
+            "defaultValue": {},
             "metadata": {
-                "description": "Specifies the name of the Azure Log Analytics workspace that the Azure Virtual Machine audit feature will send its data to."
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure Virtual Machine."
             },
-            "type": "string"
-        },
-        "auditLogAnalyticsWorkspaceResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Specifies the resource group name of the Azure Log Analytics workspace that the Azure Virtual Machine audit feature will send its data to."
-            },
-            "type": "string"
-        },
-        "auditLogAnalyticsWorkspaceSubscriptionId": {
-            "defaultValue": "[subscription().subscriptionId]",
-            "metadata": {
-                "description": "Specifies the subscription id of the Azure Log Analytics workspace that the Azure Virtual Machine audit feature will send its data to."
-            },
-            "type": "string"
+            "type": "object"
         },
         "availabilitySetName": {
             "defaultValue": "",
@@ -106,9 +93,11 @@
             "type": "string"
         },
         "name": {
+            "maxLength": 64,
             "metadata": {
                 "description": "Specifies the name of the Azure Virtual Machine."
             },
+            "minLength": 1,
             "type": "string"
         },
         "networkInterfaceCards": {
@@ -163,6 +152,7 @@
             "virtualMachines": "2020-12-01",
             "virtualMachinesExtensions": "2020-12-01"
         },
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
         "backup": "[union(variables('defaultResourceProperties').backup, parameters('backup'))]",
         "copy": [
             {
@@ -189,6 +179,14 @@
         "dataDisksCount": "[length(parameters('dataDisks'))]",
         "dataDisksIsNotEmpty": "[greater(variables('dataDisksCount'), 0)]",
         "defaultResourceProperties": {
+            "audit": {
+                "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
+            },
             "backup": {
                 "policyName": "",
                 "recoveryServicesVault": {
@@ -235,7 +233,8 @@
                 "storageAccountType": "Premium_LRS"
             }
         },
-        "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isBackupEnabled": "[not(empty(variables('backup').policyName))]",
         "isSpotVirtualMachine": "[equals(toLower(parameters('priority')), 'spot')]",
         "licenseTypeIsNotEmpty": "[not(empty(parameters('licenseType')))]",
@@ -243,9 +242,9 @@
         "osType": "[if(or(and(variables('licenseTypeIsNotEmpty'), startsWith(parameters('licenseType'), 'Windows')), contains(union(createObject('offer', ''), parameters('imageReference')).offer, 'Windows'), contains(union(createObject('id', ''), parameters('imageReference')).id, 'Windows')), 'Windows', 'Linux')]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
-            "auditLogAnalyticsWorkspace": "[resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName'))]",
-            "insightsDataCollectionRule": "[resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.Insights/dataCollectionRules', format('Microsoft-VMInsights-Health-{0}', parameters('auditLogAnalyticsWorkspaceName')))]",
-            "recoveryServicesVaultBackupPolicy": "[resourceId(variables('backup').recoveryServicesVault.subscriptionId, variables('backup').recoveryServicesVault.resourceGroupName, 'Microsoft.RecoveryServices/vaults/backupPolicies', if(empty(variables('backup').recoveryServicesVault.name), 'dummyRecoveryServicesVault', variables('backup').recoveryServicesVault.name), if(variables('isBackupEnabled'), variables('backup').policyName, 'dummyBackupPolicy'))]",
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
+            "insightsDataCollectionRule": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.Insights/dataCollectionRules', format('Microsoft-VMInsights-Health-{0}', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>')))]",
+            "recoveryServicesVaultBackupPolicy": "[resourceId(variables('backup').recoveryServicesVault.subscriptionId, variables('backup').recoveryServicesVault.resourceGroupName, 'Microsoft.RecoveryServices/vaults/backupPolicies', if(variables('isBackupEnabled'), variables('backup').recoveryServicesVault.name, '<NULL>'), if(variables('isBackupEnabled'), variables('backup').policyName, '<NULL>'))]",
             "virtualMachine": "[resourceId('Microsoft.Compute/virtualMachines', parameters('name'))]",
             "virtualMachineAntimalwareAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), split(variables('virtualMachineAntimalwareAgentName'), '/')[1])]",
             "virtualMachineDependencyAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), split(variables('virtualMachineDependencyAgentName'), '/')[1])]",
@@ -491,7 +490,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
-            "condition": "[variables('isAuditingEnabled')]",
+            "condition": "[variables('isAuditEnabled')]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
             ],
@@ -560,6 +559,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').insightsDataCollectionRuleAssociations]",
+            "condition": "[variables('isAuditEnabled')]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachineAntimalwareAgent]",
                 "[variables('resourceIds').virtualMachineDependencyAgent]",

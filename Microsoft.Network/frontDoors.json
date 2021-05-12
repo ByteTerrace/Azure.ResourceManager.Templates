@@ -2,25 +2,12 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "auditLogAnalyticsWorkspaceName": {
+        "audit": {
+            "defaultValue": {},
             "metadata": {
-                "description": "Specifies the name of the Azure Log Analytics workspace that the Azure Front Door audit feature will send its data to."
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure Front Door."
             },
-            "type": "string"
-        },
-        "auditLogAnalyticsWorkspaceResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Specifies the resource group name of the Azure Log Analytics workspace that the Azure Front Door audit feature will send its data to."
-            },
-            "type": "string"
-        },
-        "auditLogAnalyticsWorkspaceSubscriptionId": {
-            "defaultValue": "[subscription().subscriptionId]",
-            "metadata": {
-                "description": "Specifies the subscription id of the Azure Log Analytics workspace that the Azure Front Door audit feature will send its data to."
-            },
-            "type": "string"
+            "type": "object"
         },
         "backendPools": {
             "defaultValue": [],
@@ -75,30 +62,49 @@
             "diagnosticSettings": "2017-05-01-preview",
             "frontDoors": "2020-05-01"
         },
-        "backendPoolDefaultProperties": {
-            "httpPort": 80,
-            "httpsPort": 443,
-            "weight": 1
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "defaultResourceProperties": {
+            "audit": {
+                "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "logNames": [
+                    "FrontdoorAccessLog",
+                    "FrontdoorWebApplicationFirewallLog"
+                ],
+                "retentionPolicy": {
+                    "days": 137,
+                    "isEnabled": true
+                }
+            },
+            "backendPool": {
+                "httpPort": 80,
+                "httpsPort": 443,
+                "weight": 1
+            },
+            "frontendEndpoint": {
+                "sessionAffinityIsEnabled": false,
+                "sessionAffinityTimeToLiveInSeconds": 0
+            },
+            "loadBalancingSettings": {
+                "additionalLatencyMilliseconds": 0,
+                "sampleSize": 4,
+                "successfulSamplesRequired": 2
+            }
         },
-        "frontDoorResourceId": "[resourceId('Microsoft.Network/frontdoors', parameters('name'))]",
-        "frontendEndpointDefaultEntry": {
-            "hostName": "[format('{0}.azurefd.net', parameters('name'))]"
+        "frontendEndpoints": "[union(createArray(createObject('hostName', format('{0}.azurefd.net', parameters('name')))), parameters('frontendEndpoints'))]",
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "loadBalancingSettings": "[union(createArray(createObject('name', 'default')), parameters('loadBalancingSettings'))]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "resourceIds": {
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
+            "frontDoor": "[resourceId('Microsoft.Network/frontdoors', parameters('name'))]"
         },
-        "frontendEndpointDefaultProperties": {
-            "sessionAffinityIsEnabled": false,
-            "sessionAffinityTimeToLiveInSeconds": 0
-        },
-        "frontendEndpoints": "[union(createArray(variables('frontendEndpointDefaultEntry')), parameters('frontendEndpoints'))]",
-        "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
-        "loadBalancingSettings": "[union(createArray(variables('loadBalancingSettingsDefaultEntry')), parameters('loadBalancingSettings'))]",
-        "loadBalancingSettingsDefaultEntry": {
-            "name": "default"
-        },
-        "loadBalancingSettingsDefaultProperties": {
-            "additionalLatencyMilliseconds": 0,
-            "sampleSize": 4,
-            "successfulSamplesRequired": 2
-        }
+        "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
         {
@@ -120,10 +126,10 @@
                                     {
                                         "address": "[parameters('backendPools')[copyIndex('backendPools')].httpAddress]",
                                         "enabledState": "Enabled",
-                                        "httpPort": "[union(variables('backendPoolDefaultProperties'), parameters('backendPools')[copyIndex('backendPools')]).httpPort]",
-                                        "httpsPort": "[union(variables('backendPoolDefaultProperties'), parameters('backendPools')[copyIndex('backendPools')]).httpsPort]",
+                                        "httpPort": "[union(variables('defaultResourceProperties').backendPool, parameters('backendPools')[copyIndex('backendPools')]).httpPort]",
+                                        "httpsPort": "[union(variables('defaultResourceProperties').backendPool, parameters('backendPools')[copyIndex('backendPools')]).httpsPort]",
                                         "priority": "[add(union(createObject('priority', copyIndex('backendPools')), parameters('backendPools')[copyIndex('backendPools')]).priority, 1)]",
-                                        "weight": "[union(variables('backendPoolDefaultProperties'), parameters('backendPools')[copyIndex('backendPools')]).weight]"
+                                        "weight": "[union(variables('defaultResourceProperties').backendPool, parameters('backendPools')[copyIndex('backendPools')]).weight]"
                                     }
                                 ],
                                 "healthProbeSettings": {
@@ -142,8 +148,8 @@
                             "name": "[union(createObject('name', replace(variables('frontendEndpoints')[copyIndex('frontendEndpoints')].hostName, '.', '-')), variables('frontendEndpoints')[copyIndex('frontendEndpoints')]).name]",
                             "properties": {
                                 "hostName": "[variables('frontendEndpoints')[copyIndex('frontendEndpoints')].hostName]",
-                                "sessionAffinityEnabledState": "[if(union(variables('frontendEndpointDefaultProperties'), variables('frontendEndpoints')[copyIndex('frontendEndpoints')]).sessionAffinityIsEnabled, 'Enabled', 'Disabled')]",
-                                "sessionAffinityTtlSeconds": "[union(variables('frontendEndpointDefaultProperties'), variables('frontendEndpoints')[copyIndex('frontendEndpoints')]).sessionAffinityTimeToLiveInSeconds]"
+                                "sessionAffinityEnabledState": "[if(union(variables('defaultResourceProperties').frontendEndpoint, variables('frontendEndpoints')[copyIndex('frontendEndpoints')]).sessionAffinityIsEnabled, 'Enabled', 'Disabled')]",
+                                "sessionAffinityTtlSeconds": "[union(variables('defaultResourceProperties').frontendEndpoint, variables('frontendEndpoints')[copyIndex('frontendEndpoints')]).sessionAffinityTimeToLiveInSeconds]"
                             }
                         },
                         "name": "frontendEndpoints"
@@ -167,9 +173,9 @@
                         "input": {
                             "name": "[variables('loadBalancingSettings')[copyIndex('loadBalancingSettings')].name]",
                             "properties": {
-                                "additionalLatencyMilliseconds": "[union(variables('loadBalancingSettingsDefaultProperties'), variables('loadBalancingSettings')[copyIndex('loadBalancingSettings')]).additionalLatencyMilliseconds]",
-                                "sampleSize": "[union(variables('loadBalancingSettingsDefaultProperties'), variables('loadBalancingSettings')[copyIndex('loadBalancingSettings')]).sampleSize]",
-                                "successfulSamplesRequired": "[union(variables('loadBalancingSettingsDefaultProperties'), variables('loadBalancingSettings')[copyIndex('loadBalancingSettings')]).successfulSamplesRequired]"
+                                "additionalLatencyMilliseconds": "[union(variables('defaultResourceProperties').loadBalancingSettings, variables('loadBalancingSettings')[copyIndex('loadBalancingSettings')]).additionalLatencyMilliseconds]",
+                                "sampleSize": "[union(variables('defaultResourceProperties').loadBalancingSettings, variables('loadBalancingSettings')[copyIndex('loadBalancingSettings')]).sampleSize]",
+                                "successfulSamplesRequired": "[union(variables('defaultResourceProperties').loadBalancingSettings, variables('loadBalancingSettings')[copyIndex('loadBalancingSettings')]).successfulSamplesRequired]"
                             }
                         },
                         "name": "loadBalancingSettings"
@@ -201,31 +207,28 @@
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
             "dependsOn": [
-                "[variables('frontDoorResourceId')]"
+                "[variables('resourceIds').frontDoor]"
             ],
             "location": "global",
-            "name": "[format('{0}/microsoft.insights/audit', parameters('name'))]",
+            "name": "[format('{0}/Microsoft.Insights/audit', parameters('name'))]",
             "properties": {
-                "logs": [
+                "copy": [
                     {
-                        "category": "FrontdoorAccessLog",
-                        "enabled": "[variables('isAuditingEnabled')]",
-                        "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
-                        }
-                    },
-                    {
-                        "category": "FrontdoorWebApplicationFirewallLog",
-                        "enabled": "[variables('isAuditingEnabled')]",
-                        "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
-                        }
+                        "count": "[length(variables('audit').logNames)]",
+                        "input": {
+                            "category": "[variables('audit').logNames[copyIndex('logs')]]",
+                            "enabled": "[variables('isAuditEnabled')]",
+                            "retentionPolicy": {
+                                "days": "[variables('audit').retentionPolicy.days]",
+                                "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                            }
+                        },
+                        "name": "logs"
                     }
                 ],
-                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
             "type": "Microsoft.Network/frontdoors/providers/diagnosticsettings"
         }

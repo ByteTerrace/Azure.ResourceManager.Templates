@@ -2,25 +2,12 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "auditLogAnalyticsWorkspaceName": {
+        "audit": {
+            "defaultValue": {},
             "metadata": {
-                "description": "Specifies the name of the Azure Log Analytics workspace that the Azure Recovery Services Vault audit feature will send its data to."
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure Recovery Services Vault."
             },
-            "type": "string"
-        },
-        "auditLogAnalyticsWorkspaceResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Specifies the resource group name of the Azure Log Analytics workspace that the Azure Recovery Services Vault audit feature will send its data to."
-            },
-            "type": "string"
-        },
-        "auditLogAnalyticsWorkspaceSubscriptionId": {
-            "defaultValue": "[subscription().subscriptionId]",
-            "metadata": {
-                "description": "Specifies the subscription id of the Azure Log Analytics workspace that the Azure Recovery Services Vault audit feature will send its data to."
-            },
-            "type": "string"
+            "type": "object"
         },
         "backup": {
             "defaultValue": {},
@@ -67,6 +54,7 @@
             "resourceGroups": "2021-04-01",
             "roleAssignments": "2020-04-01-preview"
         },
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
         "backupPrivateEndpoints": "[union(variables('defaultResourceProperties').backup, parameters('backup')).privateEndpoints]",
         "backupPrivateEndpointsCount": "[length(variables('backupPrivateEndpoints'))]",
         "backupPrivateEndpointsIsNotEmpty": "[greater(variables('backupPrivateEndpointsCount'), 0)]",
@@ -82,6 +70,26 @@
         ],
         "customerManagedEncryption": "[union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption'))]",
         "defaultResourceProperties": {
+            "audit": {
+                "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "logNames": [
+                    "AddonAzureBackupAlerts",
+                    "AddonAzureBackupJobs",
+                    "AddonAzureBackupPolicy",
+                    "AddonAzureBackupProtectedInstance",
+                    "AddonAzureBackupStorage",
+                    "CoreAzureBackup"
+                ],
+                "retentionPolicy": {
+                    "days": 137,
+                    "isEnabled": true
+                }
+            },
             "backup": {
                 "privateEndpoints": []
             },
@@ -106,11 +114,13 @@
                 }
             }
         },
-        "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isCustomerManagedEncryptionEnabled": "[not(empty(variables('customerManagedEncryption').keyName))]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceGroups": "[union(variables('privateEndpointResourceGroups'), createArray())]",
         "resourceIds": {
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
             "contributorRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
             "keyVaultCryptoServiceEncryptionUserRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]",
             "recoveryServicesVault": "[resourceId('Microsoft.RecoveryServices/vaults', parameters('name'))]",
@@ -344,63 +354,28 @@
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
             "dependsOn": [
                 "[variables('resourceIds').recoveryServicesVault]"
             ],
             "location": "[parameters('location')]",
-            "name": "[format('{0}/microsoft.insights/audit', parameters('name'))]",
+            "name": "[format('{0}/Microsoft.Insights/audit', parameters('name'))]",
             "properties": {
-                "logs": [
+                "copy": [
                     {
-                        "category": "AddonAzureBackupAlerts",
-                        "enabled": "[variables('isAuditingEnabled')]",
-                        "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
-                        }
-                    },
-                    {
-                        "category": "AddonAzureBackupJobs",
-                        "enabled": "[variables('isAuditingEnabled')]",
-                        "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
-                        }
-                    },
-                    {
-                        "category": "AddonAzureBackupPolicy",
-                        "enabled": "[variables('isAuditingEnabled')]",
-                        "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
-                        }
-                    },
-                    {
-                        "category": "AddonAzureBackupProtectedInstance",
-                        "enabled": "[variables('isAuditingEnabled')]",
-                        "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
-                        }
-                    },
-                    {
-                        "category": "AddonAzureBackupStorage",
-                        "enabled": "[variables('isAuditingEnabled')]",
-                        "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
-                        }
-                    },
-                    {
-                        "category": "CoreAzureBackup",
-                        "enabled": "[variables('isAuditingEnabled')]",
-                        "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
-                        }
+                        "count": "[length(variables('audit').logNames)]",
+                        "input": {
+                            "category": "[variables('audit').logNames[copyIndex('logs')]]",
+                            "enabled": "[variables('isAuditEnabled')]",
+                            "retentionPolicy": {
+                                "days": "[variables('audit').retentionPolicy.days]",
+                                "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                            }
+                        },
+                        "name": "logs"
                     }
                 ],
-                "workspaceId": "[if(variables('isAuditingEnabled'), resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName')), json('null'))]"
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
             "type": "Microsoft.RecoveryServices/vaults/providers/diagnosticsettings"
         }

@@ -2,56 +2,22 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "auditLogAnalyticsWorkspaceName": {
+        "audit": {
             "metadata": {
-                "description": "Specifies the name of the Azure Log Analytics workspace that the Azure Network Security group audit feature will send its data to."
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure Network Security Group."
             },
-            "type": "string"
-        },
-        "auditLogAnalyticsWorkspaceResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Specifies the resource group name of the Azure Log Analytics workspace that the Azure Network Security group audit feature will send its data to."
-            },
-            "type": "string"
-        },
-        "auditLogAnalyticsWorkspaceSubscriptionId": {
-            "defaultValue": "[subscription().subscriptionId]",
-            "metadata": {
-                "description": "Specifies the subscription id of the Azure Log Analytics workspace that the Azure Network Security group audit feature will send its data to."
-            },
-            "type": "string"
-        },
-        "flowLogStorageAccountName": {
-            "metadata": {
-                "description": "Specifies the name of the Azure Storage Account that the Azure Network Security flow log feature will send its data to."
-            },
-            "type": "string"
-        },
-        "flowLogStorageAccountResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Specifies the resource group name of the Azure Storage Account that the Azure Network Security flow log feature will send its data to."
-            },
-            "type": "string"
-        },
-        "flowLogStorageAccountSubscriptionId": {
-            "defaultValue": "[subscription().subscriptionId]",
-            "metadata": {
-                "description": "Specifies the subscription id of the Azure Storage Account that the Azure Network Security flow log feature will send its data to."
-            },
-            "type": "string"
+            "type": "object"
         },
         "location": {
             "metadata": {
-                "description": "Specifies the location in which the Azure Network Security group resource(s) will be deployed."
+                "description": "Specifies the location in which the Azure Network Security Group resource(s) will be deployed."
             },
             "type": "string"
         },
         "name": {
             "maxLength": 80,
             "metadata": {
-                "description": "Specifies the name of the Azure Network Security group."
+                "description": "Specifies the name of the Azure Network Security Group."
             },
             "minLength": 1,
             "type": "string"
@@ -59,14 +25,14 @@
         "securityRules": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of security rules that will be assigned to the Azure Network Security group."
+                "description": "An array of security rules that will be assigned to the Azure Network Security Group."
             },
             "type": "array"
         },
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Network Security group."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Network Security Group."
             },
             "type": "object"
         }
@@ -75,23 +41,39 @@
         "apiVersions": {
             "deployments": "2021-04-01",
             "diagnosticSettings": "2017-05-01-preview",
-            "logAnalyticsWorkspaces": "2020-08-01",
-            "networkSecurityGroups": "2020-07-01",
-            "networkWatchersFlowLogsApiVersion": "2020-07-01"
+            "networkSecurityGroups": "2020-07-01"
         },
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
         "defaultResourceProperties": {
+            "audit": {
+                "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "logNames": [
+                    "NetworkSecurityGroupEvent",
+                    "NetworkSecurityGroupRuleCounter"
+                ],
+                "retentionPolicy": {
+                    "days": 137,
+                    "isEnabled": true
+                }
+            },
             "securityRule": {
                 "description": "",
                 "sourcePortRanges": [ "*" ]
             }
         },
-        "isAuditingEnabled": "[not(empty(parameters('auditLogAnalyticsWorkspaceName')))]",
-        "isFlowLogEnabled": "[not(empty(parameters('flowLogStorageAccountName')))]",
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
-            "auditLogAnalyticsWorkspace": "[resourceId(parameters('auditLogAnalyticsWorkspaceSubscriptionId'), parameters('auditLogAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('auditLogAnalyticsWorkspaceName'))]",
-            "flowLogStorageAccount": "[resourceId(parameters('flowLogStorageAccountSubscriptionId'), parameters('flowLogStorageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('flowLogStorageAccountName'))]",
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
             "networkSecurityGroup": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('name'))]"
-        }
+        },
+        "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
         {
@@ -130,140 +112,30 @@
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
             "dependsOn": [
                 "[variables('resourceIds').networkSecurityGroup]"
             ],
             "location": "[parameters('location')]",
-            "name": "[format('{0}/microsoft.insights/audit', parameters('name'))]",
+            "name": "[format('{0}/Microsoft.Insights/audit', parameters('name'))]",
             "properties": {
-                "logs": [
+                "copy": [
                     {
-                        "category": "NetworkSecurityGroupEvent",
-                        "enabled": "[variables('isAuditingEnabled')]",
-                        "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
-                        }
-                    },
-                    {
-                        "category": "NetworkSecurityGroupRuleCounter",
-                        "enabled": "[variables('isAuditingEnabled')]",
-                        "retentionPolicy": {
-                            "enabled": false,
-                            "days": 0
-                        }
+                        "count": "[length(variables('audit').logNames)]",
+                        "input": {
+                            "category": "[variables('audit').logNames[copyIndex('logs')]]",
+                            "enabled": "[variables('isAuditEnabled')]",
+                            "retentionPolicy": {
+                                "days": "[variables('audit').retentionPolicy.days]",
+                                "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                            }
+                        },
+                        "name": "logs"
                     }
                 ],
-                "workspaceId": "[if(variables('isAuditingEnabled'), variables('resourceIds').auditLogAnalyticsWorkspace, json('null'))]"
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
             "type": "Microsoft.Network/networkSecurityGroups/providers/diagnosticsettings"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').deployments]",
-            "dependsOn": [
-                "[variables('resourceIds').networkSecurityGroup]"
-            ],
-            "name": "[format('{0}-FlowLog', deployment().name)]",
-            "properties": {
-                "expressionEvaluationOptions": {
-                    "scope": "inner"
-                },
-                "mode": "Incremental",
-                "parameters": {
-                    "isEnabled": {
-                        "value": "[variables('isFlowLogEnabled')]"
-                    },
-                    "logAnalyticsWorkspaceId": {
-                        "value": "[if(variables('isAuditingEnabled'), variables('resourceIds').auditLogAnalyticsWorkspace, '')]"
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    },
-                    "networkSecurityGroupId": {
-                        "value": "[variables('resourceIds').networkSecurityGroup]"
-                    },
-                    "networkSecurityGroupName": {
-                        "value": "[parameters('name')]"
-                    },
-                    "networkSecurityGroupResourceGroupName": {
-                        "value": "[resourceGroup().name]"
-                    },
-                    "networkWatcherName": {
-                        "value": "[format('Networkwatcher_{0}', toLower(replace(parameters('location'), ' ', '')))]"
-                    },
-                    "storageAccountId": {
-                        "value": "[variables('resourceIds').flowLogStorageAccount]"
-                    },
-                    "tags": {
-                        "value": "[parameters('tags')]"
-                    }
-                },
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {
-                        "isEnabled": {
-                            "type": "bool"
-                        },
-                        "logAnalyticsWorkspaceId": {
-                            "type": "string"
-                        },
-                        "location": {
-                            "type": "string"
-                        },
-                        "networkSecurityGroupId": {
-                            "type": "string"
-                        },
-                        "networkSecurityGroupName": {
-                            "type": "string"
-                        },
-                        "networkSecurityGroupResourceGroupName": {
-                            "type": "string"
-                        },
-                        "networkWatcherName": {
-                            "type": "string"
-                        },
-                        "storageAccountId": {
-                            "type": "string"
-                        },
-                        "tags": {
-                            "type": "object"
-                        }
-                    },
-                    "resources": [
-                        {
-                            "apiVersion": "2020-06-01",
-                            "name": "[format('{0}/{1}-{2}-flowlog', parameters('networkWatcherName'), parameters('networkSecurityGroupName'), parameters('networkSecurityGroupResourceGroupName'))]",
-                            "location": "[parameters('location')]",
-                            "properties": {
-                                "enabled": "[parameters('isEnabled')]",
-                                "flowAnalyticsConfiguration": {
-                                    "networkWatcherFlowAnalyticsConfiguration": {
-                                        "enabled": "[not(empty(parameters('logAnalyticsWorkspaceId')))]",
-                                        "trafficAnalyticsInterval": 60,
-                                        "workspaceResourceId": "[parameters('logAnalyticsWorkspaceId')]"
-                                    }
-                                },
-                                "format": {
-                                    "type": "JSON",
-                                    "version": "2"
-                                },
-                                "retentionPolicy": {
-                                    "days": 0,
-                                    "enabled": false
-                                },
-                                "storageId": "[parameters('storageAccountId')]",
-                                "targetResourceId": "[parameters('networkSecurityGroupId')]"
-                            },
-                            "tags": "[parameters('tags')]",
-                            "type": "Microsoft.Network/networkWatchers/flowLogs"
-                        }
-                    ]
-                }
-            },
-            "resourceGroup": "NetworkWatcherRG",
-            "subscriptionId": "[subscription().subscriptionId]",
-            "type": "Microsoft.Resources/deployments"
         }
     ]
 }
