@@ -1,0 +1,147 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "addressPrefixes": {
+            "metadata": {
+                "description": "An array of address prefixes, in CIDR notation, that should be reserved for the Azure Virtual Network Subnet."
+            },
+            "type": "array"
+        },
+        "delegatedServiceNames": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of service names that will be granted permissions to create resources within the Azure Virtual Network Subnet."
+            },
+            "type": "array"
+        },
+        "isPrivateEndpointSupportEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether private endpoint support is enabled the Azure Virtual Network Subnet."
+            },
+            "type": "bool"
+        },
+        "isPrivateLinkServiceSupportEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether private link service support is enabled the Azure Virtual Network Subnet."
+            },
+            "type": "bool"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Virtual Network Subnet resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 80,
+            "metadata": {
+                "description": "Specifies the name of the Azure Virtual Network Subnet."
+            },
+            "minLength": 1,
+            "type": "string"
+        },
+        "natGateway": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the NAT gateway settings that will be applied to the Azure Virtual Network Subnet."
+            },
+            "type": "object"
+        },
+        "networkSecurityGroup": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the network security group settings that will be applied to the Azure Virtual Network Subnet."
+            },
+            "type": "object"
+        },
+        "routeTable": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the route table settings that will be applied to the Azure Virtual Network Subnet."
+            },
+            "type": "object"
+        },
+        "serviceEndpoints": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of service endpoints that will be enabled within the Azure Virtual Network Subnet."
+            },
+            "type": "array"
+        },
+        "virtualNetwork": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the virtual network settings that will be applied to the Azure Virtual Network Subnet."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "addressPrefixCount": "[length(parameters('addressPrefixes'))]",
+        "defaultResourceProperties": {
+            "natGateway": {
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "networkSecurityGroup": {
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "routeTable": {
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "serviceEndpoint": {
+                "locations": []
+            }
+        },
+        "natGateway": "[union(variables('defaultResourceProperties').natGateway, parameters('natGateway'))]",
+        "networkSecurityGroup": "[union(variables('defaultResourceProperties').networkSecurityGroup, parameters('networkSecurityGroup'))]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "routeTable": "[union(variables('defaultResourceProperties').routeTable, parameters('routeTable'))]",
+        "subscriptionId": "[subscription().subscriptionId]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-07-01",
+            "name": "[format('{0}/{1}', parameters('virtualNetwork').name, parameters('name'))]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressPrefix": "[if(equals(variables('addressPrefixCount'), 1), parameters('addressPrefixes')[0], json('null'))]",
+                "addressPrefixes": "[if(greater(variables('addressPrefixCount'), 1), parameters('addressPrefixes'), json('null'))]",
+                "copy": [
+                    {
+                        "count": "[length(parameters('delegatedServiceNames'))]",
+                        "input": {
+                            "name": "[format('DelegatedService_{0}', copyIndex('delegations'))]",
+                            "properties": {
+                                "serviceName": "[parameters('delegatedServiceNames')[copyIndex('delegations')]]"
+                            }
+                        },
+                        "name": "delegations"
+                    },
+                    {
+                        "count": "[length(parameters('serviceEndpoints'))]",
+                        "input": {
+                            "locations": "[if(empty(union(variables('defaultResourceProperties').serviceEndpoint, parameters('serviceEndpoints')[copyIndex('serviceEndpoints')]).locations), createArray('*'), union(variables('defaultResourceProperties').serviceEndpoint, parameters('serviceEndpoints')[copyIndex('serviceEndpoints')]).locations)]",
+                            "service": "[parameters('serviceEndpoints')[copyIndex('serviceEndpoints')].name]"
+                        },
+                        "name": "serviceEndpoints"
+                    }
+                ],
+                "natGateway": "[if(empty(variables('natGateway').name), json('null'), createObject('id', resourceId(variables('natGateway').subscriptionId, variables('natGateway').resourceGroupName, 'Microsoft.Network/natGateways', variables('natGateway').name)))]",
+                "networkSecurityGroup": "[if(empty(variables('networkSecurityGroup').name), json('null'), createObject('id', resourceId(variables('networkSecurityGroup').subscriptionId, variables('networkSecurityGroup').resourceGroupName, 'Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroup').name)))]",
+                "privateEndpointNetworkPolicies": "[if(parameters('isPrivateEndpointSupportEnabled'), 'Disabled', 'Enabled')]",
+                "privateLinkServiceNetworkPolicies": "[if(parameters('isPrivateLinkServiceSupportEnabled'), 'Disabled', 'Enabled')]",
+                "routeTable": "[if(empty(variables('routeTable').name), json('null'), createObject('id', resourceId(variables('routeTable').subscriptionId, variables('routeTable').resourceGroupName, 'Microsoft.Network/routeTables', variables('routeTable').name)))]"
+            },
+            "type": "Microsoft.Network/virtualNetworks/subnets"
+        }
+    ]
+}

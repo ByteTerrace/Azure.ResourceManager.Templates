@@ -17,7 +17,6 @@
     "variables": {
         "apiVersions": {
             "deployment": "2021-04-01",
-            "networkWatchersFlowLogs": "2020-07-01",
             "roleAssignments": "2020-04-01-preview",
             "workspacesLinkedStorageAccounts": "2020-08-01"
         },
@@ -83,6 +82,7 @@
             "sharedImageGalleries": [],
             "sqlServers": [],
             "storageAccounts": [],
+            "subnets": [],
             "virtualMachines": [],
             "virtualNetworks": []
         },
@@ -275,7 +275,7 @@
                 "skuName": "Standard"
             },
             "networkSecurityGroup": {
-                "audit": "[union(createObject('flowLogStorageAccount', createObject('name', '', 'resourceGroupName', variables('resourceGroupName'), 'subscriptionId', variables('subscriptionId'))), variables('audit'))]",
+                "audit": "[variables('audit')]",
                 "securityRules": []
             },
             "publicIpAddress": {
@@ -352,6 +352,19 @@
                 "tableServices": {},
                 "virtualNetworkRules": []
             },
+            "subnet": {
+                "delegatedServiceNames": [],
+                "isPrivateEndpointSupportEnabled": false,
+                "isPrivateLinkServiceSupportEnabled": false,
+                "natGateway": {},
+                "networkSecurityGroup": {},
+                "routeTable": {},
+                "serviceEndpoints": [],
+                "virtualNetwork": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
+            },
             "virtualMachine": {
                 "audit": "[variables('audit')]",
                 "availabilitySetName": "",
@@ -415,6 +428,7 @@
             "sharedImageGallery": "[format('{0}-SharedImageGallery', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
+            "subnet": "[format('{0}-Subnet', deployment().name)]",
             "virtualMachine": "[format('{0}-VirtualMachine', deployment().name)]",
             "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]"
         },
@@ -1054,6 +1068,65 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').subnets))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').subnets)]",
+                "mode": "Serial",
+                "name": "subnetsCopy"
+            },
+            "dependsOn": [
+                "scriptsPreDeployCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').subnet, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "addressPrefixes": {
+                        "value": "[variables('resourceDefinitions').subnets[copyIndex()].addressPrefixes]"
+                    },
+                    "delegatedServiceNames": {
+                        "value": "[union(variables('defaultResourceProperties').subnet, variables('resourceDefinitions').subnets[copyIndex()]).delegatedServiceNames]"
+                    },
+                    "isPrivateEndpointSupportEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').subnet, variables('resourceDefinitions').subnets[copyIndex()]).isPrivateEndpointSupportEnabled]"
+                    },
+                    "isPrivateLinkServiceSupportEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').subnet, variables('resourceDefinitions').subnets[copyIndex()]).isPrivateLinkServiceSupportEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').subnets[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').subnets[copyIndex()].name]"
+                    },
+                    "natGateway": {
+                        "value": "[union(variables('defaultResourceProperties').subnet, variables('resourceDefinitions').subnets[copyIndex()]).natGateway]"
+                    },
+                    "networkSecurityGroup": {
+                        "value": "[union(variables('defaultResourceProperties').subnet, variables('resourceDefinitions').subnets[copyIndex()]).networkSecurityGroup]"
+                    },
+                    "routeTable": {
+                        "value": "[union(variables('defaultResourceProperties').subnet, variables('resourceDefinitions').subnets[copyIndex()]).routeTable]"
+                    },
+                    "serviceEndpoints": {
+                        "value": "[union(variables('defaultResourceProperties').subnet, variables('resourceDefinitions').subnets[copyIndex()]).serviceEndpoints]"
+                    },
+                    "virtualNetwork": {
+                        "value": "[variables('resourceDefinitions').subnets[copyIndex()].virtualNetwork]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Network/subnets.json"
+                }
+            },
+            "resourceGroup": "[union(variables('defaultResourceProperties').subnet, variables('resourceDefinitions').subnets[copyIndex()]).virtualNetwork.resourceGroupName]",
+            "subscriptionId": "[union(variables('defaultResourceProperties').subnet, variables('resourceDefinitions').subnets[copyIndex()]).virtualNetwork.subscriptionId]",
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').bastionHosts))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').bastionHosts)]",
@@ -1064,6 +1137,7 @@
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
                 "scriptsPreDeployCopy",
+                "subnetsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').bastionHost, copyIndex())]",
@@ -1105,6 +1179,7 @@
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
                 "scriptsPreDeployCopy",
+                "subnetsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').firewall, copyIndex())]",
@@ -1153,6 +1228,7 @@
             },
             "dependsOn": [
                 "scriptsPreDeployCopy",
+                "subnetsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').dnsPrivateZone, copyIndex())]",
@@ -1354,6 +1430,7 @@
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
                 "scriptsPreDeployCopy",
+                "subnetsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').loadBalancer, copyIndex())]",
@@ -1461,6 +1538,7 @@
                 "applicationInsightsComponentsCopy",
                 "logAnalyticsWorkspacesCopy",
                 "scriptsPreDeployCopy",
+                "subnetsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').monitorPrivateLinkScope, copyIndex())]",
@@ -1498,6 +1576,7 @@
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
                 "scriptsPreDeployCopy",
+                "subnetsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').keyVault, copyIndex())]",
@@ -1613,6 +1692,7 @@
             "dependsOn": [
                 "keyVaultsCopy",
                 "scriptsPreDeployCopy",
+                "subnetsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').applicationConfigurationStore, copyIndex())]",
@@ -1663,6 +1743,7 @@
                 "keyVaultsCopy",
                 "logAnalyticsWorkspacesCopy",
                 "scriptsPreDeployCopy",
+                "subnetsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').recoveryServicesVault, copyIndex())]",
@@ -1705,6 +1786,7 @@
             },
             "dependsOn": [
                 "scriptsPreDeployCopy",
+                "subnetsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').containerRegistry, copyIndex())]",
@@ -1934,6 +2016,7 @@
                 "recoveryServicesVaultsCopy",
                 "scriptsPreDeployCopy",
                 "sharedImageGalleriesCopy",
+                "subnetsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').virtualMachine, copyIndex())]",
@@ -2010,6 +2093,7 @@
             "dependsOn": [
                 "containerRegistriesCopy",
                 "scriptsPreDeployCopy",
+                "subnetsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').containerInstance, copyIndex())]",
@@ -2071,6 +2155,7 @@
             "dependsOn": [
                 "keyVaultsCopy",
                 "scriptsPreDeployCopy",
+                "subnetsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').storageAccount, copyIndex())]",
@@ -2150,159 +2235,6 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
-            "condition": "[not(empty(variables('resourceDefinitions').networkSecurityGroups))]",
-            "copy": {
-                "count": "[length(variables('resourceDefinitions').networkSecurityGroups)]",
-                "mode": "Parallel",
-                "name": "networkSecurityGroupsFlowLogsCopy"
-            },
-            "dependsOn": [
-                "networkSecurityGroupsCopy",
-                "storageAccountsCopy"
-            ],
-            "name": "[format('{0}_{1}-FlowLog', variables('deploymentNames').networkSecurityGroup, copyIndex())]",
-            "properties": {
-                "expressionEvaluationOptions": {
-                    "scope": "inner"
-                },
-                "mode": "Incremental",
-                "parameters": {
-                    "isEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).audit.isEnabled]"
-                    },
-                    "location": {
-                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).location]"
-                    },
-                    "logAnalyticsWorkspaceName": {
-                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).audit.logAnalyticsWorkspace.name]"
-                    },
-                    "logAnalyticsWorkspaceResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).audit.logAnalyticsWorkspace.resourceGroupName]"
-                    },
-                    "logAnalyticsWorkspaceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).audit.logAnalyticsWorkspace.subscriptionId]"
-                    },
-                    "networkSecurityGroupName": {
-                        "value": "[variables('resourceDefinitions').networkSecurityGroups[copyIndex()].name]"
-                    },
-                    "networkSecurityGroupResourceGroupName": {
-                        "value": "[variables('resourceGroupName')]"
-                    },
-                    "networkSecurityGroupSubscriptionId": {
-                        "value": "[variables('subscriptionId')]"
-                    },
-                    "networkWatcherName": {
-                        "value": "[format('Networkwatcher_{0}', toLower(replace(union(variables('defaultResourceProperties'), variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).location, ' ', '')))]"
-                    },
-                    "retentionPolicy": {
-                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).audit.retentionPolicy]"
-                    },
-                    "storageAccountName": {
-                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).audit.flowLogStorageAccount.name]"
-                    },
-                    "storageAccountResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).audit.flowLogStorageAccount.resourceGroupName]"
-                    },
-                    "storageAccountSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).audit.flowLogStorageAccount.subscriptionId]"
-                    },
-                    "tags": {
-                        "value": "[parameters('tags')]"
-                    }
-                },
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {
-                        "isEnabled": {
-                            "type": "bool"
-                        },
-                        "location": {
-                            "type": "string"
-                        },
-                        "logAnalyticsWorkspaceName": {
-                            "type": "string"
-                        },
-                        
-                        "logAnalyticsWorkspaceResourceGroupName": {
-                            "type": "string"
-                        },
-                        
-                        "logAnalyticsWorkspaceSubscriptionId": {
-                            "type": "string"
-                        },
-                        "networkSecurityGroupName": {
-                            "type": "string"
-                        },
-                        "networkSecurityGroupResourceGroupName": {
-                            "type": "string"
-                        },
-                        "networkSecurityGroupSubscriptionId": {
-                            "type": "string"
-                        },
-                        "networkWatcherName": {
-                            "type": "string"
-                        },
-                        "retentionPolicy": {
-                            "type": "object"
-                        },
-                        "storageAccountName": {
-                            "type": "string"
-                        },
-                        "storageAccountResourceGroupName": {
-                            "type": "string"
-                        },
-                        "storageAccountSubscriptionId": {
-                            "type": "string"
-                        },
-                        "tags": {
-                            "type": "object"
-                        }
-                    },
-                    "variables": {
-                        "resourceIds": {
-                            "logAnalyticsWorkspace": "[resourceId(parameters('logAnalyticsWorkspaceSubscriptionId'), parameters('logAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]",
-                            "networkSecurityGroup": "[resourceId(parameters('networkSecurityGroupSubscriptionId'), parameters('networkSecurityGroupResourceGroupName'), 'Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
-                            "storageAccount": "[resourceId(parameters('storageAccountSubscriptionId'), parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
-                        }
-                    },
-                    "resources": [
-                        {
-                            "apiVersion": "2020-06-01",
-                            "name": "[format('{0}/{1}-{2}-flowlog', parameters('networkWatcherName'), parameters('networkSecurityGroupName'), parameters('networkSecurityGroupResourceGroupName'))]",
-                            "location": "[parameters('location')]",
-                            "properties": {
-                                "enabled": "[parameters('isEnabled')]",
-                                "flowAnalyticsConfiguration": {
-                                    "networkWatcherFlowAnalyticsConfiguration": {
-                                        "enabled": "[parameters('isEnabled')]",
-                                        "trafficAnalyticsInterval": 60,
-                                        "workspaceResourceId": "[variables('resourceIds').logAnalyticsWorkspace]"
-                                    }
-                                },
-                                "format": {
-                                    "type": "JSON",
-                                    "version": "2"
-                                },
-                                "retentionPolicy": {
-                                    "days": "[parameters('retentionPolicy').days]",
-                                    "enabled": "[parameters('retentionPolicy').isEnabled]"
-                                },
-                                "storageId": "[variables('resourceIds').storageAccount]",
-                                "targetResourceId": "[variables('resourceIds').networkSecurityGroup]"
-                            },
-                            "tags": "[parameters('tags')]",
-                            "type": "Microsoft.Network/networkWatchers/flowLogs"
-                        }
-                    ]
-                }
-            },
-            "resourceGroup": "NetworkWatcherRG",
-            "subscriptionId": "[subscription().subscriptionId]",
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').sqlServers))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').sqlServers)]",
@@ -2315,6 +2247,7 @@
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "scriptsPreDeployCopy",
+                "subnetsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').sqlServer, copyIndex())]",
@@ -2394,6 +2327,7 @@
             "dependsOn": [
                 "keyVaultsCopy",
                 "scriptsPreDeployCopy",
+                "subnetsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').cosmosDbAccount, copyIndex())]",
@@ -2453,6 +2387,7 @@
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "scriptsPreDeployCopy",
+                "subnetsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').kubernetesServiceCluster, copyIndex())]",
@@ -2491,6 +2426,7 @@
                 "scriptsPreDeployCopy",
                 "sqlServersCopy",
                 "storageAccountsCopy",
+                "subnetsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').hdInsightCluster, copyIndex())]",
@@ -2556,6 +2492,7 @@
                 "scriptsPreDeployCopy",
                 "sqlServersCopy",
                 "storageAccountsCopy",
+                "subnetsCopy",
                 "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').applicationServicePlan, copyIndex())]",
@@ -2673,7 +2610,6 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
-                "networkSecurityGroupsFlowLogsCopy",
                 "privateDnsZonesCopy",
                 "proximityPlacementGroupsCopy",
                 "publicDnsZonesCopy",
@@ -2685,6 +2621,7 @@
                 "sharedImageGalleriesCopy",
                 "sqlServersCopy",
                 "storageAccountsCopy",
+                "subnetsCopy",
                 "virtualMachinesCopy",
                 "virtualNetworksCopy"
             ],

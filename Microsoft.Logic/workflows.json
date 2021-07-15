@@ -9,6 +9,13 @@
             },
             "type": "object"
         },
+        "connections": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the array of connections that will be created and made available to the Azure Logic App Workflow."
+            },
+            "type": "secureObject"
+        },
         "isEnabled": {
             "defaultValue": true,
             "metadata": {
@@ -41,9 +48,15 @@
     "variables": {
         "apiVersions": {
             "diagnosticSettings": "2017-05-01-preview",
-            "logicAppWorkflows": "2019-05-01"
+            "logicAppWorkflows": "2019-05-01",
+            "webConnections": "2016-06-01"
         },
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "connectionsCollectionCount": "[length(union(variables('connectionsDefaultObject'), parameters('connections')).collection)]",
+        "connectionsCollectionIsNotEmpty": "[greater(variables('connectionsCollectionCount'), 0)]",
+        "connectionsDefaultObject": {
+            "collection": []
+        },
         "defaultResourceProperties": {
             "audit": {
                 "isEnabled": true,
@@ -59,6 +72,11 @@
                     "days": 137,
                     "isEnabled": true
                 }
+            },
+            "connection": {
+                "displayName": "",
+                "parameters": {},
+                "testLinks": []
             }
         },
         "isAuditEnabled": "[variables('audit').isEnabled]",
@@ -72,7 +90,30 @@
     },
     "resources": [
         {
+            "apiVersion": "[variables('apiVersions').webConnections]",
+            "condition": "[variables('connectionsCollectionIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('connectionsCollectionCount')]",
+                "name": "connectionsCopy"
+            },
+            "location": "[parameters('location')]",
+            "name": "[if(variables('connectionsCollectionIsNotEmpty'), parameters('connections').collection[copyIndex()].name, 'dummyConnection')]",
+            "properties": {
+                "api": {
+                    "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('location'), parameters('connections').collection[copyIndex()].type)]"
+                },
+                "displayName": "[if(empty(union(variables('defaultResourceProperties').connection, parameters('connections').collection[copyIndex()]).displayName), parameters('connections').collection[copyIndex()].name, parameters('connections').collection[copyIndex()].displayName)]",
+                "parameterValues": "[union(variables('defaultResourceProperties').connection, parameters('connections').collection[copyIndex()]).parameters]",
+                "testLinks": "[union(variables('defaultResourceProperties').connection, parameters('connections').collection[copyIndex()]).testLinks]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Web/connections"
+        },
+        {
             "apiVersion": "[variables('apiVersions').logicAppWorkflows]",
+            "dependsOn": [
+                "connectionsCopy"
+            ],
             "identity": {
                 "type": "SystemAssigned"
             },
