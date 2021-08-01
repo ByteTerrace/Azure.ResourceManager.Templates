@@ -5,13 +5,14 @@ jobs:
     runs-on: 'ubuntu-latest'
     steps:
       - name: 'checkout Azure Resource Manager template repository'
+        path: '$GITHUB_WORKSPACE/project'
         uses: 'actions/checkout@v2'
       - name: 'upload Azure Resource Manager template artifact'
         uses: 'actions/upload-artifact@v2'
         with:
           if-no-files-found: 'error'
           name: 'project'
-          path: '$GITHUB_WORKSPACE/**/*.json'
+          path: '$GITHUB_WORKSPACE/project/**/*.json'
           retention-days: 13
   deploy:
     needs: 'build'
