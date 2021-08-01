@@ -1,12 +1,12 @@
 name: 'Azure Resource Manager Templates'
 on: [push]
 jobs:
-  Explore-GitHub-Actions:
+  Package-Arm-Templates:
     runs-on: 'ubuntu-latest'
     steps:
       - uses: actions/upload-artifact@v2
         with:
           if-no-files-found: 'error'
           name: 'project'
-          path: '/**/*.json'
+          path: './**/*.json'
           retention-days: 13
