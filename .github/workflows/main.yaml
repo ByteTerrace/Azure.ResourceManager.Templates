@@ -8,13 +8,16 @@ jobs:
         uses: 'actions/checkout@v2'
         with:
           clean: true
-          path: $GITHUB_WORKSPACE/project
+          fetch-depth: 1
+          lfs: false
+          path: ${{ format('{0}/project', github.workspace) }}
+          submodules: false
       - name: 'upload Azure Resource Manager template artifact'
         uses: 'actions/upload-artifact@v2'
         with:
           if-no-files-found: 'error'
           name: 'project'
-          path: '$GITHUB_WORKSPACE/project/**/*.json'
+          path: ${{ format('{0}/project/**/*.json', github.workspace) }}'
           retention-days: 13
   deploy:
     needs: 'build'
@@ -24,7 +27,7 @@ jobs:
         uses: 'actions/download-artifact@v2'
         with:
           name: 'project'
-          path: '$GITHUB_WORKSPACE/downloads/arm-templates'
+          path: ${{ format('{0}/downloads/arm-templates', github.workspace) }}
       - name: 'login to Azure'
         uses: 'azure/login@v1'
         with:
@@ -35,7 +38,7 @@ jobs:
         run: |
           $resourceGroupName 'byteterrace';
           $subscriptionIdOrName 'byteterrace';
-          $templateFilePath = '$GITHUB_WORKSPACE/downloads/arm-templates/resourceGroupDeployment.json';
+          $templateFilePath = ${{ format('{0}/downloads/arm-templates/resourceGroupDeployment.json', github.workspace) }};
           $templateName = 'ResourceGroupDeployment';
           $version = '1.0.0';
 
