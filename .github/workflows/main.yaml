@@ -37,7 +37,7 @@ jobs:
       - name: 'publish template spec to Azure Resource Group'
         run: |
           $resourceGroupName = 'byteterrace';
-          $subscriptionIdOrName 'byteterrace';
+          $subscriptionIdOrName = 'byteterrace';
           $templateFilePath = ${{ format('{0}/downloads/arm-templates/resourceGroupDeployment.json', github.workspace) }};
           $templateName = 'ResourceGroupDeployment';
           $version = '1.0.0';
