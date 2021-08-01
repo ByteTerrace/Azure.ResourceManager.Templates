@@ -38,7 +38,7 @@ jobs:
         run: |
           $resourceGroupName = 'byteterrace';
           $subscriptionIdOrName = 'byteterrace';
-          $templateFilePath = ${{ format('{0}/downloads/arm-templates/resourceGroupDeployment.json', github.workspace) }};
+          $templateFilePath = ${{ format('''{0}/downloads/arm-templates/resourceGroupDeployment.json''', github.workspace) }};
           $templateName = 'ResourceGroupDeployment';
           $version = '1.0.0';
 
