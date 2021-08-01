@@ -25,5 +25,13 @@ jobs:
       - name: 'login to Azure'
         uses: 'azure/login@v1'
         with:
+          allow-no-subscriptions: true
           creds: ${{ secrets.AZURE_APPLICATION_CREDENTIALS }}
-          environment: 'AzureStack'
+          environment: 'AzureCloud'
+      - name: 'logout of Azure'
+        uses: 'azure/CLI@v1'
+        with:
+          inlineScript: |
+            az logout
+            az cache purge
+            az account clear
