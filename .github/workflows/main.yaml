@@ -4,7 +4,8 @@ jobs:
   build:
     runs-on: 'ubuntu-latest'
     steps:
-      - name: 'checkout Azure Resource Manager template repository'
+      - clean: true
+        name: 'checkout Azure Resource Manager template repository'
         path: '$GITHUB_WORKSPACE/project'
         uses: 'actions/checkout@v2'
       - name: 'upload Azure Resource Manager template artifact'
