@@ -17,7 +17,7 @@ jobs:
         with:
           if-no-files-found: 'error'
           name: 'project'
-          path: ${{ format('{0}/project/**/*.json', github.workspace) }}'
+          path: ${{ format('{0}/project/**/*.json', github.workspace) }}
           retention-days: 13
   deploy:
     needs: 'build'
