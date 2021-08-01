@@ -11,7 +11,7 @@ jobs:
         with:
           if-no-files-found: 'error'
           name: 'project'
-          path: './**/*.json'
+          path: '$GITHUB_WORKSPACE/**/*.json'
           retention-days: 13
   deploy:
     needs: 'build'
@@ -21,13 +21,29 @@ jobs:
         uses: 'actions/download-artifact@v2'
         with:
           name: 'project'
-          path: '~/downloads/arm-templates'
+          path: '$GITHUB_WORKSPACE/downloads/arm-templates'
       - name: 'login to Azure'
         uses: 'azure/login@v1'
         with:
           allow-no-subscriptions: true
           creds: ${{ secrets.AZURE_APPLICATION_CREDENTIALS }}
           environment: 'AzureCloud'
+      - name: 'publish template spec to Azure Resource Group'
+        run: |
+          $resourceGroupName 'byteterrace';
+          $subscriptionIdOrName 'byteterrace';
+          $templateFilePath = '$GITHUB_WORKSPACE/downloads/arm-templates/resourceGroupDeployment.json';
+          $templateName = 'ResourceGroupDeployment';
+          $version = '1.0.0';
+
+          az ts create `
+              --name $templateName `
+              --resource-group $resourceGroupName `
+              --subscription $subscriptionIdOrName `
+              --template-file $templateFilePath `
+              --version $version `
+              --yes;
+        shell: 'pwsh'
       - name: 'logout of Azure'
         uses: 'azure/CLI@v1'
         with:
