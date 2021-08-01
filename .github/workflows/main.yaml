@@ -1,10 +1,13 @@
 name: 'Azure Resource Manager Templates'
 on: [push]
 jobs:
-  Package-Arm-Templates:
+  Azure-Resource-Manager-Templates:
     runs-on: 'ubuntu-latest'
     steps:
-      - uses: actions/upload-artifact@v2
+      - name: 'checkout Azure Resource Manager template repository'
+        uses: 'actions/checkout@v2'
+      - name: 'create Azure Resource Manager template artifact'
+        uses: 'actions/upload-artifact@v2'
         with:
           if-no-files-found: 'error'
           name: 'project'
