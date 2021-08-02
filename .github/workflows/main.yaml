@@ -1,3 +1,5 @@
+env:
+  contentVersion: '3.0.0.0'
 name: 'Azure Resource Manager Templates'
 on: [push]
 jobs:
@@ -12,15 +14,7 @@ jobs:
           lfs: false
           path: ${{ format('{0}/project', github.workspace) }}
           submodules: false
-      - name: 'git version'
-        uses: 'codacy/git-version@2.2.0'
-        with:
-          dev-branch: 'develop'
-          prefix: '3.'
-          release-branch: 'main'
-      - env:
-          contentVersion: '1.0.0.0'
-        name: 'transform Azure Resource Manager templates'
+      - name: 'transform Azure Resource Manager templates'
         uses: 'microsoft/variable-substitution@v1'
         with:
           files: '/project/**/*.json'
@@ -52,7 +46,7 @@ jobs:
           $subscriptionIdOrName = 'byteterrace';
           $templateFilePath = ${{ format('''{0}/downloads/arm-templates/resourceGroupDeployment.json''', github.workspace) }};
           $templateName = 'ResourceGroupDeployment';
-          $version = '1.0.0.0';
+          $version = '${Env:contentVersion}';
 
           az ts create `
               --name $templateName `
