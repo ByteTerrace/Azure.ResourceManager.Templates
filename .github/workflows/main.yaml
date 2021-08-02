@@ -12,6 +12,21 @@ jobs:
           lfs: false
           path: ${{ format('{0}/project', github.workspace) }}
           submodules: false
+      - name: 'git version'
+        uses: 'codacy/git-version@2.2.0'
+        with:
+          dev-branch: 'develop'
+          major-identifier: 'breaking'
+          minor-identifier: 'features'
+          prefix: '3.'
+          release-branch: 'main'
+          tool-version: 'latest'
+      - env:
+          contentVersion: '1.0.0.0'
+        name: 'transform Azure Resource Manager templates'
+        uses: 'microsoft/variable-substitution@v1'
+        with:
+          files: '/project/**/*.json'
       - name: 'upload Azure Resource Manager template artifact'
         uses: 'actions/upload-artifact@v2'
         with:
@@ -28,12 +43,6 @@ jobs:
         with:
           name: 'project'
           path: ${{ format('{0}/downloads/arm-templates', github.workspace) }}
-      - env:
-          contentVersion: '1.0.0.0'
-        name: 'transform Azure Resource Manager templates'
-        uses: 'microsoft/variable-substitution@v1'
-        with:
-          files: '/downloads/arm-templates/**/*.json'
       - name: 'login to Azure'
         uses: 'azure/login@v1'
         with:
