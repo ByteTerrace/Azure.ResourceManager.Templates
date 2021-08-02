@@ -33,7 +33,7 @@ jobs:
         name: 'transform Azure Resource Manager templates'
         uses: 'microsoft/variable-substitution@v1'
         with:
-          files: ${{ format('{0}/downloads/arm-templates/resourceGroupDeployment.json', github.workspace) }}
+          files: ${{ format('{0}/downloads/arm-templates/*.json', github.workspace) }}
       - name: 'login to Azure'
         uses: 'azure/login@v1'
         with:
