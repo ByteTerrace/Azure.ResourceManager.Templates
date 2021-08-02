@@ -16,11 +16,8 @@ jobs:
         uses: 'codacy/git-version@2.2.0'
         with:
           dev-branch: 'develop'
-          major-identifier: 'breaking'
-          minor-identifier: 'features'
           prefix: '3.'
           release-branch: 'main'
-          tool-version: 'latest'
       - env:
           contentVersion: '1.0.0.0'
         name: 'transform Azure Resource Manager templates'
