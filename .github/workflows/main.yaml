@@ -1,5 +1,5 @@
 env:
-  contentVersion: '3.0.0.0'
+  byteterrace.contentVersion: '3.0.0.0'
 name: 'Azure Resource Manager Templates'
 on: [push]
 jobs:
@@ -46,7 +46,7 @@ jobs:
           $subscriptionIdOrName = 'byteterrace';
           $templateFilePath = ${{ format('''{0}/downloads/arm-templates/resourceGroupDeployment.json''', github.workspace) }};
           $templateName = 'ResourceGroupDeployment';
-          $version = '${Env:contentVersion}';
+          $version = ${{ format('''{0}''', byteterrace.contentVersion) }};
 
           az ts create `
               --name $templateName `
