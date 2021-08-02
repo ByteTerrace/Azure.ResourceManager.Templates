@@ -2572,7 +2572,7 @@
                 }
             },
             "type": "Microsoft.Resources/deployments"
-        },
+        }/*,
         {
             "apiVersion": "[variables('deploymentApiVersion')]",
             "condition": "[not(empty(variables('resourceDefinitions').scripts.postDeploy))]",
@@ -2651,6 +2651,6 @@
                 }
             },
             "type": "Microsoft.Resources/deployments"
-        }
+        }*/
     ]
 }
