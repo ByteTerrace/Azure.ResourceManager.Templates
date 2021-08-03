@@ -348,7 +348,6 @@
                 "kind": "StorageV2",
                 "queueServices": {},
                 "skuName": "Standard_LRS",
-                "staticWebsite": {},
                 "tableServices": {},
                 "virtualNetworkRules": []
             },
@@ -2213,9 +2212,6 @@
                     "skuName": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).skuName]"
                     },
-                    "staticWebsite": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).staticWebsite]"
-                    },
                     "tableServices": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).tableServices]"
                     },
@@ -2646,7 +2642,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Resources/deploymentScripts.json"
                 }
             },
