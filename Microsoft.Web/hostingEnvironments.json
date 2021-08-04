@@ -9,21 +9,24 @@
             },
             "type": "object"
         },
-        "kind": {
-            "allowedValues": [
-                "ASEV2",
-                "ASEV3"
-            ],
-            "defaultValue": "ASEV3",
-            "metadata": {
-                "description": "Specifies the kind of the Azure App Service Environment."
-            },
-            "type": "string"
-        },
         "isDedicatedHostGroup": {
             "defaultValue": false,
             "metadata": {
                 "description": "Indicates whether the Azure App Service Environment will be deployed onto dedicated hosts instead of provisioned on a multi-tenant hypervisor."
+            },
+            "type": "bool"
+        },
+        "isInternalEncryptionEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether all internal traffic within the Azure App Service Environment will be encrypted."
+            },
+            "type": "bool"
+        },
+        "isMinimalSslCipherSuiteConfigurationEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the the Azure App Service Environment will be configured to only support the set of SSL cipher suites that are required in order to function."
             },
             "type": "bool"
         },
@@ -33,6 +36,16 @@
                 "description": "Indicates whether the Azure App Service Environment, and the apps that are deployed within it, will be zone redundant."
             },
             "type": "bool"
+        },
+        "kind": {
+            "allowedValues": [
+                "ASEV3"
+            ],
+            "defaultValue": "ASEV3",
+            "metadata": {
+                "description": "Specifies the kind of the Azure App Service Environment."
+            },
+            "type": "string"
         },
         "location": {
             "metadata": {
@@ -101,6 +114,16 @@
                     "isEnabled": true
                 }
             },
+            "clusterSettings": [
+                {
+                    "name": "DisableTls1.0",
+                    "value": "1"
+                },
+                {
+                    "name": "InternalEncryption",
+                    "value": "[string(parameters('isInternalEncryptionEnabled'))]"
+                }
+            ],
             "privateDnsZone": {
                 "name": "[null()]",
                 "resourceGroupName": "[variables('resourceGroupName')]",
@@ -113,11 +136,14 @@
         },
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "isPrivateDnsZoneNotEmpty": "[not(empty(parameters('privateDnsZone')))]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
             "hostingEnvironment": "[resourceId('Microsoft.Web/hostingEnvironments', parameters('name'))]",
             "hostingEnvironmentConfiguration": "[resourceId('Microsoft.Web/hostingEnvironments/configurations', parameters('name'), 'networking')]"
         },
+        "subnet": "[union(variables('defaultResourceProperties').subnet, parameters('subnet'))]",
         "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
@@ -127,10 +153,15 @@
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
+                "clusterSettings": "[if(parameters('isMinimalSslCipherSuiteConfigurationEnabled'), union(variables('defaultResourceProperties').clusterSettings, createArray(createObject('name', 'FrontEndSSLCipherSuiteOrder', 'value', 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256'))), variables('defaultResourceProperties').clusterSettings)]",
                 "dedicatedHostCount": "[if(parameters('isDedicatedHostGroup'), 2, 0)]",
+                "dnsSuffix": "[format('{0}.appserviceenvironment.net', parameters('name'))]",
+                "frontEndScaleFactor": 15,
                 "internalLoadBalancingMode": "[if(equals(toLower(parameters('virtualIpType')), 'internal'), 3, 0)]",
+                "multiSize": "Standard_D2d_v4",
+                "upgradePreference": "None",
                 "virtualNetwork": {
-                    "id": "[resourceId(union(variables('defaultResourceProperties').subnet, parameters('subnet')).subscriptionId, union(variables('defaultResourceProperties').subnet, parameters('subnet')).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('subnet').virtualNetworkName, parameters('subnet').name)]"
+                    "id": "[resourceId(variables('subnet').subscriptionId, variables('subnet').resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('subnet').virtualNetworkName, parameters('subnet').name)]"
                 },
                 "zoneRedundant": "[parameters('isZoneRedundant')]"
             },
@@ -166,7 +197,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').privateDnsZonesARecords]",
-            "condition": "[not(empty(parameters('privateDnsZone')))]",
+            "condition": "[variables('isPrivateDnsZoneNotEmpty')]",
             "dependsOn": [
                 "[variables('resourceIds').hostingEnvironment]"
             ],
@@ -184,7 +215,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').privateDnsZonesARecords]",
-            "condition": "[not(empty(parameters('privateDnsZone')))]",
+            "condition": "[variables('isPrivateDnsZoneNotEmpty')]",
             "dependsOn": [
                 "[variables('resourceIds').hostingEnvironment]"
             ],
@@ -202,7 +233,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').privateDnsZonesARecords]",
-            "condition": "[not(empty(parameters('privateDnsZone')))]",
+            "condition": "[variables('isPrivateDnsZoneNotEmpty')]",
             "dependsOn": [
                 "[variables('resourceIds').hostingEnvironment]"
             ],

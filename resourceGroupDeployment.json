@@ -36,6 +36,7 @@
         "defaultResourceDefinitions": {
             "applicationConfigurationStores": [],
             "applicationSecurityGroups": [],
+            "applicationServiceEnvironments": [],
             "applicationServicePlans": [],
             "availabilitySets": [],
             "bastionHosts": [],
@@ -93,6 +94,16 @@
                 "privateEndpoints": [],
                 "settings": {},
                 "skuName": "Standard"
+            },
+            "applicationServiceEnvironment": {
+                "audit": "[variables('audit')]",
+                "isDedicatedHostGroup": false,
+                "isInternalEncryptionEnabled": false,
+                "isMinimalSslCipherSuiteConfigurationEnabled": true,
+                "isZoneRedundant": true,
+                "kind": "ASEV3",
+                "privateDnsZone": {},
+                "virtualIpType": "Internal"
             },
             "applicationServicePlan": {
                 "isPerSiteScalingEnabled": false,
@@ -391,6 +402,7 @@
             "applicationConfigurationStore": "[format('{0}-AppConfigurationStore', deployment().name)]",
             "applicationInsightsComponent": "[format('{0}-AppInsightsComponent', deployment().name)]",
             "applicationSecurityGroup": "[format('{0}-AppSecurityGroup', deployment().name)]",
+            "applicationServiceEnvironment": "[format('{0}-AppServiceEnvironment', deployment().name)]",
             "applicationServicePlan": "[format('{0}-AppServicePlan', deployment().name)]",
             "availabilitySet": "[format('{0}-AvailabilitySet', deployment().name)]",
             "bastionHost": "[format('{0}-BastionHost', deployment().name)]",
@@ -2472,6 +2484,70 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').applicationServiceEnvironments))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').applicationServiceEnvironments)]",
+                "mode": "Parallel",
+                "name": "applicationServiceEnvironmentsCopy"
+            },
+            "dependsOn": [
+                "cdnProfilesCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "scriptsPreDeployCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').applicationServiceEnvironment, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServiceEnvironment, variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).audit]"
+                    },
+                    "isDedicatedHostGroup": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServiceEnvironment, variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).isDedicatedHostGroup]"
+                    },
+                    "isInternalEncryptionEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServiceEnvironment, variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).isInternalEncryptionEnabled]"
+                    },
+                    "isMinimalSslCipherSuiteConfigurationEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServiceEnvironment, variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).isMinimalSslCipherSuiteConfigurationEnabled]"
+                    },
+                    "isZoneRedundant": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServiceEnvironment, variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).isZoneRedundant]"
+                    },
+                    "kind": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServiceEnvironment, variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).kind]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()].name]"
+                    },
+                    "privateDnsZone": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServiceEnvironment, variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).privateDnsZone]"
+                    },
+                    "subnet": {
+                        "value": "[variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()].subnet]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "virtualIpType": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServiceEnvironment, variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).virtualIpType]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Web/hostingEnvironments.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').applicationServicePlans))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').applicationServicePlans)]",
@@ -2480,6 +2556,7 @@
             },
             "dependsOn": [
                 "applicationInsightsComponentsCopy",
+                "applicationServiceEnvironmentsCopy",
                 "cdnProfilesCopy",
                 "containerRegistriesCopy",
                 "keyVaultsCopy",
@@ -2581,6 +2658,7 @@
                 "applicationConfigurationStoresCopy",
                 "applicationInsightsComponentsCopy",
                 "applicationSecurityGroupsCopy",
+                "applicationServiceEnvironmentsCopy",
                 "applicationServicePlansCopy",
                 "availabilitySetsCopy",
                 "bastionHostsCopy",
