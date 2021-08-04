@@ -40,7 +40,7 @@
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
-                "description": "[if(empty(parameters('description')), json('null'), parameters('description'))]"
+                "description": "[if(empty(parameters('description')), null(), parameters('description'))]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Compute/galleries"

@@ -47,8 +47,8 @@
             "name": "[parameters('name')]",
             "properties": {
                 "arguments": "",
-                "azCliVersion": "[if(equals(toLower(parameters('kind')), 'azurecli'), '2.0.80', json('null'))]",
-                "azPowerShellVersion": "[if(equals(toLower(parameters('kind')), 'azurepowershell'), '3.0', json('null'))]",
+                "azCliVersion": "[if(equals(toLower(parameters('kind')), 'azurecli'), '2.0.80', null())]",
+                "azPowerShellVersion": "[if(equals(toLower(parameters('kind')), 'azurepowershell'), '3.0', null())]",
                 "cleanupPreference": "Always",
                 "environmentVariables": [],
                 "retentionInterval": "PT3H",

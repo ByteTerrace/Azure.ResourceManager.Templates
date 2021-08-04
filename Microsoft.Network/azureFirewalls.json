@@ -116,14 +116,14 @@
                                 "publicIPAddress": {
                                     "id": "[resourceId(union(variables('defaultResourceProperties'), parameters('ipConfigurations')[copyIndex('ipConfigurations')]).publicIpAddress.subscriptionId, union(variables('defaultResourceProperties'), parameters('ipConfigurations')[copyIndex('ipConfigurations')]).publicIpAddress.resourceGroupName, 'Microsoft.Network/publicIPAddresses', parameters('ipConfigurations')[copyIndex('ipConfigurations')].publicIpAddress.name)]"
                                 },
-                                "subnet": "[if(not(empty(union(variables('defaultResourceProperties'), parameters('ipConfigurations')[copyIndex('ipConfigurations')]).subnet.name)), createObject('id', resourceId(union(variables('defaultResourceProperties'), parameters('ipConfigurations')[copyIndex('ipConfigurations')]).subnet.subscriptionId, union(variables('defaultResourceProperties'), parameters('ipConfigurations')[copyIndex('ipConfigurations')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('ipConfigurations')[copyIndex('ipConfigurations')].subnet.virtualNetworkName, parameters('ipConfigurations')[copyIndex('ipConfigurations')].subnet.name)), json('null'))]"
+                                "subnet": "[if(not(empty(union(variables('defaultResourceProperties'), parameters('ipConfigurations')[copyIndex('ipConfigurations')]).subnet.name)), createObject('id', resourceId(union(variables('defaultResourceProperties'), parameters('ipConfigurations')[copyIndex('ipConfigurations')]).subnet.subscriptionId, union(variables('defaultResourceProperties'), parameters('ipConfigurations')[copyIndex('ipConfigurations')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('ipConfigurations')[copyIndex('ipConfigurations')].subnet.virtualNetworkName, parameters('ipConfigurations')[copyIndex('ipConfigurations')].subnet.name)), null())]"
                             },
                             "name": "[parameters('ipConfigurations')[copyIndex('ipConfigurations')].name]"
                         },
                         "name": "ipConfigurations"
                     }
                 ],
-                "managementIpConfiguration": "[if(empty(parameters('managementIpConfiguration')), json('null'), variables('managementIpConfiguration'))]",
+                "managementIpConfiguration": "[if(empty(parameters('managementIpConfiguration')), null(), variables('managementIpConfiguration'))]",
                 "natRuleCollections": [],
                 "networkRuleCollections": [],
                 "sku": {

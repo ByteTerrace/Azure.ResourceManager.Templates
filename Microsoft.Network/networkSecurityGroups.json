@@ -89,17 +89,17 @@
                             "properties": {
                                 "access": "[parameters('securityRules')[copyIndex('securityRules')].access]",
                                 "description": "[union(variables('defaultResourceProperties').securityRule, parameters('securityRules')[copyIndex('securityRules')]).description]",
-                                "destinationAddressPrefix": "[if(equals(length(parameters('securityRules')[copyIndex('securityRules')].destinationAddressPrefixes), 1), parameters('securityRules')[copyIndex('securityRules')].destinationAddressPrefixes[0], json('null'))]",
+                                "destinationAddressPrefix": "[if(equals(length(parameters('securityRules')[copyIndex('securityRules')].destinationAddressPrefixes), 1), parameters('securityRules')[copyIndex('securityRules')].destinationAddressPrefixes[0], null())]",
                                 "destinationAddressPrefixes": "[if(greater(length(parameters('securityRules')[copyIndex('securityRules')].destinationAddressPrefixes), 1), parameters('securityRules')[copyIndex('securityRules')].destinationAddressPrefixes, createArray())]",
-                                "destinationPortRange": "[if(equals(length(parameters('securityRules')[copyIndex('securityRules')].destinationPortRanges), 1), parameters('securityRules')[copyIndex('securityRules')].destinationPortRanges[0], json('null'))]",
+                                "destinationPortRange": "[if(equals(length(parameters('securityRules')[copyIndex('securityRules')].destinationPortRanges), 1), parameters('securityRules')[copyIndex('securityRules')].destinationPortRanges[0], null())]",
                                 "destinationPortRanges": "[if(greater(length(parameters('securityRules')[copyIndex('securityRules')].destinationPortRanges), 1), parameters('securityRules')[copyIndex('securityRules')].destinationPortRanges, createArray())]",
                                 "direction": "[parameters('securityRules')[copyIndex('securityRules')].direction]",
                                 "priority": "[parameters('securityRules')[copyIndex('securityRules')].priority]",
                                 "protocol": "[parameters('securityRules')[copyIndex('securityRules')].protocol]",
-                                "sourceAddressPrefix": "[if(equals(length(parameters('securityRules')[copyIndex('securityRules')].sourceAddressPrefixes), 1), parameters('securityRules')[copyIndex('securityRules')].sourceAddressPrefixes[0], json('null'))]",
+                                "sourceAddressPrefix": "[if(equals(length(parameters('securityRules')[copyIndex('securityRules')].sourceAddressPrefixes), 1), parameters('securityRules')[copyIndex('securityRules')].sourceAddressPrefixes[0], null())]",
                                 "sourceAddressPrefixes": "[if(greater(length(parameters('securityRules')[copyIndex('securityRules')].sourceAddressPrefixes), 1), parameters('securityRules')[copyIndex('securityRules')].sourceAddressPrefixes, createArray())]",
                                 "sourceApplicationSecurityGroups": [],
-                                "sourcePortRange": "[if(equals(length(union(variables('defaultResourceProperties').securityRule, parameters('securityRules')[copyIndex('securityRules')]).sourcePortRanges), 1), union(variables('defaultResourceProperties').securityRule, parameters('securityRules')[copyIndex('securityRules')]).sourcePortRanges[0], json('null'))]",
+                                "sourcePortRange": "[if(equals(length(union(variables('defaultResourceProperties').securityRule, parameters('securityRules')[copyIndex('securityRules')]).sourcePortRanges), 1), union(variables('defaultResourceProperties').securityRule, parameters('securityRules')[copyIndex('securityRules')]).sourcePortRanges[0], null())]",
                                 "sourcePortRanges": "[if(greater(length(union(variables('defaultResourceProperties').securityRule, parameters('securityRules')[copyIndex('securityRules')]).sourcePortRanges), 1), union(variables('defaultResourceProperties').securityRule, parameters('securityRules')[copyIndex('securityRules')]).sourcePortRanges, createArray())]"
                             }
                         },

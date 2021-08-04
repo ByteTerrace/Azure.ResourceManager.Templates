@@ -107,19 +107,19 @@
     "variables": {
         "defaultResourceProperties": {
             "container": {
-                "command": "[json('null')]",
+                "command": "[null()]",
                 "environmentVariables": [],
                 "image": "mcr.microsoft.com/azuredocs/aci-helloworld",
                 "ports": "[parameters('ports')]",
                 "resources": {
                     "limits": {
-                        "cpuCoreCount": "[json('null')]",
-                        "gpuProperties": "[json('null')]",
-                        "memorySizeInGigabytes": "[json('null')]"
+                        "cpuCoreCount": "[null()]",
+                        "gpuProperties": "[null()]",
+                        "memorySizeInGigabytes": "[null()]"
                     },
                     "requests": {
                         "cpuCoreCount": 1.0,
-                        "gpuProperties": "[json('null')]",
+                        "gpuProperties": "[null()]",
                         "memorySizeInGigabytes": 1.5
                     }
                 }
@@ -202,7 +202,7 @@
                     "ports": "[parameters('ports')]",
                     "type": "[if(variables('isAttachedToNetworkProfile'), 'Private', 'Public')]"
                 },
-                "networkProfile": "[if(variables('isAttachedToNetworkProfile'), createObject('id', variables('resourceIds').networkProfile), json('null'))]",
+                "networkProfile": "[if(variables('isAttachedToNetworkProfile'), createObject('id', variables('resourceIds').networkProfile), null())]",
                 "osType": "[parameters('operatingSystemName')]",
                 "restartPolicy": "[parameters('restartPolicy')]",
                 "sku": "[parameters('skuName')]"

@@ -106,6 +106,8 @@
                 "virtualIpType": "Internal"
             },
             "applicationServicePlan": {
+                "audit": "[variables('audit')]",
+                "autoscale": {},
                 "isPerSiteScalingEnabled": false,
                 "operatingSystemName": "Linux",
                 "serviceEnvironmentName": "",
@@ -2572,6 +2574,12 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).audit]"
+                    },
+                    "autoscale": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).autoscale]"
+                    },
                     "isPerSiteScalingEnabled": {
                         "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).isPerSiteScalingEnabled]"
                     },

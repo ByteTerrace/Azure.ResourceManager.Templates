@@ -278,9 +278,9 @@
             "fileShare": {
                 "accessTier": "TransactionOptimized",
                 "enabledProtocols": "SMB",
-                "metadata": "[json('null')]",
+                "metadata": "[null()]",
                 "quotaInGigabytes": 5,
-                "rootSquash": "[json('null')]"
+                "rootSquash": "[null()]"
             },
             "privateEndpoint": {
                 "dnsZone": {
@@ -368,8 +368,8 @@
                 "accessTier": "[parameters('accessTier')]",
                 "allowBlobPublicAccess": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).isAnonymousAccessEnabled]",
                 "allowSharedKeyAccess": "[parameters('isSharedKeyAccessEnabled')]",
-                "azureFilesIdentityBasedAuthentication": "[json('null')]",
-                "customDomain": "[json('null')]",
+                "azureFilesIdentityBasedAuthentication": "[null()]",
+                "customDomain": "[null()]",
                 "encryption": {
                     "keySource": "Microsoft.Storage",
                     "requireInfrastructureEncryption": "[variables('customerManagedEncryption').isDoubleEncryptionAtRestEnabled]",
@@ -394,7 +394,7 @@
                 },
                 "isHnsEnabled": "[union(variables('defaultResourceProperties').dataLake, parameters('dataLake')).isHierarchicalNamespaceEnabled]",
                 "isNfsV3Enabled": "[union(variables('defaultResourceProperties').fileService, parameters('fileServices')).shares.isNetworkFileSystemV3Enabled]",
-                "keyPolicy": "[json('null')]",
+                "keyPolicy": "[null()]",
                 "largeFileSharesState": "[if(union(variables('defaultResourceProperties').fileService, parameters('fileServices')).shares.isLargeSupportEnabled, 'Enabled', 'Disabled')]",
                 "minimumTlsVersion": "TLS1_2",
                 "networkAcls": {
@@ -419,8 +419,8 @@
                     ],
                     "defaultAction": "[if(parameters('isPublicNetworkAccessEnabled'), 'Allow', 'Deny')]"
                 },
-                "routingPreference": "[json('null')]",
-                "sasPolicy": "[json('null')]",
+                "routingPreference": "[null()]",
+                "sasPolicy": "[null()]",
                 "supportsHttpsTrafficOnly": true
             },
             "sku": {
@@ -634,7 +634,7 @@
             "name": "[format('{0}/{1}', variables('storageAccountName'), if(variables('encryptionScopesIsNotEmpty'), parameters('encryptionScopes'), createArray(createObject('name', 'dummyEncryptionScope')))[copyIndex()].name)]",
             "properties": {
                 "keyVaultProperties": {
-                    "keyUri": "[if(variables('encryptionScopesIsNotEmpty'), format('{0}keys/{1}{2}', reference(resourceId(union(variables('defaultResourceProperties').encryptionScope, parameters('encryptionScopes')[copyIndex()]).keyVault.subscriptionId, union(variables('defaultResourceProperties').encryptionScope, parameters('encryptionScopes')[copyIndex()]).keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', parameters('encryptionScopes')[copyIndex()].keyVault.name), variables('apiVersions').keyVaults).vaultUri, parameters('encryptionScopes')[copyIndex()].keyName, if(empty(union(variables('defaultResourceProperties').encryptionScope, parameters('encryptionScopes')[copyIndex()]).keyVersion), '', format('/{0}', parameters('encryptionScopes')[copyIndex()].keyVersion))), json('null'))]"
+                    "keyUri": "[if(variables('encryptionScopesIsNotEmpty'), format('{0}keys/{1}{2}', reference(resourceId(union(variables('defaultResourceProperties').encryptionScope, parameters('encryptionScopes')[copyIndex()]).keyVault.subscriptionId, union(variables('defaultResourceProperties').encryptionScope, parameters('encryptionScopes')[copyIndex()]).keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', parameters('encryptionScopes')[copyIndex()].keyVault.name), variables('apiVersions').keyVaults).vaultUri, parameters('encryptionScopes')[copyIndex()].keyName, if(empty(union(variables('defaultResourceProperties').encryptionScope, parameters('encryptionScopes')[copyIndex()]).keyVersion), '', format('/{0}', parameters('encryptionScopes')[copyIndex()].keyVersion))), null())]"
                 },
                 "requireInfrastructureEncryption": "[union(variables('defaultResourceProperties').encryptionScope, parameters('encryptionScopes')[copyIndex()]).isDoubleEncryptionAtRestEnabled]",
                 "source": "Microsoft.KeyVault",
@@ -675,7 +675,7 @@
                     "enabled": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).isSoftDeleteEnabled]"
                 },
                 "isVersioningEnabled": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).isVersioningEnabled]",
-                "lastAccessTimeTrackingPolicy": "[json('null')]",
+                "lastAccessTimeTrackingPolicy": "[null()]",
                 "restorePolicy": {
                     "days": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).pointInTimeRestoreRetentionPeriodInDays]",
                     "enabled": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).isPointInTimeRestoreEnabled]"
@@ -735,7 +735,7 @@
                 "cors": {
                     "corsRules": "[union(variables('defaultResourceProperties').fileService, parameters('fileServices')).corsRules]"
                 },
-                "protocolSettings": "[json('null')]",
+                "protocolSettings": "[null()]",
                 "shareDeleteRetentionPolicy": {
                     "days": "[union(variables('defaultResourceProperties').fileService, parameters('fileServices')).shares.softDeleteRetentionPeriodInDays]",
                     "enabled": "[union(variables('defaultResourceProperties').fileService, parameters('fileServices')).shares.isSoftDeleteEnabled]"

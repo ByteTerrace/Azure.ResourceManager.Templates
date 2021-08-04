@@ -133,6 +133,7 @@
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isPrivateDnsZoneNotEmpty": "[not(empty(parameters('privateDnsZone')))]",
+        "isVirtualIpInternal": "[equals(toLower(parameters('virtualIpType')), 'internal')]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
@@ -151,9 +152,9 @@
             "properties": {
                 "clusterSettings": "[union(variables('defaultResourceProperties').clusterSettings, if(parameters('isInternalEncryptionEnabled'), createArray(createObject('name', 'InternalEncryption', 'value', 'true')), createArray()), if(parameters('isMinimalSslCipherSuiteConfigurationEnabled'), createArray(createObject('name', 'FrontEndSSLCipherSuiteOrder', 'value', 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256')), createArray()))]",
                 "dedicatedHostCount": "[if(parameters('isDedicatedHostGroup'), 2, 0)]",
-                "dnsSuffix": "[format('{0}.appserviceenvironment.net', parameters('name'))]",
+                "dnsSuffix": "[format(concat('{0}.', if(variables('isVirtualIpInternal'), 'appserviceenvironment.net', 'p.azurewebsites.net')), parameters('name'))]",
                 "frontEndScaleFactor": 15,
-                "internalLoadBalancingMode": "[if(equals(toLower(parameters('virtualIpType')), 'internal'), 3, 0)]",
+                "internalLoadBalancingMode": "[if(variables('isVirtualIpInternal'), 3, 0)]",
                 "multiSize": "Standard_D2d_v4",
                 "upgradePreference": "None",
                 "virtualNetwork": {

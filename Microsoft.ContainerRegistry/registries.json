@@ -263,11 +263,11 @@
             "properties": {
                 "adminUserEnabled": "[parameters('isAdministratorAccountEnabled')]",
                 "encryption": {
-                    "keyVaultProperties": "[if(variables('isCustomerManagedEncryptionEnabled'), createObject('identity', reference(variables('resourceIds').containerRegistryManagedIdentity, variables('apiVersions').userAssignedIdentities).clientId, 'keyIdentifier', format('{0}keys/{1}{2}', reference(variables('resourceIds').containerRegistryCustomerManagedEncryptionKeyVault, variables('apiVersions').keyVaults).vaultUri, variables('customerManagedEncryption').keyName, if(empty(variables('customerManagedEncryption').keyVersion), '', format('/{1}', variables('customerManagedEncryption').keyVersion)))), json('null'))]",
+                    "keyVaultProperties": "[if(variables('isCustomerManagedEncryptionEnabled'), createObject('identity', reference(variables('resourceIds').containerRegistryManagedIdentity, variables('apiVersions').userAssignedIdentities).clientId, 'keyIdentifier', format('{0}keys/{1}{2}', reference(variables('resourceIds').containerRegistryCustomerManagedEncryptionKeyVault, variables('apiVersions').keyVaults).vaultUri, variables('customerManagedEncryption').keyName, if(empty(variables('customerManagedEncryption').keyVersion), '', format('/{1}', variables('customerManagedEncryption').keyVersion)))), null())]",
                     "status": "[if(variables('isCustomerManagedEncryptionEnabled'), 'Enabled', 'Disabled')]"
                 },
                 "networkRuleBypassOptions": "[if(parameters('isTrustedMicrosoftResourceAccessEnabled'), 'AzureServices', 'None')]",
-                "networkRuleSet": "[if(equals(parameters('skuName'), 'Premium'), variables('networkRuleSetProperties'), json('null'))]",
+                "networkRuleSet": "[if(equals(parameters('skuName'), 'Premium'), variables('networkRuleSetProperties'), null())]",
                 "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]",
                 "zoneRedundancy": "Disabled"
             },

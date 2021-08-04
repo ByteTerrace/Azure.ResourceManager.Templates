@@ -218,8 +218,8 @@
             "properties": {
                 "encryption": {
                     "keyVaultProperties": {
-                        "identityClientId": "[if(variables('isCustomerManagedEncryptionEnabled'), reference(variables('resourceIds').configurationStoreManagedIdentity, variables('apiVersions').userAssignedIdentities).clientId, json('null'))]",
-                        "keyIdentifier": "[if(variables('isCustomerManagedEncryptionEnabled'), format('{0}keys/{1}{2}', reference(variables('resourceIds').configurationStoreCustomerManagedEncryptionKeyVault, variables('apiVersions').keyVaults).vaultUri, variables('customerManagedEncryption').keyName, if(empty(variables('customerManagedEncryption').keyVersion), '', format('/{1}', variables('customerManagedEncryption').keyVersion))), json('null'))]"
+                        "identityClientId": "[if(variables('isCustomerManagedEncryptionEnabled'), reference(variables('resourceIds').configurationStoreManagedIdentity, variables('apiVersions').userAssignedIdentities).clientId, null())]",
+                        "keyIdentifier": "[if(variables('isCustomerManagedEncryptionEnabled'), format('{0}keys/{1}{2}', reference(variables('resourceIds').configurationStoreCustomerManagedEncryptionKeyVault, variables('apiVersions').keyVaults).vaultUri, variables('customerManagedEncryption').keyName, if(empty(variables('customerManagedEncryption').keyVersion), '', format('/{1}', variables('customerManagedEncryption').keyVersion))), null())]"
                     }
                 },
                 "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]"

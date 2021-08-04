@@ -216,7 +216,7 @@
                 "enabledForDeployment": "[parameters('isVirtualMachineDeploymentEnabled')]",
                 "enabledForDiskEncryption": "[parameters('isDiskEncryptionEnabled')]",
                 "enabledForTemplateDeployment": "[parameters('isTemplateDeploymentEnabled')]",
-                "enablePurgeProtection": "[if(parameters('isPurgeProtectionEnabled'), parameters('isPurgeProtectionEnabled'), json('null'))]",
+                "enablePurgeProtection": "[if(parameters('isPurgeProtectionEnabled'), parameters('isPurgeProtectionEnabled'), null())]",
                 "enableRbacAuthorization": "[parameters('isRbacAuthorizationEnabled')]",
                 "enableSoftDelete": true,
                 "networkAcls": {
