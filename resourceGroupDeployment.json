@@ -110,9 +110,7 @@
                 "autoscale": {},
                 "isPerSiteScalingEnabled": false,
                 "operatingSystemName": "Linux",
-                "serviceEnvironmentName": "",
-                "serviceEnvironmentResourceGroupName": "[variables('resourceGroupName')]",
-                "serviceEnvironmentSubscriptionId": "[variables('subscriptionId')]",
+                "serviceEnvironment": {},
                 "skuName": "P1v2"
             },
             "availabilitySet": {
@@ -2592,14 +2590,8 @@
                     "operatingSystemName": {
                         "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).operatingSystemName]"
                     },
-                    "serviceEnvironmentName": {
-                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).serviceEnvironmentName]"
-                    },
-                    "serviceEnvironmentResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).serviceEnvironmentResourceGroupName]"
-                    },
-                    "serviceEnvironmentSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).serviceEnvironmentSubscriptionId]"
+                    "serviceEnvironment": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).serviceEnvironment]"
                     },
                     "skuName": {
                         "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).skuName]"
