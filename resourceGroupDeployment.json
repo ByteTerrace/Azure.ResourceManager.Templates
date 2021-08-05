@@ -402,7 +402,7 @@
                 "audit": "[variables('audit')]",
                 "applicationSettings": {},
                 "connectionStrings": {},
-                "cors": [],
+                "cors": {},
                 "ipSecurityRestrictions": [],
                 "isAlwaysOnEnabled": false,
                 "metadata": [],
