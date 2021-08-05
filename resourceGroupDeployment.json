@@ -2679,7 +2679,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
-                    "relativePath": "./Microsoft.Web/serverfarms.json"
+                    "relativePath": "./Microsoft.Web/sites.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
