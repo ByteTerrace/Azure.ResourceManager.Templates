@@ -25,7 +25,7 @@
         },
         "location": {
             "metadata": {
-                "description": "Specifies the location in which the Azure App Service PlanGonna resource(s) should be deployed."
+                "description": "Specifies the location in which the Azure App Service Plan resource(s) should be deployed."
             },
             "type": "string"
         },

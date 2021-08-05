@@ -85,7 +85,8 @@
             "storageAccounts": [],
             "subnets": [],
             "virtualMachines": [],
-            "virtualNetworks": []
+            "virtualNetworks": [],
+            "webApplications": []
         },
         "defaultResourceProperties": {
             "applicationConfigurationStore": {
@@ -396,6 +397,16 @@
                 "ddosProtectionPlanResourceGroupName": "[variables('resourceGroupName')]",
                 "ddosProtectionPlanSubscriptionId": "[variables('subscriptionId')]",
                 "subnets": []
+            },
+            "webApplication": {
+                "audit": "[variables('audit')]",
+                "applicationSettings": {},
+                "connectionStrings": {},
+                "cors": [],
+                "ipSecurityRestrictions": [],
+                "isAlwaysOnEnabled": false,
+                "metadata": [],
+                "scmIpSecurityRestrictions": []
             }
         },
         "deploymentNames": {
@@ -441,7 +452,8 @@
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
             "subnet": "[format('{0}-Subnet', deployment().name)]",
             "virtualMachine": "[format('{0}-VirtualMachine', deployment().name)]",
-            "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]"
+            "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]",
+            "webApplication": "[format('{0}-WebApplication', deployment().name)]"
         },
         "logAnalyticsWorkspaces": "[if(variables('logAnalyticsWorkspacesIsNotEmpty'), variables('resourceDefinitions').monitor.logAnalyticsWorkspaces, createArray(createObject('name', 'dummyLogAnalyticsWorkspace')))]",
         "logAnalyticsWorkspacesCount": "[length(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces)]",
@@ -2555,16 +2567,10 @@
                 "name": "applicationServicePlansCopy"
             },
             "dependsOn": [
-                "applicationInsightsComponentsCopy",
                 "applicationServiceEnvironmentsCopy",
-                "cdnProfilesCopy",
-                "containerRegistriesCopy",
-                "keyVaultsCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "scriptsPreDeployCopy",
-                "sqlServersCopy",
-                "storageAccountsCopy",
                 "subnetsCopy",
                 "virtualNetworksCopy"
             ],
@@ -2595,6 +2601,77 @@
                     },
                     "skuName": {
                         "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Web/serverfarms.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').webApplications))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').webApplications)]",
+                "mode": "Parallel",
+                "name": "webApplicationsCopy"
+            },
+            "dependsOn": [
+                "applicationInsightsComponentsCopy",
+                "applicationServiceEnvironmentsCopy",
+                "applicationServicePlansCopy",
+                "cdnProfilesCopy",
+                "containerRegistriesCopy",
+                "keyVaultsCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "scriptsPreDeployCopy",
+                "sqlServersCopy",
+                "storageAccountsCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').webApplication, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).audit]"
+                    },
+                    "applicationSettings": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).applicationSettings]"
+                    },
+                    "connectionStrings": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).connectionStrings]"
+                    },
+                    "cors": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).cors]"
+                    },
+                    "ipSecurityRestrictions": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).ipSecurityRestrictions]"
+                    },
+                    "isAlwaysOnEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).isAlwaysOnEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').webApplications[copyIndex()]).location]"
+                    },
+                    "metadata": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).metadata]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').webApplications[copyIndex()].name]"
+                    },
+                    "scmIpSecurityRestrictions": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).scmIpSecurityRestrictions]"
+                    },
+                    "servicePlan": {
+                        "value": "[variables('resourceDefinitions').webApplications[copyIndex()].servicePlan]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
@@ -2697,7 +2774,8 @@
                 "storageAccountsCopy",
                 "subnetsCopy",
                 "virtualMachinesCopy",
-                "virtualNetworksCopy"
+                "virtualNetworksCopy",
+                "webApplicationsCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').scriptPostDeploy, copyIndex())]",
             "properties": {

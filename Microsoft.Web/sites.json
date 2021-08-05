@@ -1,0 +1,323 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "audit": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure Web Site."
+            },
+            "type": "object"
+        },
+        "applicationSettings": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the array of application setting name-value pairs that will be set on the Azure Web Site."
+            },
+            "type": "secureObject"
+        },
+        "connectionStrings": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the array of connection strings that will be set on the Azure Web Site."
+            },
+            "type": "secureObject"
+        },
+        "cors": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the CORS settings that will be applied to the Azure Web Site."
+            },
+            "type": "object"
+        },
+        "ipSecurityRestrictions": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of IP security restrictions that will be applied to the Azure Web Site."
+            },
+            "type": "array"
+        },
+        "isAlwaysOnEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the always on feature is enabled on the Azure Web Site."
+            },
+            "type": "bool"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Web Site resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "metadata": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An object that encapsulates the array of metadata name-value pairs that will be set on the Azure Web Site."
+            },
+            "type": "array"
+        },
+        "name": {
+            "maxLength": 60,
+            "metadata": {
+                "description": "Specifies the name of the Azure Web Site."
+            },
+            "minLength": 2,
+            "type": "string"
+        },
+        "scmIpSecurityRestrictions": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of SCM IP security restrictions that will be applied to the Azure Web Site."
+            },
+            "type": "array"
+        },
+        "servicePlan": {
+            "metadata": {
+                "description": "An object that encapsulates the properties of the service plan that the Azure Web Site will be deployed within."
+            },
+            "type": "object"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Web Site."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "diagnosticSettings": "2017-05-01-preview",
+            "sites": "2020-12-01",
+            "sitesConfig": "2020-12-01"
+        },
+        "applicationSettingsCollection": "[union(variables('defaultResourceProperties').applicationSettings, parameters('applicationSettings')).collection]",
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "cors": "[union(variables('defaultResourceProperties').cors, parameters('cors'))]",
+        "defaultResourceProperties": {
+            "applicationSettings": {
+                "collection": []
+            },
+            "audit": {
+                "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "logNames": [
+                    "AppServiceAntivirusScanAuditLogs",
+                    "AppServiceAuditLogs",
+                    "AppServiceFileAuditLogs",
+                    "AppServiceIPSecAuditLogs",
+                    "AppServicePlatformLogs"
+                ],
+                "retentionPolicy": {
+                    "days": 137,
+                    "isEnabled": true
+                }
+            },
+            "connectionStrings": {
+                "collection": []
+            },
+            "cors": {
+                "allowedOrigins": [],
+                "isCredentialSupportEnabled": false
+            },
+            "ipSecurityRestriction": {
+                "description": "",
+                "headers": {},
+                "ipAddress": "[null()]",
+                "subnet": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "subnetMask": "[null()]",
+                "tag": "[null()]"
+            },
+            "servicePlan": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            }
+        },
+        "connectionStringsCollection": "[union(variables('defaultResourceProperties').connectionStrings, parameters('connectionStrings')).collection]",
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "resourceIds": {
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
+            "serverFarm": "[resourceId(variables('servicePlan').subscriptionId, variables('servicePlan').resourceGroupName, 'Microsoft.Web/serverfarms', variables('servicePlan').name)]",
+            "site": "[resourceId('Microsoft.Web/sites', parameters('name'))]"
+        },
+        "scmIpSecurityRestrictionsCount": "[length(parameters('scmIpSecurityRestrictions'))]",
+        "servicePlan": "[union(variables('defaultResourceProperties').servicePlan, parameters('servicePlan'))]",
+        "subscriptionId": "[subscription().subscriptionId]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').sites]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "clientAffinityEnabled": false,
+                "clientCertEnabled": false,
+                "clientCertMode": "Required",
+                "name": "[parameters('name')]",
+                "hyperV": false,
+                "httpsOnly": true,
+                "isXenon": false,
+                "reserved": false,
+                "serverFarmId": "[variables('resourceIds').serverFarm]",
+                "siteConfig": {
+                    "acrUseManagedIdentityCreds": false,
+                    "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
+                    "autoHealEnabled": false,
+                    "copy": [
+                        {
+                            "count": "[length(variables('applicationSettingsCollection'))]",
+                            "input": {
+                                "name": "[variables('applicationSettingsCollection')[copyIndex('appSettings')].name]",
+                                "value": "[variables('applicationSettingsCollection')[copyIndex('appSettings')].value]"
+                            },
+                            "name": "appSettings"
+                        },
+                        {
+                            "count": "[length(variables('connectionStringsCollection'))]",
+                            "input": {
+                                "connectionString": "[variables('connectionStringsCollection')[copyIndex('connectionStrings')].value]",
+                                "name": "[variables('connectionStringsCollection')[copyIndex('connectionStrings')].name]",
+                                "type": "[variables('connectionStringsCollection')[copyIndex('connectionStrings')].type]"
+                            },
+                            "name": "connectionStrings"
+                        },
+                        {
+                            "count": "[length(parameters('ipSecurityRestrictions'))]",
+                            "input": {
+                                "action": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).action]",
+                                "description": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).description]",
+                                "headers": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).headers]",
+                                "ipAddress": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).ipAddress]",
+                                "priority": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).priority]",
+                                "name": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).name]",
+                                "subnetMask": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).subnetMask]",
+                                "tag": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).tag]",
+                                "vnetSubnetResourceId": "[if(empty(union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).subnet.name), null(), resourceId(union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).subnet.subscriptionId, union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).subnet.virtualNetworkName, union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).subnet.name))]"
+                            },
+                            "name": "ipSecurityRestrictions"
+                        },
+                        {
+                            "count": "[variables('scmIpSecurityRestrictionsCount')]",
+                            "input": {
+                                "action": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).action]",
+                                "description": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).description]",
+                                "headers": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).headers]",
+                                "ipAddress": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).ipAddress]",
+                                "priority": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).priority]",
+                                "name": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).name]",
+                                "subnetMask": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).subnetMask]",
+                                "tag": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).tag]",
+                                "vnetSubnetResourceId": "[if(empty(union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).subnet.name), null(), resourceId(union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).subnet.subscriptionId, union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).subnet.virtualNetworkName, union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).subnet.name))]"
+                            },
+                            "name": "scmIpSecurityRestrictions"
+                        }
+                    ],
+                    "cors": {
+                        "allowedOrigins": "[variables('cors').allowedOrigins]",
+                        "supportCredentials": "[variables('cors').isCredentialSupportEnabled]"
+                    },
+                    "ftpsState": "FtpsOnly",
+                    "healthCheckPath": "[null()]",
+                    "http20Enabled": true,
+                    "logsDirectorySizeLimit": 27,
+                    "managedPipelineMode": "Integrated",
+                    "metadata": "[parameters('metadata')]",
+                    "minTlsVersion": "1.2",
+                    "numberOfWorkers": 1,
+                    "scmMinTlsVersion": "1.2",
+                    "phpVersion": "OFF",
+                    "scmIpSecurityRestrictionsUseMain": "[equals(variables('scmIpSecurityRestrictionsCount'), 0)]",
+                    "use32BitWorkerProcess": false,
+                    "webSocketsEnabled": true,
+                    "websiteTimeZone": "UTC"
+                }
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Web/sites"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').sitesConfig]",
+            "dependsOn": [
+                "[variables('resourceIds').site]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/logs', parameters('name'))]",
+            "properties": {
+                "applicationLogs": {
+                    "azureTableStorage": {
+                        "level": "Off",
+                        "sasUrl": "[null()]"
+                    },
+                    "azureBlobStorage": {
+                        "level": "Off",
+                        "retentionInDays": 3,
+                        "sasUrl": "[null()]"
+                    },
+                    "fileSystem": {
+                        "level": "Error"
+                    }
+                },
+                "detailedErrorMessages": {
+                    "enabled": true
+                },
+                "failedRequestsTracing": {
+                    "enabled": true
+                },
+                "httpLogs": {
+                    "azureBlobStorage": {
+                        "enabled": false,
+                        "retentionInDays": 7,
+                        "sasUrl": "[null()]"
+                    },
+                    "fileSystem": {
+                        "enabled": true,
+                        "retentionInDays": 3,
+                        "retentionInMb": 27
+                    }
+                }
+            },
+            "type": "Microsoft.Web/sites/config"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
+            "dependsOn": [
+                "[variables('resourceIds').site]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/Microsoft.Insights/audit', parameters('name'))]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(variables('audit').logNames)]",
+                        "input": {
+                            "category": "[variables('audit').logNames[copyIndex('logs')]]",
+                            "enabled": "[variables('isAuditEnabled')]",
+                            "retentionPolicy": {
+                                "days": "[variables('audit').retentionPolicy.days]",
+                                "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                            }
+                        },
+                        "name": "logs"
+                    }
+                ],
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
+            },
+            "type": "Microsoft.Web/sites/providers/diagnosticsettings"
+        }
+    ]
+}
