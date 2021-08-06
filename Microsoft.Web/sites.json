@@ -45,7 +45,7 @@
             "type": "object"
         },
         "frameworkVersion": {
-            "defaultValue": "",
+            "defaultValue": "DOTNETCORE|3.1",
             "metadata": {
                 "description": "Specifies the application framework version that will be deployed within the Azure Web Site."
             },
@@ -232,9 +232,10 @@
         "customDomainsCount": "[length(parameters('customDomains'))]",
         "dnsZones": "[union(createObject('private', createArray(), 'public', createArray()), parameters('dnsZones'))]",
         "healthCheck": "[union(variables('defaultResourceProperties').healthCheck, parameters('healthCheck'))]",
+        "currentStacK": "[if(startsWith(toLower(parameters('frameworkVersion')), 'dotnetcore'), 'dotnetcore', 'dotnet')]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
-        "metadata": "[union(createArray(createObject('CURRENT_STACK', 'dotnet')), parameters('metadata'))]",
+        "metadata": "[union(createArray(createObject('CURRENT_STACK', variables('currentStacK'))), parameters('metadata'))]",
         "privateDnsZonesCount": "[length(variables('dnsZones').private)]",
         "privateDnsZonesIsNotEmpty": "[greater(variables('privateDnsZonesCount'), 0)]",
         "publicDnsZonesCount": "[length(variables('dnsZones').public)]",
@@ -325,7 +326,7 @@
                     "healthCheckPath": "[if(variables('healthCheck').isEnabled, variables('healthCheck').path, '')]",
                     "http20Enabled": "[parameters('isHttp20SupportEnabled')]",
                     "keyVaultReferenceIdentity": "SystemAssigned",
-                    "linuxFxVersion": "[if(equals(toLower(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).kind), 'linux'), if(empty(parameters('frameworkVersion')), 'DOTNETCORE|3.1', parameters('frameworkVersion')), null())]",
+                    "linuxFxVersion": "[if(equals(toLower(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).kind), 'linux'), parameters('frameworkVersion'), null())]",
                     "loadBalancing": "LeastRequests",
                     "logsDirectorySizeLimit": 27,
                     "managedPipelineMode": "Integrated",
@@ -341,7 +342,7 @@
                     "use32BitWorkerProcess": "[parameters('is32BitModeEnabled')]",
                     "webSocketsEnabled": "[parameters('isWebSocketSupportEnabled')]",
                     "websiteTimeZone": "UTC",
-                    "windowsFxVersion": "[if(equals(toLower(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).kind), 'linux'), null(), if(empty(parameters('frameworkVersion')), null(), parameters('frameworkVersion')))]"
+                    "windowsFxVersion": "[null()]"
                 }
             },
             "tags": "[parameters('tags')]",
