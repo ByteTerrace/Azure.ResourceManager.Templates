@@ -9,10 +9,10 @@
             },
             "type": "object"
         },
-        "autoHeal": {
+        "autoHealRules": {
             "defaultValue": {},
             "metadata": {
-                "description": "An object that encapsulates the auto-heal settings that will be applied to the Azure Web Site."
+                "description": "An object that encapsulates the auto-heal rules that will be applied to the Azure Web Site."
             },
             "type": "object"
         },
@@ -173,7 +173,7 @@
         },
         "applicationSettingsCollection": "[union(union(createObject('collection', createArray()), parameters('applicationSettings')).collection, if(variables('healthCheck').isEnabled, createArray(createObject('name', 'WEBSITE_HEALTHCHECK_MAXPINGFAILURES', 'value', variables('healthCheck').unhealthyInstanceLifetimeInMinutes)), createArray()))]",
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
-        "autoHeal": "[union(variables('defaultResourceProperties').autoHeal, parameters('autoHeal'))]",
+        "autoHealRulesIsNotEmpty": "[not(empty(parameters('autoHealRules')))]",
         "cors": "[union(variables('defaultResourceProperties').cors, parameters('cors'))]",
         "defaultResourceProperties": {
             "audit": {
@@ -194,10 +194,6 @@
                     "days": 137,
                     "isEnabled": true
                 }
-            },
-            "autoHeal": {
-                "isEnabled": true,
-                "rules": "[null()]"
             },
             "connectionStrings": {
                 "collection": []
@@ -281,8 +277,8 @@
                 "siteConfig": {
                     "acrUseManagedIdentityCreds": false,
                     "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
-                    "autoHealEnabled": "[variables('autoHeal').isEnabled]",
-                    "autoHealRules": "[variables('autoHeal').rules]",
+                    "autoHealEnabled": "[variables('autoHealRulesIsNotEmpty')]",
+                    "autoHealRules": "[parameters('autoHealRules')]",
                     "copy": [
                         {
                             "count": "[length(variables('applicationSettingsCollection'))]",
