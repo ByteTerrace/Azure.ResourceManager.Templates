@@ -110,6 +110,7 @@
                 "audit": "[variables('audit')]",
                 "autoscale": {},
                 "isPerSiteScalingEnabled": false,
+                "maximumElasticWorkerCount": 20,
                 "operatingSystemName": "Linux",
                 "serviceEnvironment": {},
                 "skuName": "P1v2"
@@ -2604,6 +2605,9 @@
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').applicationServicePlans[copyIndex()]).location]"
+                    },
+                    "maximumElasticWorkerCount": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).maximumElasticWorkerCount]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').applicationServicePlans[copyIndex()].name]"
