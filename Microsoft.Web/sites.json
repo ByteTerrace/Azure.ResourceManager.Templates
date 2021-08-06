@@ -111,13 +111,16 @@
             "sitesConfig": "2020-12-01",
             "sitesHostNameBindings": "2020-12-01"
         },
-        "applicationSettingsCollection": "[union(variables('defaultResourceProperties').applicationSettings, parameters('applicationSettings')).collection]",
+        "applicationSettingsCollection": "[union(union(createObject('collection', createArray()), parameters('applicationSettings')).collection, variables('defaultResourceProperties').applicationSettingsCollection)]",
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
         "cors": "[union(variables('defaultResourceProperties').cors, parameters('cors'))]",
         "defaultResourceProperties": {
-            "applicationSettings": {
-                "collection": []
-            },
+            "applicationSettingsCollection": [
+                {
+                    "name": "WEBSITE_HEALTHCHECK_MAXPINGFAILURES",
+                    "value": "7"
+                }
+            ],
             "audit": {
                 "isEnabled": true,
                 "logAnalyticsWorkspace": {
