@@ -152,6 +152,13 @@
             "minLength": 2,
             "type": "string"
         },
+        "privateEndpoints": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of private endpoints that will be linked with the Azure Web Site."
+            },
+            "type": "array"
+        },
         "publicCertificates": {
             "defaultValue": [],
             "metadata": {
@@ -199,6 +206,8 @@
             "diagnosticSettings": "2017-05-01-preview",
             "privateDnsZonesARecords": "2020-06-01",
             "privateDnsZonesTXTRecords": "2020-06-01",
+            "privateEndpoints": "2020-07-01",
+            "privateEndpointsPrivateDnsZoneGroups": "2020-07-01",
             "publicDnsZonesARecords": "2018-05-01",
             "publicDnsZonesTXTRecords": "2018-05-01",
             "serverFarms": "2020-09-01",
@@ -284,6 +293,16 @@
                 "subnetMask": "[null()]",
                 "tag": "[null()]"
             },
+            "privateEndpoint": {
+                "dnsZone": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "subnet": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
+            },
             "publicCertificate": {
                 "location": "CurrentUserMy"
             },
@@ -310,6 +329,9 @@
         "metadata": "[union(createArray(createObject('name', 'CURRENT_STACK', 'value', variables('currentStack'))), parameters('metadata'))]",
         "privateDnsZonesCount": "[length(variables('dnsZones').private)]",
         "privateDnsZonesIsNotEmpty": "[greater(variables('privateDnsZonesCount'), 0)]",
+        "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('dnsZones', createArray(), 'name', 'dummyEndpoint')))]",
+        "privateEndpointsCount": "[length(parameters('privateEndpoints'))]",
+        "privateEndpointsIsNotEmpty": "[greater(variables('privateEndpointsCount'), 0)]",
         "publicCertificatesCount": "[length(parameters('publicCertificates'))]",
         "publicDnsZonesCount": "[length(variables('dnsZones').public)]",
         "publicDnsZonesIsNotEmpty": "[greater(variables('publicDnsZonesCount'), 0)]",
@@ -344,7 +366,7 @@
                 "siteConfig": {
                     "acrUseManagedIdentityCreds": false,
                     "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
-                    "appSettings": "[if(variables('functionExtension').isEnabled, union(createArray(createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccountResourceId, variables('apiVersions').storageAccounts).keys[0].value)), createObject('name', 'FUNCTION_APP_EDIT_MODE', 'value', 'readonly')), if(equals(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'Y1'), createArray(createObject('name', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccountResourceId, variables('apiVersions').storageAccounts).keys[0].value)), createObject('name', 'WEBSITE_CONTENTSHARE', 'value', format('functionapp-{0}', toLower(parameters('name'))))), createArray()), variables('applicationSettingsCollection')), variables('applicationSettingsCollection'))]",
+                    "appSettings": "[if(variables('functionExtension').isEnabled, union(createArray(createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccountResourceId, variables('apiVersions').storageAccounts).keys[0].value)), createObject('name', 'FUNCTION_APP_EDIT_MODE', 'value', 'readonly')), if(or(startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'EP'), startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'Y')), createArray(createObject('name', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccountResourceId, variables('apiVersions').storageAccounts).keys[0].value)), createObject('name', 'WEBSITE_CONTENTSHARE', 'value', format('functionapp-{0}', toLower(parameters('name'))))), createArray()), variables('applicationSettingsCollection')), variables('applicationSettingsCollection'))]",
                     "autoHealEnabled": "[not(empty(variables('autoHeal').rules))]",
                     "autoHealRules": "[variables('autoHeal').rules]",
                     "copy": [
@@ -465,6 +487,68 @@
             "type": "Microsoft.Web/sites/config"
         },
         {
+            "apiVersion": "[variables('apiVersions').privateEndpoints]",
+            "condition": "[variables('privateEndpointsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('privateEndpointsCount')]",
+                "mode": "Parallel",
+                "name": "privateEndpointsCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').site]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[variables('privateEndpoints')[copyIndex()].name]",
+            "properties": {
+                "customDnsConfigs": [],
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('privateEndpoints')[copyIndex()].name]",
+                        "properties": {
+                            "groupIds": [
+                                "sites"
+                            ],
+                            "privateLinkServiceId": "[variables('resourceIds').site]"
+                        }
+                    }
+                ],
+                "subnet": {
+                    "id": "[resourceId(union(variables('defaultResourceProperties').privateEndpoint, variables('privateEndpoints')[copyIndex()]).subnet.subscriptionId, union(variables('defaultResourceProperties').privateEndpoint, variables('privateEndpoints')[copyIndex()]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('privateEndpoints')[copyIndex()].subnet.virtualNetworkName, variables('privateEndpoints')[copyIndex()].subnet.name)]"
+                }
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Network/privateEndpoints"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').privateEndpointsPrivateDnsZoneGroups]",
+            "condition": "[variables('privateEndpointsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('privateEndpointsCount')]",
+                "mode": "Parallel",
+                "name": "privateDnsZoneGroupsCopy"
+            },
+            "dependsOn": [
+                "privateEndpointsCopy"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/default', variables('privateEndpoints')[copyIndex()].name)]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(variables('privateEndpoints')[copyIndex()].dnsZones)]",
+                        "input": {
+                            "name": "[replace(variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')].name, '.', '-')]",
+                            "properties": {
+                                "privateDnsZoneId": "[resourceId(union(variables('defaultResourceProperties').privateEndpoint.dnsZone, variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')]).subscriptionId, union(variables('defaultResourceProperties').privateEndpoint.dnsZone, variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')]).resourceGroupName, 'Microsoft.Network/privateDnsZones', variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')].name)]"
+                            }
+                        },
+                        "name": "privateDnsZoneConfigs"
+                    }
+                ]
+            },
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups"
+        },
+        {
             "apiVersion": "[variables('apiVersions').privateDnsZonesARecords]",
             "condition": "[variables('privateDnsZonesIsNotEmpty')]",
             "copy": {
@@ -472,7 +556,7 @@
                 "name": "privateDnsZoneARecords"
             },
             "dependsOn": [
-                "[variables('resourceIds').site]"
+                "privateEndpointsCopy"
             ],
             "name": "[format('{0}/@', coalesce(union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).name, '<NULL>'))]",
             "properties": {
@@ -493,7 +577,7 @@
                 "name": "privateDnsZoneTXTRecords"
             },
             "dependsOn": [
-                "[variables('resourceIds').site]"
+                "privateEndpointsCopy"
             ],
             "name": "[format('{0}/asuid', coalesce(union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).name, '<NULL>'))]",
             "properties": {

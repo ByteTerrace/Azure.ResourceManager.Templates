@@ -37,6 +37,13 @@
             "minLength": 1,
             "type": "string"
         },
+        "maximumElasticWorkerCount": {
+            "defaultValue": 20,
+            "metadata": {
+                "description": ""
+            },
+            "type": "string"
+        },
         "operatingSystemName": {
             "allowedValues": [
                 "Linux",
@@ -61,6 +68,9 @@
                 "B2",
                 "B3",
                 "D1",
+                "EP1",
+                "EP2",
+                "EP3",
                 "F1",
                 "I1",
                 "I2",
@@ -188,6 +198,7 @@
             "properties": {
                 "hostingEnvironmentProfile": "[if(variables('isHostingEnvironmentEnabled'), variables('hostingEnvironmentProfile'), null())]",
                 "hyperV": "[and(variables('isDockerSupportEnabled'), not(variables('isLinuxOperatingSystem')))]",
+                "maximumElasticWorkerCount": "[parameters('maximumElasticWorkerCount')]",
                 "perSiteScaling": "[parameters('isPerSiteScalingEnabled')]",
                 "reserved": "[variables('isLinuxOperatingSystem')]"
             },
