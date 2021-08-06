@@ -408,8 +408,10 @@
                 "healthCheck": {},
                 "ipSecurityRestrictions": [],
                 "isAlwaysOnEnabled": false,
+                "linuxFxVersion": "DOTNETCORE|3.1",
                 "metadata": [],
-                "scmIpSecurityRestrictions": []
+                "scmIpSecurityRestrictions": [],
+                "windowsFxVersion": ""
             }
         },
         "deploymentNames": {
@@ -2670,6 +2672,9 @@
                     "isAlwaysOnEnabled": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).isAlwaysOnEnabled]"
                     },
+                    "linuxFxVersion": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).linuxFxVersion]"
+                    },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').webApplications[copyIndex()]).location]"
                     },
@@ -2687,6 +2692,9 @@
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
+                    },
+                    "windowsFxVersion": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).windowsFxVersion]"
                     }
                 },
                 "templateLink": {
