@@ -407,6 +407,7 @@
                 "customDomains": [],
                 "dnsZones": {},
                 "frameworkVersion": "DOTNETCORE|3.1",
+                "functionExtension": {},
                 "healthCheck": {},
                 "ipSecurityRestrictions": [],
                 "isAlwaysOnEnabled": true,
@@ -2677,6 +2678,9 @@
                     },
                     "frameworkVersion": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).frameworkVersion]"
+                    },
+                    "functionExtension": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).functionExtension]"
                     },
                     "healthCheck": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).healthCheck]"

@@ -58,6 +58,13 @@
             },
             "type": "string"
         },
+        "functionExtension": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the function extension settings that will be applied to the Azure Web Site."
+            },
+            "type": "object"
+        },
         "healthCheck": {
             "defaultValue": {},
             "metadata": {
@@ -198,12 +205,24 @@
             "sites": "2020-12-01",
             "sitesConfig": "2020-12-01",
             "sitesHostNameBindings": "2020-12-01",
-            "sitesPublicCertificates": "2020-12-01"
+            "sitesPublicCertificates": "2020-12-01",
+            "storageAccounts": "2021-02-01"
         },
-        "applicationSettingsCollection": "[union(union(createObject('collection', createArray()), parameters('applicationSettings')).collection, if(variables('autoHeal').isProactiveModeEnabled, createArray(), createArray(createObject('name', 'WEBSITE_PROACTIVE_AUTOHEAL_ENABLED', 'value', 'False'))), if(variables('healthCheck').isEnabled, createArray(createObject('name', 'WEBSITE_HEALTHCHECK_MAXPINGFAILURES', 'value', variables('healthCheck').unhealthyInstanceLifetimeInMinutes)), createArray()))]",
-        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "applicationSettingsCollection": "[union(union(createObject('collection', createArray()), parameters('applicationSettings')).collection, variables('functionApplicationSettingsCollection'), if(variables('autoHeal').isProactiveModeEnabled, createArray(), createArray(createObject('name', 'WEBSITE_PROACTIVE_AUTOHEAL_ENABLED', 'value', 'False'))), if(variables('healthCheck').isEnabled, createArray(createObject('name', 'WEBSITE_HEALTHCHECK_MAXPINGFAILURES', 'value', variables('healthCheck').unhealthyInstanceLifetimeInMinutes)), createArray()))]",
+        "audit": "[union(variables('defaultResourceProperties').audit, createObject('logNames', if(variables('functionExtension').isEnabled, variables('defaultFunctionExtenstionLogNames'), variables('defaultApplicationServiceLogNames'))), parameters('audit'))]",
         "autoHeal": "[union(variables('defaultResourceProperties').autoHeal, parameters('autoHeal'))]",
         "cors": "[union(variables('defaultResourceProperties').cors, parameters('cors'))]",
+        "defaultApplicationServiceLogNames": [
+            "AppServiceAntivirusScanAuditLogs",
+            "AppServiceAppLogs",
+            "AppServiceAuditLogs",
+            "AppServiceFileAuditLogs",
+            "AppServiceIPSecAuditLogs",
+            "AppServicePlatformLogs"
+        ],
+        "defaultFunctionExtenstionLogNames": [
+            "FunctionAppLogs"
+        ],
         "defaultResourceProperties": {
             "audit": {
                 "isEnabled": true,
@@ -212,13 +231,6 @@
                     "resourceGroupName": "[variables('resourceGroupName')]",
                     "subscriptionId": "[variables('subscriptionId')]"
                 },
-                "logNames": [
-                    "AppServiceAntivirusScanAuditLogs",
-                    "AppServiceAuditLogs",
-                    "AppServiceFileAuditLogs",
-                    "AppServiceIPSecAuditLogs",
-                    "AppServicePlatformLogs"
-                ],
                 "retentionPolicy": {
                     "days": 137,
                     "isEnabled": true
@@ -234,6 +246,14 @@
             "cors": {
                 "allowedOrigins": [],
                 "isCredentialSupportEnabled": false
+            },
+            "functionExtension": {
+                "isEnabled": false,
+                "storageAccount": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "version": "~3"
             },
             "healthCheck": {
                 "isEnabled": true,
@@ -277,9 +297,12 @@
             }
         },
         "connectionStringsCollection": "[union(variables('defaultResourceProperties').connectionStrings, parameters('connectionStrings')).collection]",
-        "currentStack": "[if(or(startsWith(toLower(parameters('frameworkVersion')), 'dotnetcore|'), and(startsWith(toLower(parameters('frameworkVersion')), 'dotnet|'), endsWith(parameters('frameworkVersion'), '5.0'))), 'dotnetcore', 'dotnet')]",
+        "currentStack": "[if(or(startsWith(toLower(parameters('frameworkVersion')), 'dotnetcore|'), and(startsWith(toLower(parameters('frameworkVersion')), 'dotnet|'), endsWith(parameters('frameworkVersion'), '5.0'))), 'dotnetcore', if(startsWith(toLower(parameters('frameworkVersion')), 'dotnet|'), 'dotnet', if(startsWith(toLower(parameters('frameworkVersion')), 'java|'), 'java', if(startsWith(toLower(parameters('frameworkVersion')), 'powershellcore|'), 'powershell', if(startsWith(toLower(parameters('frameworkVersion')), 'python|'), 'python', null())))))]",
         "customDomainsCount": "[length(parameters('customDomains'))]",
         "dnsZones": "[union(createObject('private', createArray(), 'public', createArray()), parameters('dnsZones'))]",
+        "functionApplicationSettingsCollection": "[if(variables('functionExtension').isEnabled, createArray(createObject('name', 'FUNCTIONS_EXTENSION_VERSION', 'value', variables('functionExtension').version), createObject('name', 'FUNCTIONS_WORKER_RUNTIME', 'value', variables('functionWorkerRuntime'))), createArray())]",
+        "functionExtension": "[union(variables('defaultResourceProperties').functionExtension, parameters('functionExtension'))]",
+        "functionWorkerRuntime": "[if(equals(variables('currentStack'), 'dotnetcore'), 'dotnet', if(equals(variables('currentStack'), 'java'), 'java', if(equals(variables('currentStack'), 'powershellcore'), 'powershell', if(equals(variables('currentStack'), 'python'), 'python', null()))))]",
         "healthCheck": "[union(variables('defaultResourceProperties').healthCheck, parameters('healthCheck'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
@@ -295,7 +318,8 @@
         "resourceIds": {
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
             "serverFarm": "[resourceId(variables('servicePlan').subscriptionId, variables('servicePlan').resourceGroupName, 'Microsoft.Web/serverfarms', variables('servicePlan').name)]",
-            "site": "[resourceId('Microsoft.Web/sites', parameters('name'))]"
+            "site": "[resourceId('Microsoft.Web/sites', parameters('name'))]",
+            "storageAccountResourceId": "[resourceId(variables('functionExtension').storageAccount.subscriptionId, variables('functionExtension').storageAccount.resourceGroupName, 'Microsoft.Storage/storageAccounts',  union(createObject('name', '<NULL>'),variables('functionExtension').storageAccount).name)]"
         },
         "scmIpSecurityRestrictionsCount": "[length(parameters('scmIpSecurityRestrictions'))]",
         "servicePlan": "[union(variables('defaultResourceProperties').servicePlan, parameters('servicePlan'))]",
@@ -307,6 +331,7 @@
             "identity": {
                 "type": "SystemAssigned"
             },
+            "kind": "[if(variables('functionExtension').isEnabled, 'functionapp', '')]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
@@ -319,17 +344,10 @@
                 "siteConfig": {
                     "acrUseManagedIdentityCreds": false,
                     "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
+                    "appSettings": "[if(variables('functionExtension').isEnabled, union(createArray(createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccountResourceId, variables('apiVersions').storageAccounts).keys[0].value))), variables('applicationSettingsCollection')), variables('applicationSettingsCollection'))]",
                     "autoHealEnabled": "[not(empty(variables('autoHeal').rules))]",
                     "autoHealRules": "[variables('autoHeal').rules]",
                     "copy": [
-                        {
-                            "count": "[length(variables('applicationSettingsCollection'))]",
-                            "input": {
-                                "name": "[variables('applicationSettingsCollection')[copyIndex('appSettings')].name]",
-                                "value": "[variables('applicationSettingsCollection')[copyIndex('appSettings')].value]"
-                            },
-                            "name": "appSettings"
-                        },
                         {
                             "count": "[length(variables('connectionStringsCollection'))]",
                             "input": {
@@ -377,6 +395,7 @@
                     "ftpsState": "FtpsOnly",
                     "healthCheckPath": "[if(variables('healthCheck').isEnabled, variables('healthCheck').path, '')]",
                     "http20Enabled": "[parameters('isHttp20SupportEnabled')]",
+                    "javaVersion": "[if(equals(variables('currentStack'), 'java'), if(endsWith(parameters('frameworkVersion'), '|8'), '1.8', if(endsWith(parameters('frameworkVersion'), '|11'), '11', null())), null())]",
                     "keyVaultReferenceIdentity": "SystemAssigned",
                     "linuxFxVersion": "[if(equals(toLower(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).kind), 'linux'), variables('linuxFxVersion'), null())]",
                     "loadBalancing": "LeastRequests",
@@ -454,7 +473,7 @@
             "dependsOn": [
                 "[variables('resourceIds').site]"
             ],
-            "name": "[format('{0}/@', coalesce(union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).name, 'dummyDnsZone'))]",
+            "name": "[format('{0}/@', coalesce(union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).name, '<NULL>'))]",
             "properties": {
                 "aRecords": [
                     {
@@ -475,7 +494,7 @@
             "dependsOn": [
                 "[variables('resourceIds').site]"
             ],
-            "name": "[format('{0}/asuid', coalesce(union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).name, 'dummyDnsZone'))]",
+            "name": "[format('{0}/asuid', coalesce(union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).name, '<NULL>'))]",
             "properties": {
                 "ttl": "[union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).recordTimeToLiveInSeconds]",
                 "txtRecords": [
@@ -498,7 +517,7 @@
             "dependsOn": [
                 "[variables('resourceIds').site]"
             ],
-            "name": "[format('{0}/@', coalesce(union(variables('defaultResourceProperties').publicDnsZone, variables('dnsZones').public[copyIndex()]).name, 'dummyDnsZone'))]",
+            "name": "[format('{0}/@', coalesce(union(variables('defaultResourceProperties').publicDnsZone, variables('dnsZones').public[copyIndex()]).name, '<NULL>'))]",
             "properties": {
                 "ARecords": [
                     {
@@ -520,7 +539,7 @@
             "dependsOn": [
                 "[variables('resourceIds').site]"
             ],
-            "name": "[format('{0}/asuid', coalesce(union(variables('defaultResourceProperties').publicDnsZone, variables('dnsZones').public[copyIndex()]).name, 'dummyDnsZone'))]",
+            "name": "[format('{0}/asuid', coalesce(union(variables('defaultResourceProperties').publicDnsZone, variables('dnsZones').public[copyIndex()]).name, '<NULL>'))]",
             "properties": {
                 "targetResource": {},
                 "TTL": "[union(variables('defaultResourceProperties').publicDnsZone, variables('dnsZones').public[copyIndex()]).recordTimeToLiveInSeconds]",
