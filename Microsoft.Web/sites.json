@@ -221,7 +221,6 @@
             "privateCertificates": "2020-12-01",
             "privateDnsZonesARecords": "2020-06-01",
             "privateDnsZonesCnameRecords": "2020-06-01",
-            "privateDnsZonesTXTRecords": "2020-06-01",
             "privateEndpoints": "2020-07-01",
             "privateEndpointsPrivateDnsZoneGroups": "2020-07-01",
             "publicDnsZonesARecords": "2018-05-01",
@@ -310,6 +309,8 @@
             },
             "publicDnsZone": {
                 "name": "",
+                "isARecordEnabled": true,
+                "isCnameRecordEnabled": true,
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
             },
@@ -623,7 +624,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').privateDnsZonesARecords]",
-            "condition": "[and(variables('privateDnsZonesIsNotEmpty'), not(empty(union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).name)))]",
+            "condition": "[and(variables('privateDnsZonesIsNotEmpty'), not(empty(union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).endpoint.name)))]",
             "copy": {
                 "count": "[variables('privateDnsZonesCount')]",
                 "mode": "Parallel",
@@ -636,7 +637,7 @@
             "properties": {
                 "aRecords": [
                     {
-                        "ipv4Address": "[reference(resourceId(union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).endpoint.subscriptionId, union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).endpoint.resourceGroupName, 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups', union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).endpoint.name, 'default'), variables('apiVersions').privateEndpointsPrivateDnsZoneGroups).privateDnsZoneConfigs[0].properties.recordSets[0].ipAddresses[0]]"
+                        "ipv4Address": "[if(empty(union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).endpoint.name), null(), reference(resourceId(union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).endpoint.subscriptionId, union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).endpoint.resourceGroupName, 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups', union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).endpoint.name, 'default'), variables('apiVersions').privateEndpointsPrivateDnsZoneGroups).privateDnsZoneConfigs[0].properties.recordSets[0].ipAddresses[0])]"
                     }
                 ],
                 "ttl": 10
@@ -644,8 +645,28 @@
             "type": "Microsoft.Network/privateDnsZones/A"
         },
         {
+            "apiVersion": "[variables('apiVersions').privateDnsZonesCnameRecords]",
+            "condition": "[and(variables('privateDnsZonesIsNotEmpty'), not(empty(union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).endpoint.name)))]",
+            "copy": {
+                "count": "[variables('privateDnsZonesCount')]",
+                "mode": "Parallel",
+                "name": "privateDnsZoneCnameRecordsCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').site]"
+            ],
+            "name": "[format('{0}/www', coalesce(union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).name, '<NULL>'))]",
+            "properties": {
+                "cnameRecord": {
+                    "cname": "[reference(variables('resourceIds').site, variables('apiVersions').sites).defaultHostName]"
+                },
+                "ttl": 10
+            },
+            "type": "Microsoft.Network/privateDnsZones/CNAME"
+        },
+        {
             "apiVersion": "[variables('apiVersions').publicDnsZonesARecords]",
-            "condition": "[variables('publicDnsZonesIsNotEmpty')]",
+            "condition": "[and(variables('publicDnsZonesIsNotEmpty'), union(variables('defaultResourceProperties').publicDnsZone, variables('dnsZones').public[copyIndex()]).isARecordEnabled)]",
             "copy": {
                 "count": "[variables('publicDnsZonesCount')]",
                 "mode": "Parallel",
@@ -658,7 +679,7 @@
             "properties": {
                 "ARecords": [
                     {
-                        "ipv4Address": "[reference(variables('resourceIds').site, variables('apiVersions').sites, 'Full').properties.inboundIpAddress]"
+                        "ipv4Address": "[reference(variables('resourceIds').site, variables('apiVersions').sites).inboundIpAddress]"
                     }
                 ],
                 "targetResource": {},
@@ -668,7 +689,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').publicDnsZonesCnameRecords]",
-            "condition": "[variables('publicDnsZonesIsNotEmpty')]",
+            "condition": "[and(variables('publicDnsZonesIsNotEmpty'), union(variables('defaultResourceProperties').publicDnsZone, variables('dnsZones').public[copyIndex()]).isCnameRecordEnabled)]",
             "copy": {
                 "count": "[variables('publicDnsZonesCount')]",
                 "mode": "Parallel",
@@ -699,6 +720,31 @@
                 "[variables('resourceIds').site]"
             ],
             "name": "[format('{0}/asuid', coalesce(union(variables('defaultResourceProperties').publicDnsZone, variables('dnsZones').public[copyIndex()]).name, '<NULL>'))]",
+            "properties": {
+                "targetResource": {},
+                "TTL": 10,
+                "TXTRecords": [
+                    {
+                        "value": [
+                            "[reference(variables('resourceIds').site, variables('apiVersions').sites).customDomainVerificationId]"
+                        ]
+                    }
+                ]
+            },
+            "type": "Microsoft.Network/dnszones/TXT"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').publicDnsZonesTxtRecords]",
+            "condition": "[variables('publicDnsZonesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('publicDnsZonesCount')]",
+                "mode": "Parallel",
+                "name": "publicDnsZoneWwwTxtRecordsCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').site]"
+            ],
+            "name": "[format('{0}/asuid.www', coalesce(union(variables('defaultResourceProperties').publicDnsZone, variables('dnsZones').public[copyIndex()]).name, '<NULL>'))]",
             "properties": {
                 "targetResource": {},
                 "TTL": 10,
@@ -762,7 +808,8 @@
                 "privateDnsZoneGroupsCopy",
                 "privateEndpointsCopy",
                 "publicCertificatesCopy",
-                "publicDnsZoneTxtRecordsCopy"
+                "publicDnsZoneTxtRecordsCopy",
+                "publicDnsZoneWwwTxtRecordsCopy"
             ],
             "location": "[parameters('location')]",
             "name": "[format('{0}/{1}', parameters('name'), parameters('customDomains')[copyIndex()].name)]",
