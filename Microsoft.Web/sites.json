@@ -266,6 +266,17 @@
                 "allowedOrigins": [],
                 "isCredentialSupportEnabled": false
             },
+            "customDomain": {
+                "ssl": {
+                    "certificate": {
+                        "name": "[null()]",
+                        "resourceGroupName": "[variables('resourceGroupName')]",
+                        "subscriptionId": "[variables('subscriptionId')]",
+                        "thumbprint": ""
+                    },
+                    "state": "SniEnabled"
+                }
+            },
             "functionExtension": {
                 "isEnabled": false,
                 "storageAccount": {
@@ -765,10 +776,8 @@
             "location": "[parameters('location')]",
             "name": "[format('{0}/{1}', parameters('name'), parameters('customDomains')[copyIndex()].name)]",
             "properties": {
-                "hostNameType": "Verified",
-                "siteName": "[parameters('name')]",
-                "sslState": "[if(json('false'), 'SniEnabled', null())]",
-                "thumbprint": "[null()]"
+                "sslState": "[union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).ssl.state]",
+                "thumbprint": "[if(equals(toLower(union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).ssl.state), 'disabled'), null(), if(empty(union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).ssl.certificate.thumbprint), reference(resourceId(union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).ssl.certificate.subscriptionId, union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).ssl.certificate.resourceGroupName, 'Microsoft.Web/certificates', coalesce(union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).ssl.certificate.name, '<NULL>'))).thumbprint, parameters('customDomains')[copyIndex()].ssl.certificate.thumbprint))]"
             },
             "type": "Microsoft.Web/sites/hostNameBindings"
         },
