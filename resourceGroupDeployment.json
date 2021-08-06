@@ -417,6 +417,7 @@
                 "is32BitModeEnabled": false,
                 "metadata": [],
                 "minimumSupportedTlsVersion": "1.2",
+                "publicCertificates": [],
                 "remoteDebugging": {},
                 "scmIpSecurityRestrictions": [],
                 "timeZone": "UTC"
@@ -2712,6 +2713,9 @@
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').webApplications[copyIndex()].name]"
+                    },
+                    "publicCertificates": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).publicCertificates]"
                     },
                     "remoteDebugging": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).remoteDebugging]"

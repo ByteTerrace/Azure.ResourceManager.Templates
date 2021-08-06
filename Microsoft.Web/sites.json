@@ -145,6 +145,13 @@
             "minLength": 2,
             "type": "string"
         },
+        "publicCertificates": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of public certificates that will be assigned to the Azure Web Site."
+            },
+            "type": "array"
+        },
         "remoteDebugging": {
             "defaultValue": {},
             "metadata": {
@@ -190,7 +197,8 @@
             "serverFarms": "2020-09-01",
             "sites": "2020-12-01",
             "sitesConfig": "2020-12-01",
-            "sitesHostNameBindings": "2020-12-01"
+            "sitesHostNameBindings": "2020-12-01",
+            "sitesPublicCertificates": "2020-12-01"
         },
         "applicationSettingsCollection": "[union(union(createObject('collection', createArray()), parameters('applicationSettings')).collection, if(variables('autoHeal').isProactiveModeEnabled, createArray(), createArray(createObject('name', 'WEBSITE_PROACTIVE_AUTOHEAL_ENABLED', 'value', 'False'))), if(variables('healthCheck').isEnabled, createArray(createObject('name', 'WEBSITE_HEALTHCHECK_MAXPINGFAILURES', 'value', variables('healthCheck').unhealthyInstanceLifetimeInMinutes)), createArray()))]",
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
@@ -256,6 +264,9 @@
                 "subnetMask": "[null()]",
                 "tag": "[null()]"
             },
+            "publicCertificate": {
+                "location": "CurrentUserMy"
+            },
             "remoteDebugging": {
                 "isEnabled": false,
                 "version": "VS2019"
@@ -276,6 +287,7 @@
         "metadata": "[union(createArray(createObject('name', 'CURRENT_STACK', 'value', variables('currentStack'))), parameters('metadata'))]",
         "privateDnsZonesCount": "[length(variables('dnsZones').private)]",
         "privateDnsZonesIsNotEmpty": "[greater(variables('privateDnsZonesCount'), 0)]",
+        "publicCertificatesCount": "[length(parameters('publicCertificates'))]",
         "publicDnsZonesCount": "[length(variables('dnsZones').public)]",
         "publicDnsZonesIsNotEmpty": "[greater(variables('publicDnsZonesCount'), 0)]",
         "remoteDebugging": "[union(variables('defaultResourceProperties').remoteDebugging, parameters('remoteDebugging'))]",
@@ -542,6 +554,21 @@
                 "siteName": "[parameters('name')]"
             },
             "type": "Microsoft.Web/sites/hostNameBindings"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').sitesPublicCertificates]",
+            "copy": {
+                "count": "[variables('publicCertificatesCount')]",
+                "mode": "Parralel",
+                "name": "publicCertificatesCopy"
+            },
+            "location": "[parameters('location')]",
+            "name":"[format('{0}/{1}', parameters('name'), parameters('publicCertificates')[copyIndex()].name)]",
+            "properties": {
+                "blob": "[parameters('publicCertificates')[copyIndex()].blob]",
+                "publicCertificateLocation": "[union(variables('defaultResourceProperties').publicCertificate, parameters('publicCertificates')[copyIndex()]).location]"
+            },
+            "type": "Microsoft.Web/sites/publicCertificates"
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
