@@ -405,7 +405,7 @@
                 "cors": {},
                 "customDomains": [],
                 "dnsZones": {},
-                "frameworkVersion": "",
+                "frameworkVersion": "DOTNETCORE|3.1",
                 "healthCheck": {},
                 "ipSecurityRestrictions": [],
                 "isAlwaysOnEnabled": true,
