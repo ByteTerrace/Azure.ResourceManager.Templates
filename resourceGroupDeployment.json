@@ -403,6 +403,8 @@
                 "applicationSettings": {},
                 "connectionStrings": {},
                 "cors": {},
+                "customDomains": [],
+                "dnsZones": {},
                 "ipSecurityRestrictions": [],
                 "isAlwaysOnEnabled": false,
                 "metadata": [],
@@ -2651,6 +2653,12 @@
                     },
                     "cors": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).cors]"
+                    },
+                    "customDomains": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).customDomains]"
+                    },
+                    "dnsZones": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).dnsZones]"
                     },
                     "ipSecurityRestrictions": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).ipSecurityRestrictions]"
