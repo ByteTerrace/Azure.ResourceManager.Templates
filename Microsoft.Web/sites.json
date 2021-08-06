@@ -302,7 +302,7 @@
         "dnsZones": "[union(createObject('private', createArray(), 'public', createArray()), parameters('dnsZones'))]",
         "functionApplicationSettingsCollection": "[if(variables('functionExtension').isEnabled, createArray(createObject('name', 'FUNCTIONS_EXTENSION_VERSION', 'value', variables('functionExtension').version), createObject('name', 'FUNCTIONS_WORKER_RUNTIME', 'value', variables('functionWorkerRuntime'))), createArray())]",
         "functionExtension": "[union(variables('defaultResourceProperties').functionExtension, parameters('functionExtension'))]",
-        "functionWorkerRuntime": "[if(equals(variables('currentStack'), 'dotnetcore'), 'dotnet', if(equals(variables('currentStack'), 'java'), 'java', if(equals(variables('currentStack'), 'powershellcore'), 'powershell', if(equals(variables('currentStack'), 'python'), 'python', null()))))]",
+        "functionWorkerRuntime": "[if(and(equals(variables('currentStack'), 'dotnetcore'), or(endsWith(parameters('frameworkVersion'), '5.0'), endsWith(parameters('frameworkVersion'), '6.0'))), 'dotnet-isolated', if(equals(variables('currentStack'), 'dotnetcore'), 'dotnet', if(equals(variables('currentStack'), 'java'), 'java', if(equals(variables('currentStack'), 'powershellcore'), 'powershell', if(equals(variables('currentStack'), 'python'), 'python', null())))))]",
         "healthCheck": "[union(variables('defaultResourceProperties').healthCheck, parameters('healthCheck'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
