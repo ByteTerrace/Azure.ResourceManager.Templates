@@ -405,6 +405,7 @@
                 "cors": {},
                 "customDomains": [],
                 "dnsZones": {},
+                "healthCheck": {},
                 "ipSecurityRestrictions": [],
                 "isAlwaysOnEnabled": false,
                 "metadata": [],
@@ -2659,6 +2660,9 @@
                     },
                     "dnsZones": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).dnsZones]"
+                    },
+                    "healthCheck": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).healthCheck]"
                     },
                     "ipSecurityRestrictions": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).ipSecurityRestrictions]"

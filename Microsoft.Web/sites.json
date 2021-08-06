@@ -44,6 +44,13 @@
             },
             "type": "object"
         },
+        "healthCheck": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the health check settings that will be applied to the Azure Web Site."
+            },
+            "type": "object"
+        },
         "ipSecurityRestrictions": {
             "defaultValue": [],
             "metadata": {
@@ -111,16 +118,10 @@
             "sitesConfig": "2020-12-01",
             "sitesHostNameBindings": "2020-12-01"
         },
-        "applicationSettingsCollection": "[union(union(createObject('collection', createArray()), parameters('applicationSettings')).collection, variables('defaultResourceProperties').applicationSettingsCollection)]",
+        "applicationSettingsCollection": "[union(union(createObject('collection', createArray()), parameters('applicationSettings')).collection, if(variables('healthCheck').isEnabled, createArray(createObject('name', 'WEBSITE_HEALTHCHECK_MAXPINGFAILURES', 'value', variables('healthCheck').unhealthyInstanceLifetimeInMinutes)), createArray()))]",
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
         "cors": "[union(variables('defaultResourceProperties').cors, parameters('cors'))]",
         "defaultResourceProperties": {
-            "applicationSettingsCollection": [
-                {
-                    "name": "WEBSITE_HEALTHCHECK_MAXPINGFAILURES",
-                    "value": "7"
-                }
-            ],
             "audit": {
                 "isEnabled": true,
                 "logAnalyticsWorkspace": {
@@ -146,6 +147,11 @@
             "cors": {
                 "allowedOrigins": [],
                 "isCredentialSupportEnabled": false
+            },
+            "healthCheck": {
+                "isEnabled": true,
+                "path": "/",
+                "unhealthyInstanceLifetimeInMinutes": 7
             },
             "privateDnsZone": {
                 "name": "",
@@ -179,6 +185,7 @@
         "connectionStringsCollection": "[union(variables('defaultResourceProperties').connectionStrings, parameters('connectionStrings')).collection]",
         "customDomainsCount": "[length(parameters('customDomains'))]",
         "dnsZones": "[union(createObject('private', createArray(), 'public', createArray()), parameters('dnsZones'))]",
+        "healthCheck": "[union(variables('defaultResourceProperties').healthCheck, parameters('healthCheck'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "privateDnsZonesCount": "[length(variables('dnsZones').private)]",
@@ -271,7 +278,7 @@
                         "supportCredentials": "[variables('cors').isCredentialSupportEnabled]"
                     },
                     "ftpsState": "FtpsOnly",
-                    "healthCheckPath": "/",
+                    "healthCheckPath": "[if(variables('healthCheck').isEnabled, variables('healthCheck').path, '')]",
                     "http20Enabled": true,
                     "keyVaultReferenceIdentity": "SystemAssigned",
                     "loadBalancing": "LeastRequests",
