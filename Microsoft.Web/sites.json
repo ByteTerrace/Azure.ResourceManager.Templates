@@ -9,6 +9,13 @@
             },
             "type": "object"
         },
+        "autoHeal": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the auto-heal settings that will be applied to the Azure Web Site."
+            },
+            "type": "object"
+        },
         "applicationSettings": {
             "defaultValue": {},
             "metadata": {
@@ -166,6 +173,7 @@
         },
         "applicationSettingsCollection": "[union(union(createObject('collection', createArray()), parameters('applicationSettings')).collection, if(variables('healthCheck').isEnabled, createArray(createObject('name', 'WEBSITE_HEALTHCHECK_MAXPINGFAILURES', 'value', variables('healthCheck').unhealthyInstanceLifetimeInMinutes)), createArray()))]",
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "autoHeal": "[union(variables('defaultResourceProperties').autoHeal, parameters('autoHeal'))]",
         "cors": "[union(variables('defaultResourceProperties').cors, parameters('cors'))]",
         "defaultResourceProperties": {
             "audit": {
@@ -186,6 +194,10 @@
                     "days": 137,
                     "isEnabled": true
                 }
+            },
+            "autoHeal": {
+                "isEnabled": true,
+                "rules": "[null()]"
             },
             "connectionStrings": {
                 "collection": []
@@ -269,7 +281,8 @@
                 "siteConfig": {
                     "acrUseManagedIdentityCreds": false,
                     "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
-                    "autoHealEnabled": false,
+                    "autoHealEnabled": "[variables('autoHeal').isEnabled]",
+                    "autoHealRules": "[variables('autoHeal').rules]",
                     "copy": [
                         {
                             "count": "[length(variables('applicationSettingsCollection'))]",
