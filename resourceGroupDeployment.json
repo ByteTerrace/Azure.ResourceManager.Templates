@@ -423,6 +423,7 @@
                 "publicCertificates": [],
                 "remoteDebugging": {},
                 "scmIpSecurityRestrictions": [],
+                "subnet": {},
                 "timeZone": "UTC"
             }
         },
@@ -2737,6 +2738,9 @@
                     },
                     "servicePlan": {
                         "value": "[variables('resourceDefinitions').webApplications[copyIndex()].servicePlan]"
+                    },
+                    "subnet": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).subnet]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
