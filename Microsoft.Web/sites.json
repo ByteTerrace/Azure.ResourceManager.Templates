@@ -477,12 +477,12 @@
                 "[variables('resourceIds').site]"
             ],
             "location": "[parameters('location')]",
-            "name": "[format('{0}/{1}', parameters('name'), guid(variables('resourceIds').subnet))]",
+            "name": "[format('{0}/virtualNetwork', parameters('name'), guid(variables('resourceIds').subnet))]",
             "properties": {
                 "isSwift": true,
-                "vnetResourceId": "[variables('resourceIds').subnet]"
+                "subnetResourceId": "[variables('resourceIds').subnet]"
             },
-            "type": "Microsoft.Web/sites/virtualNetworkConnections"
+            "type": "Microsoft.Web/sites/config"
         },
         {
             "apiVersion": "[variables('apiVersions').sitesConfig]",
