@@ -44,6 +44,13 @@
             },
             "type": "object"
         },
+        "frameworkVersion": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the application framework version that will be deployed within the Azure Web Site."
+            },
+            "type": "string"
+        },
         "healthCheck": {
             "defaultValue": {},
             "metadata": {
@@ -59,18 +66,39 @@
             "type": "array"
         },
         "isAlwaysOnEnabled": {
-            "defaultValue": false,
+            "defaultValue": true,
             "metadata": {
                 "description": "Indicates whether the always on feature is enabled on the Azure Web Site."
             },
             "type": "bool"
         },
-        "linuxFxVersion": {
-            "defaultValue": "DOTNETCORE|3.1",
+        "isClientAffinityEnabled": {
+            "defaultValue": false,
             "metadata": {
-                "description": "Specifies the Linux application framework version that will be deployed within the Azure Web Site (if running on a Linux App Service Plan)."
+                "description": "Indicates whether the client affinity feature is enabled on the Azure Web Site."
             },
-            "type": "string"
+            "type": "bool"
+        },
+        "isHttp20SupportEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether support for the HTTP 2.0 network protocol is enabled on the Azure Web Site."
+            },
+            "type": "bool"
+        },
+        "isWebSocketSupportEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether support for the HTTP 2.0 network protocol is enabled on the Azure Web Site."
+            },
+            "type": "bool"
+        },
+        "is32BitModeEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the Azure Web Site will run in 32-bit mode."
+            },
+            "type": "bool"
         },
         "location": {
             "metadata": {
@@ -84,6 +112,16 @@
                 "description": "An object that encapsulates the array of metadata name-value pairs that will be set on the Azure Web Site."
             },
             "type": "array"
+        },
+        "minimumSupportedTlsVersion": {
+            "allowedValues": [
+                "1.2"
+            ],
+            "defaultValue": "1.2",
+            "metadata": {
+                "description": "Specifies the minimum version of the TLS protocol that will be supported within the Azure Web Site."
+            },
+            "type": "string"
         },
         "name": {
             "maxLength": 60,
@@ -112,13 +150,6 @@
                 "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Web Site."
             },
             "type": "object"
-        },
-        "windowsFxVersion": {
-            "defaultValue": "",
-            "metadata": {
-                "description": "Specifies the Windows application framework version that will be deployed within the Azure Web Site (if running on a Windows App Service Plan)."
-            },
-            "type": "string"
         }
     },
     "variables": {
@@ -227,14 +258,11 @@
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
-                "clientAffinityEnabled": false,
+                "clientAffinityEnabled": "[parameters('isClientAffinityEnabled')]",
                 "clientCertEnabled": false,
                 "clientCertMode": "Required",
                 "name": "[parameters('name')]",
-                "hyperV": false,
                 "httpsOnly": true,
-                "isXenon": false,
-                "reserved": false,
                 "serverFarmId": "[variables('resourceIds').serverFarm]",
                 "siteConfig": {
                     "acrUseManagedIdentityCreds": false,
@@ -295,25 +323,25 @@
                     },
                     "ftpsState": "FtpsOnly",
                     "healthCheckPath": "[if(variables('healthCheck').isEnabled, variables('healthCheck').path, '')]",
-                    "http20Enabled": true,
+                    "http20Enabled": "[parameters('isHttp20SupportEnabled')]",
                     "keyVaultReferenceIdentity": "SystemAssigned",
-                    "linuxFxVersion": "[if(equals(toLower(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).kind), 'linux'), parameters('linuxFxVersion'), null())]",
+                    "linuxFxVersion": "[if(equals(toLower(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).kind), 'linux'), if(empty(parameters('frameworkVersion')), 'DOTNETCORE|3.1', parameters('frameworkVersion')), null())]",
                     "loadBalancing": "LeastRequests",
                     "logsDirectorySizeLimit": 27,
                     "managedPipelineMode": "Integrated",
                     "metadata": "[variables('metadata')]",
                     "netFrameworkVersion": "v4.0",
-                    "minTlsVersion": "1.2",
+                    "minTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
                     "numberOfWorkers": 1,
-                    "scmMinTlsVersion": "1.2",
+                    "scmMinTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
                     "phpVersion": "OFF",
                     "remoteDebuggingEnabled": false,
                     "redundancyMode": "None",
                     "scmIpSecurityRestrictionsUseMain": "[equals(variables('scmIpSecurityRestrictionsCount'), 0)]",
-                    "use32BitWorkerProcess": false,
-                    "webSocketsEnabled": true,
+                    "use32BitWorkerProcess": "[parameters('is32BitModeEnabled')]",
+                    "webSocketsEnabled": "[parameters('isWebSocketSupportEnabled')]",
                     "websiteTimeZone": "UTC",
-                    "windowsFxVersion": "[if(equals(toLower(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).kind), 'linux'), null(), if(empty(parameters('windowsFxVersion')), null(), parameters('windowsFxVersion')))]"
+                    "windowsFxVersion": "[if(equals(toLower(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).kind), 'linux'), null(), if(empty(parameters('frameworkVersion')), null(), parameters('frameworkVersion')))]"
                 }
             },
             "tags": "[parameters('tags')]",

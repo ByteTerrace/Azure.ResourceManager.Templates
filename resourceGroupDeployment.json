@@ -405,13 +405,17 @@
                 "cors": {},
                 "customDomains": [],
                 "dnsZones": {},
+                "frameworkVersion": "",
                 "healthCheck": {},
                 "ipSecurityRestrictions": [],
-                "isAlwaysOnEnabled": false,
-                "linuxFxVersion": "DOTNETCORE|3.1",
+                "isAlwaysOnEnabled": true,
+                "isClientAffinityEnabled": false,
+                "isHttp20SupportEnabled": true,
+                "isWebSocketSupportEnabled": false,
+                "is32BitModeEnabled": false,
                 "metadata": [],
-                "scmIpSecurityRestrictions": [],
-                "windowsFxVersion": ""
+                "minimumSupportedTlsVersion": "1.2",
+                "scmIpSecurityRestrictions": []
             }
         },
         "deploymentNames": {
@@ -2663,6 +2667,9 @@
                     "dnsZones": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).dnsZones]"
                     },
+                    "frameworkVersion": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).frameworkVersion]"
+                    },
                     "healthCheck": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).healthCheck]"
                     },
@@ -2672,14 +2679,26 @@
                     "isAlwaysOnEnabled": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).isAlwaysOnEnabled]"
                     },
-                    "linuxFxVersion": {
-                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).linuxFxVersion]"
+                    "isClientAffinityEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).isClientAffinityEnabled]"
+                    },
+                    "isHttp20SupportEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).isHttp20SupportEnabled]"
+                    },
+                    "isWebSocketSupportEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).isWebSocketSupportEnabled]"
+                    },
+                    "is32BitModeEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).is32BitModeEnabled]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').webApplications[copyIndex()]).location]"
                     },
                     "metadata": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).metadata]"
+                    },
+                    "minimumSupportedTlsVersion": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).minimumSupportedTlsVersion]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').webApplications[copyIndex()].name]"
@@ -2692,9 +2711,6 @@
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
-                    },
-                    "windowsFxVersion": {
-                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).windowsFxVersion]"
                     }
                 },
                 "templateLink": {
