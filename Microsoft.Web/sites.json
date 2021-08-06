@@ -159,6 +159,13 @@
             },
             "type": "array"
         },
+        "privateCertificates": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of private certificates that will be assigned to the Azure Web Site."
+            },
+            "type": "array"
+        },
         "publicCertificates": {
             "defaultValue": [],
             "metadata": {
@@ -211,6 +218,7 @@
     "variables": {
         "apiVersions": {
             "diagnosticSettings": "2017-05-01-preview",
+            "privateCertificates": "2020-12-01",
             "privateDnsZonesARecords": "2020-06-01",
             "privateDnsZonesCnameRecords": "2020-06-01",
             "privateDnsZonesTXTRecords": "2020-06-01",
@@ -328,6 +336,12 @@
                     "subscriptionId": "[variables('subscriptionId')]"
                 }
             },
+            "privateCertificate": {
+                "keyVault": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
+            },
             "publicCertificate": {
                 "location": "CurrentUserMy"
             },
@@ -356,6 +370,7 @@
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "linuxFxVersion": "[if(and(equals(variables('currentStack'), 'dotnetcore'), endsWith(parameters('frameworkVersion'), '5.0')), 'DOTNETCORE|5.0', parameters('frameworkVersion'))]",
         "metadata": "[union(createArray(createObject('name', 'CURRENT_STACK', 'value', variables('currentStack'))), parameters('metadata'))]",
+        "privateCertificatesCount": "[length(parameters('privateCertificates'))]",
         "privateDnsZonesCount": "[length(variables('dnsZones').private)]",
         "privateDnsZonesIsNotEmpty": "[greater(variables('privateDnsZonesCount'), 0)]",
         "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('dnsZones', createArray(), 'name', 'dummyEndpoint')))]",
@@ -756,6 +771,23 @@
             "type": "Microsoft.Web/sites/publicCertificates"
         },
         {
+            "apiVersion": "[variables('apiVersions').privateCertificates]",
+            "condition": "[greater(variables('privateCertificatesCount'), 0)]",
+            "copy": {
+                "count": "[variables('privateCertificatesCount')]",
+                "mode": "Parallel",
+                "name": "privateCertificatesCopy"
+            },
+            "location": "[parameters('location')]",
+            "name": "[format('{0}-{1}', parameters('servicePlan').name, parameters('privateCertificates')[copyIndex()].keyVault.secretName)]",
+            "properties": {
+                "keyVaultId": "[resourceId(union(variables('defaultResourceProperties').privateCertificate, parameters('privateCertificates')[copyIndex()]).keyVault.subscriptionId, union(variables('defaultResourceProperties').privateCertificate, parameters('privateCertificates')[copyIndex()]).keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', parameters('privateCertificates')[copyIndex()].keyVault.name)]",
+                "keyVaultSecretName": "[parameters('privateCertificates')[copyIndex()].keyVault.secretName]",
+                "serverFarmId": "[variables('resourceIds').serverFarm]"
+            },
+            "type": "Microsoft.Web/certificates"
+        },
+        {
             "apiVersion": "[variables('apiVersions').sitesHostNameBindings]",
             "condition": "[greater(variables('customDomainsCount'), 0)]",
             "copy": {
@@ -765,6 +797,7 @@
             },
             "dependsOn": [
                 "[variables('resourceIds').site]",
+                "privateCertificatesCopy",
                 "privateDnsZoneARecords",
                 "privateDnsZoneCnameRecords",
                 "privateDnsZoneTxtRecords",
@@ -777,7 +810,7 @@
             "name": "[format('{0}/{1}', parameters('name'), parameters('customDomains')[copyIndex()].name)]",
             "properties": {
                 "sslState": "[union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).ssl.state]",
-                "thumbprint": "[if(equals(toLower(union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).ssl.state), 'disabled'), null(), if(empty(union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).ssl.certificate.thumbprint), reference(resourceId(union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).ssl.certificate.subscriptionId, union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).ssl.certificate.resourceGroupName, 'Microsoft.Web/certificates', coalesce(union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).ssl.certificate.name, '<NULL>'))).thumbprint, parameters('customDomains')[copyIndex()].ssl.certificate.thumbprint))]"
+                "thumbprint": "[if(equals(toLower(union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).ssl.state), 'disabled'), null(), if(empty(union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).ssl.certificate.thumbprint), reference(resourceId(union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).ssl.certificate.subscriptionId, union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).ssl.certificate.resourceGroupName, 'Microsoft.Web/certificates', coalesce(union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).ssl.certificate.name, parameters('customDomains')[copyIndex()].name))).thumbprint, parameters('customDomains')[copyIndex()].ssl.certificate.thumbprint))]"
             },
             "type": "Microsoft.Web/sites/hostNameBindings"
         },
