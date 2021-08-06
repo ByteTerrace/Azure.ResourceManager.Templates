@@ -42,7 +42,7 @@
             "metadata": {
                 "description": ""
             },
-            "type": "string"
+            "type": "int"
         },
         "operatingSystemName": {
             "allowedValues": [
