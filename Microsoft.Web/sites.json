@@ -332,7 +332,7 @@
                     "logsDirectorySizeLimit": 27,
                     "managedPipelineMode": "Integrated",
                     "metadata": "[variables('metadata')]",
-                    "netFrameworkVersion": "[if(and(equals(variables('currentStack'), 'dotnetcore'), endsWith(parameters('frameworkVersion'), '5.0')), 'v5.0', 'v4.0')]",
+                    "netFrameworkVersion": "[if(and(not(equals(toLower(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).kind), 'linux')), equals(variables('currentStack'), 'dotnetcore'), endsWith(parameters('frameworkVersion'), '5.0')), 'v5.0', 'v4.0')]",
                     "minTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
                     "numberOfWorkers": 1,
                     "scmMinTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
