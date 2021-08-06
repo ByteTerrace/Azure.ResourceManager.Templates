@@ -411,6 +411,7 @@
                 "ipSecurityRestrictions": [],
                 "isAlwaysOnEnabled": true,
                 "isClientAffinityEnabled": false,
+                "isHttpsOnlyModeEnabled": true,
                 "isHttp20SupportEnabled": true,
                 "isWebSocketSupportEnabled": false,
                 "is32BitModeEnabled": false,
@@ -2687,6 +2688,9 @@
                     },
                     "isClientAffinityEnabled": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).isClientAffinityEnabled]"
+                    },
+                    "isHttpsOnlyModeEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).isHttpsOnlyModeEnabled]"
                     },
                     "isHttp20SupportEnabled": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).isHttp20SupportEnabled]"

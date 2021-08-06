@@ -86,6 +86,13 @@
             },
             "type": "bool"
         },
+        "isHttpsOnlyModeEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether HTTP network protocol support is restricted to HTTPS on the Azure Web Site."
+            },
+            "type": "bool"
+        },
         "isHttp20SupportEnabled": {
             "defaultValue": true,
             "metadata": {
@@ -295,7 +302,7 @@
                 "clientCertEnabled": false,
                 "clientCertMode": "Required",
                 "name": "[parameters('name')]",
-                "httpsOnly": true,
+                "httpsOnly": "[parameters('isHttpsOnlyModeEnabled')]",
                 "serverFarmId": "[variables('resourceIds').serverFarm]",
                 "siteConfig": {
                     "acrUseManagedIdentityCreds": false,
