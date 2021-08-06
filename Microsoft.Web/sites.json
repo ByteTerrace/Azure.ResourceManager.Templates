@@ -326,7 +326,7 @@
                     "fileSystem": {
                         "enabled": true,
                         "retentionInDays": 3,
-                        "retentionInMb": 23
+                        "retentionInMb": 31
                     }
                 }
             },
