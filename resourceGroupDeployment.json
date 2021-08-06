@@ -400,7 +400,7 @@
             },
             "webApplication": {
                 "audit": "[variables('audit')]",
-                "autoHealRules": {},
+                "autoHeal": {},
                 "applicationSettings": {},
                 "connectionStrings": {},
                 "cors": {},
@@ -2653,8 +2653,8 @@
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).audit]"
                     },
-                    "autoHealRules": {
-                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).autoHealRules]"
+                    "autoHeal": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).autoHeal]"
                     },
                     "applicationSettings": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).applicationSettings]"

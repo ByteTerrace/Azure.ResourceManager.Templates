@@ -9,10 +9,10 @@
             },
             "type": "object"
         },
-        "autoHealRules": {
+        "autoHeal": {
             "defaultValue": {},
             "metadata": {
-                "description": "An object that encapsulates the auto-heal rules that will be applied to the Azure Web Site."
+                "description": "An object that encapsulates the auto-heal settings that will be applied to the Azure Web Site."
             },
             "type": "object"
         },
@@ -171,9 +171,9 @@
             "sitesConfig": "2020-12-01",
             "sitesHostNameBindings": "2020-12-01"
         },
-        "applicationSettingsCollection": "[union(union(createObject('collection', createArray()), parameters('applicationSettings')).collection, if(variables('healthCheck').isEnabled, createArray(createObject('name', 'WEBSITE_HEALTHCHECK_MAXPINGFAILURES', 'value', variables('healthCheck').unhealthyInstanceLifetimeInMinutes)), createArray()))]",
+        "applicationSettingsCollection": "[union(union(createObject('collection', createArray()), parameters('applicationSettings')).collection, if(variables('autoHeal').isProactiveModeEnabled, createArray(), createArray(createObject('name', 'WEBSITE_PROACTIVE_AUTOHEAL_ENABLED', 'value', 'False'))), if(variables('healthCheck').isEnabled, createArray(createObject('name', 'WEBSITE_HEALTHCHECK_MAXPINGFAILURES', 'value', variables('healthCheck').unhealthyInstanceLifetimeInMinutes)), createArray()))]",
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
-        "autoHealRulesIsNotEmpty": "[not(empty(parameters('autoHealRules')))]",
+        "autoHeal": "[union(variables('defaultResourceProperties').autoHeal, parameters('autoHeal'))]",
         "cors": "[union(variables('defaultResourceProperties').cors, parameters('cors'))]",
         "defaultResourceProperties": {
             "audit": {
@@ -194,6 +194,10 @@
                     "days": 137,
                     "isEnabled": true
                 }
+            },
+            "autoHeal": {
+                "isProactiveModeEnabled": true,
+                "rules": {}
             },
             "connectionStrings": {
                 "collection": []
@@ -277,8 +281,8 @@
                 "siteConfig": {
                     "acrUseManagedIdentityCreds": false,
                     "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
-                    "autoHealEnabled": "[variables('autoHealRulesIsNotEmpty')]",
-                    "autoHealRules": "[parameters('autoHealRules')]",
+                    "autoHealEnabled": "[not(empty(variables('autoHeal').rules))]",
+                    "autoHealRules": "[variables('autoHeal').rules]",
                     "copy": [
                         {
                             "count": "[length(variables('applicationSettingsCollection'))]",
