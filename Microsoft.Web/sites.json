@@ -250,6 +250,7 @@
             "functionExtension": {
                 "isEnabled": false,
                 "storageAccount": {
+                    "blobContainerName": "[format('functionapp-{0}-{1}', parameters('name'), variables('currentStack'))]",
                     "resourceGroupName": "[variables('resourceGroupName')]",
                     "subscriptionId": "[variables('subscriptionId')]"
                 },
@@ -344,7 +345,7 @@
                 "siteConfig": {
                     "acrUseManagedIdentityCreds": false,
                     "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
-                    "appSettings": "[if(variables('functionExtension').isEnabled, union(createArray(createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccountResourceId, variables('apiVersions').storageAccounts).keys[0].value))), variables('applicationSettingsCollection')), variables('applicationSettingsCollection'))]",
+                    "appSettings": "[if(variables('functionExtension').isEnabled, union(createArray(createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccountResourceId, variables('apiVersions').storageAccounts).keys[0].value))), if(equals(variables('currentStack'), 'powershell'), createArray(createObject('name', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccountResourceId, variables('apiVersions').storageAccounts).keys[0].value)), createObject('name', 'WEBSITE_CONTENTSHARE', 'value', variables('functionExtension').storageAccount.blobContainerName)), createArray()), variables('applicationSettingsCollection')), variables('applicationSettingsCollection'))]",
                     "autoHealEnabled": "[not(empty(variables('autoHeal').rules))]",
                     "autoHealRules": "[variables('autoHeal').rules]",
                     "copy": [
@@ -407,6 +408,7 @@
                     "numberOfWorkers": 1,
                     "scmMinTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
                     "phpVersion": "OFF",
+                    "powerShellVersion": "[if(equals(variables('currentStack'), 'powershell'), if(endsWith(parameters('frameworkVersion'), '|7'), '~7', null()), null())]",
                     "remoteDebuggingEnabled": "[variables('remoteDebugging').isEnabled]",
                     "remoteDebuggingVersion": "[variables('remoteDebugging').version]",
                     "redundancyMode": "None",
