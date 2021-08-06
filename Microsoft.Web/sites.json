@@ -222,6 +222,7 @@
             "sitesConfig": "2020-12-01",
             "sitesHostNameBindings": "2020-12-01",
             "sitesPublicCertificates": "2020-12-01",
+            "sitesVirtualNetworkConnections": "2020-12-01",
             "storageAccounts": "2021-02-01"
         },
         "applicationSettingsCollection": "[union(union(createObject('collection', createArray()), parameters('applicationSettings')).collection, variables('functionApplicationSettingsCollection'), if(variables('privateEndpointsIsNotEmpty'), variables('privateEndpointsApplicationSettingsCollection'), createArray()), if(variables('autoHeal').isProactiveModeEnabled, createArray(), createArray(createObject('name', 'WEBSITE_PROACTIVE_AUTOHEAL_ENABLED', 'value', 'False'))), if(variables('healthCheck').isEnabled, createArray(createObject('name', 'WEBSITE_HEALTHCHECK_MAXPINGFAILURES', 'value', variables('healthCheck').unhealthyInstanceLifetimeInMinutes)), createArray()))]",
@@ -349,10 +350,6 @@
             {
                 "name": "WEBSITE_DNS_SERVER",
                 "value": "168.63.129.16"
-            },
-            {
-                "name": "WEBSITE_VNET_ROUTE_ALL",
-                "value": "1"
             }
         ],
         "privateEndpointsCount": "[length(parameters('privateEndpoints'))]",
@@ -366,8 +363,8 @@
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
             "serverFarm": "[resourceId(variables('servicePlan').subscriptionId, variables('servicePlan').resourceGroupName, 'Microsoft.Web/serverfarms', variables('servicePlan').name)]",
             "site": "[resourceId('Microsoft.Web/sites', parameters('name'))]",
-            "storageAccountResourceId": "[resourceId(variables('functionExtension').storageAccount.subscriptionId, variables('functionExtension').storageAccount.resourceGroupName, 'Microsoft.Storage/storageAccounts', union(createObject('name', '<NULL>'), variables('functionExtension').storageAccount).name)]",
-            "subnetResourceId": "[resourceId(variables('subnet').subscriptionId, variables('subnet').resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', union(createObject('virtualNetworkName', '<NULL>'), variables('subnet')).virtualNetworkName, union(createObject('name', '<NULL>'), variables('subnet')).name)]"
+            "storageAccount": "[resourceId(variables('functionExtension').storageAccount.subscriptionId, variables('functionExtension').storageAccount.resourceGroupName, 'Microsoft.Storage/storageAccounts', union(createObject('name', '<NULL>'), variables('functionExtension').storageAccount).name)]",
+            "subnet": "[resourceId(variables('subnet').subscriptionId, variables('subnet').resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', union(createObject('virtualNetworkName', '<NULL>'), variables('subnet')).virtualNetworkName, union(createObject('name', '<NULL>'), variables('subnet')).name)]"
         },
         "scmIpSecurityRestrictionsCount": "[length(parameters('scmIpSecurityRestrictions'))]",
         "servicePlan": "[union(variables('defaultResourceProperties').servicePlan, parameters('servicePlan'))]",
@@ -394,7 +391,7 @@
                 "siteConfig": {
                     "acrUseManagedIdentityCreds": false,
                     "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
-                    "appSettings": "[if(variables('functionExtension').isEnabled, union(createArray(createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccountResourceId, variables('apiVersions').storageAccounts).keys[0].value)), createObject('name', 'FUNCTION_APP_EDIT_MODE', 'value', 'readonly')), if(or(startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'EP'), startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'Y')), createArray(createObject('name', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccountResourceId, variables('apiVersions').storageAccounts).keys[0].value)), createObject('name', 'WEBSITE_CONTENTSHARE', 'value', format('functionapp-{0}', toLower(parameters('name'))))), createArray()), variables('applicationSettingsCollection')), variables('applicationSettingsCollection'))]",
+                    "appSettings": "[if(variables('functionExtension').isEnabled, union(createArray(createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccount, variables('apiVersions').storageAccounts).keys[0].value)), createObject('name', 'FUNCTION_APP_EDIT_MODE', 'value', 'readonly')), if(or(startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'EP'), startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'Y')), createArray(createObject('name', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccount, variables('apiVersions').storageAccounts).keys[0].value)), createObject('name', 'WEBSITE_CONTENTSHARE', 'value', format('functionapp-{0}', toLower(parameters('name'))))), createArray()), variables('applicationSettingsCollection')), variables('applicationSettingsCollection'))]",
                     "autoHealEnabled": "[not(empty(variables('autoHeal').rules))]",
                     "autoHealRules": "[variables('autoHeal').rules]",
                     "copy": [
@@ -464,14 +461,28 @@
                     "redundancyMode": "None",
                     "scmIpSecurityRestrictionsUseMain": "[equals(variables('scmIpSecurityRestrictionsCount'), 0)]",
                     "use32BitWorkerProcess": "[parameters('is32BitModeEnabled')]",
+                    "vnetRouteAllEnabled ": "[variables('privateEndpointsIsNotEmpty')]",
                     "webSocketsEnabled": "[parameters('isWebSocketSupportEnabled')]",
                     "websiteTimeZone": "[parameters('timeZone')]",
                     "windowsFxVersion": "[null()]"
-                },
-                "virtualNetworkSubnetId": "[if(variables('subnetIsNotEmpty'), variables('resourceIds').subnetResourceId, null())]"
+                }
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Web/sites"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').sitesVirtualNetworkConnections]",
+            "condition": "[variables('subnetIsNotEmpty')]",
+            "dependsOn": [
+                "[variables('resourceIds').site]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/{1}', parameters('name'), guid(variables('resourceIds').subnet))]",
+            "properties": {
+                "isSwift": true,
+                "vnetResourceId": "[variables('resourceIds').subnet]"
+            },
+            "type": "Microsoft.Web/sites/virtualNetworkConnections"
         },
         {
             "apiVersion": "[variables('apiVersions').sitesConfig]",
