@@ -138,6 +138,13 @@
             "minLength": 2,
             "type": "string"
         },
+        "remoteDebugging": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the remote debugging settings that will be applied to the Azure Web Site."
+            },
+            "type": "object"
+        },
         "scmIpSecurityRestrictions": {
             "defaultValue": [],
             "metadata": {
@@ -157,6 +164,13 @@
                 "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Web Site."
             },
             "type": "object"
+        },
+        "timeZone": {
+            "defaultValue": "UTC",
+            "metadata": {
+                "description": "Specifies the time zone of the Azure Web Site."
+            },
+            "type": "string"
         }
     },
     "variables": {
@@ -235,6 +249,10 @@
                 "subnetMask": "[null()]",
                 "tag": "[null()]"
             },
+            "remoteDebugging": {
+                "isEnabled": false,
+                "version": "VS2019"
+            },
             "servicePlan": {
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
@@ -253,6 +271,7 @@
         "privateDnsZonesIsNotEmpty": "[greater(variables('privateDnsZonesCount'), 0)]",
         "publicDnsZonesCount": "[length(variables('dnsZones').public)]",
         "publicDnsZonesIsNotEmpty": "[greater(variables('publicDnsZonesCount'), 0)]",
+        "remoteDebugging": "[union(variables('defaultResourceProperties').remoteDebugging, parameters('remoteDebugging'))]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
@@ -350,12 +369,13 @@
                     "numberOfWorkers": 1,
                     "scmMinTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
                     "phpVersion": "OFF",
-                    "remoteDebuggingEnabled": false,
+                    "remoteDebuggingEnabled": "[variables('remoteDebugging').isEnabled]",
+                    "remoteDebuggingVersion": "[variables('remoteDebugging').version]",
                     "redundancyMode": "None",
                     "scmIpSecurityRestrictionsUseMain": "[equals(variables('scmIpSecurityRestrictionsCount'), 0)]",
                     "use32BitWorkerProcess": "[parameters('is32BitModeEnabled')]",
                     "webSocketsEnabled": "[parameters('isWebSocketSupportEnabled')]",
-                    "websiteTimeZone": "UTC",
+                    "websiteTimeZone": "[parameters('timeZone')]",
                     "windowsFxVersion": "[null()]"
                 }
             },

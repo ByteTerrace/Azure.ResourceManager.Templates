@@ -416,7 +416,9 @@
                 "is32BitModeEnabled": false,
                 "metadata": [],
                 "minimumSupportedTlsVersion": "1.2",
-                "scmIpSecurityRestrictions": []
+                "remoteDebugging": {},
+                "scmIpSecurityRestrictions": [],
+                "timeZone": "UTC"
             }
         },
         "deploymentNames": {
@@ -2707,6 +2709,9 @@
                     "name": {
                         "value": "[variables('resourceDefinitions').webApplications[copyIndex()].name]"
                     },
+                    "remoteDebugging": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).remoteDebugging]"
+                    },
                     "scmIpSecurityRestrictions": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).scmIpSecurityRestrictions]"
                     },
@@ -2715,6 +2720,9 @@
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
+                    },
+                    "timeZone": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).timeZone]"
                     }
                 },
                 "templateLink": {
