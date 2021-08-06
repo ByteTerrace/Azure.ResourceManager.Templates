@@ -30,6 +30,20 @@
             },
             "type": "object"
         },
+        "customDomains": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of custom domains that will be assigned to the Azure Web Site."
+            },
+            "type": "array"
+        },
+        "dnsZones": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the DNS zones that the Azure Web Site will be integrated with."
+            },
+            "type": "object"
+        },
         "ipSecurityRestrictions": {
             "defaultValue": [],
             "metadata": {
@@ -89,8 +103,13 @@
     "variables": {
         "apiVersions": {
             "diagnosticSettings": "2017-05-01-preview",
+            "privateDnsZonesARecords": "2020-06-01",
+            "privateDnsZonesTXTRecords": "2020-06-01",
+            "publicDnsZonesARecords": "2018-05-01",
+            "publicDnsZonesTXTRecords": "2018-05-01",
             "sites": "2020-12-01",
-            "sitesConfig": "2020-12-01"
+            "sitesConfig": "2020-12-01",
+            "sitesHostNameBindings": "2020-12-01"
         },
         "applicationSettingsCollection": "[union(variables('defaultResourceProperties').applicationSettings, parameters('applicationSettings')).collection]",
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
@@ -125,6 +144,16 @@
                 "allowedOrigins": [],
                 "isCredentialSupportEnabled": false
             },
+            "privateDnsZone": {
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "publicDnsZone": {
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
             "ipSecurityRestriction": {
                 "description": "",
                 "headers": {},
@@ -143,8 +172,14 @@
             }
         },
         "connectionStringsCollection": "[union(variables('defaultResourceProperties').connectionStrings, parameters('connectionStrings')).collection]",
+        "customDomainsCount": "[length(parameters('customDomains'))]",
+        "dnsZones": "[union(createObject('private', createArray(), 'public', createArray()), parameters('dnsZones'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "privateDnsZonesCount": "[length(variables('dnsZones').private)]",
+        "privateDnsZonesIsNotEmpty": "[greater(variables('privateDnsZonesCount'), 0)]",
+        "publicDnsZonesCount": "[length(variables('dnsZones').public)]",
+        "publicDnsZonesIsNotEmpty": "[greater(variables('publicDnsZonesCount'), 0)]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
@@ -231,8 +266,10 @@
                         "supportCredentials": "[variables('cors').isCredentialSupportEnabled]"
                     },
                     "ftpsState": "FtpsOnly",
-                    "healthCheckPath": "[null()]",
+                    "healthCheckPath": "/",
                     "http20Enabled": true,
+                    "keyVaultReferenceIdentity": "SystemAssigned",
+                    "loadBalancing": "LeastRequests",
                     "logsDirectorySizeLimit": 27,
                     "managedPipelineMode": "Integrated",
                     "metadata": "[parameters('metadata')]",
@@ -240,6 +277,7 @@
                     "numberOfWorkers": 1,
                     "scmMinTlsVersion": "1.2",
                     "phpVersion": "OFF",
+                    "redundancyMode": "None",
                     "scmIpSecurityRestrictionsUseMain": "[equals(variables('scmIpSecurityRestrictionsCount'), 0)]",
                     "use32BitWorkerProcess": false,
                     "webSocketsEnabled": true,
@@ -293,6 +331,96 @@
             "type": "Microsoft.Web/sites/config"
         },
         {
+            "apiVersion": "[variables('apiVersions').privateDnsZonesARecords]",
+            "condition": "[variables('privateDnsZonesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('privateDnsZonesCount')]",
+                "name": "privateDnsZoneARecords"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').site]"
+            ],
+            "name": "[format('{0}/@', coalesce(union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).name, 'dummyDnsZone'))]",
+            "properties": {
+                "aRecords": [
+                    {
+                        "ipv4Address": "[reference(variables('resourceIds').site, variables('apiVersions').sites, 'Full').properties.inboundIpAddress]"
+                    }
+                ],
+                "ttl": 3600
+            },
+            "type": "Microsoft.Network/privateDnsZones/A"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').privateDnsZonesTXTRecords]",
+            "condition": "[variables('privateDnsZonesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('privateDnsZonesCount')]",
+                "name": "privateDnsZoneTXTRecords"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').site]"
+            ],
+            "name": "[format('{0}/asuid', coalesce(union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).name, 'dummyDnsZone'))]",
+            "properties": {
+                "ttl": 3600,
+                "txtRecords": [
+                    {
+                        "value": [
+                            "[reference(variables('resourceIds').site, variables('apiVersions').sites).customDomainVerificationId]"
+                        ]
+                    }
+                ]
+            },
+            "type": "Microsoft.Network/privateDnsZones/TXT"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').publicDnsZonesARecords]",
+            "condition": "[variables('publicDnsZonesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('publicDnsZonesCount')]",
+                "name": "publicDnsZoneARecords"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').site]"
+            ],
+            "name": "[format('{0}/@', coalesce(union(variables('defaultResourceProperties').publicDnsZone, variables('dnsZones').public[copyIndex()]).name, 'dummyDnsZone'))]",
+            "properties": {
+                "ARecords": [
+                    {
+                        "ipv4Address": "[reference(variables('resourceIds').site, variables('apiVersions').sites, 'Full').properties.inboundIpAddress]"
+                    }
+                ],
+                "targetResource": {},
+                "TTL": 3600
+            },
+            "type": "Microsoft.Network/dnszones/A"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').publicDnsZonesTXTRecords]",
+            "condition": "[variables('publicDnsZonesIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('publicDnsZonesCount')]",
+                "name": "publicDnsZoneTXTRecords"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').site]"
+            ],
+            "name": "[format('{0}/asuid', coalesce(union(variables('defaultResourceProperties').publicDnsZone, variables('dnsZones').public[copyIndex()]).name, 'dummyDnsZone'))]",
+            "properties": {
+                "targetResource": {},
+                "TTL": 3600,
+                "TXTRecords": [
+                    {
+                        "value": [
+                            "[reference(variables('resourceIds').site, variables('apiVersions').sites).customDomainVerificationId]"
+                        ]
+                    }
+                ]
+            },
+            "type": "Microsoft.Network/dnszones/TXT"
+        },
+        {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
             "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
             "dependsOn": [
@@ -318,6 +446,27 @@
                 "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
             "type": "Microsoft.Web/sites/providers/diagnosticsettings"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').sitesHostNameBindings]",
+            "condition": "[greater(variables('customDomainsCount'), 0)]",
+            "copy": {
+                "count": "[variables('customDomainsCount')]",
+                "mode": "Serial",
+                "name": "hostNameBindingsCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').site]",
+                "privateDnsZoneTXTRecords",
+                "publicDnsZoneTXTRecords"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/{1}', parameters('name'), parameters('customDomains')[copyIndex()].name)]",
+            "properties": {
+                "hostNameType": "Verified",
+                "siteName": "[parameters('name')]"
+            },
+            "type": "Microsoft.Web/sites/hostNameBindings"
         }
     ]
 }
