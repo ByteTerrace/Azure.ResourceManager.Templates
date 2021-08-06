@@ -419,6 +419,7 @@
                 "is32BitModeEnabled": false,
                 "metadata": [],
                 "minimumSupportedTlsVersion": "1.2",
+                "privateCertificates": [],
                 "privateEndpoints": [],
                 "publicCertificates": [],
                 "remoteDebugging": {},
@@ -2725,6 +2726,9 @@
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').webApplications[copyIndex()].name]"
+                    },
+                    "privateCertificates": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).privateCertificates]"
                     },
                     "privateEndpoints": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).privateEndpoints]"
