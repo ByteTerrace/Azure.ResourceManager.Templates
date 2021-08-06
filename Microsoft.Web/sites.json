@@ -147,12 +147,14 @@
             "privateDnsZone": {
                 "name": "",
                 "resourceGroupName": "[variables('resourceGroupName')]",
-                "subscriptionId": "[variables('subscriptionId')]"
+                "subscriptionId": "[variables('subscriptionId')]",
+                "recordTimeToLiveInSeconds": 1020
             },
             "publicDnsZone": {
                 "name": "",
                 "resourceGroupName": "[variables('resourceGroupName')]",
-                "subscriptionId": "[variables('subscriptionId')]"
+                "subscriptionId": "[variables('subscriptionId')]",
+                "recordTimeToLiveInSeconds": 1020
             },
             "ipSecurityRestriction": {
                 "description": "",
@@ -318,13 +320,13 @@
                 "httpLogs": {
                     "azureBlobStorage": {
                         "enabled": false,
-                        "retentionInDays": 7,
+                        "retentionInDays": 3,
                         "sasUrl": "[null()]"
                     },
                     "fileSystem": {
                         "enabled": true,
                         "retentionInDays": 3,
-                        "retentionInMb": 27
+                        "retentionInMb": 23
                     }
                 }
             },
@@ -347,7 +349,7 @@
                         "ipv4Address": "[reference(variables('resourceIds').site, variables('apiVersions').sites, 'Full').properties.inboundIpAddress]"
                     }
                 ],
-                "ttl": 3600
+                "ttl": "[union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).recordTimeToLiveInSeconds]"
             },
             "type": "Microsoft.Network/privateDnsZones/A"
         },
@@ -363,7 +365,7 @@
             ],
             "name": "[format('{0}/asuid', coalesce(union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).name, 'dummyDnsZone'))]",
             "properties": {
-                "ttl": 3600,
+                "ttl": "[union(variables('defaultResourceProperties').privateDnsZone, variables('dnsZones').private[copyIndex()]).recordTimeToLiveInSeconds]",
                 "txtRecords": [
                     {
                         "value": [
@@ -392,7 +394,7 @@
                     }
                 ],
                 "targetResource": {},
-                "TTL": 3600
+                "TTL": "[union(variables('defaultResourceProperties').publicDnsZone, variables('dnsZones').public[copyIndex()]).recordTimeToLiveInSeconds]"
             },
             "type": "Microsoft.Network/dnszones/A"
         },
@@ -409,7 +411,7 @@
             "name": "[format('{0}/asuid', coalesce(union(variables('defaultResourceProperties').publicDnsZone, variables('dnsZones').public[copyIndex()]).name, 'dummyDnsZone'))]",
             "properties": {
                 "targetResource": {},
-                "TTL": 3600,
+                "TTL": "[union(variables('defaultResourceProperties').publicDnsZone, variables('dnsZones').public[copyIndex()]).recordTimeToLiveInSeconds]",
                 "TXTRecords": [
                     {
                         "value": [
@@ -419,6 +421,27 @@
                 ]
             },
             "type": "Microsoft.Network/dnszones/TXT"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').sitesHostNameBindings]",
+            "condition": "[greater(variables('customDomainsCount'), 0)]",
+            "copy": {
+                "count": "[variables('customDomainsCount')]",
+                "mode": "Serial", // Note: This copy block is run in serial mode because running in parallel results in "another operation is in progress" errors.
+                "name": "hostNameBindingsCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').site]",
+                "privateDnsZoneTXTRecords",
+                "publicDnsZoneTXTRecords"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/{1}', parameters('name'), parameters('customDomains')[copyIndex()].name)]",
+            "properties": {
+                "hostNameType": "Verified",
+                "siteName": "[parameters('name')]"
+            },
+            "type": "Microsoft.Web/sites/hostNameBindings"
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
@@ -446,27 +469,6 @@
                 "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
             "type": "Microsoft.Web/sites/providers/diagnosticsettings"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').sitesHostNameBindings]",
-            "condition": "[greater(variables('customDomainsCount'), 0)]",
-            "copy": {
-                "count": "[variables('customDomainsCount')]",
-                "mode": "Serial",
-                "name": "hostNameBindingsCopy"
-            },
-            "dependsOn": [
-                "[variables('resourceIds').site]",
-                "privateDnsZoneTXTRecords",
-                "publicDnsZoneTXTRecords"
-            ],
-            "location": "[parameters('location')]",
-            "name": "[format('{0}/{1}', parameters('name'), parameters('customDomains')[copyIndex()].name)]",
-            "properties": {
-                "hostNameType": "Verified",
-                "siteName": "[parameters('name')]"
-            },
-            "type": "Microsoft.Web/sites/hostNameBindings"
         }
     ]
 }
