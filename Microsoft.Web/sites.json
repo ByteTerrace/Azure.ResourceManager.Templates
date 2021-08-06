@@ -535,6 +535,25 @@
             "type": "Microsoft.Network/dnszones/TXT"
         },
         {
+            "apiVersion": "[variables('apiVersions').sitesPublicCertificates]",
+            "condition": "[greater(variables('publicCertificatesCount'), 0)]",
+            "dependsOn": [
+                "[variables('resourceIds').site]"
+            ],
+            "copy": {
+                "count": "[variables('publicCertificatesCount')]",
+                "mode": "Parallel",
+                "name": "publicCertificatesCopy"
+            },
+            "location": "[parameters('location')]",
+            "name":"[format('{0}/{1}', parameters('name'), parameters('publicCertificates')[copyIndex()].name)]",
+            "properties": {
+                "blob": "[parameters('publicCertificates')[copyIndex()].blob]",
+                "publicCertificateLocation": "[union(variables('defaultResourceProperties').publicCertificate, parameters('publicCertificates')[copyIndex()]).location]"
+            },
+            "type": "Microsoft.Web/sites/publicCertificates"
+        },
+        {
             "apiVersion": "[variables('apiVersions').sitesHostNameBindings]",
             "condition": "[greater(variables('customDomainsCount'), 0)]",
             "copy": {
@@ -545,6 +564,7 @@
             "dependsOn": [
                 "[variables('resourceIds').site]",
                 "privateDnsZoneTXTRecords",
+                "publicCertificatesCopy",
                 "publicDnsZoneTXTRecords"
             ],
             "location": "[parameters('location')]",
@@ -554,21 +574,6 @@
                 "siteName": "[parameters('name')]"
             },
             "type": "Microsoft.Web/sites/hostNameBindings"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').sitesPublicCertificates]",
-            "copy": {
-                "count": "[variables('publicCertificatesCount')]",
-                "mode": "Parralel",
-                "name": "publicCertificatesCopy"
-            },
-            "location": "[parameters('location')]",
-            "name":"[format('{0}/{1}', parameters('name'), parameters('publicCertificates')[copyIndex()].name)]",
-            "properties": {
-                "blob": "[parameters('publicCertificates')[copyIndex()].blob]",
-                "publicCertificateLocation": "[union(variables('defaultResourceProperties').publicCertificate, parameters('publicCertificates')[copyIndex()]).location]"
-            },
-            "type": "Microsoft.Web/sites/publicCertificates"
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
