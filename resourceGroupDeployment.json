@@ -63,6 +63,7 @@
             "logic": {
                 "applications": []
             },
+            "managedHsms": [],
             "managedIdentities": [],
             "monitor": {
                 "applicationInsightsComponents": [],
@@ -227,7 +228,7 @@
                 "firewallRules": [],
                 "isAllowTrustedMicrosoftServicesEnabled": true,
                 "isDiskEncryptionEnabled": false,
-                "isPublicNetworkAccessEnabled": true,
+                "isPublicNetworkAccessEnabled": false,
                 "isPurgeProtectionEnabled": true,
                 "isRbacAuthorizationEnabled": true,
                 "isTemplateDeploymentEnabled": false,
@@ -235,7 +236,7 @@
                 "privateEndpoints": [],
                 "secrets": {},
                 "skuName": "Premium",
-                "softDeleteRetentionInDays": 14,
+                "softDeleteRetentionInDays": 13,
                 "tenantId": "[subscription().tenantId]",
                 "virtualNetworkRules": []
             },
@@ -260,6 +261,18 @@
                     "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
                     "isEnabled": true
                 }
+            },
+            "managedHsm": {
+                "audit": "[variables('audit')]",
+                "firewallRules": [],
+                "isAllowTrustedMicrosoftServicesEnabled": true,
+                "isPublicNetworkAccessEnabled": false,
+                "isPurgeProtectionEnabled": true,
+                "privateEndpoints": [],
+                "skuName": "Standard_B1",
+                "softDeleteRetentionInDays": 13,
+                "tenantId": "[subscription().tenantId]",
+                "virtualNetworkRules": []
             },
             "managedIdentity": {},
             "monitor": {
@@ -454,9 +467,10 @@
             "loadBalancer": "[format('{0}-LoadBalancer', deployment().name)]",
             "logAnalyticsWorkspace": "[format('{0}-LogAnalyticsWorkspace', deployment().name)]",
             "logicApplicationWorkflow": "[format('{0}-LogicAppWorkflow', deployment().name)]",
-            "proximityPlacementGroup": "[format('{0}-ProximityPlacementGroup', deployment().name)]",
+            "managedHsm": "[format('{0}-ManagedHsm', deployment().name)]",
             "managedIdentity": "[format('{0}-ManagedIdentity', deployment().name)]",
             "monitorPrivateLinkScope": "[format('{0}-MonitorPrivateLinkScope', deployment().name)]",
+            "proximityPlacementGroup": "[format('{0}-ProximityPlacementGroup', deployment().name)]",
             "natGateway": "[format('{0}-NatGateway', deployment().name)]",
             "networkSecurityGroup": "[format('{0}-NetworkSecurityGroup', deployment().name)]",
             "privateEndpoint": "[format('{0}-PrivateEndpoint', deployment().name)]",
@@ -1689,6 +1703,74 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').managedHsms))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').managedHsms)]",
+                "mode": "Parallel",
+                "name": "managedHsmsCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "scriptsPreDeployCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').managedHsm, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "administratorObjectIds": {
+                        "value": "[variables('resourceDefinitions').managedHsms[copyIndex()].administratorObjectIds]"
+                    },
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).audit]"
+                    },
+                    "firewallRules": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).firewallRules]"
+                    },
+                    "isAllowTrustedMicrosoftServicesEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
+                    },
+                    "isPublicNetworkAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).isPublicNetworkAccessEnabled]"
+                    },
+                    "isPurgeProtectionEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).isPurgeProtectionEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').managedHsms[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').keyVaults[copyIndex()].name]"
+                    },
+                    "privateEndpoints": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).privateEndpoints]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).skuName]"
+                    },
+                    "softDeleteRetentionInDays": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).softDeleteRetentionInDays]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "tenantId": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).tenantId]"
+                    },
+                    "virtualNetworkRules": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).virtualNetworkRules]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.KeyVault/managedHSMs.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').communicationServices))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').communicationServices)]",
@@ -2835,6 +2917,7 @@
                 "logAnalyticsWorkspacesLinkedStorageJoinCopy",
                 "logAnalyticsWorkspacesLinkedStorageRbacCopy",
                 "logicApplicationWorkflowsCopy",
+                "managedHsmsCopy",
                 "managedIdentitiesCopy",
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
