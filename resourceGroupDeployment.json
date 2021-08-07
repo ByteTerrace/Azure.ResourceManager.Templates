@@ -1741,7 +1741,7 @@
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').managedHsms[copyIndex()]).location]"
                     },
                     "name": {
-                        "value": "[variables('resourceDefinitions').keyVaults[copyIndex()].name]"
+                        "value": "[variables('resourceDefinitions').managedHsms[copyIndex()].name]"
                     },
                     "privateEndpoints": {
                         "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).privateEndpoints]"
