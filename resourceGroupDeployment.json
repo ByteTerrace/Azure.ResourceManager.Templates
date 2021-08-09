@@ -83,6 +83,7 @@
             },
             "sharedImageGalleries": [],
             "sqlServers": [],
+            "staticWebApplications": [],
             "storageAccounts": [],
             "subnets": [],
             "virtualMachines": [],
@@ -358,6 +359,10 @@
                 "virtualNetworkRules": [],
                 "vulnerabilityAssessment": {}
             },
+            "staticWebApplication": {
+                "privateEndpoints": [],
+                "skuName": "Standard"
+            },
             "storageAccount": {
                 "accessTier": "Hot",
                 "audit": "[variables('audit')]",
@@ -430,6 +435,7 @@
                 "isHttp20SupportEnabled": true,
                 "isWebSocketSupportEnabled": false,
                 "is32BitModeEnabled": false,
+                "logging": {},
                 "metadata": [],
                 "minimumSupportedTlsVersion": "1.2",
                 "privateCertificates": [],
@@ -482,6 +488,7 @@
             "scriptPreDeploy": "[format('{0}-ScriptPreDeploy', deployment().name)]",
             "sharedImageGallery": "[format('{0}-SharedImageGallery', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
+            "staticWebApplication": "[format('{0}-StaticWebApplication', deployment().name)]",
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
             "subnet": "[format('{0}-Subnet', deployment().name)]",
             "virtualMachine": "[format('{0}-VirtualMachine', deployment().name)]",
@@ -2721,6 +2728,54 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').staticWebApplications))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').staticWebApplications)]",
+                "mode": "Parallel",
+                "name": "staticWebApplicationsCopy"
+            },
+            "dependsOn": [
+                "applicationInsightsComponentsCopy",
+                "cdnProfilesCopy",
+                "containerRegistriesCopy",
+                "keyVaultsCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "scriptsPreDeployCopy",
+                "sqlServersCopy",
+                "storageAccountsCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').staticWebApplication, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').staticWebApplications[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').staticWebApplication[copyIndex()].name]"
+                    },
+                    "privateEndpoints": {
+                        "value": "[union(variables('defaultResourceProperties').staticWebApplication, variables('resourceDefinitions').staticWebApplications[copyIndex()]).privateEndpoints]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').staticWebApplication, variables('resourceDefinitions').staticWebApplications[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Web/sites.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').webApplications))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').webApplications)]",
@@ -2799,6 +2854,9 @@
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').webApplications[copyIndex()]).location]"
+                    },
+                    "logging": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).logging]"
                     },
                     "metadata": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).metadata]"
@@ -2932,6 +2990,7 @@
                 "scriptsPreDeployCopy",
                 "sharedImageGalleriesCopy",
                 "sqlServersCopy",
+                "staticWebApplicationsCopy",
                 "storageAccountsCopy",
                 "subnetsCopy",
                 "virtualMachinesCopy",

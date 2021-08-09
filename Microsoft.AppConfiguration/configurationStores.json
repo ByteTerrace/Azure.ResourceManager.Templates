@@ -104,7 +104,7 @@
             }
         },
         "isCustomerManagedEncryptionEnabled": "[variables('customerManagedEncryption').isEnabled]",
-        "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('dnsZones', createArray(), 'name', 'dummyEndpoint')))]",
+        "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('dnsZones', createArray(), 'name', '<NULL>')))]",
         "privateEndpointsCount": "[length(parameters('privateEndpoints'))]",
         "privateEndpointsIsNotEmpty": "[greater(variables('privateEndpointsCount'), 0)]",
         "resourceGroupName": "[resourceGroup().name]",

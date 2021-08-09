@@ -55,7 +55,7 @@
                 }
             }
         },
-        "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('name', 'dummyEndpoint')))]",
+        "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('name', '<NULL>')))]",
         "privateEndpointsCount": "[length(parameters('privateEndpoints'))]",
         "privateEndpointsIsNotEmpty": "[greater(variables('privateEndpointsCount'), 0)]",
         "privateLinkScopeResourceId": "[resourceId('Microsoft.Insights/privateLinkScopes', parameters('name'))]",

@@ -127,6 +127,13 @@
             },
             "type": "string"
         },
+        "logging": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the logging settings that will be applied to the Azure Web Site."
+            },
+            "type": "object"
+        },
         "metadata": {
             "defaultValue": [],
             "metadata": {
@@ -297,6 +304,32 @@
                 "path": "/",
                 "unhealthyInstanceLifetimeInMinutes": 7
             },
+            "logging": {
+                "application": {
+                    "azureBlobStorage": {
+                        "level": "Off",
+                        "sasUrl": "[null()]"
+                    },
+                    "azureTableStorage": {
+                        "level": "Off",
+                        "sasUrl": "[null()]"
+                    },
+                    "fileSystem": {
+                        "level": "Off"
+                    },
+                    "isDetailedErrorsEnabled": false
+                },
+                "http": {
+                    "azureBlobStorage": {
+                        "level": "Off",
+                        "sasUrl": "[null()]"
+                    },
+                    "fileSystem": {
+                        "level": "Off"
+                    },
+                    "isFailedRequestTracingEnabled": false
+                }
+            },
             "privateDnsZone": {
                 "endpoint": {
                     "name": "",
@@ -369,11 +402,12 @@
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "linuxFxVersion": "[if(and(equals(variables('currentStack'), 'dotnetcore'), endsWith(parameters('frameworkVersion'), '5.0')), 'DOTNETCORE|5.0', parameters('frameworkVersion'))]",
+        "logging": "[union(variables('defaultResourceProperties').logging, parameters('logging'))]",
         "metadata": "[union(createArray(createObject('name', 'CURRENT_STACK', 'value', variables('currentStack'))), parameters('metadata'))]",
         "privateCertificatesCount": "[length(parameters('privateCertificates'))]",
         "privateDnsZonesCount": "[length(variables('dnsZones').private)]",
         "privateDnsZonesIsNotEmpty": "[greater(variables('privateDnsZonesCount'), 0)]",
-        "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('dnsZones', createArray(), 'name', 'dummyEndpoint')))]",
+        "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('dnsZones', createArray(), 'name', '<NULL>')))]",
         "privateEndpointsApplicationSettingsCollection": [
             {
                 "name": "WEBSITE_CONTENTOVERVNET",
@@ -472,7 +506,8 @@
                         "supportCredentials": "[variables('cors').isCredentialSupportEnabled]"
                     },
                     "ftpsState": "FtpsOnly",
-                    "functionsRuntimeScaleMonitoringEnabled": "[variables('privateEndpointsIsNotEmpty')]",
+                    "functionAppScaleLimit": "[if(variables('functionExtension').isEnabled, 7, null())]",
+                    "functionsRuntimeScaleMonitoringEnabled": "[and(variables('functionExtension').isEnabled, variables('privateEndpointsIsNotEmpty'))]",
                     "healthCheckPath": "[if(variables('healthCheck').isEnabled, variables('healthCheck').path, '')]",
                     "http20Enabled": "[parameters('isHttp20SupportEnabled')]",
                     "javaVersion": "[if(equals(variables('currentStack'), 'java'), if(endsWith(parameters('frameworkVersion'), '|8'), '1.8', if(endsWith(parameters('frameworkVersion'), '|11'), '11', null())), null())]",
@@ -482,8 +517,9 @@
                     "logsDirectorySizeLimit": 27,
                     "managedPipelineMode": "Integrated",
                     "metadata": "[variables('metadata')]",
-                    "netFrameworkVersion": "[if(and(not(equals(toLower(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).kind), 'linux')), equals(variables('currentStack'), 'dotnetcore'), endsWith(parameters('frameworkVersion'), '5.0')), 'v5.0', 'v4.0')]",
+                    "minimumElasticInstanceCount": "[if(variables('functionExtension').isEnabled, 1, null())]",
                     "minTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
+                    "netFrameworkVersion": "[if(and(not(equals(toLower(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).kind), 'linux')), equals(variables('currentStack'), 'dotnetcore'), endsWith(parameters('frameworkVersion'), '5.0')), 'v5.0', 'v4.0')]",
                     "numberOfWorkers": 1,
                     "scmMinTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
                     "phpVersion": "OFF",
@@ -503,6 +539,50 @@
             "type": "Microsoft.Web/sites"
         },
         {
+            "apiVersion": "[variables('apiVersions').sitesConfig]",
+            "condition": "[not(variables('functionExtension').isEnabled)]",
+            "dependsOn": [
+                "[variables('resourceIds').site]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/logs', parameters('name'))]",
+            "properties": {
+                "applicationLogs": {
+                    "azureBlobStorage": {
+                        "level": "[variables('logging').application.azureBlobStorage.level]",
+                        "retentionInDays": 3,
+                        "sasUrl": "[variables('logging').application.azureBlobStorage.sasUrl]"
+                    },
+                    "azureTableStorage": {
+                        "level": "[variables('logging').application.azureTableStorage.level]",
+                        "sasUrl": "[variables('logging').application.azureTableStorage.sasUrl]"
+                    },
+                    "fileSystem": {
+                        "level": "[variables('logging').application.fileSystem.level]"
+                    }
+                },
+                "detailedErrorMessages": {
+                    "enabled": "[variables('logging').application.isDetailedErrorsEnabled]"
+                },
+                "failedRequestsTracing": {
+                    "enabled": "[variables('logging').http.isFailedRequestTracingEnabled]"
+                },
+                "httpLogs": {
+                    "azureBlobStorage": {
+                        "level": "[variables('logging').http.azureBlobStorage.level]",
+                        "retentionInDays": 3,
+                        "sasUrl": "[variables('logging').http.azureBlobStorage.sasUrl]"
+                    },
+                    "fileSystem": {
+                        "level": "[variables('logging').http.fileSystem.level]",
+                        "retentionInDays": 3,
+                        "retentionInMb": 31
+                    }
+                }
+            },
+            "type": "Microsoft.Web/sites/config"
+        },
+        {
             "apiVersion": "[variables('apiVersions').sitesVirtualNetworkConnections]",
             "condition": "[variables('subnetIsNotEmpty')]",
             "dependsOn": [
@@ -513,50 +593,6 @@
             "properties": {
                 "isSwift": true,
                 "subnetResourceId": "[variables('resourceIds').subnet]"
-            },
-            "type": "Microsoft.Web/sites/config"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').sitesConfig]",
-            "condition": "[not(variables('functionExtension').isEnabled)]",
-            "dependsOn": [
-                "[variables('resourceIds').site]"
-            ],
-            "location": "[parameters('location')]",
-            "name": "[format('{0}/logs', parameters('name'))]",
-            "properties": {
-                "applicationLogs": {
-                    "azureTableStorage": {
-                        "level": "Off",
-                        "sasUrl": "[null()]"
-                    },
-                    "azureBlobStorage": {
-                        "level": "Off",
-                        "retentionInDays": 3,
-                        "sasUrl": "[null()]"
-                    },
-                    "fileSystem": {
-                        "level": "Error"
-                    }
-                },
-                "detailedErrorMessages": {
-                    "enabled": true
-                },
-                "failedRequestsTracing": {
-                    "enabled": true
-                },
-                "httpLogs": {
-                    "azureBlobStorage": {
-                        "enabled": false,
-                        "retentionInDays": 3,
-                        "sasUrl": "[null()]"
-                    },
-                    "fileSystem": {
-                        "enabled": true,
-                        "retentionInDays": 3,
-                        "retentionInMb": 31
-                    }
-                }
             },
             "type": "Microsoft.Web/sites/config"
         },
