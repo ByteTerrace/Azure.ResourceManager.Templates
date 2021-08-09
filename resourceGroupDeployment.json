@@ -2755,7 +2755,7 @@
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').staticWebApplications[copyIndex()]).location]"
                     },
                     "name": {
-                        "value": "[variables('resourceDefinitions').staticWebApplication[copyIndex()].name]"
+                        "value": "[variables('resourceDefinitions').staticWebApplications[copyIndex()].name]"
                     },
                     "privateEndpoints": {
                         "value": "[union(variables('defaultResourceProperties').staticWebApplication, variables('resourceDefinitions').staticWebApplications[copyIndex()]).privateEndpoints]"
