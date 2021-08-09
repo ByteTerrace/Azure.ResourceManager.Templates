@@ -61,23 +61,23 @@
             "apiVersion": "[variables('apiVersions').eventGridSubscriptions]",
             "name": "[parameters('name')]",
             "properties": {
-                "deadLetterDestination": "[json('null')]",
+                "deadLetterDestination": "[null()]",
                 "destination": {
                     "endpointType": "[parameters('destination').endpointType]",
                     "properties": {
-                        "azureActiveDirectoryApplicationIdOrUri": "[if(variables('isAzureActiveDirectoryAuthenticationEnabled'), variables('azureActiveDirectoryApplicationIdOrUri'), json('null'))]",
-                        "azureActiveDirectoryTenantId": "[if(variables('isAzureActiveDirectoryAuthenticationEnabled'), variables('azureActiveDirectoryTenantId'), json('null'))]",
-                        "endpointUrl": "[if(variables('isWebHookDestination'), parameters('destination').endpointUrl, json('null'))]",
-                        "maxEventsPerBatch": "[if(or(variables('isAzureFunctionDestination'), variables('isWebHookDestination')), parameters('destination').maxEventsPerBatch, json('null'))]",
-                        "preferredBatchSizeInKilobytes": "[if(or(variables('isAzureFunctionDestination'), variables('isWebHookDestination')), parameters('destination').preferredBatchSizeInKilobytes, json('null'))]",
-                        "queueName": "[if(variables('isStorageQueueDestination'), parameters('destination').queueName, json('null'))]",
-                        "resourceId": "[if(not(variables('isWebHookDestination')), format('/subscriptions/{0}/resourceGroups/{1}/providers/{2}/{3}', variables('destination').subscriptionId, variables('destination').resourceGroupName, variables('destination').resourceType, variables('destination').resourcePath), json('null'))]"
+                        "azureActiveDirectoryApplicationIdOrUri": "[if(variables('isAzureActiveDirectoryAuthenticationEnabled'), variables('azureActiveDirectoryApplicationIdOrUri'), null())]",
+                        "azureActiveDirectoryTenantId": "[if(variables('isAzureActiveDirectoryAuthenticationEnabled'), variables('azureActiveDirectoryTenantId'), null())]",
+                        "endpointUrl": "[if(variables('isWebHookDestination'), parameters('destination').endpointUrl, null())]",
+                        "maxEventsPerBatch": "[if(or(variables('isAzureFunctionDestination'), variables('isWebHookDestination')), parameters('destination').maxEventsPerBatch, null())]",
+                        "preferredBatchSizeInKilobytes": "[if(or(variables('isAzureFunctionDestination'), variables('isWebHookDestination')), parameters('destination').preferredBatchSizeInKilobytes, null())]",
+                        "queueName": "[if(variables('isStorageQueueDestination'), parameters('destination').queueName, null())]",
+                        "resourceId": "[if(not(variables('isWebHookDestination')), format('/subscriptions/{0}/resourceGroups/{1}/providers/{2}/{3}', variables('destination').subscriptionId, variables('destination').resourceGroupName, variables('destination').resourceType, variables('destination').resourcePath), null())]"
                     }
                 },
                 "eventDeliverySchema": "[parameters('eventDeliverySchema')]",
-                "filter": "[json('null')]",
+                "filter": "[null()]",
                 "labels": [],
-                "retryPolicy": "[json('null')]"
+                "retryPolicy": "[null()]"
             },
             "scope": "[format('Microsoft.EventGrid/topics/{0}', parameters('topicName'))]",
             "type": "Microsoft.EventGrid/eventSubscriptions"

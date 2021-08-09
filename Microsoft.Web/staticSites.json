@@ -2,32 +2,40 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "name": {
-            "maxLength": 255,
+        "location": {
             "metadata": {
-                "description": "Specifies the name of the Azure Monitor Private Link Scope."
+                "description": "Specifies the location in which the Azure Static Web Application resource(s) will be deployed."
             },
-            "minLength": 1,
+            "type": "string"
+        },
+        "name": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Static Web Application."
+            },
             "type": "string"
         },
         "privateEndpoints": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of private endpoints that will be linked with the Azure Monitor Private Link Scope."
+                "description": "An array of private endpoints that will be linked with the Azure Static Web Application."
             },
             "type": "array"
         },
-        "scopedResources": {
-            "defaultValue": [],
+        "skuName": {
+            "allowedValues": [
+                "Free",
+                "Standard"
+            ],
+            "defaultValue": "Standard",
             "metadata": {
-                "description": "An array of resources that will be associated with the Azure Monitor Private Link Scope."
+                "description": "Specifies the SKU name of the Azure Static Web Application."
             },
-            "type": "array"
+            "type": "string"
         },
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Monitor Private Link Scope."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Static Web Application."
             },
             "type": "object"
         }
@@ -36,14 +44,9 @@
         "apiVersions": {
             "privateEndpoints": "2020-07-01",
             "privateEndpointsPrivateDnsZoneGroups": "2020-07-01",
-            "privateLinkScopes": "2019-10-17-preview",
-            "privateLinkScopesResources": "2019-10-17-preview"
+            "staticSites": "2020-12-01"
         },
         "defaultResourceProperties": {
-            "linkedResource": {
-                "resourceGroupName": "[variables('resourceGroupName')]",
-                "subscriptionId": "[variables('subscriptionId')]"
-            },
             "privateEndpoint": {
                 "dnsZone": {
                     "resourceGroupName": "[variables('resourceGroupName')]",
@@ -55,41 +58,31 @@
                 }
             }
         },
-        "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('name', '<NULL>')))]",
+        "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('dnsZones', createArray(), 'name', '<NULL>')))]",
         "privateEndpointsCount": "[length(parameters('privateEndpoints'))]",
         "privateEndpointsIsNotEmpty": "[greater(variables('privateEndpointsCount'), 0)]",
-        "privateLinkScopeResourceId": "[resourceId('Microsoft.Insights/privateLinkScopes', parameters('name'))]",
-        "resourceGroupName": "[resourceGroup().name]",
-        "scopedResources": "[if(variables('scopedResourcesIsNotEmpty'), parameters('scopedResources'), createArray(createObject('path', 'dummyResource', 'providerName', 'dummyProvider')))]",
-        "scopedResourcesIsNotEmpty": "[greater(variables('scopedResourcesLength'), 0)]",
-        "scopedResourcesLength": "[length(parameters('scopedResources'))]",
+        "resourceGroupName": "[resourceGroup().name]","resourceIds": {
+            "site": "[resourceId('Microsoft.Web/staticSites', parameters('name'))]"
+        },
         "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
         {
-            "apiVersion": "[variables('apiVersions').privateLinkScopes]",
-            "location": "global",
+            "apiVersion": "[variables('apiVersions').staticSites]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "location": "[parameters('location')]",
             "name": "[parameters('name')]",
-            "properties": {},
-            "tags": "[parameters('tags')]",
-            "type": "Microsoft.Insights/privateLinkScopes"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').privateLinkScopesResources]",
-            "condition": "[variables('scopedResourcesIsNotEmpty')]",
-            "copy": {
-                "count": "[variables('scopedResourcesLength')]",
-                "name": "scopedResourcesCopy",
-                "mode": "Parallel"
-            },
-            "dependsOn": [
-                "[variables('privateLinkScopeResourceId')]"
-            ],
-            "name": "[format('{0}/scope-{1}', parameters('name'), guid(format('/subscriptions/{0}/resourceGroups/{1}/providers/{2}/{3}', union(variables('defaultResourceProperties').linkedResource, variables('scopedResources')[copyIndex()]).subscriptionId, union(variables('defaultResourceProperties').linkedResource, variables('scopedResources')[copyIndex()]).resourceGroupName, variables('scopedResources')[copyIndex()].providerName, variables('scopedResources')[copyIndex()].path)))]",
             "properties": {
-                "linkedResourceId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/{2}/{3}', union(variables('defaultResourceProperties').linkedResource, variables('scopedResources')[copyIndex()]).subscriptionId, union(variables('defaultResourceProperties').linkedResource, variables('scopedResources')[copyIndex()]).resourceGroupName, variables('scopedResources')[copyIndex()].providerName, variables('scopedResources')[copyIndex()].path)]"
+                "allowConfigFileUpdates": true,
+                "stagingEnvironmentPolicy": "Enabled"
             },
-            "type": "Microsoft.Insights/privateLinkScopes/scopedresources"
+            "sku": {
+                "name": "[parameters('skuName')]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Web/staticSites"
         },
         {
             "apiVersion": "[variables('apiVersions').privateEndpoints]",
@@ -100,9 +93,9 @@
                 "name": "privateEndpointsCopy"
             },
             "dependsOn": [
-                "[variables('privateLinkScopeResourceId')]"
+                "[variables('resourceIds').site]"
             ],
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "name": "[variables('privateEndpoints')[copyIndex()].name]",
             "properties": {
                 "customDnsConfigs": [],
@@ -111,9 +104,9 @@
                         "name": "[variables('privateEndpoints')[copyIndex()].name]",
                         "properties": {
                             "groupIds": [
-                                "azuremonitor"
+                                "staticSites"
                             ],
-                            "privateLinkServiceId": "[variables('privateLinkScopeResourceId')]"
+                            "privateLinkServiceId": "[variables('resourceIds').site]"
                         }
                     }
                 ],
@@ -135,7 +128,7 @@
             "dependsOn": [
                 "privateEndpointsCopy"
             ],
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "name": "[format('{0}/default', variables('privateEndpoints')[copyIndex()].name)]",
             "properties": {
                 "copy": [

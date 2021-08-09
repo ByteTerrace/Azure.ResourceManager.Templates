@@ -161,11 +161,11 @@
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
-                "dnsSettings": "[if(empty(parameters('dnsPrefix')), json('null'), createObject('domainNameLabel', parameters('dnsPrefix')))]",
+                "dnsSettings": "[if(empty(parameters('dnsPrefix')), null(), createObject('domainNameLabel', parameters('dnsPrefix')))]",
                 "idleTimeoutInMinutes": "[parameters('idleTimeoutInMinutes')]",
                 "publicIPAddressVersion": "[parameters('version')]",
                 "publicIPAllocationMethod": "[parameters('allocationMethod')]",
-                "publicIPPrefix": "[if(empty(parameters('ipPrefixName')), json('null'), createObject('id', resourceId(parameters('ipPrefixSubscriptionId'), parameters('ipPrefixResourceGroupName'), 'Microsoft.Network/publicIPPrefixes', parameters('ipPrefixName'))))]"
+                "publicIPPrefix": "[if(empty(parameters('ipPrefixName')), null(), createObject('id', resourceId(parameters('ipPrefixSubscriptionId'), parameters('ipPrefixResourceGroupName'), 'Microsoft.Network/publicIPPrefixes', parameters('ipPrefixName'))))]"
             },
             "sku": {
                 "name": "[parameters('skuName')]",
@@ -173,7 +173,7 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Network/publicIPAddresses",
-            "zones": "[if(empty(parameters('availabilityZones')), json('null'), parameters('availabilityZones'))]"
+            "zones": "[if(empty(parameters('availabilityZones')), null(), parameters('availabilityZones'))]"
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",

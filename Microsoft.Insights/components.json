@@ -62,7 +62,7 @@
                 "Flow_Type": "Bluefield",
                 "Request_Source": "rest",
                 "SamplingPercentage": "[parameters('samplingPercentage')]",
-                "WorkspaceResourceId": "[if(not(empty(parameters('logAnalyticsWorkspaceName'))), resourceId(parameters('logAnalyticsWorkspaceSubscriptionId'), parameters('logAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName')), json('null'))]"
+                "WorkspaceResourceId": "[if(not(empty(parameters('logAnalyticsWorkspaceName'))), resourceId(parameters('logAnalyticsWorkspaceSubscriptionId'), parameters('logAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName')), null())]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Insights/components"

@@ -103,7 +103,7 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Network/natGateways",
-            "zones": "[if(empty(parameters('availabilityZones')), json('null'), parameters('availabilityZones'))]"
+            "zones": "[if(empty(parameters('availabilityZones')), null(), parameters('availabilityZones'))]"
         }
     ]
 }

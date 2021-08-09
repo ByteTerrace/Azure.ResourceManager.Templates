@@ -36,6 +36,7 @@
         "defaultResourceDefinitions": {
             "applicationConfigurationStores": [],
             "applicationSecurityGroups": [],
+            "applicationServiceEnvironments": [],
             "applicationServicePlans": [],
             "availabilitySets": [],
             "bastionHosts": [],
@@ -62,6 +63,7 @@
             "logic": {
                 "applications": []
             },
+            "managedHsms": [],
             "managedIdentities": [],
             "monitor": {
                 "applicationInsightsComponents": [],
@@ -81,10 +83,12 @@
             },
             "sharedImageGalleries": [],
             "sqlServers": [],
+            "staticWebApplications": [],
             "storageAccounts": [],
             "subnets": [],
             "virtualMachines": [],
-            "virtualNetworks": []
+            "virtualNetworks": [],
+            "webApplications": []
         },
         "defaultResourceProperties": {
             "applicationConfigurationStore": {
@@ -94,12 +98,23 @@
                 "settings": {},
                 "skuName": "Standard"
             },
+            "applicationServiceEnvironment": {
+                "audit": "[variables('audit')]",
+                "isDedicatedHostGroup": false,
+                "isInternalEncryptionEnabled": false,
+                "isMinimalSslCipherSuiteConfigurationEnabled": true,
+                "isZoneRedundant": true,
+                "kind": "ASEV3",
+                "privateDnsZone": {},
+                "virtualIpType": "Internal"
+            },
             "applicationServicePlan": {
+                "audit": "[variables('audit')]",
+                "autoscale": {},
                 "isPerSiteScalingEnabled": false,
+                "maximumElasticWorkerCount": 20,
                 "operatingSystemName": "Linux",
-                "serviceEnvironmentName": "",
-                "serviceEnvironmentResourceGroupName": "[variables('resourceGroupName')]",
-                "serviceEnvironmentSubscriptionId": "[variables('subscriptionId')]",
+                "serviceEnvironment": {},
                 "skuName": "P1v2"
             },
             "availabilitySet": {
@@ -214,7 +229,7 @@
                 "firewallRules": [],
                 "isAllowTrustedMicrosoftServicesEnabled": true,
                 "isDiskEncryptionEnabled": false,
-                "isPublicNetworkAccessEnabled": true,
+                "isPublicNetworkAccessEnabled": false,
                 "isPurgeProtectionEnabled": true,
                 "isRbacAuthorizationEnabled": true,
                 "isTemplateDeploymentEnabled": false,
@@ -222,7 +237,7 @@
                 "privateEndpoints": [],
                 "secrets": {},
                 "skuName": "Premium",
-                "softDeleteRetentionInDays": 14,
+                "softDeleteRetentionInDays": 13,
                 "tenantId": "[subscription().tenantId]",
                 "virtualNetworkRules": []
             },
@@ -247,6 +262,18 @@
                     "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
                     "isEnabled": true
                 }
+            },
+            "managedHsm": {
+                "audit": "[variables('audit')]",
+                "firewallRules": [],
+                "isAllowTrustedMicrosoftServicesEnabled": true,
+                "isPublicNetworkAccessEnabled": false,
+                "isPurgeProtectionEnabled": true,
+                "privateEndpoints": [],
+                "skuName": "Standard_B1",
+                "softDeleteRetentionInDays": 13,
+                "tenantId": "[subscription().tenantId]",
+                "virtualNetworkRules": []
             },
             "managedIdentity": {},
             "monitor": {
@@ -332,6 +359,10 @@
                 "virtualNetworkRules": [],
                 "vulnerabilityAssessment": {}
             },
+            "staticWebApplication": {
+                "privateEndpoints": [],
+                "skuName": "Standard"
+            },
             "storageAccount": {
                 "accessTier": "Hot",
                 "audit": "[variables('audit')]",
@@ -348,7 +379,6 @@
                 "kind": "StorageV2",
                 "queueServices": {},
                 "skuName": "Standard_LRS",
-                "staticWebsite": {},
                 "tableServices": {},
                 "virtualNetworkRules": []
             },
@@ -386,12 +416,42 @@
                 "ddosProtectionPlanResourceGroupName": "[variables('resourceGroupName')]",
                 "ddosProtectionPlanSubscriptionId": "[variables('subscriptionId')]",
                 "subnets": []
+            },
+            "webApplication": {
+                "audit": "[variables('audit')]",
+                "autoHeal": {},
+                "applicationSettings": {},
+                "connectionStrings": {},
+                "cors": {},
+                "customDomains": [],
+                "dnsZones": {},
+                "frameworkVersion": "DOTNETCORE|3.1",
+                "functionExtension": {},
+                "healthCheck": {},
+                "ipSecurityRestrictions": [],
+                "isAlwaysOnEnabled": true,
+                "isClientAffinityEnabled": false,
+                "isHttpsOnlyModeEnabled": true,
+                "isHttp20SupportEnabled": true,
+                "isWebSocketSupportEnabled": false,
+                "is32BitModeEnabled": false,
+                "logging": {},
+                "metadata": [],
+                "minimumSupportedTlsVersion": "1.2",
+                "privateCertificates": [],
+                "privateEndpoints": [],
+                "publicCertificates": [],
+                "remoteDebugging": {},
+                "scmIpSecurityRestrictions": [],
+                "subnet": {},
+                "timeZone": "UTC"
             }
         },
         "deploymentNames": {
             "applicationConfigurationStore": "[format('{0}-AppConfigurationStore', deployment().name)]",
             "applicationInsightsComponent": "[format('{0}-AppInsightsComponent', deployment().name)]",
             "applicationSecurityGroup": "[format('{0}-AppSecurityGroup', deployment().name)]",
+            "applicationServiceEnvironment": "[format('{0}-AppServiceEnvironment', deployment().name)]",
             "applicationServicePlan": "[format('{0}-AppServicePlan', deployment().name)]",
             "availabilitySet": "[format('{0}-AvailabilitySet', deployment().name)]",
             "bastionHost": "[format('{0}-BastionHost', deployment().name)]",
@@ -413,9 +473,10 @@
             "loadBalancer": "[format('{0}-LoadBalancer', deployment().name)]",
             "logAnalyticsWorkspace": "[format('{0}-LogAnalyticsWorkspace', deployment().name)]",
             "logicApplicationWorkflow": "[format('{0}-LogicAppWorkflow', deployment().name)]",
-            "proximityPlacementGroup": "[format('{0}-ProximityPlacementGroup', deployment().name)]",
+            "managedHsm": "[format('{0}-ManagedHsm', deployment().name)]",
             "managedIdentity": "[format('{0}-ManagedIdentity', deployment().name)]",
             "monitorPrivateLinkScope": "[format('{0}-MonitorPrivateLinkScope', deployment().name)]",
+            "proximityPlacementGroup": "[format('{0}-ProximityPlacementGroup', deployment().name)]",
             "natGateway": "[format('{0}-NatGateway', deployment().name)]",
             "networkSecurityGroup": "[format('{0}-NetworkSecurityGroup', deployment().name)]",
             "privateEndpoint": "[format('{0}-PrivateEndpoint', deployment().name)]",
@@ -427,10 +488,12 @@
             "scriptPreDeploy": "[format('{0}-ScriptPreDeploy', deployment().name)]",
             "sharedImageGallery": "[format('{0}-SharedImageGallery', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
+            "staticWebApplication": "[format('{0}-StaticWebApplication', deployment().name)]",
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
             "subnet": "[format('{0}-Subnet', deployment().name)]",
             "virtualMachine": "[format('{0}-VirtualMachine', deployment().name)]",
-            "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]"
+            "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]",
+            "webApplication": "[format('{0}-WebApplication', deployment().name)]"
         },
         "logAnalyticsWorkspaces": "[if(variables('logAnalyticsWorkspacesIsNotEmpty'), variables('resourceDefinitions').monitor.logAnalyticsWorkspaces, createArray(createObject('name', 'dummyLogAnalyticsWorkspace')))]",
         "logAnalyticsWorkspacesCount": "[length(variables('resourceDefinitions').monitor.logAnalyticsWorkspaces)]",
@@ -1647,6 +1710,74 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').managedHsms))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').managedHsms)]",
+                "mode": "Parallel",
+                "name": "managedHsmsCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "scriptsPreDeployCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').managedHsm, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "administratorObjectIds": {
+                        "value": "[variables('resourceDefinitions').managedHsms[copyIndex()].administratorObjectIds]"
+                    },
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).audit]"
+                    },
+                    "firewallRules": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).firewallRules]"
+                    },
+                    "isAllowTrustedMicrosoftServicesEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
+                    },
+                    "isPublicNetworkAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).isPublicNetworkAccessEnabled]"
+                    },
+                    "isPurgeProtectionEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).isPurgeProtectionEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').managedHsms[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').managedHsms[copyIndex()].name]"
+                    },
+                    "privateEndpoints": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).privateEndpoints]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).skuName]"
+                    },
+                    "softDeleteRetentionInDays": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).softDeleteRetentionInDays]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "tenantId": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).tenantId]"
+                    },
+                    "virtualNetworkRules": {
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).virtualNetworkRules]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.KeyVault/managedHSMs.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').communicationServices))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').communicationServices)]",
@@ -2013,6 +2144,8 @@
                 "availabilitySetsCopy",
                 "diskEncryptionSetsCopy",
                 "loadBalancersCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
                 "recoveryServicesVaultsCopy",
                 "scriptsPreDeployCopy",
                 "sharedImageGalleriesCopy",
@@ -2212,9 +2345,6 @@
                     },
                     "skuName": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).skuName]"
-                    },
-                    "staticWebsite": {
-                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).staticWebsite]"
                     },
                     "tableServices": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).tableServices]"
@@ -2476,11 +2606,133 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').applicationServiceEnvironments))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').applicationServiceEnvironments)]",
+                "mode": "Parallel",
+                "name": "applicationServiceEnvironmentsCopy"
+            },
+            "dependsOn": [
+                "cdnProfilesCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "scriptsPreDeployCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').applicationServiceEnvironment, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServiceEnvironment, variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).audit]"
+                    },
+                    "isDedicatedHostGroup": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServiceEnvironment, variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).isDedicatedHostGroup]"
+                    },
+                    "isInternalEncryptionEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServiceEnvironment, variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).isInternalEncryptionEnabled]"
+                    },
+                    "isMinimalSslCipherSuiteConfigurationEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServiceEnvironment, variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).isMinimalSslCipherSuiteConfigurationEnabled]"
+                    },
+                    "isZoneRedundant": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServiceEnvironment, variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).isZoneRedundant]"
+                    },
+                    "kind": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServiceEnvironment, variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).kind]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()].name]"
+                    },
+                    "privateDnsZone": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServiceEnvironment, variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).privateDnsZone]"
+                    },
+                    "subnet": {
+                        "value": "[variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()].subnet]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "virtualIpType": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServiceEnvironment, variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).virtualIpType]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Web/hostingEnvironments.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').applicationServicePlans))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').applicationServicePlans)]",
                 "mode": "Parallel",
                 "name": "applicationServicePlansCopy"
+            },
+            "dependsOn": [
+                "applicationServiceEnvironmentsCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "scriptsPreDeployCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').applicationServicePlan, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).audit]"
+                    },
+                    "autoscale": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).autoscale]"
+                    },
+                    "isPerSiteScalingEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).isPerSiteScalingEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').applicationServicePlans[copyIndex()]).location]"
+                    },
+                    "maximumElasticWorkerCount": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).maximumElasticWorkerCount]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').applicationServicePlans[copyIndex()].name]"
+                    },
+                    "operatingSystemName": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).operatingSystemName]"
+                    },
+                    "serviceEnvironment": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).serviceEnvironment]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Web/serverfarms.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').staticWebApplications))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').staticWebApplications)]",
+                "mode": "Parallel",
+                "name": "staticWebApplicationsCopy"
             },
             "dependsOn": [
                 "applicationInsightsComponentsCopy",
@@ -2495,33 +2747,21 @@
                 "subnetsCopy",
                 "virtualNetworksCopy"
             ],
-            "name": "[format('{0}_{1}', variables('deploymentNames').applicationServicePlan, copyIndex())]",
+            "name": "[format('{0}_{1}', variables('deploymentNames').staticWebApplication, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "isPerSiteScalingEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).isPerSiteScalingEnabled]"
-                    },
                     "location": {
-                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').applicationServicePlans[copyIndex()]).location]"
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').staticWebApplications[copyIndex()]).location]"
                     },
                     "name": {
-                        "value": "[variables('resourceDefinitions').applicationServicePlans[copyIndex()].name]"
+                        "value": "[variables('resourceDefinitions').staticWebApplications[copyIndex()].name]"
                     },
-                    "operatingSystemName": {
-                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).operatingSystemName]"
-                    },
-                    "serviceEnvironmentName": {
-                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).serviceEnvironmentName]"
-                    },
-                    "serviceEnvironmentResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).serviceEnvironmentResourceGroupName]"
-                    },
-                    "serviceEnvironmentSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).serviceEnvironmentSubscriptionId]"
+                    "privateEndpoints": {
+                        "value": "[union(variables('defaultResourceProperties').staticWebApplication, variables('resourceDefinitions').staticWebApplications[copyIndex()]).privateEndpoints]"
                     },
                     "skuName": {
-                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).skuName]"
+                        "value": "[union(variables('defaultResourceProperties').staticWebApplication, variables('resourceDefinitions').staticWebApplications[copyIndex()]).skuName]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
@@ -2529,7 +2769,135 @@
                 },
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
-                    "relativePath": "./Microsoft.Web/serverfarms.json"
+                    "relativePath": "./Microsoft.Web/staticSites.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').webApplications))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').webApplications)]",
+                "mode": "Parallel",
+                "name": "webApplicationsCopy"
+            },
+            "dependsOn": [
+                "applicationInsightsComponentsCopy",
+                "applicationServiceEnvironmentsCopy",
+                "applicationServicePlansCopy",
+                "cdnProfilesCopy",
+                "containerRegistriesCopy",
+                "keyVaultsCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "scriptsPreDeployCopy",
+                "sqlServersCopy",
+                "storageAccountsCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').webApplication, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).audit]"
+                    },
+                    "autoHeal": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).autoHeal]"
+                    },
+                    "applicationSettings": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).applicationSettings]"
+                    },
+                    "connectionStrings": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).connectionStrings]"
+                    },
+                    "cors": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).cors]"
+                    },
+                    "customDomains": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).customDomains]"
+                    },
+                    "dnsZones": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).dnsZones]"
+                    },
+                    "frameworkVersion": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).frameworkVersion]"
+                    },
+                    "functionExtension": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).functionExtension]"
+                    },
+                    "healthCheck": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).healthCheck]"
+                    },
+                    "ipSecurityRestrictions": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).ipSecurityRestrictions]"
+                    },
+                    "isAlwaysOnEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).isAlwaysOnEnabled]"
+                    },
+                    "isClientAffinityEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).isClientAffinityEnabled]"
+                    },
+                    "isHttpsOnlyModeEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).isHttpsOnlyModeEnabled]"
+                    },
+                    "isHttp20SupportEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).isHttp20SupportEnabled]"
+                    },
+                    "isWebSocketSupportEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).isWebSocketSupportEnabled]"
+                    },
+                    "is32BitModeEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).is32BitModeEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').webApplications[copyIndex()]).location]"
+                    },
+                    "logging": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).logging]"
+                    },
+                    "metadata": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).metadata]"
+                    },
+                    "minimumSupportedTlsVersion": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).minimumSupportedTlsVersion]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').webApplications[copyIndex()].name]"
+                    },
+                    "privateCertificates": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).privateCertificates]"
+                    },
+                    "privateEndpoints": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).privateEndpoints]"
+                    },
+                    "publicCertificates": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).publicCertificates]"
+                    },
+                    "remoteDebugging": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).remoteDebugging]"
+                    },
+                    "scmIpSecurityRestrictions": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).scmIpSecurityRestrictions]"
+                    },
+                    "servicePlan": {
+                        "value": "[variables('resourceDefinitions').webApplications[copyIndex()].servicePlan]"
+                    },
+                    "subnet": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).subnet]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "timeZone": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).timeZone]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Web/sites.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -2585,6 +2953,7 @@
                 "applicationConfigurationStoresCopy",
                 "applicationInsightsComponentsCopy",
                 "applicationSecurityGroupsCopy",
+                "applicationServiceEnvironmentsCopy",
                 "applicationServicePlansCopy",
                 "availabilitySetsCopy",
                 "bastionHostsCopy",
@@ -2606,6 +2975,7 @@
                 "logAnalyticsWorkspacesLinkedStorageJoinCopy",
                 "logAnalyticsWorkspacesLinkedStorageRbacCopy",
                 "logicApplicationWorkflowsCopy",
+                "managedHsmsCopy",
                 "managedIdentitiesCopy",
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
@@ -2620,10 +2990,12 @@
                 "scriptsPreDeployCopy",
                 "sharedImageGalleriesCopy",
                 "sqlServersCopy",
+                "staticWebApplicationsCopy",
                 "storageAccountsCopy",
                 "subnetsCopy",
                 "virtualMachinesCopy",
-                "virtualNetworksCopy"
+                "virtualNetworksCopy",
+                "webApplicationsCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').scriptPostDeploy, copyIndex())]",
             "properties": {
@@ -2646,7 +3018,7 @@
                     }
                 },
                 "templateLink": {
-                    "contentVersion": "1.0.0.0",
+                    "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Resources/deploymentScripts.json"
                 }
             },

@@ -59,8 +59,8 @@
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
-                "customRdpProperty": "[json('null')]",
-                "description": "[json('null')]",
+                "customRdpProperty": "[null()]",
+                "description": "[null()]",
                 "friendlyName": "[parameters('name')]",
                 "hostpoolType": "Personal",
                 "loadBalancerType": "Persistent",
@@ -69,7 +69,7 @@
                 "preferredAppGroupType": "Desktop",
                 "startVMOnConnect": false,
                 "validationEnvironment": false,
-                "vmTemplate": "[json('null')]"
+                "vmTemplate": "[null()]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.DesktopVirtualization/hostpools"

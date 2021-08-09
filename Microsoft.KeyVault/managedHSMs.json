@@ -2,133 +2,101 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "administratorObjectIds":{
+            "metadata": {
+                "description": "A list of object ids that will be assigned as administrators of the the Azure Managed HSM."
+            },
+            "type": "array"
+        },
         "audit": {
             "defaultValue": {},
             "metadata": {
-                "description": "An object that encapsulates the audit settings that will be applied to the Azure Key Vault."
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure Managed HSM."
             },
             "type": "object"
         },
         "firewallRules": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of firewall rules that will be assigned to the Azure Key Vault."
+                "description": "An array of firewall rules that will be assigned to the Azure Managed HSM."
             },
             "type": "array"
         },
         "isAllowTrustedMicrosoftServicesEnabled": {
-            "defaultValue": false,
+            "defaultValue": true,
             "metadata": {
-                "description": "Indicates whether trusted Microsoft services are allowed to access the Azure Key Vault."
-            },
-            "type": "bool"
-        },
-        "isDiskEncryptionEnabled": {
-            "defaultValue": false,
-            "metadata": {
-                "description": "Indicates whether Azure Disk Encryption is permitted to retrieve secrets and upwrap keys in the Azure Key Vault."
+                "description": "Indicates whether trusted Microsoft services are allowed to access the Azure Managed HSM."
             },
             "type": "bool"
         },
         "isPublicNetworkAccessEnabled": {
-            "defaultValue": true,
+            "defaultValue": false,
             "metadata": {
-                "description": "Indicates whether the Azure Key Vault is accessible from the internet."
+                "description": "Indicates whether the Azure Managed HSM is accessible from the internet."
             },
             "type": "bool"
         },
         "isPurgeProtectionEnabled": {
             "defaultValue": true,
             "metadata": {
-                "description": "Indicates whether the purge protection feature is enabled on the Azure Key Vault."
-            },
-            "type": "bool"
-        },
-        "isRbacAuthorizationEnabled": {
-            "defaultValue": true,
-            "metadata": {
-                "description": "Indicates whether the RBAC authorization feature is enabled on the Azure Key Vault."
-            },
-            "type": "bool"
-        },
-        "isTemplateDeploymentEnabled": {
-            "defaultValue": false,
-            "metadata": {
-                "description": "Indicates whether Azure Resource Manager is permitted to access secrets from the Azure Key Vault."
-            },
-            "type": "bool"
-        },
-        "isVirtualMachineDeploymentEnabled": {
-            "defaultValue": false,
-            "metadata": {
-                "description": "Indicates whether Azure virtual machines are able to retrieve certificates stored as secrets from the Azure Key Vault."
+                "description": "Indicates whether the purge protection feature is enabled on the Azure Managed HSM."
             },
             "type": "bool"
         },
         "location": {
             "metadata": {
-                "description": "Specifies the location in which the Azure Key Vault resource(s) will be deployed."
+                "description": "Specifies the location in which the Azure Managed HSM resource(s) should be deployed."
             },
             "type": "string"
         },
         "name": {
-            "maxLength": 24,
             "metadata": {
-                "description": "Specifies the name of the Azure Key Vault."
+                "description": "Specifies the name of the Azure Managed HSM."
             },
-            "minLength": 3,
             "type": "string"
         },
         "privateEndpoints": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of private endpoints that will be linked with the Azure Key Vault."
+                "description": "An array of private endpoints that will be linked with the Azure Managed HSM."
             },
             "type": "array"
         },
-        "secrets": {
-            "defaultValue": {},
-            "metadata": {
-                "description": "An object that encapsulates the array of secrets that will be stored within the Azure Key Vault."
-            },
-            "type": "secureObject"
-        },
         "skuName": {
             "allowedValues": [
-                "Premium",
-                "Standard"
+                "Standard_B1"
             ],
-            "defaultValue": "Standard",
+            "defaultValue": "Standard_B1",
             "metadata": {
-                "description": "Specifies the SKU name of the Azure Key Vault."
+                "description": "Specifies the SKU name of the Azure Managed HSM."
             },
             "type": "string"
         },
         "softDeleteRetentionInDays": {
-            "defaultValue": 14,
+            "defaultValue": 13,
             "metadata": {
-                "description": "Specifies the amount of time, in days, that items will remain soft deleted within the Azure Key Vault."
+                "description": "Specifies the amount of time, in days, that items will remain soft deleted within the Azure Managed HSM."
             },
             "type": "int"
         },
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Key Vault."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Managed HSM."
             },
             "type": "object"
         },
         "tenantId": {
             "defaultValue": "[subscription().tenantId]",
             "metadata": {
-                "description": "Specifies the Azure Active Directory tenant GUID that will be used for authenticating requests to the Azure Key Vault."
+                "description": "Specifies the Azure Active Directory tenant GUID that will be used for authenticating requests to the Azure Managed HSM."
             },
             "type": "string"
         },
         "virtualNetworkRules": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of virtual network rules that will be assigned to the Azure Key Vault."
+                "description": "An array of virtual network rules that will be assigned to the Azure Managed HSM."
             },
             "type": "array"
         }
@@ -136,28 +104,11 @@
     "variables": {
         "apiVersions": {
             "diagnosticSettings": "2017-05-01-preview",
-            "keyVaults": "2019-09-01",
-            "keyVaultSecretsApiVersion": "2019-09-01",
+            "managedHsms": "2021-04-01-preview",
             "privateEndpoints": "2020-07-01",
             "privateEndpointsPrivateDnsZoneGroups": "2020-07-01"
         },
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
-        "copy": [
-            {
-                "count": "[length(parameters('firewallRules'))]",
-                "input": {
-                    "value": "[parameters('firewallRules')[copyIndex('firewallRules')]]"
-                },
-                "name": "firewallRules"
-            },
-            {
-                "count": "[length(parameters('virtualNetworkRules'))]",
-                "input": {
-                    "id": "[resourceId(union(variables('defaultResourceProperties').virtualNetworkRules, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subscriptionId, union(variables('defaultResourceProperties').virtualNetworkRules, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
-                },
-                "name": "virtualNetworkRules"
-            }
-        ],
         "defaultResourceProperties": {
             "audit": {
                 "isEnabled": true,
@@ -184,7 +135,7 @@
                     "subscriptionId": "[variables('subscriptionId')]"
                 }
             },
-            "virtualNetworkRules": {
+            "subnet": {
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
             }
@@ -197,43 +148,50 @@
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
-            "keyVault": "[resourceId('Microsoft.KeyVault/vaults', parameters('name'))]"
-        },
-        "secretsCollectionCount": "[length(union(variables('secretsDefaultObject'), parameters('secrets')).collection)]",
-        "secretsCollectionIsNotEmpty": "[greater(variables('secretsCollectionCount'), 0)]",
-        "secretsDefaultObject": {
-            "collection": []
+            "managedHsm": "[resourceId('Microsoft.KeyVault/managedHSMs', parameters('name'))]"
         },
         "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
         {
-            "apiVersion": "[variables('apiVersions').keyVaults]",
+            "apiVersion": "[variables('apiVersions').managedHsms]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
                 "createMode": "default",
-                "enabledForDeployment": "[parameters('isVirtualMachineDeploymentEnabled')]",
-                "enabledForDiskEncryption": "[parameters('isDiskEncryptionEnabled')]",
-                "enabledForTemplateDeployment": "[parameters('isTemplateDeploymentEnabled')]",
-                "enablePurgeProtection": "[if(parameters('isPurgeProtectionEnabled'), parameters('isPurgeProtectionEnabled'), null())]",
-                "enableRbacAuthorization": "[parameters('isRbacAuthorizationEnabled')]",
+                "enablePurgeProtection": "[parameters('isPurgeProtectionEnabled')]",
                 "enableSoftDelete": true,
+                "initialAdminObjectIds": "[parameters('administratorObjectIds')]",
                 "networkAcls": {
+                    "copy": [
+                        {
+                            "count": "[length(parameters('firewallRules'))]",
+                            "input": {
+                                "value": "[parameters('firewallRules')[copyIndex('ipRules')]]"
+                            },
+                            "name": "ipRules"
+                        },
+                        {
+                            "count": "[length(parameters('virtualNetworkRules'))]",
+                            "input": {
+                                "id": "[resourceId(union(variables('defaultResourceProperties').subnet, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subscriptionId, union(variables('defaultResourceProperties').subnet, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].name)]"
+                            },
+                            "name": "virtualNetworkRules"
+                        }
+                    ],
                     "bypass": "[if(parameters('isAllowTrustedMicrosoftServicesEnabled'), 'AzureServices', 'None')]",
-                    "defaultAction": "[if(parameters('isPublicNetworkAccessEnabled'), 'Allow', 'Deny')]",
-                    "ipRules": "[variables('firewallRules')]",
-                    "virtualNetworkRules": "[variables('virtualNetworkRules')]"
+                    "defaultAction": "[if(parameters('isPublicNetworkAccessEnabled'), 'Allow', 'Deny')]"
                 },
-                "sku": {
-                    "family": "A",
-                    "name": "[parameters('skuName')]"
-                },
+                "publicNetworkAccess": "Enabled",
                 "softDeleteRetentionInDays": "[parameters('softDeleteRetentionInDays')]",
                 "tenantId": "[parameters('tenantId')]"
             },
+            "sku": {
+                "family": "B",
+                "name": "[parameters('skuName')]"
+            },
             "tags": "[parameters('tags')]",
-            "type": "Microsoft.KeyVault/vaults"
+            "type": "Microsoft.KeyVault/managedHSMs"
         },
         {
             "apiVersion": "[variables('apiVersions').privateEndpoints]",
@@ -244,7 +202,7 @@
                 "name": "privateEndpointsCopy"
             },
             "dependsOn": [
-                "[variables('resourceIds').keyVault]"
+                "[variables('resourceIds').managedHsm]"
             ],
             "location": "[parameters('location')]",
             "name": "[variables('privateEndpoints')[copyIndex()].name]",
@@ -255,9 +213,9 @@
                         "name": "[variables('privateEndpoints')[copyIndex()].name]",
                         "properties": {
                             "groupIds": [
-                                "vault"
+                                "managedhsm"
                             ],
-                            "privateLinkServiceId": "[variables('resourceIds').keyVault]"
+                            "privateLinkServiceId": "[variables('resourceIds').managedHsm]"
                         }
                     }
                 ],
@@ -301,7 +259,7 @@
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
             "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
             "dependsOn": [
-                "[variables('resourceIds').keyVault]"
+                "[variables('resourceIds').managedHsm]"
             ],
             "location": "[parameters('location')]",
             "name": "[format('{0}/Microsoft.Insights/audit', parameters('name'))]",
@@ -322,23 +280,7 @@
                 ],
                 "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
-            "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').keyVaultSecretsApiVersion]",
-            "condition": "[variables('secretsCollectionIsNotEmpty')]",
-            "copy": {
-                "count": "[variables('secretsCollectionCount')]",
-                "name": "secretsCopy"
-            },
-            "dependsOn": [
-                "[variables('resourceIds').keyVault]"
-            ],
-            "name": "[format('{0}/{1}', parameters('name'), if(variables('secretsCollectionIsNotEmpty'), parameters('secrets').collection[copyIndex()].name, 'dummySecret'))]",
-            "properties": {
-                "value": "[parameters('secrets').collection[copyIndex()].value]"
-            },
-            "type": "Microsoft.KeyVault/vaults/secrets"
+            "type": "Microsoft.KeyVault/managedHSMs/providers/diagnosticsettings"
         }
     ]
 }

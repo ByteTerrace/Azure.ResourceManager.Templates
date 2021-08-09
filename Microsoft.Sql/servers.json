@@ -216,7 +216,7 @@
                 },
                 "keyVersion": ""
             },
-            "databases": {
+            "database": {
                 "catalogCollation": "DATABASE_DEFAULT",
                 "defaultCollation": "SQL_Latin1_General_CP1_CI_AS",
                 "isAzureHybridBenefitEnabled": false,
@@ -232,7 +232,7 @@
                     "subscriptionId": "[variables('subscriptionId')]"
                 }
             },
-            "virtualNetworkRules": {
+            "virtualNetworkRule": {
                 "ignoreMissingVnetServiceEndpoint": true,
                 "subnet": {
                     "resourceGroupName": "[variables('resourceGroupName')]",
@@ -257,7 +257,7 @@
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isCustomerManagedEncryptionEnabled": "[variables('customerManagedEncryption').isEnabled]",
         "isVulnerabilityAssessmentEnabled": "[variables('vulnerabilityAssessment').isEnabled]",
-        "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('dnsZones', createArray(), 'name', 'dummyEndpoint')))]",
+        "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('dnsZones', createArray(), 'name', '<NULL>')))]",
         "privateEndpointsCount": "[length(parameters('privateEndpoints'))]",
         "privateEndpointsIsNotEmpty": "[greater(variables('privateEndpointsCount'), 0)]",
         "resourceGroupName": "[resourceGroup().name]",
@@ -617,8 +617,8 @@
             ],
             "name": "[format('{0}/{1}', variables('serverName'), variables('virtualNetworkRules')[copyIndex()].name)]",
             "properties": {
-                "ignoreMissingVnetServiceEndpoint": "[union(variables('defaultResourceProperties').virtualNetworkRules, variables('virtualNetworkRules')[copyIndex()]).ignoreMissingVnetServiceEndpoint]",
-                "virtualNetworkSubnetId": "[resourceId(union(variables('defaultResourceProperties').virtualNetworkRules, variables('virtualNetworkRules')[copyIndex()]).subnet.subscriptionId, union(variables('defaultResourceProperties').virtualNetworkRules, variables('virtualNetworkRules')[copyIndex()]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkRules')[copyIndex()].subnet.virtualNetworkName, variables('virtualNetworkRules')[copyIndex()].subnet.name)]"
+                "ignoreMissingVnetServiceEndpoint": "[union(variables('defaultResourceProperties').virtualNetworkRule, variables('virtualNetworkRules')[copyIndex()]).ignoreMissingVnetServiceEndpoint]",
+                "virtualNetworkSubnetId": "[resourceId(union(variables('defaultResourceProperties').virtualNetworkRule, variables('virtualNetworkRules')[copyIndex()]).subnet.subscriptionId, union(variables('defaultResourceProperties').virtualNetworkRule, variables('virtualNetworkRules')[copyIndex()]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkRules')[copyIndex()].subnet.virtualNetworkName, variables('virtualNetworkRules')[copyIndex()].subnet.name)]"
             },
             "type": "Microsoft.Sql/servers/virtualNetworkRules"
         },
@@ -637,7 +637,7 @@
             "name": "[format('{0}/{1}', variables('serverName'), variables('serverKeyName'))]",
             "properties": {
                 "serverKeyType": "[variables('serverKeyType')]",
-                "uri": "[if(variables('isCustomerManagedEncryptionEnabled'), format('{0}keys/{1}/{2}', reference(variables('resourceIds').sqlServerCustomerManagedEncryptionKeyVault, variables('apiVersions').keyVaults).vaultUri, variables('customerManagedEncryption').keyName, variables('customerManagedEncryption').keyVersion), json('null'))]"
+                "uri": "[if(variables('isCustomerManagedEncryptionEnabled'), format('{0}keys/{1}/{2}', reference(variables('resourceIds').sqlServerCustomerManagedEncryptionKeyVault, variables('apiVersions').keyVaults).vaultUri, variables('customerManagedEncryption').keyName, variables('customerManagedEncryption').keyVersion), null())]"
             },
             "type": "Microsoft.Sql/servers/keys"
         },
@@ -740,7 +740,7 @@
                     "emailSubscriptionAdmins": true,
                     "isEnabled": true
                 },
-                "storageContainerPath": "[if(variables('isVulnerabilityAssessmentEnabled'), format('{0}vulnerability-assessment', reference(variables('resourceIds').sqlServerVulnerabilityAssessmentStorageAccount, variables('apiVersions').storageAccounts).primaryEndpoints.blob), json('null'))]"
+                "storageContainerPath": "[if(variables('isVulnerabilityAssessmentEnabled'), format('{0}vulnerability-assessment', reference(variables('resourceIds').sqlServerVulnerabilityAssessmentStorageAccount, variables('apiVersions').storageAccounts).primaryEndpoints.blob), null())]"
             },
             "type": "Microsoft.Sql/servers/vulnerabilityAssessments"
         },
@@ -762,13 +762,13 @@
             "location": "[parameters('location')]",
             "name": "[format('{0}/{1}', variables('serverName'), variables('databases')[copyIndex()].name)]",
             "properties": {
-                "catalogCollation": "[union(variables('defaultResourceProperties').databases, variables('databases')[copyIndex()]).catalogCollation]",
-                "collation": "[union(variables('defaultResourceProperties').databases, variables('databases')[copyIndex()]).defaultCollation]",
+                "catalogCollation": "[union(variables('defaultResourceProperties').database, variables('databases')[copyIndex()]).catalogCollation]",
+                "collation": "[union(variables('defaultResourceProperties').database, variables('databases')[copyIndex()]).defaultCollation]",
                 "createMode": "Default",
-                "licenseType": "[if(union(variables('defaultResourceProperties').databases, variables('databases')[copyIndex()]).isAzureHybridBenefitEnabled, 'BasePrice', 'LicenseIncluded')]"
+                "licenseType": "[if(union(variables('defaultResourceProperties').database, variables('databases')[copyIndex()]).isAzureHybridBenefitEnabled, 'BasePrice', 'LicenseIncluded')]"
             },
             "sku": {
-                "name": "[union(variables('defaultResourceProperties').databases, variables('databases')[copyIndex()]).skuName]"
+                "name": "[union(variables('defaultResourceProperties').database, variables('databases')[copyIndex()]).skuName]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Sql/servers/databases"

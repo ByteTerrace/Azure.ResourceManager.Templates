@@ -113,8 +113,8 @@
             "name": "[format('{0}/{1}', parameters('virtualNetwork').name, parameters('name'))]",
             "location": "[parameters('location')]",
             "properties": {
-                "addressPrefix": "[if(equals(variables('addressPrefixCount'), 1), parameters('addressPrefixes')[0], json('null'))]",
-                "addressPrefixes": "[if(greater(variables('addressPrefixCount'), 1), parameters('addressPrefixes'), json('null'))]",
+                "addressPrefix": "[if(equals(variables('addressPrefixCount'), 1), parameters('addressPrefixes')[0], null())]",
+                "addressPrefixes": "[if(greater(variables('addressPrefixCount'), 1), parameters('addressPrefixes'), null())]",
                 "copy": [
                     {
                         "count": "[length(parameters('delegatedServiceNames'))]",
@@ -135,11 +135,11 @@
                         "name": "serviceEndpoints"
                     }
                 ],
-                "natGateway": "[if(empty(variables('natGateway').name), json('null'), createObject('id', resourceId(variables('natGateway').subscriptionId, variables('natGateway').resourceGroupName, 'Microsoft.Network/natGateways', variables('natGateway').name)))]",
-                "networkSecurityGroup": "[if(empty(variables('networkSecurityGroup').name), json('null'), createObject('id', resourceId(variables('networkSecurityGroup').subscriptionId, variables('networkSecurityGroup').resourceGroupName, 'Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroup').name)))]",
+                "natGateway": "[if(empty(variables('natGateway').name), null(), createObject('id', resourceId(variables('natGateway').subscriptionId, variables('natGateway').resourceGroupName, 'Microsoft.Network/natGateways', variables('natGateway').name)))]",
+                "networkSecurityGroup": "[if(empty(variables('networkSecurityGroup').name), null(), createObject('id', resourceId(variables('networkSecurityGroup').subscriptionId, variables('networkSecurityGroup').resourceGroupName, 'Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroup').name)))]",
                 "privateEndpointNetworkPolicies": "[if(parameters('isPrivateEndpointSupportEnabled'), 'Disabled', 'Enabled')]",
                 "privateLinkServiceNetworkPolicies": "[if(parameters('isPrivateLinkServiceSupportEnabled'), 'Disabled', 'Enabled')]",
-                "routeTable": "[if(empty(variables('routeTable').name), json('null'), createObject('id', resourceId(variables('routeTable').subscriptionId, variables('routeTable').resourceGroupName, 'Microsoft.Network/routeTables', variables('routeTable').name)))]"
+                "routeTable": "[if(empty(variables('routeTable').name), null(), createObject('id', resourceId(variables('routeTable').subscriptionId, variables('routeTable').resourceGroupName, 'Microsoft.Network/routeTables', variables('routeTable').name)))]"
             },
             "type": "Microsoft.Network/virtualNetworks/subnets"
         }
