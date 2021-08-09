@@ -2769,7 +2769,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
-                    "relativePath": "./Microsoft.Web/sites.json"
+                    "relativePath": "./Microsoft.Web/staticSites.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
