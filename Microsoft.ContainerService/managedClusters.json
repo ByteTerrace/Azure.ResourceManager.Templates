@@ -80,7 +80,7 @@
         }
     },
     "variables": {
-        "agentPoolProfiles": "[if(empty(parameters('agentPoolProfiles')), createArray(union(createObject('name', 'main'), variables('defaultResourceProperties').agentPoolProfile)), parameters('agentPoolProfiles'))]",
+        "agentPoolProfiles": "[if(empty(parameters('agentPoolProfiles')), createArray(union(variables('defaultResourceProperties').agentPoolProfile, createObject('mode', 'System', 'name', 'main'))), parameters('agentPoolProfiles'))]",
         "apiVersions": {
             "diagnosticSettings": "2017-05-01-preview",
             "managedClusters": "2021-05-01"
@@ -103,7 +103,7 @@
                 "minimumCount": 1,
                 "maximumCount": 3,
                 "maximumPodCount": 31,
-                "mode": "System",
+                "mode": "User",
                 "nodeLabels": "[null()]",
                 "nodeTaints": "[null()]",
                 "osType": "Linux",
@@ -146,6 +146,7 @@
             },
             "identity": {
                 "name": "",
+                "type": "SystemAssigned",
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
             },
@@ -174,7 +175,6 @@
         "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
-        "isIdentityNotEmpty": "[not(empty(parameters('identity')))]",
         "networking": "[union(variables('defaultResourceProperties').networking, parameters('networking'))]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
@@ -187,10 +187,7 @@
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').managedClusters]",
-            "identity": {
-                "type": "[if(variables('isIdentityNotEmpty'), 'UserAssigned', 'SystemAssigned')]",
-                "userAssignedIdentities": "[if(variables('isIdentityNotEmpty'), createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name), createObject()), null())]"
-            },
+            "identity": "[if(equals(toLower(variables('identity').type), 'none'), null(), union(createObject('type', variables('identity').type), if(equals(toLower(variables('identity').type), 'userassigned'), createObject('userAssignedIdentities', createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name), createObject())), createObject())))]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
