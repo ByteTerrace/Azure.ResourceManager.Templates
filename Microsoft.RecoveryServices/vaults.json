@@ -108,6 +108,7 @@
                     "resourceGroupName": "[variables('resourceGroupName')]",
                     "subscriptionId": "[variables('subscriptionId')]"
                 },
+                "location": "[parameters('location')]",
                 "subnet": {
                     "resourceGroupName": "[variables('resourceGroupName')]",
                     "subscriptionId": "[variables('subscriptionId')]"
@@ -296,12 +297,12 @@
             "copy": {
                 "count": "[variables('backupPrivateEndpointsCount')]",
                 "mode": "Parallel",
-                "name": "backupPrivateEndpointsCopy"
+                "name": "privateEndpointsCopy"
             },
             "dependsOn": [
                 "resourceGroupsRbacCopy"
             ],
-            "location": "[parameters('location')]",
+            "location": "[union(variables('defaultResourceProperties').privateEndpoint, variables('privateEndpoints')[copyIndex()]).location]",
             "name": "[if(variables('backupPrivateEndpointsIsNotEmpty'), variables('backupPrivateEndpoints'), createArray(createObject('name', 'dummyBackupPrivateEndpoint')))[copyIndex()].name]",
             "properties": {
                 "customDnsConfigs": [],
@@ -329,12 +330,12 @@
             "copy": {
                 "count": "[variables('backupPrivateEndpointsCount')]",
                 "mode": "Parallel",
-                "name": "backupPrivateDnsZoneGroupsCopy"
+                "name": "privateDnsZoneGroupsCopy"
             },
             "dependsOn": [
-                "backupPrivateEndpointsCopy"
+                "privateEndpointsCopy"
             ],
-            "location": "[parameters('location')]",
+            "location": "[union(variables('defaultResourceProperties').privateEndpoint, variables('privateEndpoints')[copyIndex()]).location]",
             "name": "[format('{0}/default', if(variables('backupPrivateEndpointsIsNotEmpty'), variables('backupPrivateEndpoints'), createArray(createObject('name', 'dummyBlobServicesPrivateDnsZoneGroup')))[copyIndex()].name)]",
             "properties": {
                 "copy": [

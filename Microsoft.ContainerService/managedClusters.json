@@ -2,50 +2,260 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "dnsPrefix": {
-            "defaultValue": "",
+        "agentPoolProfiles": {
+            "defaultValue": [],
             "metadata": {
-                "description": "Specifies the DNS prefix to that will be assigned to the Azure Kubernetes Service cluster."
+                "description": "An array of agent pool profiles that will be deployed within the Azure Kubernetes Service Cluster."
+            },
+            "type": "array"
+        },
+        "audit": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure Kubernetes Service Cluster."
+            },
+            "type": "object"
+        },
+        "customerManagedEncryption": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the customer-managed encryption settings that will be applied to the Azure Kubernetes Service Cluster."
+            },
+            "type": "object"
+        },
+        "dnsPrefix": {
+            "defaultValue": "[parameters('name')]",
+            "metadata": {
+                "description": "Specifies the DNS prefix to that will be assigned to the Azure Kubernetes Service Cluster."
+            },
+            "type": "string"
+        },
+        "kubernetesVersion": {
+            "defaultValue": "1.20.7",
+            "metadata": {
+                "description": "Specifies the version of Kubernetes that will be deployed to the Azure Kubernetes Service Cluster."
             },
             "type": "string"
         },
         "location": {
             "metadata": {
-                "description": "Specifies the location in which the Azure Kubernetes Service cluster resource(s) should be deployed."
+                "description": "Specifies the location in which the Azure Kubernetes Service Cluster resource(s) should be deployed."
             },
             "type": "string"
         },
         "name": {
             "maxLength": 63,
             "metadata": {
-                "description": "Specifies the name of the Azure Kubernetes Service cluster."
+                "description": "Specifies the name of the Azure Kubernetes Service Cluster."
             },
             "minLength": 1,
             "type": "string"
         },
+        "networking": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the network settings that will be applied to the Azure Kubernetes Service Cluster."
+            },
+            "type": "object"
+        },
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Kubernetes Service cluster."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Kubernetes Service Cluster."
             },
             "type": "object"
         }
     },
+    "variables": {
+        "agentPoolProfiles": "[if(empty(parameters('agentPoolProfiles')), createArray(union(createObject('name', 'main'), variables('defaultResourceProperties').agentPoolProfile)), parameters('agentPoolProfiles'))]",
+        "apiVersions": {
+            "diagnosticSettings": "2017-05-01-preview",
+            "managedClusters": "2021-05-01"
+        },
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "customerManagedEncryption": "[union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption'))]",
+        "defaultResourceProperties": {
+            "agentPoolProfile": {
+                "availabilityZones": [
+                    "1",
+                    "2",
+                    "3"
+                ],
+                "count": 1,
+                "isAutoScalingEnabled": true,
+                "minimumCount": 1,
+                "maximumCount": 3,
+                "maximumPodCount": 31,
+                "mode": "System",
+                "osDiskSizeGB": 0,
+                "osType": "Linux",
+                "storageProfile": "ManagedDisks",
+                "subnet": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "type": "VirtualMachineScaleSets",
+                "virtualMachineSize": "Standard_D2s_v4"
+            },
+            "audit": {
+                "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "logNames": [
+                    "cluster-autoscaler",
+                    "guard",
+                    "kube-apiserver",
+                    "kube-audit",
+                    "kube-audit-admin",
+                    "kube-controller-manager",
+                    "kube-scheduler"
+                ],
+                "retentionPolicy": {
+                    "days": 137,
+                    "isEnabled": true
+                }
+            },
+            "customerManagedEncryption": {
+                "isEnabled": true,
+                "diskEncryptionSet": {
+                    "name": "[null()]",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
+            },
+            "networking": {
+                "dnsServiceIpAddress": "192.168.255.254",
+                "dockerBridgeCidr": "172.16.0.254/16",
+                "loadBalancerSku": "Standard",
+                "plugin": "kubenet",
+                "policy": "calico",
+                "serviceCidr": "192.168.0.0/16"
+            },
+            "privateEndpoint": {
+                "dnsZone": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "location": "[parameters('location')]",
+                "subnet": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
+            }
+        },
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "networking": "[union(variables('defaultResourceProperties').networking, parameters('networking'))]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "resourceIds": {
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
+            "diskEncryptionSet": "[resourceId(variables('customerManagedEncryption').diskEncryptionSet.subscriptionId, variables('customerManagedEncryption').diskEncryptionSet.resourceGroupName, 'Microsoft.Compute/diskEncryptionSets', coalesce(variables('customerManagedEncryption').diskEncryptionSet.name, '<NULL>'))]",
+            "managedCluster": "[resourceId('Microsoft.ContainerService/managedClusters', parameters('name'))]"
+        },
+        "subscriptionId": "[subscription().subscriptionId]"
+    },
     "resources": [
         {
-            "apiVersion": "2020-12-01",
+            "apiVersion": "[variables('apiVersions').managedClusters]",
             "identity": {
                 "type": "SystemAssigned"
             },
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
+                "aadProfile": {
+                    "adminGroupObjectIDs": [
+                        "f378e8a4-5076-4d18-aae0-48911cd0051b"
+                    ],
+                    "managed": true
+                },
+                "addonProfiles": {
+                    "aciConnectorLinux": "[null()]",
+                    "azurepolicy": {
+                        "enabled": true
+                    },
+                    "httpApplicationRouting": {
+                        "enabled": false
+                    },
+                    "omsagent": {
+                        "config": "[if(variables('isAuditEnabled'), createObject('logAnalyticsWorkspaceResourceID', variables('resourceIds').auditLogAnalyticsWorkspace), null())]",
+                        "enabled": "[variables('isAuditEnabled')]"
+                    }
+                },
                 "agentProfiles": [],
+                "apiServerAccessProfile": {
+                    "enablePrivateCluster": false
+                },
+                "copy": [
+                    {
+                        "count": 1,
+                        "input": {
+                            "availabilityZones": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].availabilityZones]",
+                            "count": 1,
+                            "enableAutoScaling": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].isAutoScalingEnabled]",
+                            "minCount": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].minimumCount]",
+                            "maxCount": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].maximumCount]",
+                            "maxPods": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].maximumPodCount]",
+                            "mode": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].mode]",
+                            "name": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].name]",
+                            "osDiskSizeGB": 0,
+                            "osType": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].osType]",
+                            "storageProfile": "ManagedDisks",
+                            "type": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].type]",
+                            "vmSize": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].virtualMachineSize]",
+                            "vnetSubnetID": "[if(empty(variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].subnet.name), null(), resourceId('Microsoft.Network/virtualNetworks/subnets', variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].subnet.virtualNetworkName, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].subnet.name))]"
+                        },
+                        "name": "agentPoolProfiles"
+                    }
+                ],
+                "diskEncryptionSetID": "[variables('resourceIds').diskEncryptionSet]",
                 "dnsPrefix": "[toLower(parameters('dnsPrefix'))]",
-                "enableRBAC": true
+                "enableRBAC": true,
+                "kubernetesVersion": "[parameters('kubernetesVersion')]",
+                "linuxProfile": "[null()]",
+                "networkProfile": {
+                    "dnsServiceIP": "[if(equals(toLower(variables('networking').plugin), 'azure'), variables('networking').dnsServiceIpAddress, null())]",
+                    "dockerBridgeCidr": "[if(equals(toLower(variables('networking').plugin), 'azure'), variables('networking').dockerBridgeCidr, null())]",
+                    "loadBalancerSku": "[variables('networking').loadBalancerSku]",
+                    "networkPlugin": "[variables('networking').plugin]",
+                    "networkPolicy": "[variables('networking').policy]",
+                    "serviceCidr": "[if(equals(toLower(variables('networking').plugin), 'azure'), variables('networking').serviceCidr, null())]"
+                },
+                "windowsProfile": "[null()]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.ContainerService/managedClusters"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
+            "dependsOn": [
+                "[variables('resourceIds').managedCluster]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/Microsoft.Insights/audit', parameters('name'))]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(variables('audit').logNames)]",
+                        "input": {
+                            "category": "[variables('audit').logNames[copyIndex('logs')]]",
+                            "enabled": "[variables('isAuditEnabled')]",
+                            "retentionPolicy": {
+                                "days": "[variables('audit').retentionPolicy.days]",
+                                "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                            }
+                        },
+                        "name": "logs"
+                    }
+                ],
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
+            },
+            "type": "Microsoft.ContainerService/managedClusters/providers/diagnosticsettings"
         }
     ]
 }

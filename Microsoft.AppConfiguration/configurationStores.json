@@ -93,6 +93,7 @@
                     "resourceGroupName": "[variables('resourceGroupName')]",
                     "subscriptionId": "[variables('subscriptionId')]"
                 },
+                "location": "[parameters('location')]",
                 "subnet": {
                     "resourceGroupName": "[variables('resourceGroupName')]",
                     "subscriptionId": "[variables('subscriptionId')]"
@@ -241,7 +242,7 @@
             "dependsOn": [
                 "[variables('resourceIds').configurationStore]"
             ],
-            "location": "[parameters('location')]",
+            "location": "[union(variables('defaultResourceProperties').privateEndpoint, variables('privateEndpoints')[copyIndex()]).location]",
             "name": "[variables('privateEndpoints')[copyIndex()].name]",
             "properties": {
                 "customDnsConfigs": [],
@@ -274,7 +275,7 @@
             "dependsOn": [
                 "privateEndpointsCopy"
             ],
-            "location": "[parameters('location')]",
+            "location": "[union(variables('defaultResourceProperties').privateEndpoint, variables('privateEndpoints')[copyIndex()]).location]",
             "name": "[format('{0}/default', variables('privateEndpoints')[copyIndex()].name)]",
             "properties": {
                 "copy": [
