@@ -65,6 +65,13 @@
             },
             "type": "string"
         },
+        "extensions": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the extensions that will be applied to the Azure Virtual Machine."
+            },
+            "type": "secureObject"
+        },
         "imageReference": {
             "defaultValue": {},
             "metadata": {
@@ -79,12 +86,33 @@
             },
             "type": "bool"
         },
+        "isUltraSsdSupportEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether support for attaching ultra SSDs is enabled on the Azure Virtual Machine."
+            },
+            "type": "bool"
+        },
+        "isVulnerabilityAssessmentEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the vulnerability assessment feature is enabled on the Azure Virtual Machine."
+            },
+            "type": "bool"
+        },
         "licenseType": {
             "defaultValue": "Windows_Client",
             "metadata": {
                 "description": "Specifies the type of license that will be applied to the Azure Virtual Machine."
             },
             "type": "string"
+        },
+        "linuxConfiguration": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the linux configuration that will be applied to the Azure Virtual Machine."
+            },
+            "type": "secureObject"
         },
         "location": {
             "metadata": {
@@ -138,6 +166,13 @@
                 "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Virtual Machine."
             },
             "type": "object"
+        },
+        "windowsConfiguration": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the windows configuration that will be applied to the Azure Virtual Machine."
+            },
+            "type": "secureObject"
         }
     },
     "variables": {
@@ -175,7 +210,7 @@
                 "name": "networkInterfacesByResourceId"
             }
         ],
-        "dataDisks": "[if(variables('dataDisksIsNotEmpty'), parameters('dataDisks'), createArray(createObject('name', 'dummyDataDisk')))]",
+        "dataDisks": "[if(variables('dataDisksIsNotEmpty'), parameters('dataDisks'), createArray(createObject('name', '<NULL>')))]",
         "dataDisksCount": "[length(parameters('dataDisks'))]",
         "dataDisksIsNotEmpty": "[greater(variables('dataDisksCount'), 0)]",
         "defaultResourceProperties": {
@@ -200,6 +235,58 @@
                 "createOption": "Empty",
                 "networkAccessPolicy": "AllowAll",
                 "skuName": "Premium_LRS"
+            },
+            "extensions": {
+                "azureActiveDirectoryDomainJoin": {
+                    "isEnabled": false,
+                    "isRestartAfterJoinEnabled": false,
+                    "domainName": "",
+                    "numberOfRetries": 3,
+                    "options": 3,
+                    "restart": true,
+                    "retryIntervalInSeconds": 17,
+                    "userName": "",
+                    "userPassword": "",
+                    "version": "1.3"
+                },
+                "azureAntimalwareAgent": {
+                    "isAntimalwareEnabled": true,
+                    "isEnabled": true,
+                    "isRealtimeProtectionEnabled": true,
+                    "version": "1.5"
+                },
+                "azureDependencyAgent": {
+                    "isEnabled": true,
+                    "version": "[if(variables('isLinuxVm'), '9.9', if(variables('isWindowsVm'), '9.9', null()))]"
+                },
+                "azureGuestConfigurationAgent": {
+                    "isEnabled": true,
+                    "version": "[if(variables('isLinuxVm'), '1.9', if(variables('isWindowsVm'), '1.9', null()))]"
+                },
+                "azureGuestHealthAgent": {
+                    "isEnabled": true,
+                    "version": "[if(variables('isLinuxVm'), '1.0', if(variables('isWindowsVm'), '1.0', null()))]"
+                },
+                "azureLogAnalyticsAgent": {
+                    "isEnabled": true,
+                    "version": "1.0"
+                },
+                "azureMonitorAgent": {
+                    "isEnabled": true,
+                    "version": "[if(variables('isLinuxVm'), '1.9', if(variables('isWindowsVm'), '1.0', null()))]"
+                },
+                "azureNetworkWatcherAgent": {
+                    "isEnabled": true,
+                    "version": "[if(variables('isLinuxVm'), '1.4', if(variables('isWindowsVm'), '1.4', null()))]"
+                }
+            },
+            "linuxConfiguration": {
+                "administratorUserPublicSshKey": "",
+                "isPasswordAuthenticationEnabled": true,
+                "isVmAgentEnabled": true,
+                "patchSettings": {
+                    "mode": "ImageDefault"
+                }
             },
             "networkInterfaceCard": {
                 "dnsServers": [],
@@ -231,37 +318,71 @@
                 "createOption": "FromImage",
                 "isWriteAcceleratorEnabled": false,
                 "storageAccountType": "Premium_LRS"
+            },
+            "windowsConfiguration": {
+                "isVmAgentEnabled": true,
+                "patchSettings": {
+                    "isHotPatchingEnabled": false,
+                    "mode": "AutomaticByOS"
+                },
+                "timeZone": "UTC"
             }
         },
+        "extensions": "[union(variables('defaultResourceProperties').extensions, parameters('extensions'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isBackupEnabled": "[not(empty(variables('backup').policyName))]",
+        "isLinuxVm": "[or(not(empty(parameters('linuxConfiguration'))), equals(parameters('licenseType'), 'RHEL_BYOS'), equals(parameters('licenseType'), 'SLES_BYOS'), contains(union(createObject('id', ''), parameters('imageReference')).id, 'Linux'), contains(union(createObject('offer', ''), parameters('imageReference')).offer, 'Linux'))]",
         "isSpotVirtualMachine": "[equals(toLower(parameters('priority')), 'spot')]",
+        "isWindowsVm": "[or(not(empty(parameters('windowsConfiguration'))), equals(parameters('licenseType'), 'Windows_Client'), equals(parameters('licenseType'), 'Windows_Server'), contains(union(createObject('id', ''), parameters('imageReference')).id, 'Windows'), contains(union(createObject('offer', ''), parameters('imageReference')).offer, 'Windows'))]",
         "licenseTypeIsNotEmpty": "[not(empty(parameters('licenseType')))]",
+        "linuxConfiguration": {
+            "disablePasswordAuthentication": "[not(variables('linuxConfigurationFriendly').isPasswordAuthenticationEnabled)]",
+            "ssh": "[if(empty(variables('linuxConfigurationFriendly').administratorUserPublicSshKey), null(), createObject('publicKeys', createArray(createObject('keyData', variables('linuxConfigurationFriendly').administratorUserPublicSshKey, 'path', format('/home/{0}/.ssh/authorized_keys', parameters('administratorUserName'))))))]",
+            "patchSettings": {
+                "patchMode": "[variables('linuxConfigurationFriendly').patchSettings.mode]"
+            },
+            "provisionVMAgent": "[variables('linuxConfigurationFriendly').isVmAgentEnabled]"
+        },
+        "linuxConfigurationFriendly": "[union(variables('defaultResourceProperties').linuxConfiguration, parameters('linuxConfiguration'))]",
         "networkInterfaceCardsCount": "[length(parameters('networkInterfaceCards'))]",
-        "osType": "[if(or(and(variables('licenseTypeIsNotEmpty'), startsWith(parameters('licenseType'), 'Windows')), contains(union(createObject('offer', ''), parameters('imageReference')).offer, 'Windows'), contains(union(createObject('id', ''), parameters('imageReference')).id, 'Windows')), 'Windows', 'Linux')]",
+        "osType": "[if(variables('isLinuxVm'), 'Linux', if(variables('isWindowsVm'), 'Windows', 'Unknown'))]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
             "insightsDataCollectionRule": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.Insights/dataCollectionRules', format('Microsoft-VMInsights-Health-{0}', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>')))]",
             "recoveryServicesVaultBackupPolicy": "[resourceId(variables('backup').recoveryServicesVault.subscriptionId, variables('backup').recoveryServicesVault.resourceGroupName, 'Microsoft.RecoveryServices/vaults/backupPolicies', if(variables('isBackupEnabled'), variables('backup').recoveryServicesVault.name, '<NULL>'), if(variables('isBackupEnabled'), variables('backup').policyName, '<NULL>'))]",
             "virtualMachine": "[resourceId('Microsoft.Compute/virtualMachines', parameters('name'))]",
-            "virtualMachineAntimalwareAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), split(variables('virtualMachineAntimalwareAgentName'), '/')[1])]",
-            "virtualMachineDependencyAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), split(variables('virtualMachineDependencyAgentName'), '/')[1])]",
-            "virtualMachineGuestConfigurationAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), split(variables('virtualMachineGuestConfigurationAgentName'), '/')[1])]",
-            "virtualMachineGuestHealthAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), split(variables('virtualMachineGuestHealthAgentName'), '/')[1])]",
-            "virtualMachineLogAnalyticsAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), split(variables('virtualMachineLogAnalyticsAgentName'), '/')[1])]",
-            "virtualMachineMonitorAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), split(variables('virtualMachineMonitorAgentName'), '/')[1])]",
-            "virtualMachineNetworkWatcherAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), split(variables('virtualMachineNetworkWatcherAgentName'), '/')[1])]"
+            "virtualMachineActiveDirectoryDomainJoin": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineActiveDirectoryDomainJoinName'))]",
+            "virtualMachineAntimalwareAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineAntimalwareAgentName'))]",
+            "virtualMachineDependencyAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineDependencyAgentName'))]",
+            "virtualMachineGuestConfigurationAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineGuestConfigurationAgentName'))]",
+            "virtualMachineGuestHealthAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineGuestHealthAgentName'))]",
+            "virtualMachineLogAnalyticsAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineLogAnalyticsAgentName'))]",
+            "virtualMachineMonitorAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineMonitorAgentName'))]",
+            "virtualMachineNetworkWatcherAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineNetworkWatcherAgentName'))]"
         },
         "subscriptionId": "[subscription().subscriptionId]",
-        "virtualMachineAntimalwareAgentName": "[format('{0}/AzureAntimalwareAgent', parameters('name'))]",
-        "virtualMachineDependencyAgentName": "[format('{0}/AzureDependencyAgent', parameters('name'))]",
-        "virtualMachineGuestConfigurationAgentName": "[format('{0}/AzureGuestConfigurationAgent', parameters('name'))]",
-        "virtualMachineGuestHealthAgentName": "[format('{0}/AzureGuestHealthAgent', parameters('name'))]",
-        "virtualMachineLogAnalyticsAgentName": "[format('{0}/AzureLogAnalyticsAgent', parameters('name'))]",
-        "virtualMachineMonitorAgentName": "[format('{0}/AzureMonitorAgent', parameters('name'))]",
-        "virtualMachineNetworkWatcherAgentName": "[format('{0}/AzureNetworkWatcherAgent', parameters('name'))]"
+        "virtualMachineActiveDirectoryDomainJoinName": "AzureActiveDirectoryDomainJoin",
+        "virtualMachineAntimalwareAgentName": "AzureAntimalwareAgent",
+        "virtualMachineDependencyAgentName": "AzureDependencyAgent",
+        "virtualMachineGuestConfigurationAgentName": "AzureGuestConfigurationAgent",
+        "virtualMachineGuestHealthAgentName": "AzureGuestHealthAgent",
+        "virtualMachineLogAnalyticsAgentName": "AzureLogAnalyticsAgent",
+        "virtualMachineMonitorAgentName": "AzureMonitorAgent",
+        "virtualMachineNetworkWatcherAgentName": "AzureNetworkWatcherAgent",
+        "windowsConfiguration": {
+            "additionalUnattendContent": "[null()]",
+            "enableAutomaticUpdates": "[not(equals(toLower(variables('windowsConfigurationFriendly').patchSettings.mode), 'manual'))]",
+            "patchSettings": {
+                "enableHotpatching": "[variables('windowsConfigurationFriendly').patchSettings.isHotPatchingEnabled]",
+                "patchMode": "[variables('windowsConfigurationFriendly').patchSettings.mode]"
+            },
+            "provisionVMAgent": "[variables('windowsConfigurationFriendly').isVmAgentEnabled]",
+            "timeZone": "[variables('windowsConfigurationFriendly').timeZone]",
+            "winRM": "[null()]"
+        },
+        "windowsConfigurationFriendly": "[union(variables('defaultResourceProperties').windowsConfiguration, parameters('windowsConfiguration'))]"
     },
     "resources": [
         {
@@ -343,7 +464,7 @@
             "name": "[parameters('name')]",
             "properties": {
                 "additionalCapabilities": {
-                    "ultraSSDEnabled": false
+                    "ultraSSDEnabled": "[parameters('isUltraSsdSupportEnabled')]"
                 },
                 "availabilitySet": "[if(empty(parameters('availabilitySetName')), null(), createObject('id', resourceId(parameters('availabilitySetResourceGroupName'), 'Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))))]",
                 "billingProfile": {
@@ -370,19 +491,9 @@
                     "allowExtensionOperations": true,
                     "computerName": "[parameters('name')]",
                     "customData": "[null()]",
-                    "linuxConfiguration": "[null()]",
+                    "linuxConfiguration": "[if(variables('isLinuxVm'), variables('linuxConfiguration'), null())]",
                     "secrets": [],
-                    "windowsConfiguration": {
-                        "additionalUnattendContent": "[null()]",
-                        "enableAutomaticUpdates": true,
-                        "patchSettings": {
-                            "enableHotpatching": false,
-                            "patchMode": "AutomaticByOS"
-                        },
-                        "provisionVmAgent": true,
-                        "timeZone": "UTC",
-                        "winRM": "[null()]"
-                    }
+                    "windowsConfiguration": "[if(variables('isWindowsVm'), variables('windowsConfiguration'), null())]"
                 },
                 "priority": "[parameters('priority')]",
                 "securityProfile": {
@@ -410,23 +521,52 @@
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
+            "condition": "[variables('extensions').azureActiveDirectoryDomainJoin.isEnabled]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
             ],
             "location": "[parameters('location')]",
-            "name": "[variables('virtualMachineAntimalwareAgentName')]",
+            "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineActiveDirectoryDomainJoinName'))]",
+            "properties": {
+                "autoUpgradeMinorVersion": true,
+                "publisher": "Microsoft.Compute",
+                "protectedSettings": "[if(empty(variables('extensions').azureActiveDirectoryDomainJoin.userPassword), null(), createObject('Password', variables('extensions').azureActiveDirectoryDomainJoin.userPassword))]",
+                "settings": {
+                    "Name": "[variables('extensions').azureActiveDirectoryDomainJoin.domainName]",
+                    "NumberOfRetries": "[variables('extensions').azureActiveDirectoryDomainJoin.numberOfRetries]",
+                    "Options": "[variables('extensions').azureActiveDirectoryDomainJoin.options]",
+                    "UnjoinDomainUser": "[null()]",
+                    "OUPath": "[variables('extensions').azureActiveDirectoryDomainJoin.ouPath]",
+                    "Restart": "[variables('extensions').azureActiveDirectoryDomainJoin.isRestartAfterJoinEnabled]",
+                    "RetryIntervalInMilliseconds": "[mul(variables('extensions').azureActiveDirectoryDomainJoin.retryIntervalInSeconds, 1000)]",
+                    "User": "[variables('extensions').azureActiveDirectoryDomainJoin.userName]"
+                },
+                "type": "JsonADDomainExtension",
+                "typeHandlerVersion": "[variables('extensions').azureActiveDirectoryDomainJoin.version]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
+            "condition": "[variables('extensions').azureAntimalwareAgent.isEnabled]",
+            "dependsOn": [
+                "[variables('resourceIds').virtualMachine]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineAntimalwareAgentName'))]",
             "properties": {
                 "autoUpgradeMinorVersion": true,
                 "protectedSettings": "[null()]",
                 "publisher": "Microsoft.Azure.Security",
                 "settings": {
-                    "AntimalwareEnabled": true,
+                    "AntimalwareEnabled": "[variables('extensions').azureAntimalwareAgent.isAntimalwareEnabled]",
                     "Exclusions": {
                         "Extensions": ".ldf;.log",
-                        "Paths": "D:\\DatabaseLogs;D:\\IISlogs",
+                        "Paths": "[null()]",
                         "Processes": "mssence.svc"
                     },
-                    "RealtimeProtectionEnabled": true,
+                    "RealtimeProtectionEnabled": "[variables('extensions').azureAntimalwareAgent.isRealtimeProtectionEnabled]",
                     "ScheduledScanSettings": {
                         "day": "7",
                         "isEnabled": true,
@@ -435,117 +575,124 @@
                     }
                 },
                 "type": "IaaSAntimalware",
-                "typeHandlerVersion": "1.5"
+                "typeHandlerVersion": "[variables('extensions').azureAntimalwareAgent.version]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Compute/virtualMachines/extensions"
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
+            "condition": "[and(not(equals(variables('osType'), 'Unknown')), variables('extensions').azureDependencyAgent.isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
             ],
             "location": "[parameters('location')]",
-            "name": "[variables('virtualMachineDependencyAgentName')]",
+            "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineDependencyAgentName'))]",
             "properties": {
                 "autoUpgradeMinorVersion": true,
                 "publisher": "Microsoft.Azure.Monitoring.DependencyAgent",
                 "type": "[format('DependencyAgent{0}', variables('osType'))]",
-                "typeHandlerVersion": "[if(equals(variables('osType'), 'Windows'), '9.9', '9.9')]"
+                "typeHandlerVersion": "[variables('extensions').azureDependencyAgent.version]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Compute/virtualMachines/extensions"
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
+            "condition": "[and(not(equals(variables('osType'), 'Unknown')), variables('extensions').azureGuestConfigurationAgent.isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
             ],
             "location": "[parameters('location')]",
-            "name": "[variables('virtualMachineGuestConfigurationAgentName')]",
+            "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineGuestConfigurationAgentName'))]",
             "properties": {
                 "autoUpgradeMinorVersion": true,
                 "publisher": "Microsoft.GuestConfiguration",
                 "type": "[format('Configurationfor{0}', variables('osType'))]",
-                "typeHandlerVersion": "[if(equals(variables('osType'), 'Windows'), '1.9', '1.9')]"
+                "typeHandlerVersion": "[variables('extensions').azureGuestConfigurationAgent.version]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Compute/virtualMachines/extensions"
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
+            "condition": "[and(not(equals(variables('osType'), 'Unknown')), variables('extensions').azureGuestHealthAgent.isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
             ],
             "location": "[parameters('location')]",
-            "name": "[variables('virtualMachineGuestHealthAgentName')]",
+            "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineGuestHealthAgentName'))]",
             "properties": {
                 "autoUpgradeMinorVersion": true,
                 "publisher": "Microsoft.Azure.Monitor.VirtualMachines.GuestHealth",
                 "type": "[format('GuestHealth{0}Agent', variables('osType'))]",
-                "typeHandlerVersion": "[if(equals(variables('osType'), 'Windows'), '1.0', '1.0')]"
+                "typeHandlerVersion": "[variables('extensions').azureGuestHealthAgent.version]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Compute/virtualMachines/extensions"
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
-            "condition": "[variables('isAuditEnabled')]",
+            "condition": "[and(variables('isAuditEnabled'), variables('extensions').azureLogAnalyticsAgent.isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
             ],
             "location": "[parameters('location')]",
-            "name": "[variables('virtualMachineLogAnalyticsAgentName')]",
+            "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineLogAnalyticsAgentName'))]",
             "properties": {
                 "autoUpgradeMinorVersion": true,
                 "protectedSettings": {
-                    "workspaceKey": "[listKeys(variables('resourceIds').auditLogAnalyticsWorkspace, variables('apiVersions').logAnalyticsWorkspaces).secondarySharedKey]"
+                    "workspaceKey": "[if(variables('isAuditEnabled'), listKeys(variables('resourceIds').auditLogAnalyticsWorkspace, variables('apiVersions').logAnalyticsWorkspaces).secondarySharedKey, null())]"
                 },
                 "publisher": "Microsoft.EnterpriseCloud.Monitoring",
                 "settings": {
-                    "workspaceId": "[reference(variables('resourceIds').auditLogAnalyticsWorkspace, variables('apiVersions').logAnalyticsWorkspaces).customerId]"
+                    "workspaceId": "[if(variables('isAuditEnabled'), reference(variables('resourceIds').auditLogAnalyticsWorkspace, variables('apiVersions').logAnalyticsWorkspaces).customerId, null())]"
                 },
                 "type": "MicrosoftMonitoringAgent",
-                "typeHandlerVersion": "1.0"
+                "typeHandlerVersion": "[variables('extensions').azureLogAnalyticsAgent.version]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Compute/virtualMachines/extensions"
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
+            "condition": "[and(not(equals(variables('osType'), 'Unknown')), variables('extensions').azureMonitorAgent.isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
             ],
             "location": "[parameters('location')]",
-            "name": "[variables('virtualMachineMonitorAgentName')]",
+            "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineMonitorAgentName'))]",
             "properties": {
                 "autoUpgradeMinorVersion": true,
                 "publisher": "Microsoft.Azure.Monitor",
                 "type": "[format('AzureMonitor{0}Agent', variables('osType'))]",
-                "typeHandlerVersion": "[if(equals(variables('osType'), 'Windows'), '1.0', '1.9')]"
+                "typeHandlerVersion": "[variables('extensions').azureMonitorAgent.version]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Compute/virtualMachines/extensions"
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
+            "condition": "[and(not(equals(variables('osType'), 'Unknown')), variables('extensions').azureNetworkWatcherAgent.isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
             ],
             "location": "[parameters('location')]",
-            "name": "[variables('virtualMachineNetworkWatcherAgentName')]",
+            "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineNetworkWatcherAgentName'))]",
             "properties": {
                 "autoUpgradeMinorVersion": true,
                 "publisher": "Microsoft.Azure.NetworkWatcher",
                 "type": "[format('NetworkWatcherAgent{0}', variables('osType'))]",
-                "typeHandlerVersion": "[if(equals(variables('osType'), 'Windows'), '1.4', '1.4')]"
+                "typeHandlerVersion": "[variables('extensions').azureNetworkWatcherAgent.version]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Compute/virtualMachines/extensions"
         },
         {
             "apiVersion": "[variables('apiVersions').serverVulnerabilityAssessments]",
+            "condition": "[parameters('isVulnerabilityAssessmentEnabled')]",
             "dependsOn": [
+                "[variables('resourceIds').virtualMachineActiveDirectoryDomainJoin]",
                 "[variables('resourceIds').virtualMachineAntimalwareAgent]",
                 "[variables('resourceIds').virtualMachineDependencyAgent]",
                 "[variables('resourceIds').virtualMachineGuestConfigurationAgent]",
@@ -561,6 +708,7 @@
             "apiVersion": "[variables('apiVersions').insightsDataCollectionRuleAssociations]",
             "condition": "[variables('isAuditEnabled')]",
             "dependsOn": [
+                "[variables('resourceIds').virtualMachineActiveDirectoryDomainJoin]",
                 "[variables('resourceIds').virtualMachineAntimalwareAgent]",
                 "[variables('resourceIds').virtualMachineDependencyAgent]",
                 "[variables('resourceIds').virtualMachineGuestConfigurationAgent]",
@@ -580,6 +728,7 @@
             "apiVersion": "[variables('apiVersions').deployments]",
             "condition": "[variables('isBackupEnabled')]",
             "dependsOn": [
+                "[variables('resourceIds').virtualMachineActiveDirectoryDomainJoin]",
                 "[variables('resourceIds').virtualMachineAntimalwareAgent]",
                 "[variables('resourceIds').virtualMachineDependencyAgent]",
                 "[variables('resourceIds').virtualMachineGuestConfigurationAgent]",

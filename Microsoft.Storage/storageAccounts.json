@@ -287,6 +287,7 @@
                     "resourceGroupName": "[variables('resourceGroupName')]",
                     "subscriptionId": "[variables('subscriptionId')]"
                 },
+                "location": "[parameters('location')]",
                 "subnet": {
                     "resourceGroupName": "[variables('resourceGroupName')]",
                     "subscriptionId": "[variables('subscriptionId')]"
@@ -901,7 +902,7 @@
             "dependsOn": [
                 "[variables('resourceIds').storageAccountTableServices]"
             ],
-            "location": "[parameters('location')]",
+            "location": "[union(variables('defaultResourceProperties').privateEndpoint, variables('blobServicesPrivateEndpoints')[copyIndex()]).location]",
             "name": "[if(variables('blobServicesPrivateEndpointsIsNotEmpty'), variables('blobServicesPrivateEndpoints'), createArray(createObject('name', 'dummyBlobServicesEndpoint')))[copyIndex()].name]",
             "properties": {
                 "customDnsConfigs": [],
@@ -934,7 +935,7 @@
             "dependsOn": [
                 "blobServicesPrivateEndpointsCopy"
             ],
-            "location": "[parameters('location')]",
+            "location": "[union(variables('defaultResourceProperties').privateEndpoint, variables('blobServicesPrivateEndpoints')[copyIndex()]).location]",
             "name": "[format('{0}/default', if(variables('blobServicesPrivateEndpointsIsNotEmpty'), variables('blobServicesPrivateEndpoints'), createArray(createObject('name', 'dummyBlobServicesPrivateDnsZoneGroup')))[copyIndex()].name)]",
             "properties": {
                 "copy": [
@@ -963,7 +964,7 @@
             "dependsOn": [
                 "[variables('resourceIds').storageAccountTableServices]"
             ],
-            "location": "[parameters('location')]",
+            "location": "[union(variables('defaultResourceProperties').privateEndpoint, variables('fileServicesPrivateEndpoints')[copyIndex()]).location]",
             "name": "[if(variables('fileServicesPrivateEndpointsIsNotEmpty'), variables('fileServicesPrivateEndpoints'), createArray(createObject('name', 'dummyFileServicesEndpoint')))[copyIndex()].name]",
             "properties": {
                 "customDnsConfigs": [],
@@ -996,7 +997,7 @@
             "dependsOn": [
                 "fileServicesPrivateEndpointsCopy"
             ],
-            "location": "[parameters('location')]",
+            "location": "[union(variables('defaultResourceProperties').privateEndpoint, variables('fileServicesPrivateEndpoints')[copyIndex()]).location]",
             "name": "[format('{0}/default', if(variables('fileServicesPrivateEndpointsIsNotEmpty'), variables('fileServicesPrivateEndpoints'), createArray(createObject('name', 'dummyFileServicesPrivateDnsZoneGroup')))[copyIndex()].name)]",
             "properties": {
                 "copy": [
@@ -1025,7 +1026,7 @@
             "dependsOn": [
                 "[variables('resourceIds').storageAccountTableServices]"
             ],
-            "location": "[parameters('location')]",
+            "location": "[union(variables('defaultResourceProperties').privateEndpoint, variables('queueServicesPrivateEndpoints')[copyIndex()]).location]",
             "name": "[if(variables('queueServicesPrivateEndpointsIsNotEmpty'), variables('queueServicesPrivateEndpoints'), createArray(createObject('name', 'dummyQueueServicesEndpoint')))[copyIndex()].name]",
             "properties": {
                 "customDnsConfigs": [],
@@ -1058,7 +1059,7 @@
             "dependsOn": [
                 "queueServicesPrivateEndpointsCopy"
             ],
-            "location": "[parameters('location')]",
+            "location": "[union(variables('defaultResourceProperties').privateEndpoint, variables('queueServicesPrivateEndpoints')[copyIndex()]).location]",
             "name": "[format('{0}/default', if(variables('queueServicesPrivateEndpointsIsNotEmpty'), variables('queueServicesPrivateEndpoints'), createArray(createObject('name', 'dummyQueueServicesPrivateDnsZoneGroup')))[copyIndex()].name)]",
             "properties": {
                 "copy": [
@@ -1087,7 +1088,7 @@
             "dependsOn": [
                 "[variables('resourceIds').storageAccountTableServices]"
             ],
-            "location": "[parameters('location')]",
+            "location": "[union(variables('defaultResourceProperties').privateEndpoint, variables('tableServicesPrivateEndpoints')[copyIndex()]).location]",
             "name": "[if(variables('tableServicesPrivateEndpointsIsNotEmpty'), variables('tableServicesPrivateEndpoints'), createArray(createObject('name', 'dummyTableServicesEndpoint')))[copyIndex()].name]",
             "properties": {
                 "customDnsConfigs": [],
@@ -1120,7 +1121,7 @@
             "dependsOn": [
                 "tableServicesPrivateEndpointsCopy"
             ],
-            "location": "[parameters('location')]",
+            "location": "[union(variables('defaultResourceProperties').privateEndpoint, variables('tableServicesPrivateEndpoints')[copyIndex()]).location]",
             "name": "[format('{0}/default', if(variables('tableServicesPrivateEndpointsIsNotEmpty'), variables('tableServicesPrivateEndpoints'), createArray(createObject('name', 'dummyTableServicesPrivateDnsZoneGroup')))[copyIndex()].name)]",
             "properties": {
                 "copy": [

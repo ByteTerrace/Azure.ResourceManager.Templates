@@ -242,7 +242,16 @@
                 "virtualNetworkRules": []
             },
             "kubernetesServiceCluster": {
-                "dnsPrefix": ""
+                "agentPoolProfiles": [],
+                "audit": "[variables('audit')]",
+                "customerManagedEncryption": {},
+                "dnsPrefix": "",
+                "identity": {},
+                "kubernetesVersion": "1.20.7",
+                "linuxProfile": {},
+                "networking": {},
+                "nodeResourceGroupName": "",
+                "windowsProfile": {}
             },
             "loadBalancer": {
                 "backendAddressPools": [],
@@ -403,12 +412,17 @@
                 "dataDisks": [],
                 "diskEncryptionSetName": "",
                 "diskEncryptionSetResourceGroupName": "[variables('resourceGroupName')]",
+                "extensions": {},
                 "imageReference": {},
                 "isEncryptionAtHostEnabled": true,
+                "isUltraSsdSupportEnabled": false,
+                "isVulnerabilityAssessmentEnabled": true,
                 "licenseType": "Windows_Client",
+                "linuxConfiguration": {},
                 "osDisk": {},
                 "priority": "Regular",
-                "size": "Standard_D4s_v4"
+                "size": "Standard_D4s_v4",
+                "windowsConfiguration": {}
             },
             "virtualNetwork": {
                 "addressPrefixes": [],
@@ -2177,14 +2191,26 @@
                     "diskEncryptionSetResourceGroupName": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).diskEncryptionSetResourceGroupName]"
                     },
+                    "extensions": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).extensions]"
+                    },
                     "imageReference": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).imageReference]"
                     },
                     "isEncryptionAtHostEnabled": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isEncryptionAtHostEnabled]"
                     },
+                    "isUltraSsdSupportEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isUltraSsdSupportEnabled]"
+                    },
+                    "isVulnerabilityAssessmentEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isVulnerabilityAssessmentEnabled]"
+                    },
                     "licenseType": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).licenseType]"
+                    },
+                    "linuxConfiguration": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).linuxConfiguration]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').virtualMachines[copyIndex()]).location]"
@@ -2206,6 +2232,9 @@
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
+                    },
+                    "windowsConfiguration": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).windowsConfiguration]"
                     }
                 },
                 "templateLink": {
@@ -2514,8 +2543,12 @@
                 "name": "kubernetesServiceClustersCopy"
             },
             "dependsOn": [
+                "diskEncryptionSetsCopy",
+                "keyVaultsCopy",
+                "managedIdentitiesCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
+                "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "subnetsCopy",
                 "virtualNetworksCopy"
@@ -2524,8 +2557,29 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "administratorObjectIds": {
+                        "value": "[variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()].administratorObjectIds]"
+                    },
+                    "agentPoolProfiles": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).agentPoolProfiles]"
+                    },
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).audit]"
+                    },
+                    "customerManagedEncryption": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).customerManagedEncryption]"
+                    },
                     "dnsPrefix": {
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).dnsPrefix]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).identity]"
+                    },
+                    "kubernetesVersion": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).kubernetesVersion]"
+                    },
+                    "linuxProfile": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).linuxProfile]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).location]"
@@ -2533,8 +2587,17 @@
                     "name": {
                         "value": "[variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()].name]"
                     },
+                    "networking": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).networking]"
+                    },
+                    "nodeResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).nodeResourceGroupName]"
+                    },
                     "tags": {
                         "value": "[parameters('tags')]"
+                    },
+                    "windowsProfile": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).windowsProfile]"
                     }
                 },
                 "templateLink": {

@@ -62,6 +62,7 @@
             "workspaceViews": "2017-03-03-preview",
             "workspaces": "2020-08-01"
         },
+        "containerInsightsSolutionName": "[format('ContainerInsights({0})', parameters('name'))]",
         "resourceIds": {
             "sqlAccessToSensitiveDataView": "[resourceId('Microsoft.OperationalInsights/workspaces/views', parameters('name'), 'SQLAccessToSensitiveData')]",
             "sqlSecurityInsightsView": "[resourceId('Microsoft.OperationalInsights/workspaces/views', parameters('name'), 'SQLSecurityInsights')]",
@@ -1028,6 +1029,25 @@
                     "[format('{0}/views/SQLSecurityInsights', variables('resourceIds').workspace)]"
                 ],
                 "referencedResources": [],
+                "workspaceResourceId": "[variables('resourceIds').workspace]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.OperationsManagement/solutions"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').workspaceSolutions]",
+            "dependsOn": [
+                "[variables('resourceIds').workspace]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[variables('containerInsightsSolutionName')]",
+            "plan": {
+                "name": "[variables('containerInsightsSolutionName')]",
+                "product": "OMSGallery/ContainerInsights",
+                "promotionCode": "",
+                "publisher": "Microsoft"
+            },
+            "properties": {
                 "workspaceResourceId": "[variables('resourceIds').workspace]"
             },
             "tags": "[parameters('tags')]",
