@@ -412,8 +412,10 @@
                 "dataDisks": [],
                 "diskEncryptionSetName": "",
                 "diskEncryptionSetResourceGroupName": "[variables('resourceGroupName')]",
+                "extensions": {},
                 "imageReference": {},
                 "isEncryptionAtHostEnabled": true,
+                "isVulnerabilityAssessmentEnabled": true,
                 "licenseType": "Windows_Client",
                 "osDisk": {},
                 "priority": "Regular",
@@ -2186,11 +2188,17 @@
                     "diskEncryptionSetResourceGroupName": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).diskEncryptionSetResourceGroupName]"
                     },
+                    "extensions": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).extensions]"
+                    },
                     "imageReference": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).imageReference]"
                     },
                     "isEncryptionAtHostEnabled": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isEncryptionAtHostEnabled]"
+                    },
+                    "isVulnerabilityAssessmentEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isVulnerabilityAssessmentEnabled]"
                     },
                     "licenseType": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).licenseType]"
