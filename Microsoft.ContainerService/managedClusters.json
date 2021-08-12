@@ -210,7 +210,9 @@
             "adminUsername": "[variables('linuxProfileFriendly').administratorUserName]",
             "ssh": {
                 "publicKeys": [
-                    "[variables('linuxProfileFriendly').administratorUserPublicSshKey]"
+                    {
+                        "keyData": "[variables('linuxProfileFriendly').administratorUserPublicSshKey]"
+                    }
                 ]
             }
         },
