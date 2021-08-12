@@ -415,11 +415,14 @@
                 "extensions": {},
                 "imageReference": {},
                 "isEncryptionAtHostEnabled": true,
+                "isUltraSsdSupportEnabled": false,
                 "isVulnerabilityAssessmentEnabled": true,
                 "licenseType": "Windows_Client",
+                "linuxConfiguration": {},
                 "osDisk": {},
                 "priority": "Regular",
-                "size": "Standard_D4s_v4"
+                "size": "Standard_D4s_v4",
+                "windowsConfiguration": {}
             },
             "virtualNetwork": {
                 "addressPrefixes": [],
@@ -2197,11 +2200,17 @@
                     "isEncryptionAtHostEnabled": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isEncryptionAtHostEnabled]"
                     },
+                    "isUltraSsdSupportEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isUltraSsdSupportEnabled]"
+                    },
                     "isVulnerabilityAssessmentEnabled": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isVulnerabilityAssessmentEnabled]"
                     },
                     "licenseType": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).licenseType]"
+                    },
+                    "linuxConfiguration": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).linuxConfiguration]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').virtualMachines[copyIndex()]).location]"
@@ -2223,6 +2232,9 @@
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
+                    },
+                    "windowsConfiguration": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).windowsConfiguration]"
                     }
                 },
                 "templateLink": {
