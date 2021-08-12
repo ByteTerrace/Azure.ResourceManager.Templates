@@ -315,7 +315,7 @@
                 "podIdentityProfile": {
                     "enabled": false
                 },
-                "windowsProfile": "[if(empty(parameters('windowsProfile')), null(), variables('windowsProfile'))]",
+                "windowsProfile": "[if(empty(parameters('windowsProfile')), null(), variables('windowsProfile'))]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.ContainerService/managedClusters"

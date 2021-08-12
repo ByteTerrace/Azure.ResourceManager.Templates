@@ -242,7 +242,16 @@
                 "virtualNetworkRules": []
             },
             "kubernetesServiceCluster": {
-                "dnsPrefix": ""
+                "agentPoolProfiles": [],
+                "audit": "[variables('audit')]",
+                "customerManagedEncryption": {},
+                "dnsPrefix": "",
+                "identity": {},
+                "kubernetesVersion": "1.20.7",
+                "linuxProfile": {},
+                "networking": {},
+                "nodeResourceGroupName": "",
+                "windowsProfile": {}
             },
             "loadBalancer": {
                 "backendAddressPools": [],
@@ -2514,8 +2523,12 @@
                 "name": "kubernetesServiceClustersCopy"
             },
             "dependsOn": [
+                "diskEncryptionSetsCopy",
+                "keyVaultsCopy",
+                "managedIdentitiesCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
+                "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "subnetsCopy",
                 "virtualNetworksCopy"
@@ -2524,8 +2537,29 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "administratorObjectIds": {
+                        "value": "[variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()].administratorObjectIds]"
+                    },
+                    "agentPoolProfiles": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).agentPoolProfiles]"
+                    },
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).audit]"
+                    },
+                    "customerManagedEncryption": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).customerManagedEncryption]"
+                    },
                     "dnsPrefix": {
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).dnsPrefix]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).identity]"
+                    },
+                    "kubernetesVersion": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).kubernetesVersion]"
+                    },
+                    "linuxProfile": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).linuxProfile]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).location]"
@@ -2533,8 +2567,17 @@
                     "name": {
                         "value": "[variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()].name]"
                     },
+                    "networking": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).networking]"
+                    },
+                    "nodeResourceGroupName": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).nodeResourceGroupName]"
+                    },
                     "tags": {
                         "value": "[parameters('tags')]"
+                    },
+                    "windowsProfile": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).windowsProfile]"
                     }
                 },
                 "templateLink": {
