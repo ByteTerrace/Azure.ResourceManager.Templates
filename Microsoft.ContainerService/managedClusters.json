@@ -50,6 +50,13 @@
             },
             "type": "string"
         },
+        "linuxProfile": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the linux profile properties that will be applied to the Azure Kubernetes Service Cluster."
+            },
+            "type": "secureObject"
+        },
         "location": {
             "metadata": {
                 "description": "Specifies the location in which the Azure Kubernetes Service Cluster resource(s) should be deployed."
@@ -71,12 +78,26 @@
             },
             "type": "object"
         },
+        "nodeResourceGroupName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the resource group that the Azure Kubernetes Service Cluster will deploy node resources to."
+            },
+            "type": "string"
+        },
         "tags": {
             "defaultValue": {},
             "metadata": {
                 "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Kubernetes Service Cluster."
             },
             "type": "object"
+        },
+        "windowsProfile": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the windows profile properties that will be applied to the Azure Kubernetes Service Cluster."
+            },
+            "type": "secureObject"
         }
     },
     "variables": {
@@ -150,6 +171,10 @@
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
             },
+            "linuxProfile": {
+                "administratorUserName": "",
+                "administratorUserPublicSshKey": ""
+            },
             "networking": {
                 "dnsServiceIpAddress": "172.29.255.254",
                 "dockerBridgeCidr": "172.28.0.1/16",
@@ -170,11 +195,26 @@
                     "resourceGroupName": "[variables('resourceGroupName')]",
                     "subscriptionId": "[variables('subscriptionId')]"
                 }
+            },
+            "windowsProfile": {
+                "administratorUserName": "",
+                "administratorUserPassword": "",
+                "isCsiProxyEnabled": true,
+                "licenseType": "Windows_Server"
             }
         },
         "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "linuxProfile": {
+            "adminUsername": "[variables('linuxProfileFriendly').administratorUserName]",
+            "ssh": {
+                "publicKeys": [
+                    "[variables('linuxProfileFriendly').administratorUserPublicSshKey]"
+                ]
+            }
+        },
+        "linuxProfileFriendly": "[union(variables('defaultResourceProperties').linuxProfile, parameters('linuxProfile'))]",
         "networking": "[union(variables('defaultResourceProperties').networking, parameters('networking'))]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
@@ -182,7 +222,14 @@
             "diskEncryptionSet": "[resourceId(variables('customerManagedEncryption').diskEncryptionSet.subscriptionId, variables('customerManagedEncryption').diskEncryptionSet.resourceGroupName, 'Microsoft.Compute/diskEncryptionSets', coalesce(variables('customerManagedEncryption').diskEncryptionSet.name, '<NULL>'))]",
             "managedCluster": "[resourceId('Microsoft.ContainerService/managedClusters', parameters('name'))]"
         },
-        "subscriptionId": "[subscription().subscriptionId]"
+        "subscriptionId": "[subscription().subscriptionId]",
+        "windowsProfile": {
+            "adminPassword": "[variables('windowsProfileFriendly').administratorUserPassword]",
+            "adminUsername": "[variables('windowsProfileFriendly').administratorUserName]",
+            "enableCSIProxy": "[variables('windowsProfileFriendly').isCsiProxyEnabled]",
+            "licenseType": "[variables('windowsProfileFriendly').licenseType]"
+        },
+        "windowsProfileFriendly": "[union(variables('defaultResourceProperties').windowsProfile, parameters('windowsProfile'))]"
     },
     "resources": [
         {
@@ -205,9 +252,6 @@
                     "httpApplicationRouting": {
                         "enabled": false
                     },
-                    "kubeDashboard": {
-                        "enabled": false
-                    },
                     "omsagent": {
                         "config": "[if(variables('isAuditEnabled'), createObject('logAnalyticsWorkspaceResourceID', variables('resourceIds').auditLogAnalyticsWorkspace), null())]",
                         "enabled": "[variables('isAuditEnabled')]"
@@ -215,6 +259,7 @@
                 },
                 "agentProfiles": [],
                 "apiServerAccessProfile": {
+                    "authorizedIPRanges": [],
                     "enablePrivateCluster": true,
                     "enablePrivateClusterPublicFQDN": false,
                     "privateDNSZone": "System"
@@ -255,7 +300,7 @@
                 "enableRBAC": true,
                 "fqdnSubdomain": "[null()]",
                 "kubernetesVersion": "[parameters('kubernetesVersion')]",
-                "linuxProfile": "[null()]",
+                "linuxProfile": "[if(empty(parameters('linuxProfile')), null(), variables('linuxProfile'))]",
                 "networkProfile": {
                     "dnsServiceIP": "[if(equals(toLower(variables('networking').plugin), 'azure'), variables('networking').dnsServiceIpAddress, null())]",
                     "dockerBridgeCidr": "[variables('networking').dockerBridgeCidr]",
@@ -266,11 +311,11 @@
                     "podCidr": "[if(equals(toLower(variables('networking').plugin), 'kubenet'), variables('networking').podCidr, null())]",
                     "serviceCidr": "[if(equals(toLower(variables('networking').plugin), 'azure'), variables('networking').serviceCidr, null())]"
                 },
-                "nodeResourceGroup": "[null()]",
+                "nodeResourceGroup": "[parameters('nodeResourceGroupName')]",
                 "podIdentityProfile": {
                     "enabled": false
                 },
-                "windowsProfile": "[null()]"
+                "windowsProfile": "[if(empty(parameters('windowsProfile')), null(), variables('windowsProfile'))]",
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.ContainerService/managedClusters"
