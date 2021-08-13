@@ -415,8 +415,11 @@
                 "extensions": {},
                 "imageReference": {},
                 "isEncryptionAtHostEnabled": true,
+                "isSecureBootEnabled": true,
                 "isUltraSsdSupportEnabled": false,
-                "isVulnerabilityAssessmentEnabled": true,
+                "isVirtualTrustedPlatformModuleEnabled": true,
+                "isVulnerabilityAssessmentEnabled": false,
+                "justInTimeAccess": {},
                 "licenseType": "Windows_Client",
                 "linuxConfiguration": {},
                 "osDisk": {},
@@ -2200,11 +2203,20 @@
                     "isEncryptionAtHostEnabled": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isEncryptionAtHostEnabled]"
                     },
+                    "isSecureBootEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isSecureBootEnabled]"
+                    },
                     "isUltraSsdSupportEnabled": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isUltraSsdSupportEnabled]"
                     },
+                    "isVirtualTrustedPlatformModuleEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isVirtualTrustedPlatformModuleEnabled]"
+                    },
                     "isVulnerabilityAssessmentEnabled": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isVulnerabilityAssessmentEnabled]"
+                    },
+                    "justInTimeAccess": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).justInTimeAccess]"
                     },
                     "licenseType": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).licenseType]"
@@ -2570,7 +2582,7 @@
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).customerManagedEncryption]"
                     },
                     "dnsPrefix": {
-                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).dnsPrefix]"
+                        "value": "[union(createObject('dnsPrefix', variables('resourceDefinitions').publicIpAddresses[copyIndex()].name), variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).dnsPrefix]"
                     },
                     "identity": {
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).identity]"
