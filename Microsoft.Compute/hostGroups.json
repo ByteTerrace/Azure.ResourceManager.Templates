@@ -92,7 +92,7 @@
             "properties": {
                 "autoReplaceOnFailure": "[union(variables('defaultResourceProperties').hostGroupHost, parameters('hosts')[copyIndex()]).isAutoReplaceOnFailureEnabled]",
                 "licenseType": "[if(empty(union(variables('defaultResourceProperties').hostGroupHost, parameters('hosts')[copyIndex()]).windowsLicenseType), null(), parameters('hosts')[copyIndex()].windowsLicenseType)]",
-                "platformFaultDomain": "[union(createObject('platformFaultDomainIndex', mod(copyIndex(), 1)), parameters('hosts')[copyIndex()]).platformFaultDomainIndex]"
+                "platformFaultDomain": "[union(createObject('platformFaultDomainIndex', mod(copyIndex(), parameters('numberOfFaultDomains'))), parameters('hosts')[copyIndex()]).platformFaultDomainIndex]"
             },
             "resources": [
                 {
