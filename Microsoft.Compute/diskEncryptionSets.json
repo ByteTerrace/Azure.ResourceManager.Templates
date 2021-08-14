@@ -2,6 +2,13 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "identity": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the identity that will be assigned to the Azure Disk Encryption Set."
+            },
+            "type": "object"
+        },
         "isDoubleEncryptionAtRestEnabled": {
             "defaultValue": true,
             "metadata": {
@@ -68,6 +75,15 @@
             "keyVaults": "2019-09-01",
             "roleAssignments": "2020-04-01-preview"
         },
+        "defaultResourceProperties": {
+            "identity": {
+                "isEnabled": true,
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            }
+        },
+        "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "resourceIds": {
             "diskEncryptionSet": "[resourceId('Microsoft.Compute/diskEncryptionSets', parameters('name'))]",
             "diskEncryptionSetKeyVault": "[resourceId(parameters('keyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
@@ -77,9 +93,7 @@
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').diskEncryptionSets]",
-            "identity": {
-                "type": "SystemAssigned"
-            },
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', if(empty(variables('identity').name), 'SystemAssigned', 'UserAssigned')), if(empty(variables('identity').name), createObject(), createObject('userAssignedIdentities', createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name))))), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {

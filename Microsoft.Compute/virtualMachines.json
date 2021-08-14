@@ -79,6 +79,13 @@
             },
             "type": "object"
         },
+        "identity": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the identity that will be assigned to the Azure Virtual Machine."
+            },
+            "type": "object"
+        },
         "imageReference": {
             "metadata": {
                 "description": "Specifies the properties of the image that will be used to provision the Azure Virtual Machine."
@@ -344,6 +351,12 @@
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
             },
+            "identity": {
+                "isEnabled": true,
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
             "linuxConfiguration": {
                 "administratorUserPublicSshKey": "",
                 "isPasswordAuthenticationEnabled": true,
@@ -399,6 +412,7 @@
         },
         "extensions": "[union(variables('defaultResourceProperties').extensions, parameters('extensions'))]",
         "hostGroup": "[union(variables('defaultResourceProperties').hostGroup, parameters('hostGroup'))]",
+        "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isBackupEnabled": "[not(empty(variables('backup').policyName))]",
@@ -532,9 +546,7 @@
                 "dataDisksCopy",
                 "networkInterfaceCardsCopy"
             ],
-            "identity": {
-                "type": "SystemAssigned"
-            },
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', if(empty(variables('identity').name), 'SystemAssigned', 'UserAssigned')), if(empty(variables('identity').name), createObject(), createObject('userAssignedIdentities', createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name))))), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {

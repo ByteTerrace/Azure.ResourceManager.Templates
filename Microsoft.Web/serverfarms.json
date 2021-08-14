@@ -160,6 +160,26 @@
                                     "type": "ChangeCount",
                                     "value": 1
                                 }
+                            },
+                            {
+                                "metricTrigger": {
+                                    "Dimensions": [],
+                                    "dividePerInstance": false,
+                                    "metricName": "CpuPercentage",
+                                    "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('name'))]",
+                                    "operator": "LessThan",
+                                    "statistic": "Average",
+                                    "threshold": 31,
+                                    "timeAggregation": "Average",
+                                    "timeGrain": "PT1M",
+                                    "timeWindow": "PT5M"
+                                },
+                                "scaleAction": {
+                                    "cooldown": "PT5M",
+                                    "direction": "Decrease",
+                                    "type": "ChangeCount",
+                                    "value": "1"
+                                }
                             }
                         ]
                     }

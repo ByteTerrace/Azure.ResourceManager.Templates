@@ -31,7 +31,11 @@
             "type": "object"
         },
         "availabilityZones": {
-            "defaultValue": [],
+            "defaultValue": [
+                1,
+                2,
+                3
+            ],
             "metadata": {
                 "description": "Specifies an array of availability zones that the Azure Virtual Machine Scale Set will be deployed within."
             },
@@ -55,6 +59,13 @@
             "defaultValue": {},
             "metadata": {
                 "description": "Specifies the properties of the Azure Host Group that the Azure Virtual Machine Scale Set will be assigned to."
+            },
+            "type": "object"
+        },
+        "identity": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the identity that will be assigned to the Azure Virtual Machine Scale Set."
             },
             "type": "object"
         },
@@ -244,6 +255,12 @@
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
             },
+            "identity": {
+                "isEnabled": true,
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
             "networkConfiguration": {
                 "dnsSettings": "[null()]",
                 "isAcceleratedNetworkingEnabled": true,
@@ -290,6 +307,7 @@
         },
         "diskEncryptionSet": "[union(variables('defaultResourceProperties').diskEncryptionSet, parameters('diskEncryptionSet'))]",
         "hostGroup": "[union(variables('defaultResourceProperties').hostGroup, parameters('hostGroup'))]",
+        "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isSpotVirtualMachineScaleSet": "[equals(toLower(parameters('priority')), 'spot')]",
@@ -316,9 +334,7 @@
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').virtualMachineScaleSets]",
-            "identity": {
-                "type": "SystemAssigned"
-            },
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', if(empty(variables('identity').name), 'SystemAssigned', 'UserAssigned')), if(empty(variables('identity').name), createObject(), createObject('userAssignedIdentities', createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name))))), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
@@ -350,7 +366,7 @@
                     "extensionProfile": {
                         "extensions": []
                     },
-                    "evictionPolicy": "[if(not(equals(toLower(parameters('priority')), 'regular')), 'Deallocate', null())]",
+                    "evictionPolicy": "[if(variables('isSpotVirtualMachineScaleSet'), 'Deallocate', null())]",
                     "licenseType": "[parameters('licenseType')]",
                     "networkProfile": {
                         "copy": [

@@ -166,8 +166,8 @@
                 }
             },
             "identity": {
+                "isEnabled": false,
                 "name": "",
-                "type": "SystemAssigned",
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
             },
@@ -236,7 +236,7 @@
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').managedClusters]",
-            "identity": "[if(equals(toLower(variables('identity').type), 'none'), null(), union(createObject('type', variables('identity').type), if(equals(toLower(variables('identity').type), 'userassigned'), createObject('userAssignedIdentities', createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name), createObject())), createObject())))]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', if(empty(variables('identity').name), 'SystemAssigned', 'UserAssigned')), if(empty(variables('identity').name), createObject(), createObject('userAssignedIdentities', createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name))))), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
