@@ -14,7 +14,7 @@
             "type": "array"
         },
         "isAutomaticPlacementEnabled": {
-            "defaultValue": false,
+            "defaultValue": true,
             "metadata": {
                 "description": "Indicates whether the Azure Dedicated Host Group will support automatic placement of virtual machines within the group."
             },

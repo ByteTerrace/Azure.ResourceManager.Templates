@@ -228,7 +228,7 @@
             "hostGroup": {
                 "availabilityZones": [],
                 "hosts": [],
-                "isAutomaticPlacementEnabled": false
+                "isAutomaticPlacementEnabled": true
             },
             "keyVault": {
                 "audit": "[variables('audit')]",
