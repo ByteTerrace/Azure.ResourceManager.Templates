@@ -75,7 +75,7 @@
             "properties": {
                 "platformFaultDomainCount": "[parameters('numberOfFaultDomains')]",
                 "platformUpdateDomainCount": "[parameters('numberOfUpdateDomains')]",
-                "proximityPlacementGroup": "[if(empty(parameters('proximityPlacementGroup')), null(), createObject('id', resourceId(variables('proximityPlacementGroup').subscriptionId, variables('proximityPlacementGroup').resourceGroupName, 'Microsoft.Compute/proximityPlacementGroups', variables('proximityPlacementGroup').name)))]",
+                "proximityPlacementGroup": "[if(empty(parameters('proximityPlacementGroup')), null(), createObject('id', resourceId(variables('proximityPlacementGroup').subscriptionId, variables('proximityPlacementGroup').resourceGroupName, 'Microsoft.Compute/proximityPlacementGroups', variables('proximityPlacementGroup').name)))]"
             },
             "sku": {
                 "name": "[parameters('skuName')]"
