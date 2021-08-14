@@ -55,10 +55,10 @@
             },
             "type": "object"
         },
-        "hostGroup": {
+        "host": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the properties of the Azure Host Group that the Azure Virtual Machine Scale Set will be assigned to."
+                "description": "Specifies the properties of the Azure Dedicated Host that the Azure Virtual Machine Scale Set will be assigned to."
             },
             "type": "object"
         },
@@ -250,8 +250,7 @@
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
             },
-            "hostGroup": {
-                "name": "",
+            "host": {
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
             },
@@ -306,7 +305,7 @@
             }
         },
         "diskEncryptionSet": "[union(variables('defaultResourceProperties').diskEncryptionSet, parameters('diskEncryptionSet'))]",
-        "hostGroup": "[union(variables('defaultResourceProperties').hostGroup, parameters('hostGroup'))]",
+        "host": "[union(variables('defaultResourceProperties').host, parameters('host'))]",
         "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
@@ -345,7 +344,7 @@
                     "enabled": false,
                     "gracePeriod": "PT10M"
                 },
-                "hostGroup": "[if(empty(parameters('hostGroup')), null(), createObject('id', resourceId(variables('hostGroup').subscriptionId, variables('hostGroup').resourceGroupName, 'Microsoft.Compute/hostGroups', variables('hostGroup').name)))]",
+                "hostGroup": "[if(empty(parameters('host')), null(), createObject('id', resourceId(variables('host').subscriptionId, variables('host').resourceGroupName, 'Microsoft.Compute/hostGroups', variables('host').hostGroupName)))]",
                 "orchestrationMode": "[parameters('orchestrationMode')]",
                 "overprovision": "[parameters('isOverprovisioningEnabled')]",
                 "platformFaultDomainCount": 1,

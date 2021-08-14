@@ -420,7 +420,7 @@
                 "diskEncryptionSetName": "",
                 "diskEncryptionSetResourceGroupName": "[variables('resourceGroupName')]",
                 "extensions": {},
-                "hostGroup": {},
+                "host": {},
                 "identity": {},
                 "imageReference": {},
                 "isEncryptionAtHostEnabled": true,
@@ -446,7 +446,7 @@
                 ],
                 "computerNamePrefix": "",
                 "diskEncryptionSet": {},
-                "hostGroup": {},
+                "host": {},
                 "identity": {},
                 "isOverprovisioningEnabled": true,
                 "isUltraSsdSupportEnabled": false,
@@ -2264,8 +2264,8 @@
                     "diskEncryptionSet": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).diskEncryptionSet]"
                     },
-                    "hostGroup": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).hostGroup]"
+                    "host": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).host]"
                     },
                     "identity": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).identity]"
@@ -2367,8 +2367,8 @@
                     "extensions": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).extensions]"
                     },
-                    "hostGroup": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).hostGroup]"
+                    "host": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).host]"
                     },
                     "identity": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).identity]"
