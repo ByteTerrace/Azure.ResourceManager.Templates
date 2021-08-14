@@ -413,12 +413,10 @@
             },
             "virtualMachine": {
                 "audit": "[variables('audit')]",
-                "availabilitySetName": "",
-                "availabilitySetResourceGroupName": "[variables('resourceGroupName')]",
+                "availabilitySet": {},
                 "backup": {},
                 "dataDisks": [],
-                "diskEncryptionSetName": "",
-                "diskEncryptionSetResourceGroupName": "[variables('resourceGroupName')]",
+                "diskEncryptionSet": {},
                 "extensions": {},
                 "host": {},
                 "identity": {},
@@ -2354,11 +2352,8 @@
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).audit]"
                     },
-                    "availabilitySetName": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).availabilitySetName]"
-                    },
-                    "availabilitySetResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).availabilitySetResourceGroupName]"
+                    "availabilitySet": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).availabilitySet]"
                     },
                     "backup": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).backup]"
@@ -2366,11 +2361,8 @@
                     "dataDisks": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).dataDisks]"
                     },
-                    "diskEncryptionSetName": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).diskEncryptionSetName]"
-                    },
-                    "diskEncryptionSetResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).diskEncryptionSetResourceGroupName]"
+                    "diskEncryptionSet": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).diskEncryptionSet]"
                     },
                     "extensions": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).extensions]"
