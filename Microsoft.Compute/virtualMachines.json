@@ -352,6 +352,10 @@
                         "name": "",
                         "resourceGroupName": "[variables('resourceGroupName')]"
                     },
+                    "publicIpAddress": {
+                        "name": "",
+                        "resourceGroupName": "[variables('resourceGroupName')]"
+                    },
                     "subnet": {
                         "resourceGroupName": "[variables('resourceGroupName')]"
                     }
@@ -459,6 +463,7 @@
                                 "primary": "[if(equals(length(parameters('networkInterfaceCards')[copyIndex()].ipConfigurations), 1), json('true'), parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].isPrimary)]",
                                 "privateIPAddressVersion": "[union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).addressVersion]",
                                 "privateIPAllocationMethod": "[union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).allocationMethod]",
+                                "publicIPAddress": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).publicIpAddress.name), null(), createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).publicIpAddress.resourceGroupName, 'Microsoft.Network/publicIPAddresses', union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).publicIpAddress.name)))]",
                                 "subnet": {
                                     "id": "[resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].subnet.virtualNetworkName, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].subnet.name)]"
                                 }
