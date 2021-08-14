@@ -1078,7 +1078,7 @@
                 "[variables('resourceIds').vmInsightsSolution]"
             ],
             "location": "[parameters('location')]",
-            "name": "[format('Microsoft-VMInsights-Health-{0}', parameters('name'))]",
+            "name": "[format('Microsoft-VMInsights-Health-{0}', parameters('location'))]",
             "properties": {
                 "description": "Data collection rule for VM Insights health.",
                 "dataFlows": [
