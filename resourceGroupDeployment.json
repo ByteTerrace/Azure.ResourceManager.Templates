@@ -2233,7 +2233,6 @@
             },
             "dependsOn": [
                 "applicationSecurityGroupsCopy",
-                "availabilitySetsCopy",
                 "diskEncryptionSetsCopy",
                 "hostGroupsCopy",
                 "loadBalancersCopy",

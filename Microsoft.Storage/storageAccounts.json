@@ -588,9 +588,6 @@
                     "resources": [
                         {
                             "apiVersion": "[parameters('storageAccountsApiVersion')]",
-                            "identity": {
-                                "type": "SystemAssigned"
-                            },
                             "kind": "[parameters('kind')]",
                             "location": "[parameters('location')]",
                             "name": "[parameters('name')]",
