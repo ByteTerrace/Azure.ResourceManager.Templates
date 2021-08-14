@@ -72,8 +72,14 @@
             },
             "type": "secureObject"
         },
-        "imageReference": {
+        "hostGroup": {
             "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the properties of the Azure Host Group that the Azure Virtual Machine will be assigned to."
+            },
+            "type": "object"
+        },
+        "imageReference": {
             "metadata": {
                 "description": "Specifies the properties of the image that will be used to provision the Azure Virtual Machine."
             },
@@ -333,6 +339,11 @@
                     }
                 ]
             },
+            "hostGroup": {
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
             "linuxConfiguration": {
                 "administratorUserPublicSshKey": "",
                 "isPasswordAuthenticationEnabled": true,
@@ -387,6 +398,7 @@
             }
         },
         "extensions": "[union(variables('defaultResourceProperties').extensions, parameters('extensions'))]",
+        "hostGroup": "[union(variables('defaultResourceProperties').hostGroup, parameters('hostGroup'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isBackupEnabled": "[not(empty(variables('backup').policyName))]",
@@ -544,6 +556,7 @@
                 "hardwareProfile": {
                     "vmSize": "[parameters('size')]"
                 },
+                "hostGroup": "[if(empty(parameters('hostGroup')), null(), createObject('id', resourceId(variables('hostGroup').subscriptionId, variables('hostGroup').resourceGroupName, 'Microsoft.Compute/hostGroups', variables('hostGroup').name)))]",
                 "licenseType": "[if(variables('licenseTypeIsNotEmpty'), parameters('licenseType'), null())]",
                 "networkProfile": {
                     "networkInterfaces": "[variables('networkInterfacesByResourceId')]"
