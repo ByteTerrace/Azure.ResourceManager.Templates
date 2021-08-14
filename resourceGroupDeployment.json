@@ -57,6 +57,7 @@
             },
             "firewalls": [],
             "hdInsightClusters": [],
+            "hostGroups": [],
             "keyVaults": [],
             "kubernetesServiceClusters": [],
             "loadBalancers": [],
@@ -223,6 +224,11 @@
                 "operatingSystem": "Linux",
                 "storageProfile": {},
                 "version": "4.0"
+            },
+            "hostGroup": {
+                "availabilityZones": [],
+                "hosts": [],
+                "isAutomaticPlacementEnabled": false
             },
             "keyVault": {
                 "audit": "[variables('audit')]",
@@ -486,6 +492,7 @@
             "eventGridTopic": "[format('{0}-EventGridTopic', deployment().name)]",
             "firewall": "[format('{0}-Firewall', deployment().name)]",
             "hdInsightCluster": "[format('{0}-HdInsightCluster', deployment().name)]",
+            "hostGroup": "[format('{0}-HostGroup', deployment().name)]",
             "keyVault": "[format('{0}-KeyVault', deployment().name)]",
             "kubernetesServiceCluster": "[format('{0}-KubernetesServiceCluster', deployment().name)]",
             "loadBalancer": "[format('{0}-LoadBalancer', deployment().name)]",
@@ -2154,6 +2161,48 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').hostGroups))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').hostGroups)]",
+                "mode": "Parallel",
+                "name": "hostGroupsCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "scriptsPreDeployCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').hostGroup, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "availabilityZones": {
+                        "value": "[union(variables('defaultResourceProperties').hostGroup, variables('resourceDefinitions').hostGroups[copyIndex()]).availabilityZones]"
+                    },
+                    "hosts": {
+                        "value": "[union(variables('defaultResourceProperties').hostGroup, variables('resourceDefinitions').hostGroups[copyIndex()]).hosts]"
+                    },
+                    "isAutomaticPlacementEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').hostGroup, variables('resourceDefinitions').hostGroups[copyIndex()]).isAutomaticPlacementEnabled]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').hostGroups[copyIndex()].name]"
+                    },
+                    "numberOfFaultDomains": {
+                        "value": "[variables('resourceDefinitions').hostGroups[copyIndex()].numberOfFaultDomains]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Compute/hostGroups.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').virtualMachines))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').virtualMachines)]",
@@ -2164,6 +2213,7 @@
                 "applicationSecurityGroupsCopy",
                 "availabilitySetsCopy",
                 "diskEncryptionSetsCopy",
+                "hostGroupsCopy",
                 "loadBalancersCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
@@ -3047,6 +3097,7 @@
                 "eventGridTopicsCopy",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
+                "hostGroupsCopy",
                 "keyVaultsCopy",
                 "kubernetesServiceClustersCopy",
                 "loadBalancersCopy",
