@@ -200,11 +200,8 @@
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
             "keyVault": "[resourceId('Microsoft.KeyVault/vaults', parameters('name'))]"
         },
-        "secretsCollectionCount": "[length(union(variables('secretsDefaultObject'), parameters('secrets')).collection)]",
+        "secretsCollectionCount": "[length(union(createObject('collection', createArray()), parameters('secrets')).collection)]",
         "secretsCollectionIsNotEmpty": "[greater(variables('secretsCollectionCount'), 0)]",
-        "secretsDefaultObject": {
-            "collection": []
-        },
         "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [

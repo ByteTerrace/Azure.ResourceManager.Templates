@@ -387,6 +387,7 @@
                 "encryptionScopes": [],
                 "fileServices": {},
                 "firewallRules": [],
+                "identity": {},
                 "isAdvancedThreatProtectionEnabled": true,
                 "isAllowTrustedMicrosoftServicesEnabled": true,
                 "isPublicNetworkAccessEnabled": true,
@@ -2534,6 +2535,9 @@
                     },
                     "firewallRules": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).firewallRules]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).identity]"
                     },
                     "isAdvancedThreatProtectionEnabled": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isAdvancedThreatProtectionEnabled]"
