@@ -89,9 +89,6 @@
                 "serviceEndpoints": []
             }
         },
-        "ddosProtectionPlan": {
-            "id": "[if(variables('isDdosProtectionEnabled'), resourceId(parameters('ddosProtectionPlanSubscriptionId'), parameters('ddosProtectionPlanResourceGroupName'), 'Microsoft.Network/ddosProtectionPlans', parameters('ddosProtectionPlanName')), null())]"
-        },
         "isDdosProtectionEnabled": "[not(empty(parameters('ddosProtectionPlanName')))]",
         "resourceGroupName": "[resourceGroup().name]",
         "subscriptionId": "[subscription().subscriptionId]"
@@ -124,7 +121,7 @@
                         "name": "subnets"
                     }
                 ],
-                "ddosProtectionPlan": "[if(variables('isDdosProtectionEnabled'), variables('ddosProtectionPlan'), null())]",
+                "ddosProtectionPlan": "[if(variables('isDdosProtectionEnabled'), createObject('id', resourceId(parameters('ddosProtectionPlanSubscriptionId'), parameters('ddosProtectionPlanResourceGroupName'), 'Microsoft.Network/ddosProtectionPlans', parameters('ddosProtectionPlanName'))), null())]",
                 "dhcpOptions": "[if(empty(parameters('dnsServers')), null(), createObject('dnsServers', parameters('dnsServers')))]",
                 "enableDdosProtection": "[variables('isDdosProtectionEnabled')]",
                 "enableVmProtection": true
