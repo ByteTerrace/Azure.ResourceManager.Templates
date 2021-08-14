@@ -541,7 +541,7 @@
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
             "subnet": "[format('{0}-Subnet', deployment().name)]",
             "virtualMachine": "[format('{0}-VirtualMachine', deployment().name)]",
-            "virtualMachineScaleSets": "[format('{0}-VirtualMachineScaleSets', deployment().name)]",
+            "virtualMachineScaleSet": "[format('{0}-VirtualMachineScaleSets', deployment().name)]",
             "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]",
             "webApplication": "[format('{0}-WebApplication', deployment().name)]"
         },
