@@ -187,10 +187,10 @@
             },
             "type": "string"
         },
-        "size": {
-            "defaultValue": "Standard_D4s_v4",
+        "skuName": {
+            "defaultValue": "Standard_D2s_v4",
             "metadata": {
-                "description": "Specifies the size of the Azure Virtual Machine."
+                "description": "Specifies the SKU name of the Azure Virtual Machine."
             },
             "type": "string"
         },
@@ -566,7 +566,7 @@
                 "extensionsTimeBudget": "PT15M",
                 "evictionPolicy": "[if(variables('isSpotVirtualMachine'), 'Deallocate', null())]",
                 "hardwareProfile": {
-                    "vmSize": "[parameters('size')]"
+                    "vmSize": "[parameters('skuName')]"
                 },
                 "host": "[if(empty(variables('host').name), null(), createObject('id', resourceId(variables('host').subscriptionId, variables('host').resourceGroupName, 'Microsoft.Compute/hostGroups/hosts', variables('host').hostGroupName, variables('host').name)))]",
                 "hostGroup": "[if(empty(parameters('host')), null(), createObject('id', resourceId(variables('host').subscriptionId, variables('host').resourceGroupName, 'Microsoft.Compute/hostGroups', variables('host').hostGroupName)))]",

@@ -433,7 +433,7 @@
                 "linuxConfiguration": {},
                 "osDisk": {},
                 "priority": "Regular",
-                "size": "Standard_D4s_v4",
+                "skuName": "Standard_D2s_v4",
                 "windowsConfiguration": {}
             },
             "virtualMachineScaleSet": {
@@ -451,10 +451,12 @@
                 "isOverprovisioningEnabled": true,
                 "isUltraSsdSupportEnabled": false,
                 "licenseType": "Windows_Client",
+                "numberOfVirtualMachines": 0,
                 "orchestrationMode": "Uniform",
                 "osDisk": {},
                 "priority": "Regular",
                 "proximityPlacementGroup": {},
+                "skuName": "Standard_D2s_v4",
                 "windowsConfiguration": {}
             },
             "virtualNetwork": {
@@ -2291,6 +2293,9 @@
                     "networkInterfaceConfigurations": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).networkInterfaceConfigurations]"
                     },
+                    "numberOfVirtualMachines": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).numberOfVirtualMachines]"
+                    },
                     "orchestrationMode": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).orchestrationMode]"
                     },
@@ -2302,6 +2307,9 @@
                     },
                     "proximityPlacementGroup": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).proximityPlacementGroup]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).skuName]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
@@ -2415,8 +2423,8 @@
                     "priority": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).priority]"
                     },
-                    "size": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).size]"
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).skuName]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
