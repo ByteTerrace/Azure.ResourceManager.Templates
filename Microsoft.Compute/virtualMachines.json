@@ -291,6 +291,10 @@
                     "isEnabled": true,
                     "version": "[if(variables('isLinuxVm'), '9.9', if(variables('isWindowsVm'), '9.9', null()))]"
                 },
+                "azureGuestAttestationAgent": {
+                    "isEnabled": true,
+                    "version": "1.0"
+                },
                 "azureGuestConfigurationAgent": {
                     "isEnabled": true,
                     "version": "[if(variables('isLinuxVm'), '1.9', if(variables('isWindowsVm'), '1.9', null()))]"
@@ -412,6 +416,7 @@
             "virtualMachineActiveDirectoryDomainJoin": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineActiveDirectoryDomainJoinName'))]",
             "virtualMachineAntimalwareAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineAntimalwareAgentName'))]",
             "virtualMachineDependencyAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineDependencyAgentName'))]",
+            "virtualMachineGuestAttestationAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineGuestAttestationAgentName'))]",
             "virtualMachineGuestConfigurationAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineGuestConfigurationAgentName'))]",
             "virtualMachineGuestHealthAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineGuestHealthAgentName'))]",
             "virtualMachineLogAnalyticsAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineLogAnalyticsAgentName'))]",
@@ -422,6 +427,7 @@
         "virtualMachineActiveDirectoryDomainJoinName": "AzureActiveDirectoryDomainJoin",
         "virtualMachineAntimalwareAgentName": "AzureAntimalwareAgent",
         "virtualMachineDependencyAgentName": "AzureDependencyAgent",
+        "virtualMachineGuestAttestationAgentName": "AzureGuestAttestationAgent",
         "virtualMachineGuestConfigurationAgentName": "AzureGuestConfigurationAgent",
         "virtualMachineGuestHealthAgentName": "AzureGuestHealthAgent",
         "virtualMachineLogAnalyticsAgentName": "AzureLogAnalyticsAgent",
@@ -688,6 +694,37 @@
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
+            "condition": "[and(parameters('isVirtualTrustedPlatformModuleEnabled'), variables('extensions').azureGuestAttestationAgent.isEnabled)]",
+            "dependsOn": [
+                "[variables('resourceIds').virtualMachine]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineGuestAttestationAgentName'))]",
+            "properties": {
+                "autoUpgradeMinorVersion": true,
+                "enableAutomaticUpgrade": false,
+                "publisher": "Microsoft.Azure.Security.WindowsAttestation",
+                "settings": {
+                    "AttestationConfig": {
+                        "ascSettings": {
+                            "ascReportingEndpoint": "https://eus2.service.attest.azure.net/"
+                        },
+                        "disableAlerts": "false",
+                        "maaSettings": {
+                            "maaEndpoint": "https://sharedeus2.eus2.attest.azure.net/",
+                            "maaTenantName": "GuestAttestation"
+                        },
+                        "useCustomToken": "false"
+                    }
+                },
+                "type": "GuestAttestation",
+                "typeHandlerVersion": "[variables('extensions').azureGuestAttestationAgent.version]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
             "condition": "[and(not(equals(variables('osType'), 'Unknown')), variables('extensions').azureGuestConfigurationAgent.isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
@@ -789,6 +826,7 @@
                 "[variables('resourceIds').virtualMachineActiveDirectoryDomainJoin]",
                 "[variables('resourceIds').virtualMachineAntimalwareAgent]",
                 "[variables('resourceIds').virtualMachineDependencyAgent]",
+                "[variables('resourceIds').virtualMachineGuestAttestationAgent]",
                 "[variables('resourceIds').virtualMachineGuestConfigurationAgent]",
                 "[variables('resourceIds').virtualMachineGuestHealthAgent]",
                 "[variables('resourceIds').virtualMachineLogAnalyticsAgent]",
@@ -805,6 +843,7 @@
                 "[variables('resourceIds').virtualMachineActiveDirectoryDomainJoin]",
                 "[variables('resourceIds').virtualMachineAntimalwareAgent]",
                 "[variables('resourceIds').virtualMachineDependencyAgent]",
+                "[variables('resourceIds').virtualMachineGuestAttestationAgent]",
                 "[variables('resourceIds').virtualMachineGuestConfigurationAgent]",
                 "[variables('resourceIds').virtualMachineGuestHealthAgent]",
                 "[variables('resourceIds').virtualMachineLogAnalyticsAgent]",
@@ -825,6 +864,7 @@
                 "[variables('resourceIds').virtualMachineActiveDirectoryDomainJoin]",
                 "[variables('resourceIds').virtualMachineAntimalwareAgent]",
                 "[variables('resourceIds').virtualMachineDependencyAgent]",
+                "[variables('resourceIds').virtualMachineGuestAttestationAgent]",
                 "[variables('resourceIds').virtualMachineGuestConfigurationAgent]",
                 "[variables('resourceIds').virtualMachineGuestHealthAgent]",
                 "[variables('resourceIds').virtualMachineLogAnalyticsAgent]",
