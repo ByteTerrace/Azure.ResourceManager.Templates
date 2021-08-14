@@ -613,6 +613,19 @@
             "type": "Microsoft.Security/locations/jitNetworkAccessPolicies"
         },
         {
+            "apiVersion": "[variables('apiVersions').insightsDataCollectionRuleAssociations]",
+            "condition": "[variables('isAuditEnabled')]",
+            "dependsOn": [
+                "[variables('resourceIds').virtualMachine]"
+            ],
+            "name": "[format('{0}/Microsoft.Insights/VMInsights-Health-DcrAssociation', parameters('name'))]",
+            "properties": {
+                "description": "Association of data collection rule for VM Insights Health.",
+                "dataCollectionRuleId": "[variables('resourceIds').insightsDataCollectionRule]"
+            },
+            "type": "Microsoft.Compute/virtualMachines/providers/dataCollectionRuleAssociations"
+        },
+        {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
             "condition": "[variables('extensions').azureActiveDirectoryDomainJoin.isEnabled]",
             "dependsOn": [
@@ -745,7 +758,8 @@
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
             "condition": "[and(not(equals(variables('osType'), 'Unknown')), variables('extensions').azureGuestHealthAgent.isEnabled)]",
             "dependsOn": [
-                "[variables('resourceIds').virtualMachine]"
+                "[variables('resourceIds').virtualMachine]",
+                "[variables('resourceIds').virtualMachineMonitorAgent]"
             ],
             "location": "[parameters('location')]",
             "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineGuestHealthAgentName'))]",
@@ -835,27 +849,6 @@
             ],
             "name": "[format('{0}/Microsoft.Security/default', parameters('name'))]",
             "type": "Microsoft.Compute/virtualMachines/providers/serverVulnerabilityAssessments"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').insightsDataCollectionRuleAssociations]",
-            "condition": "[variables('isAuditEnabled')]",
-            "dependsOn": [
-                "[variables('resourceIds').virtualMachineActiveDirectoryDomainJoin]",
-                "[variables('resourceIds').virtualMachineAntimalwareAgent]",
-                "[variables('resourceIds').virtualMachineDependencyAgent]",
-                "[variables('resourceIds').virtualMachineGuestAttestationAgent]",
-                "[variables('resourceIds').virtualMachineGuestConfigurationAgent]",
-                "[variables('resourceIds').virtualMachineGuestHealthAgent]",
-                "[variables('resourceIds').virtualMachineLogAnalyticsAgent]",
-                "[variables('resourceIds').virtualMachineMonitorAgent]",
-                "[variables('resourceIds').virtualMachineNetworkWatcherAgent]"
-            ],
-            "name": "[format('{0}/Microsoft.Insights/VMInsights-Health-DcrAssociation', parameters('name'))]",
-            "properties": {
-                "description": "Association of data collection rule for VM Insights Health.",
-                "dataCollectionRuleId": "[variables('resourceIds').insightsDataCollectionRule]"
-            },
-            "type": "Microsoft.Compute/virtualMachines/providers/dataCollectionRuleAssociations"
         },
         {
             "apiVersion": "[variables('apiVersions').deployments]",
