@@ -719,11 +719,11 @@
                 "publisher": "Microsoft.Azure.Security.WindowsAttestation",
                 "settings": {
                     "AttestationConfig": {
-                        "ascSettings": {
+                        "AscSettings": {
                             "ascReportingEndpoint": "https://eus2.service.attest.azure.net/"
                         },
                         "disableAlerts": "false",
-                        "maaSettings": {
+                        "MaaSettings": {
                             "maaEndpoint": "https://sharedeus2.eus2.attest.azure.net/",
                             "maaTenantName": "GuestAttestation"
                         },
