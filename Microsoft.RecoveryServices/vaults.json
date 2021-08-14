@@ -138,7 +138,7 @@
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
-                "encryption": "[if(variables('isCustomerManagedEncryptionEnabled'), createObject('infrastructureEncryption', if(variables('customerManagedEncryption').isDoubleEncryptionAtRestEnabled, 'Enabled', 'Disabled'), 'kekIdentity', createObject('useSystemAssignedIdentity', json('true')), 'keyVaultProperties', createObject('keyUri', format('{0}keys/{1}/{2}', reference(variables('resourceIds').recoveryServicesVaultCustomerManagedEncryptionKeyVault, variables('apiVersions').keyVaults).vaultUri, variables('customerManagedEncryption').keyName, variables('customerManagedEncryption').keyVersion))), null())]"
+                "encryption": "[if(variables('isCustomerManagedEncryptionEnabled'), createObject('infrastructureEncryption', if(variables('customerManagedEncryption').isDoubleEncryptionAtRestEnabled, 'Enabled', 'Disabled'), 'kekIdentity', createObject('useSystemAssignedIdentity', true()), 'keyVaultProperties', createObject('keyUri', format('{0}keys/{1}/{2}', reference(variables('resourceIds').recoveryServicesVaultCustomerManagedEncryptionKeyVault, variables('apiVersions').keyVaults).vaultUri, variables('customerManagedEncryption').keyName, variables('customerManagedEncryption').keyVersion))), null())]"
             },
             "sku": {
                 "name": "RS0",

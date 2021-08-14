@@ -289,7 +289,7 @@
                 },
                 "azureDependencyAgent": {
                     "isEnabled": true,
-                    "version": "[if(variables('isLinuxVm'), '9.9', if(variables('isWindowsVm'), '9.9', null()))]"
+                    "version": "[if(variables('isLinuxVirtualMachine'), '9.9', if(variables('isWindowsVirtualMachine'), '9.9', null()))]"
                 },
                 "azureGuestAttestationAgent": {
                     "isEnabled": true,
@@ -297,11 +297,11 @@
                 },
                 "azureGuestConfigurationAgent": {
                     "isEnabled": true,
-                    "version": "[if(variables('isLinuxVm'), '1.9', if(variables('isWindowsVm'), '1.9', null()))]"
+                    "version": "[if(variables('isLinuxVirtualMachine'), '1.9', if(variables('isWindowsVirtualMachine'), '1.9', null()))]"
                 },
                 "azureGuestHealthAgent": {
                     "isEnabled": true,
-                    "version": "[if(variables('isLinuxVm'), '1.0', if(variables('isWindowsVm'), '1.0', null()))]"
+                    "version": "[if(variables('isLinuxVirtualMachine'), '1.0', if(variables('isWindowsVirtualMachine'), '1.0', null()))]"
                 },
                 "azureLogAnalyticsAgent": {
                     "isEnabled": true,
@@ -309,11 +309,11 @@
                 },
                 "azureMonitorAgent": {
                     "isEnabled": true,
-                    "version": "[if(variables('isLinuxVm'), '1.9', if(variables('isWindowsVm'), '1.0', null()))]"
+                    "version": "[if(variables('isLinuxVirtualMachine'), '1.9', if(variables('isWindowsVirtualMachine'), '1.0', null()))]"
                 },
                 "azureNetworkWatcherAgent": {
                     "isEnabled": true,
-                    "version": "[if(variables('isLinuxVm'), '1.4', if(variables('isWindowsVm'), '1.4', null()))]"
+                    "version": "[if(variables('isLinuxVirtualMachine'), '1.4', if(variables('isWindowsVirtualMachine'), '1.4', null()))]"
                 }
             },
             "justInTimeAccess": {
@@ -390,10 +390,10 @@
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isBackupEnabled": "[not(empty(variables('backup').policyName))]",
-        "isLinuxVm": "[or(not(empty(parameters('linuxConfiguration'))), equals(parameters('licenseType'), 'RHEL_BYOS'), equals(parameters('licenseType'), 'SLES_BYOS'), contains(union(createObject('id', ''), parameters('imageReference')).id, 'Linux'), contains(union(createObject('offer', ''), parameters('imageReference')).offer, 'Linux'))]",
+        "isLinuxVirtualMachine": "[or(not(empty(parameters('linuxConfiguration'))), equals(parameters('licenseType'), 'RHEL_BYOS'), equals(parameters('licenseType'), 'SLES_BYOS'), contains(union(createObject('id', ''), parameters('imageReference')).id, 'Linux'), contains(union(createObject('offer', ''), parameters('imageReference')).offer, 'Linux'))]",
         "isSpotVirtualMachine": "[equals(toLower(parameters('priority')), 'spot')]",
         "isTrustedLaunchEnabled": "[or(parameters('isSecureBootEnabled'), parameters('isVirtualTrustedPlatformModuleEnabled'))]",
-        "isWindowsVm": "[or(not(empty(parameters('windowsConfiguration'))), equals(parameters('licenseType'), 'Windows_Client'), equals(parameters('licenseType'), 'Windows_Server'), contains(union(createObject('id', ''), parameters('imageReference')).id, 'Windows'), contains(union(createObject('offer', ''), parameters('imageReference')).offer, 'Windows'))]",
+        "isWindowsVirtualMachine": "[or(not(empty(parameters('windowsConfiguration'))), equals(parameters('licenseType'), 'Windows_Client'), equals(parameters('licenseType'), 'Windows_Server'), contains(union(createObject('id', ''), parameters('imageReference')).id, 'Windows'), contains(union(createObject('offer', ''), parameters('imageReference')).offer, 'Windows'))]",
         "justInTimeAccess": "[union(variables('defaultResourceProperties').justInTimeAccess, parameters('justInTimeAccess'))]",
         "licenseTypeIsNotEmpty": "[not(empty(parameters('licenseType')))]",
         "linuxConfiguration": {
@@ -406,7 +406,7 @@
         },
         "linuxConfigurationFriendly": "[union(variables('defaultResourceProperties').linuxConfiguration, parameters('linuxConfiguration'))]",
         "networkInterfaceCardsCount": "[length(parameters('networkInterfaceCards'))]",
-        "osType": "[if(variables('isLinuxVm'), 'Linux', if(variables('isWindowsVm'), 'Windows', 'Unknown'))]",
+        "osType": "[if(variables('isLinuxVirtualMachine'), 'Linux', if(variables('isWindowsVirtualMachine'), 'Windows', 'Unknown'))]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
@@ -466,7 +466,7 @@
                                 "applicationSecurityGroups": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).applicationSecurityGroup.name), null(), createArray(createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).applicationSecurityGroup.resourceGroupName, 'Microsoft.Network/applicationSecurityGroups', union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).applicationSecurityGroup.name))))]",
                                 "loadBalancerBackendAddressPools": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.backendAddressPoolName), null(), createArray(createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.resourceGroupName, 'Microsoft.Network/loadBalancers/backendAddressPools', union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.name, union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.backendAddressPoolName))))]",
                                 "loadBalancerInboundNatRules": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.inboundNatRuleName), null(), createArray(createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.resourceGroupName, 'Microsoft.Network/loadBalancers/backendAddressPools', union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.name, union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.inboundNatRuleName))))]",
-                                "primary": "[if(equals(length(parameters('networkInterfaceCards')[copyIndex()].ipConfigurations), 1), json('true'), parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].isPrimary)]",
+                                "primary": "[if(equals(length(parameters('networkInterfaceCards')[copyIndex()].ipConfigurations), 1), true(), parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].isPrimary)]",
                                 "privateIPAddressVersion": "[union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).addressVersion]",
                                 "privateIPAllocationMethod": "[union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).allocationMethod]",
                                 "publicIPAddress": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).publicIpAddress.name), null(), createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).publicIpAddress.resourceGroupName, 'Microsoft.Network/publicIPAddresses', union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).publicIpAddress.name)))]",
@@ -554,9 +554,9 @@
                     "allowExtensionOperations": true,
                     "computerName": "[parameters('name')]",
                     "customData": "[null()]",
-                    "linuxConfiguration": "[if(variables('isLinuxVm'), variables('linuxConfiguration'), null())]",
+                    "linuxConfiguration": "[if(variables('isLinuxVirtualMachine'), variables('linuxConfiguration'), null())]",
                     "secrets": [],
-                    "windowsConfiguration": "[if(variables('isWindowsVm'), variables('windowsConfiguration'), null())]"
+                    "windowsConfiguration": "[if(variables('isWindowsVirtualMachine'), variables('windowsConfiguration'), null())]"
                 },
                 "priority": "[parameters('priority')]",
                 "securityProfile": {

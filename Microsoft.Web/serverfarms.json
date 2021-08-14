@@ -130,27 +130,26 @@
             },
             "autoscale": {
                 "isEnabled": false,
-                "name": "[parameters('name')]",
+                "name": "[format('ASP_{0}', parameters('name'))]",
                 "notifications": [],
                 "profiles": [
                     {
                         "capacity": {
-                            "default": "1",
-                            "maximum": "3",
-                            "minimum": "1"
+                            "default": 1,
+                            "maximum": 3,
+                            "minimum": 1
                         },
-                        "name": "CPU usage exceeded maximum threshold.",
+                        "name": "Default",
                         "rules": [
                             {
                                 "metricTrigger": {
                                     "Dimensions": [],
                                     "dividePerInstance": false,
                                     "metricName": "CpuPercentage",
-                                    "metricNamespace": "Microsoft.Web/serverfarms",
                                     "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('name'))]",
                                     "operator": "GreaterThan",
                                     "statistic": "Average",
-                                    "threshold": 70,
+                                    "threshold": 61,
                                     "timeAggregation": "Average",
                                     "timeGrain": "PT1M",
                                     "timeWindow": "PT5M"
@@ -159,7 +158,7 @@
                                     "cooldown": "PT5M",
                                     "direction": "Increase",
                                     "type": "ChangeCount",
-                                    "value": "1"
+                                    "value": 1
                                 }
                             }
                         ]
@@ -237,7 +236,6 @@
                     "scaleLookAheadTime": "[null()]",
                     "scaleMode": "Disabled"
                 },
-                "targetResourceLocation": "[parameters('location')]",
                 "targetResourceUri": "[variables('resourceIds').serverfarm]"
             },
             "tags": "[parameters('tags')]",
