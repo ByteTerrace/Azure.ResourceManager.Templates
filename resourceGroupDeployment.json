@@ -432,6 +432,7 @@
                 "ddosProtectionPlanName": "",
                 "ddosProtectionPlanResourceGroupName": "[variables('resourceGroupName')]",
                 "ddosProtectionPlanSubscriptionId": "[variables('subscriptionId')]",
+                "dnsServers": [],
                 "subnets": []
             },
             "webApplication": {
@@ -1125,6 +1126,9 @@
                     },
                     "ddosProtectionPlanSubscriptionId": {
                         "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).ddosProtectionPlanSubscriptionId]"
+                    },
+                    "dnsServers": {
+                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).dnsServers]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').virtualNetworks[copyIndex()]).location]"

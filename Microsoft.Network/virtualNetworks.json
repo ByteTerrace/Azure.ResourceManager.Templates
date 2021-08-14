@@ -29,6 +29,13 @@
             },
             "type": "string"
         },
+        "dnsServers": {
+            "defaultValue": "[]",
+            "metadata": {
+                "description": "An array of domain name servers that will be associated with the Azure Virtual Network."
+            },
+            "type": "string"
+        },
         "location": {
             "metadata": {
                 "description": "Specifies the location in which the Azure Virtual Network resource(s) should be deployed."
@@ -118,6 +125,7 @@
                     }
                 ],
                 "ddosProtectionPlan": "[if(variables('isDdosProtectionEnabled'), variables('ddosProtectionPlan'), null())]",
+                "dhcpOptions": "[if(empty(parameters('dnsServers')), null(), createObject('dnsServers', createArray(parameters('dnsServers'))))]",
                 "enableDdosProtection": "[variables('isDdosProtectionEnabled')]",
                 "enableVmProtection": true
             },
