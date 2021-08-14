@@ -33,6 +33,8 @@
             "type": "string"
         },
         "numberOfFaultDomains": {
+            "maxValue": 3,
+            "minValue": 1,
             "metadata": {
                 "description": "Specifies the number of fault domains that the Azure Dedicated Host Group will support."
             },
@@ -58,6 +60,9 @@
                 "sqlServerLicenseType": "",
                 "windowsLicenseType": ""
             }
+        },
+        "resourceIds": {
+            "hostGroup": "[resourceId('Microsoft.Compute/hostGroups', parameters('name'))]"
         }
     },
     "resources": [
@@ -79,12 +84,15 @@
                 "count": "[length(parameters('hosts'))]",
                 "name": "hostGroupHostsCopy"
             },
+            "dependsOn": [
+                "[variables('resourceIds').hostGroup]"
+            ],
             "location": "[parameters('location')]",
             "name": "[format('{0}/{1}', parameters('name'), parameters('hosts')[copyIndex()].name)]",
             "properties": {
                 "autoReplaceOnFailure": "[union(variables('defaultResourceProperties').hostGroupHost, parameters('hosts')[copyIndex()]).isAutoReplaceOnFailureEnabled]",
                 "licenseType": "[if(empty(union(variables('defaultResourceProperties').hostGroupHost, parameters('hosts')[copyIndex()]).windowsLicenseType), null(), parameters('hosts')[copyIndex()].windowsLicenseType)]",
-                "platformFaultDomain": "[mod(copyIndex(), 1)]"
+                "platformFaultDomain": "[union(createObject('platformFaultDomainIndex', mod(copyIndex(), 1)), parameters('hosts')[copyIndex()]).platformFaultDomainIndex]"
             },
             "resources": [
                 {
