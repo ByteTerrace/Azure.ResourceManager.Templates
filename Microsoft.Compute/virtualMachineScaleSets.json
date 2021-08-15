@@ -115,7 +115,9 @@
             "type": "array"
         },
         "numberOfFaultDomains": {
-            "defaultValue": 3,
+            "defaultValue": 1,
+            "maxValue": 3,
+            "minValue": 1,
             "metadata": {
                 "description": ""
             },
@@ -124,7 +126,7 @@
         "numberOfVirtualMachines": {
             "defaultValue": 0,
             "metadata": {
-                "description": ""
+                "description": "Specifies the number of virtual machines that will be deployed within the Azure Virtual Machine Scale Set."
             },
             "type": "int"
         },
