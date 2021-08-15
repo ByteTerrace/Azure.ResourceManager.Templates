@@ -450,7 +450,7 @@
                 "isUltraSsdSupportEnabled": false,
                 "licenseType": "Windows_Client",
                 "networkInterfaceConfigurations": [],
-                "numberOfFaultDomains": 0,
+                "numberOfFaultDomains": 1,
                 "numberOfVirtualMachines": 0,
                 "orchestrationMode": "Uniform",
                 "osDisk": {},
