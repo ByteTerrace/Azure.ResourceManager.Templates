@@ -2208,6 +2208,9 @@
                     "isAutomaticPlacementEnabled": {
                         "value": "[union(variables('defaultResourceProperties').hostGroup, variables('resourceDefinitions').hostGroups[copyIndex()]).isAutomaticPlacementEnabled]"
                     },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').hostGroups[copyIndex()]).location]"
+                    },
                     "name": {
                         "value": "[variables('resourceDefinitions').hostGroups[copyIndex()].name]"
                     },
