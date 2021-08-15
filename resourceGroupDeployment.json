@@ -449,6 +449,7 @@
                 "isOverprovisioningEnabled": true,
                 "isUltraSsdSupportEnabled": false,
                 "licenseType": "Windows_Client",
+                "networkInterfaceConfigurations": [],
                 "numberOfVirtualMachines": 0,
                 "orchestrationMode": "Uniform",
                 "osDisk": {},

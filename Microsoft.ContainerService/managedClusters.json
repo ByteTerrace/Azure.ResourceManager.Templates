@@ -166,7 +166,7 @@
                 }
             },
             "identity": {
-                "isEnabled": false,
+                "isEnabled": true,
                 "name": "",
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
