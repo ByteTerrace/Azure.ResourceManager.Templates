@@ -33,6 +33,7 @@
             "type": "string"
         },
         "numberOfFaultDomains": {
+            "defaultValue": 1,
             "maxValue": 3,
             "minValue": 1,
             "metadata": {

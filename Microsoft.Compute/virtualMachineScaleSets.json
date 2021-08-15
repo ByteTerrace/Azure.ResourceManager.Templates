@@ -112,6 +112,9 @@
         },
         "networkInterfaceConfigurations": {
             "defaultValue": [],
+            "metadata": {
+                "description": "An array of network interface configurations that will be applied to the Azure Virtual Machine Scale Set."
+            },
             "type": "array"
         },
         "numberOfFaultDomains": {
@@ -119,7 +122,7 @@
             "maxValue": 3,
             "minValue": 1,
             "metadata": {
-                "description": ""
+                "description": "Specifies the number of fault domains that the Azure Virtual Machine Scale Set will be deployed within."
             },
             "type": "int"
         },
@@ -136,6 +139,9 @@
                 "Uniform"
             ],
             "defaultValue": "Uniform",
+            "metadata": {
+                "description": "Specifies the orchestration mode of the Azure Virtual Machine Scale Set."
+            },
             "type": "string"
         },
         "osDisk": {
@@ -285,7 +291,7 @@
             },
             "networkConfiguration": {
                 "dnsSettings": "[null()]",
-                "isAcceleratedNetworkingEnabled": true,
+                "isAcceleratedNetworkingEnabled": false,
                 "isFpgaEnabled": false,
                 "isIpForwardingEnabled": false,
                 "ipConfigurations": [
@@ -305,7 +311,11 @@
                         }
                     }
                 ],
-                "networkSecurityGroup": "[null()]"
+                "networkSecurityGroup": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
             },
             "osDisk": {
                 "cachingMode": "ReadWrite",
@@ -328,13 +338,21 @@
             }
         },
         "diskEncryptionSet": "[union(variables('defaultResourceProperties').diskEncryptionSet, parameters('diskEncryptionSet'))]",
+        "flexibleProperties": {
+            "hostGroup": "[if(empty(parameters('host')), null(), createObject('id', resourceId(variables('host').subscriptionId, variables('host').resourceGroupName, 'Microsoft.Compute/hostGroups', variables('host').hostGroupName)))]",
+            "platformFaultDomainCount": "[parameters('numberOfFaultDomains')]",
+            "proximityPlacementGroup": "[if(empty(parameters('proximityPlacementGroup')), null(), createObject('id', resourceId(variables('proximityPlacementGroup').subscriptionId, variables('proximityPlacementGroup').resourceGroupName, 'Microsoft.Compute/proximityPlacementGroups', variables('proximityPlacementGroup').name)))]",
+            "singlePlacementGroup": false
+        },
         "host": "[union(variables('defaultResourceProperties').host, parameters('host'))]",
         "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "isFlexibleVirtualMachineScaleSet": "[equals(toLower(parameters('orchestrationMode')), 'flexible')]",
         "isSpotVirtualMachineScaleSet": "[equals(toLower(parameters('priority')), 'spot')]",
         "isWindowsVirtualMachineScaleSet": "[or(not(empty(parameters('windowsConfiguration'))), equals(parameters('licenseType'), 'Windows_Client'), equals(parameters('licenseType'), 'Windows_Server'), contains(union(createObject('id', ''), parameters('imageReference')).id, 'Windows'), contains(union(createObject('offer', ''), parameters('imageReference')).offer, 'Windows'))]",
         "networkInterfaceConfigurations": "[if(empty(parameters('networkInterfaceConfigurations')), createArray(union(createObject('name', 'default', 'isPrimary', true()), variables('defaultResourceProperties').networkConfiguration)), parameters('networkInterfaceConfigurations'))]",
+        "networkInterfaceConfigurationsCount": "[length(variables('networkInterfaceConfigurations'))]",
         "proximityPlacementGroup": "[union(variables('defaultResourceProperties').proximityPlacementGroup, parameters('proximityPlacementGroup'))]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
@@ -342,11 +360,92 @@
             "autoscaleSettings": "[resourceId('Microsoft.Insights/autoscaleSettings', variables('autoscale').name)]",
             "virtualMachineScaleSet": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', parameters('name'))]"
         },
+        "sku": {
+            "capacity": "[parameters('numberOfVirtualMachines')]",
+            "name": "[parameters('skuName')]"
+        },
         "subscriptionId": "[subscription().subscriptionId]",
+        "uniformProperties": {
+            "additionalCapabilities": {
+                "ultraSSDEnabled": "[parameters('isUltraSsdSupportEnabled')]"
+            },
+            "automaticRepairsPolicy": {
+                "enabled": false,
+                "gracePeriod": "PT10M"
+            },
+            "hostGroup": "[if(empty(parameters('host')), null(), createObject('id', resourceId(variables('host').subscriptionId, variables('host').resourceGroupName, 'Microsoft.Compute/hostGroups', variables('host').hostGroupName)))]",
+            "orchestrationMode": "[parameters('orchestrationMode')]",
+            "overprovision": "[parameters('isOverprovisioningEnabled')]",
+            "platformFaultDomainCount": "[parameters('numberOfFaultDomains')]",
+            "proximityPlacementGroup": "[if(empty(parameters('proximityPlacementGroup')), null(), createObject('id', resourceId(variables('proximityPlacementGroup').subscriptionId, variables('proximityPlacementGroup').resourceGroupName, 'Microsoft.Compute/proximityPlacementGroups', variables('proximityPlacementGroup').name)))]",
+            "scaleInPolicy": {
+                "rules": [
+                    "Default"
+                ]
+            },
+            "singlePlacementGroup": false,
+            "upgradePolicy": {
+                "mode": "Manual"
+            },
+            "virtualMachineProfile": {
+                "billingProfile": {
+                    "maxPrice": "[if(variables('isSpotVirtualMachineScaleSet'), -1, null())]"
+                },
+                "extensionProfile": {
+                    "extensions": []
+                },
+                "evictionPolicy": "[if(variables('isSpotVirtualMachineScaleSet'), 'Deallocate', null())]",
+                "licenseType": "[parameters('licenseType')]",
+                "networkProfile": {
+                    "copy": [
+                        {
+                            "count": "[variables('networkInterfaceConfigurationsCount')]",
+                            "input": {
+                                "name": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].name]",
+                                "properties": {
+                                    "dnsSettings": "[union(variables('defaultResourceProperties').networkConfiguration, variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')]).dnsSettings]",
+                                    "enableAcceleratedNetworking": "[union(variables('defaultResourceProperties').networkConfiguration, variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')]).isAcceleratedNetworkingEnabled]",
+                                    "enableFpga": "[union(variables('defaultResourceProperties').networkConfiguration, variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')]).isFpgaEnabled]",
+                                    "enableIPForwarding": "[union(variables('defaultResourceProperties').networkConfiguration, variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')]).isIpForwardingEnabled]",
+                                    "ipConfigurations": "[union(variables('defaultResourceProperties').networkConfiguration, variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')]).ipConfigurations]",
+                                    "networkSecurityGroup": "[if(empty(variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].networkSecurityGroup.name), null(), createObject('id', resourceId(union(variables('defaultResourceProperties').networkConfiguration, variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')]).networkSecurityGroup.subscriptionId, union(variables('defaultResourceProperties').networkConfiguration, variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')]).networkSecurityGroup.resourceGroupName, 'Microsoft.Network/networkSecurityGroups', union(variables('defaultResourceProperties').networkConfiguration, variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')]).networkSecurityGroup.name)))]",
+                                    "primary": "[union(createObject('isPrimary', equals(variables('networkInterfaceConfigurationsCount'), 1)), variables('defaultResourceProperties').networkConfiguration, variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')]).isPrimary]"
+                                }
+                            },
+                            "name": "networkInterfaceConfigurations"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "adminUsername": "[parameters('administratorUserName')]",
+                    "adminPassword": "[parameters('administratorUserPassword')]",
+                    "computerNamePrefix": "[if(empty(parameters('computerNamePrefix')), if(variables('isWindowsVirtualMachineScaleSet'), toUpper(take(uniqueString(parameters('name')), 9)), parameters('name')), parameters('computerNamePrefix'))]",
+                    "windowsConfiguration": "[if(variables('isWindowsVirtualMachineScaleSet'), variables('windowsConfiguration'), null())]"
+                },
+                "priority": "[parameters('priority')]",
+                "scheduledEventsProfile": {
+                    "terminateNotificationProfile": {
+                        "enable": true,
+                        "notBeforeTimeout": "PT7M"
+                    }
+                },
+                "storageProfile": {
+                    "imageReference": "[parameters('imageReference')]",
+                    "osDisk": {
+                        "caching": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).cachingMode]",
+                        "createOption": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).createOption]",
+                        "managedDisk": {
+                            "diskEncryptionSet": "[if(empty(parameters('diskEncryptionSet')), null(), createObject('id', resourceId(variables('diskEncryptionSet').subscriptionId, variables('diskEncryptionSet').resourceGroupName, 'Microsoft.Compute/diskEncryptionSets', variables('diskEncryptionSet').name)))]",
+                            "storageAccountType": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).storageAccountType]"
+                        },
+                        "writeAcceleratorEnabled": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).isWriteAcceleratorEnabled]"
+                    }
+                }
+            }
+        },
         "windowsConfiguration": {
             "additionalUnattendContent": "[null()]",
             "enableAutomaticUpdates": "[not(equals(toLower(variables('windowsConfigurationFriendly').patchSettings.mode), 'manual'))]",
-            "patchSettings": "[if(equals(toLower(parameters('orchestrationMode')), 'uniform'), null(), createObject('enableHotpatching', variables('windowsConfigurationFriendly').patchSettings.isHotPatchingEnabled, 'patchMode', variables('windowsConfigurationFriendly').patchSettings.mode))]",
             "provisionVMAgent": "[variables('windowsConfigurationFriendly').isVmAgentEnabled]",
             "timeZone": "[variables('windowsConfigurationFriendly').timeZone]",
             "winRM": "[null()]"
@@ -359,93 +458,14 @@
             "identity": "[if(variables('identity').isEnabled, union(createObject('type', if(empty(variables('identity').name), 'SystemAssigned', 'UserAssigned')), if(empty(variables('identity').name), createObject(), createObject('userAssignedIdentities', createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name))))), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
-            "properties": {
-                "additionalCapabilities": {
-                    "ultraSSDEnabled": "[parameters('isUltraSsdSupportEnabled')]"
-                },
-                "automaticRepairsPolicy": {
-                    "enabled": false,
-                    "gracePeriod": "PT10M"
-                },
-                "hostGroup": "[if(empty(parameters('host')), null(), createObject('id', resourceId(variables('host').subscriptionId, variables('host').resourceGroupName, 'Microsoft.Compute/hostGroups', variables('host').hostGroupName)))]",
-                "orchestrationMode": "[parameters('orchestrationMode')]",
-                "overprovision": "[parameters('isOverprovisioningEnabled')]",
-                "platformFaultDomainCount": "[parameters('numberOfFaultDomains')]",
-                "proximityPlacementGroup": "[if(empty(parameters('proximityPlacementGroup')), null(), createObject('id', resourceId(variables('proximityPlacementGroup').subscriptionId, variables('proximityPlacementGroup').resourceGroupName, 'Microsoft.Compute/proximityPlacementGroups', variables('proximityPlacementGroup').name)))]",
-                "scaleInPolicy": {
-                    "rules": [
-                        "Default"
-                    ]
-                },
-                "singlePlacementGroup": false,
-                "upgradePolicy": {
-                    "mode": "Manual"
-                },
-                "virtualMachineProfile": {
-                    "billingProfile": {
-                        "maxPrice": "[if(variables('isSpotVirtualMachineScaleSet'), -1, null())]"
-                    },
-                    "extensionProfile": {
-                        "extensions": []
-                    },
-                    "evictionPolicy": "[if(variables('isSpotVirtualMachineScaleSet'), 'Deallocate', null())]",
-                    "licenseType": "[parameters('licenseType')]",
-                    "networkProfile": {
-                        "copy": [
-                            {
-                                "count": "[length(variables('networkInterfaceConfigurations'))]",
-                                "input": {
-                                    "name": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].name]",
-                                    "properties": {
-                                        "dnsSettings": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].dnsSettings]",
-                                        "enableAcceleratedNetworking": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].isAcceleratedNetworkingEnabled]",
-                                        "enableFpga": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].isFpgaEnabled]",
-                                        "enableIPForwarding": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].isIpForwardingEnabled]",
-                                        "ipConfigurations": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].ipConfigurations]",
-                                        "networkSecurityGroup": "[null()]",
-                                        "primary": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].isPrimary]"
-                                    }
-                                },
-                                "name": "networkInterfaceConfigurations"
-                            }
-                        ]
-                    },
-                    "osProfile": {
-                        "adminUsername": "[parameters('administratorUserName')]",
-                        "adminPassword": "[parameters('administratorUserPassword')]",
-                        "computerNamePrefix": "[if(empty(parameters('computerNamePrefix')), if(variables('isWindowsVirtualMachineScaleSet'), toUpper(take(uniqueString(parameters('name')), 9)), parameters('name')), parameters('computerNamePrefix'))]",
-                        "windowsConfiguration": "[if(variables('isWindowsVirtualMachineScaleSet'), variables('windowsConfiguration'), null())]"
-                    },
-                    "priority": "[parameters('priority')]",
-                    "scheduledEventsProfile": {
-                        "terminateNotificationProfile": {
-                            "enable": true,
-                            "notBeforeTimeout": "PT7M"
-                        }
-                    },
-                    "storageProfile": {
-                        "imageReference": "[parameters('imageReference')]",
-                        "osDisk": {
-                            "caching": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).cachingMode]",
-                            "createOption": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).createOption]",
-                            "managedDisk": {
-                                "diskEncryptionSet": "[if(empty(parameters('diskEncryptionSet')), null(), createObject('id', resourceId(variables('diskEncryptionSet').subscriptionId, variables('diskEncryptionSet').resourceGroupName, 'Microsoft.Compute/diskEncryptionSets', variables('diskEncryptionSet').name)))]",
-                                "storageAccountType": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).storageAccountType]"
-                            },
-                            "writeAcceleratorEnabled": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).isWriteAcceleratorEnabled]"
-                        }
-                    }
-                }
-            },
-            "sku": {
-                "capacity": "[parameters('numberOfVirtualMachines')]",
-                "name": "[parameters('skuName')]"
-            },
+            "properties": "[if(variables('isFlexibleVirtualMachineScaleSet'), variables('flexibleProperties'), variables('uniformProperties'))]",
+            "sku": "[if(variables('isFlexibleVirtualMachineScaleSet'), null(), variables('sku'))]",
             "type": "Microsoft.Compute/virtualMachineScaleSets",
             "zones": "[parameters('availabilityZones')]"
         },
         {
             "apiVersion": "[variables('apiVersions').autoscaleSettings]",
+            "condition": "[not(variables('isFlexibleVirtualMachineScaleSet'))]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachineScaleSet]"
             ],
@@ -480,7 +500,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
-            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
+            "condition": "[and(not(variables('isFlexibleVirtualMachineScaleSet')), or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty')))]",
             "dependsOn": [
                 "[variables('resourceIds').autoscaleSettings]"
             ],

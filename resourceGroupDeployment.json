@@ -228,7 +228,8 @@
             "hostGroup": {
                 "availabilityZones": [],
                 "hosts": [],
-                "isAutomaticPlacementEnabled": true
+                "isAutomaticPlacementEnabled": false,
+                "numberOfFaultDomains": 3
             },
             "keyVault": {
                 "audit": "[variables('audit')]",
@@ -450,7 +451,7 @@
                 "isUltraSsdSupportEnabled": false,
                 "licenseType": "Windows_Client",
                 "networkInterfaceConfigurations": [],
-                "numberOfFaultDomains": 1,
+                "numberOfFaultDomains": 3,
                 "numberOfVirtualMachines": 0,
                 "orchestrationMode": "Uniform",
                 "osDisk": {},
@@ -2215,7 +2216,7 @@
                         "value": "[variables('resourceDefinitions').hostGroups[copyIndex()].name]"
                     },
                     "numberOfFaultDomains": {
-                        "value": "[variables('resourceDefinitions').hostGroups[copyIndex()].numberOfFaultDomains]"
+                        "value": "[union(variables('defaultResourceProperties').hostGroup, variables('resourceDefinitions').hostGroups[copyIndex()]).numberOfFaultDomains]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
