@@ -450,6 +450,7 @@
                 "isUltraSsdSupportEnabled": false,
                 "licenseType": "Windows_Client",
                 "networkInterfaceConfigurations": [],
+                "numberOfFaultDomains": 0,
                 "numberOfVirtualMachines": 0,
                 "orchestrationMode": "Uniform",
                 "osDisk": {},
@@ -2290,6 +2291,9 @@
                     },
                     "networkInterfaceConfigurations": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).networkInterfaceConfigurations]"
+                    },
+                    "numberOfFaultDomains": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).numberOfFaultDomains]"
                     },
                     "numberOfVirtualMachines": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).numberOfVirtualMachines]"

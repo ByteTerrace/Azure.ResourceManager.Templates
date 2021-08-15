@@ -114,6 +114,13 @@
             "defaultValue": [],
             "type": "array"
         },
+        "numberOfFaultDomains": {
+            "defaultValue": 3,
+            "metadata": {
+                "description": ""
+            },
+            "type": "int"
+        },
         "numberOfVirtualMachines": {
             "defaultValue": 0,
             "metadata": {
@@ -361,7 +368,7 @@
                 "hostGroup": "[if(empty(parameters('host')), null(), createObject('id', resourceId(variables('host').subscriptionId, variables('host').resourceGroupName, 'Microsoft.Compute/hostGroups', variables('host').hostGroupName)))]",
                 "orchestrationMode": "[parameters('orchestrationMode')]",
                 "overprovision": "[parameters('isOverprovisioningEnabled')]",
-                "platformFaultDomainCount": 1,
+                "platformFaultDomainCount": "[parameters('numberOfFaultDomains')]",
                 "proximityPlacementGroup": "[if(empty(parameters('proximityPlacementGroup')), null(), createObject('id', resourceId(variables('proximityPlacementGroup').subscriptionId, variables('proximityPlacementGroup').resourceGroupName, 'Microsoft.Compute/proximityPlacementGroups', variables('proximityPlacementGroup').name)))]",
                 "scaleInPolicy": {
                     "rules": [
