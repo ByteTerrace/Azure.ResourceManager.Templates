@@ -119,7 +119,7 @@
         },
         "numberOfFaultDomains": {
             "defaultValue": 1,
-            "maxValue": 3,
+            "maxValue": 5,
             "minValue": 1,
             "metadata": {
                 "description": "Specifies the number of fault domains that the Azure Virtual Machine Scale Set will be deployed within."
