@@ -57,6 +57,7 @@
             },
             "firewalls": [],
             "hdInsightClusters": [],
+            "hostGroups": [],
             "keyVaults": [],
             "kubernetesServiceClusters": [],
             "loadBalancers": [],
@@ -87,6 +88,7 @@
             "storageAccounts": [],
             "subnets": [],
             "virtualMachines": [],
+            "virtualMachineScaleSets": [],
             "virtualNetworks": [],
             "webApplications": []
         },
@@ -118,8 +120,7 @@
                 "skuName": "P1v2"
             },
             "availabilitySet": {
-                "proximityPlacementGroupName": "",
-                "proximityPlacementGroupResourceGroupName": "[variables('resourceGroupName')]",
+                "proximityPlacementGroup": {},
                 "skuName": "Aligned"
             },
             "bastionHost": {
@@ -202,9 +203,9 @@
             },
             "firewalls": {
                 "availabilityZones": [
-                    "1",
-                    "2",
-                    "3"
+                    1,
+                    2,
+                    3
                 ],
                 "ipConfigurations": [],
                 "managementIpConfiguration": {},
@@ -223,6 +224,12 @@
                 "operatingSystem": "Linux",
                 "storageProfile": {},
                 "version": "4.0"
+            },
+            "hostGroup": {
+                "availabilityZones": [],
+                "hosts": [],
+                "isAutomaticPlacementEnabled": false,
+                "numberOfFaultDomains": 3
             },
             "keyVault": {
                 "audit": "[variables('audit')]",
@@ -381,6 +388,7 @@
                 "encryptionScopes": [],
                 "fileServices": {},
                 "firewallRules": [],
+                "identity": {},
                 "isAdvancedThreatProtectionEnabled": true,
                 "isAllowTrustedMicrosoftServicesEnabled": true,
                 "isPublicNetworkAccessEnabled": true,
@@ -406,22 +414,49 @@
             },
             "virtualMachine": {
                 "audit": "[variables('audit')]",
-                "availabilitySetName": "",
-                "availabilitySetResourceGroupName": "[variables('resourceGroupName')]",
+                "availabilitySet": {},
                 "backup": {},
                 "dataDisks": [],
-                "diskEncryptionSetName": "",
-                "diskEncryptionSetResourceGroupName": "[variables('resourceGroupName')]",
+                "diskEncryptionSet": {},
                 "extensions": {},
+                "host": {},
+                "identity": {},
                 "imageReference": {},
                 "isEncryptionAtHostEnabled": true,
+                "isSecureBootEnabled": true,
                 "isUltraSsdSupportEnabled": false,
-                "isVulnerabilityAssessmentEnabled": true,
+                "isVirtualTrustedPlatformModuleEnabled": true,
+                "isVulnerabilityAssessmentEnabled": false,
+                "justInTimeAccess": {},
                 "licenseType": "Windows_Client",
                 "linuxConfiguration": {},
                 "osDisk": {},
                 "priority": "Regular",
-                "size": "Standard_D4s_v4",
+                "skuName": "Standard_D2s_v4",
+                "windowsConfiguration": {}
+            },
+            "virtualMachineScaleSet": {
+                "audit": "[variables('audit')]",
+                "autoscale": {},
+                "availabilityZones": [
+                    1,
+                    2,
+                    3
+                ],
+                "computerNamePrefix": "",
+                "diskEncryptionSet": {},
+                "host": {},
+                "identity": {},
+                "isOverprovisioningEnabled": true,
+                "isUltraSsdSupportEnabled": false,
+                "licenseType": "Windows_Client",
+                "numberOfFaultDomains": 1,
+                "numberOfVirtualMachines": 0,
+                "orchestrationMode": "Uniform",
+                "osDisk": {},
+                "priority": "Regular",
+                "proximityPlacementGroup": {},
+                "skuName": "Standard_D2s_v4",
                 "windowsConfiguration": {}
             },
             "virtualNetwork": {
@@ -429,6 +464,7 @@
                 "ddosProtectionPlanName": "",
                 "ddosProtectionPlanResourceGroupName": "[variables('resourceGroupName')]",
                 "ddosProtectionPlanSubscriptionId": "[variables('subscriptionId')]",
+                "dnsServers": [],
                 "subnets": []
             },
             "webApplication": {
@@ -482,6 +518,7 @@
             "eventGridTopic": "[format('{0}-EventGridTopic', deployment().name)]",
             "firewall": "[format('{0}-Firewall', deployment().name)]",
             "hdInsightCluster": "[format('{0}-HdInsightCluster', deployment().name)]",
+            "hostGroup": "[format('{0}-HostGroup', deployment().name)]",
             "keyVault": "[format('{0}-KeyVault', deployment().name)]",
             "kubernetesServiceCluster": "[format('{0}-KubernetesServiceCluster', deployment().name)]",
             "loadBalancer": "[format('{0}-LoadBalancer', deployment().name)]",
@@ -506,6 +543,7 @@
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
             "subnet": "[format('{0}-Subnet', deployment().name)]",
             "virtualMachine": "[format('{0}-VirtualMachine', deployment().name)]",
+            "virtualMachineScaleSet": "[format('{0}-VirtualMachineScaleSets', deployment().name)]",
             "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]",
             "webApplication": "[format('{0}-WebApplication', deployment().name)]"
         },
@@ -1122,6 +1160,9 @@
                     },
                     "ddosProtectionPlanSubscriptionId": {
                         "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).ddosProtectionPlanSubscriptionId]"
+                    },
+                    "dnsServers": {
+                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).dnsServers]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').virtualNetworks[copyIndex()]).location]"
@@ -2074,11 +2115,8 @@
                     "numberOfUpdateDomains": {
                         "value": "[union(variables('defaultResourceProperties').availabilitySet, variables('resourceDefinitions').availabilitySets[copyIndex()]).numberOfUpdateDomains]"
                     },
-                    "proximityPlacementGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').availabilitySet, variables('resourceDefinitions').availabilitySets[copyIndex()]).proximityPlacementGroupName]"
-                    },
-                    "proximityPlacementGroupResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').availabilitySet, variables('resourceDefinitions').availabilitySets[copyIndex()]).proximityPlacementGroupResourceGroupName]"
+                    "proximityPlacementGroup": {
+                        "value": "[union(variables('defaultResourceProperties').availabilitySet, variables('resourceDefinitions').availabilitySets[copyIndex()]).proximityPlacementGroup]"
                     },
                     "skuName": {
                         "value": "[union(variables('defaultResourceProperties').availabilitySet, variables('resourceDefinitions').availabilitySets[copyIndex()]).skuName]"
@@ -2147,6 +2185,153 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').hostGroups))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').hostGroups)]",
+                "mode": "Parallel",
+                "name": "hostGroupsCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "scriptsPreDeployCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').hostGroup, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "availabilityZones": {
+                        "value": "[union(variables('defaultResourceProperties').hostGroup, variables('resourceDefinitions').hostGroups[copyIndex()]).availabilityZones]"
+                    },
+                    "hosts": {
+                        "value": "[union(variables('defaultResourceProperties').hostGroup, variables('resourceDefinitions').hostGroups[copyIndex()]).hosts]"
+                    },
+                    "isAutomaticPlacementEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').hostGroup, variables('resourceDefinitions').hostGroups[copyIndex()]).isAutomaticPlacementEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').hostGroups[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').hostGroups[copyIndex()].name]"
+                    },
+                    "numberOfFaultDomains": {
+                        "value": "[union(variables('defaultResourceProperties').hostGroup, variables('resourceDefinitions').hostGroups[copyIndex()]).numberOfFaultDomains]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Compute/hostGroups.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').virtualMachineScaleSets))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').virtualMachineScaleSets)]",
+                "mode": "Parallel",
+                "name": "virtualMachineScaleSetsCopy"
+            },
+            "dependsOn": [
+                "applicationSecurityGroupsCopy",
+                "diskEncryptionSetsCopy",
+                "hostGroupsCopy",
+                "loadBalancersCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "recoveryServicesVaultsCopy",
+                "scriptsPreDeployCopy",
+                "sharedImageGalleriesCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').virtualMachineScaleSet, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).audit]"
+                    },
+                    "autoscale": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).autoscale]"
+                    },
+                    "availabilityZones": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).availabilityZones]"
+                    },
+                    "computerNamePrefix": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).computerNamePrefix]"
+                    },
+                    "diskEncryptionSet": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).diskEncryptionSet]"
+                    },
+                    "host": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).host]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).identity]"
+                    },
+                    "imageReference": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).imageReference]"
+                    },
+                    "isOverprovisioningEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).isOverprovisioningEnabled]"
+                    },
+                    "isUltraSsdSupportEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).isUltraSsdSupportEnabled]"
+                    },
+                    "licenseType": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).licenseType]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()].name]"
+                    },
+                    "networkInterfaceConfigurations": {
+                        "value": "[variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()].networkInterfaceConfigurations]"
+                    },
+                    "numberOfFaultDomains": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).numberOfFaultDomains]"
+                    },
+                    "numberOfVirtualMachines": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).numberOfVirtualMachines]"
+                    },
+                    "orchestrationMode": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).orchestrationMode]"
+                    },
+                    "osDisk": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).osDisk]"
+                    },
+                    "priority": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).priority]"
+                    },
+                    "proximityPlacementGroup": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).proximityPlacementGroup]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "windowsConfiguration": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).windowsConfiguration]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Compute/virtualMachineScaleSets.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').virtualMachines))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').virtualMachines)]",
@@ -2157,6 +2342,7 @@
                 "applicationSecurityGroupsCopy",
                 "availabilitySetsCopy",
                 "diskEncryptionSetsCopy",
+                "hostGroupsCopy",
                 "loadBalancersCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
@@ -2173,11 +2359,8 @@
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).audit]"
                     },
-                    "availabilitySetName": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).availabilitySetName]"
-                    },
-                    "availabilitySetResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).availabilitySetResourceGroupName]"
+                    "availabilitySet": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).availabilitySet]"
                     },
                     "backup": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).backup]"
@@ -2185,14 +2368,17 @@
                     "dataDisks": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).dataDisks]"
                     },
-                    "diskEncryptionSetName": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).diskEncryptionSetName]"
-                    },
-                    "diskEncryptionSetResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).diskEncryptionSetResourceGroupName]"
+                    "diskEncryptionSet": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).diskEncryptionSet]"
                     },
                     "extensions": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).extensions]"
+                    },
+                    "host": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).host]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).identity]"
                     },
                     "imageReference": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).imageReference]"
@@ -2200,11 +2386,20 @@
                     "isEncryptionAtHostEnabled": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isEncryptionAtHostEnabled]"
                     },
+                    "isSecureBootEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isSecureBootEnabled]"
+                    },
                     "isUltraSsdSupportEnabled": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isUltraSsdSupportEnabled]"
                     },
+                    "isVirtualTrustedPlatformModuleEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isVirtualTrustedPlatformModuleEnabled]"
+                    },
                     "isVulnerabilityAssessmentEnabled": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).isVulnerabilityAssessmentEnabled]"
+                    },
+                    "justInTimeAccess": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).justInTimeAccess]"
                     },
                     "licenseType": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).licenseType]"
@@ -2227,8 +2422,8 @@
                     "priority": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).priority]"
                     },
-                    "size": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).size]"
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).skuName]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
@@ -2347,6 +2542,9 @@
                     },
                     "firewallRules": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).firewallRules]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).identity]"
                     },
                     "isAdvancedThreatProtectionEnabled": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isAdvancedThreatProtectionEnabled]"
@@ -2570,7 +2768,7 @@
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).customerManagedEncryption]"
                     },
                     "dnsPrefix": {
-                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).dnsPrefix]"
+                        "value": "[union(createObject('dnsPrefix', variables('resourceDefinitions').publicIpAddresses[copyIndex()].name), variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).dnsPrefix]"
                     },
                     "identity": {
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).identity]"
@@ -3031,6 +3229,7 @@
                 "eventGridTopicsCopy",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
+                "hostGroupsCopy",
                 "keyVaultsCopy",
                 "kubernetesServiceClustersCopy",
                 "loadBalancersCopy",
@@ -3057,6 +3256,7 @@
                 "storageAccountsCopy",
                 "subnetsCopy",
                 "virtualMachinesCopy",
+                "virtualMachineScaleSetsCopy",
                 "virtualNetworksCopy",
                 "webApplicationsCopy"
             ],

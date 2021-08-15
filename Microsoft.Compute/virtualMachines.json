@@ -23,19 +23,12 @@
             },
             "type": "object"
         },
-        "availabilitySetName": {
-            "defaultValue": "",
+        "availabilitySet": {
+            "defaultValue": {},
             "metadata": {
-                "description": "Specifies the name of the Azure Availability Set that the Azure Virtual Machine will be deployed within."
+                "description": "Specifies the properties of the Azure Availability Set that the Azure Virtual Machine will be deployed within."
             },
-            "type": "string"
-        },
-        "availabilitySetResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Specifies the name of the Azure Availability Set that the Azure Virtual Machine will be deployed within."
-            },
-            "type": "string"
+            "type": "object"
         },
         "backup": {
             "defaultValue": {},
@@ -51,19 +44,12 @@
             },
             "type": "array"
         },
-        "diskEncryptionSetName": {
-            "defaultValue": "",
+        "diskEncryptionSet": {
+            "defaultValue": {},
             "metadata": {
-                "description": "Specifies the name of the Azure Disk Encryption Set that the Azure Virtual Machine will be deployed within."
+                "description": "Specifies the properties of the Azure Disk Encryption Set that the Azure Virtual Machine will be deployed within."
             },
-            "type": "string"
-        },
-        "diskEncryptionSetResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Specifies the name of the Azure Disk Encryption Set that the Azure Virtual Machine will be deployed within."
-            },
-            "type": "string"
+            "type": "object"
         },
         "extensions": {
             "defaultValue": {},
@@ -72,8 +58,21 @@
             },
             "type": "secureObject"
         },
-        "imageReference": {
+        "host": {
             "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the properties of the Azure Dedicated Host that the Azure Virtual Machine will be assigned to."
+            },
+            "type": "object"
+        },
+        "identity": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the identity that will be assigned to the Azure Virtual Machine."
+            },
+            "type": "object"
+        },
+        "imageReference": {
             "metadata": {
                 "description": "Specifies the properties of the image that will be used to provision the Azure Virtual Machine."
             },
@@ -86,6 +85,13 @@
             },
             "type": "bool"
         },
+        "isSecureBootEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the secure boot feature is enabled on the Azure Virtual Machine."
+            },
+            "type": "bool"
+        },
         "isUltraSsdSupportEnabled": {
             "defaultValue": false,
             "metadata": {
@@ -93,12 +99,26 @@
             },
             "type": "bool"
         },
-        "isVulnerabilityAssessmentEnabled": {
+        "isVirtualTrustedPlatformModuleEnabled": {
             "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the virtual trusted platform module freature is enabled on the Azure Virtual Machine."
+            },
+            "type": "bool"
+        },
+        "isVulnerabilityAssessmentEnabled": {
+            "defaultValue": false,
             "metadata": {
                 "description": "Indicates whether the vulnerability assessment feature is enabled on the Azure Virtual Machine."
             },
             "type": "bool"
+        },
+        "justInTimeAccess": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the just-in-time access settings that will be applied to the Azure Virtual Machine."
+            },
+            "type": "object"
         },
         "licenseType": {
             "defaultValue": "Windows_Client",
@@ -153,10 +173,10 @@
             },
             "type": "string"
         },
-        "size": {
-            "defaultValue": "Standard_D4s_v4",
+        "skuName": {
+            "defaultValue": "Standard_D2s_v4",
             "metadata": {
-                "description": "Specifies the size of the Azure Virtual Machine."
+                "description": "Specifies the SKU name of the Azure Virtual Machine."
             },
             "type": "string"
         },
@@ -188,6 +208,7 @@
             "virtualMachinesExtensions": "2020-12-01"
         },
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "availabilitySet": "[union(variables('defaultResourceProperties').availabilitySet, parameters('availabilitySet'))]",
         "backup": "[union(variables('defaultResourceProperties').backup, parameters('backup'))]",
         "copy": [
             {
@@ -222,6 +243,11 @@
                     "subscriptionId": "[variables('subscriptionId')]"
                 }
             },
+            "availabilitySet": {
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
             "backup": {
                 "policyName": "",
                 "recoveryServicesVault": {
@@ -236,13 +262,18 @@
                 "networkAccessPolicy": "AllowAll",
                 "skuName": "Premium_LRS"
             },
+            "diskEncryptionSet": {
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
             "extensions": {
                 "azureActiveDirectoryDomainJoin": {
                     "isEnabled": false,
                     "isRestartAfterJoinEnabled": false,
                     "domainName": "",
                     "numberOfRetries": 3,
-                    "options": 3,
+                    "options": 1,
                     "restart": true,
                     "retryIntervalInSeconds": 17,
                     "userName": "",
@@ -250,22 +281,37 @@
                     "version": "1.3"
                 },
                 "azureAntimalwareAgent": {
+                    "exclusions": {
+                        "extensions": ".ldf;.log",
+                        "paths": "[null()]",
+                        "processes": "mssence.svc"
+                    },
                     "isAntimalwareEnabled": true,
                     "isEnabled": true,
                     "isRealtimeProtectionEnabled": true,
+                    "scheduledScanSettings": {
+                        "day": 0,
+                        "isEnabled": true,
+                        "time": 1290,
+                        "type": "Quick"
+                    },
                     "version": "1.5"
                 },
                 "azureDependencyAgent": {
                     "isEnabled": true,
-                    "version": "[if(variables('isLinuxVm'), '9.9', if(variables('isWindowsVm'), '9.9', null()))]"
+                    "version": "[if(variables('isLinuxVirtualMachine'), '9.9', if(variables('isWindowsVirtualMachine'), '9.9', null()))]"
+                },
+                "azureGuestAttestationAgent": {
+                    "isEnabled": true,
+                    "version": "1.0"
                 },
                 "azureGuestConfigurationAgent": {
                     "isEnabled": true,
-                    "version": "[if(variables('isLinuxVm'), '1.9', if(variables('isWindowsVm'), '1.9', null()))]"
+                    "version": "[if(variables('isLinuxVirtualMachine'), '1.9', if(variables('isWindowsVirtualMachine'), '1.9', null()))]"
                 },
                 "azureGuestHealthAgent": {
                     "isEnabled": true,
-                    "version": "[if(variables('isLinuxVm'), '1.0', if(variables('isWindowsVm'), '1.0', null()))]"
+                    "version": "[if(variables('isLinuxVirtualMachine'), '1.0', if(variables('isWindowsVirtualMachine'), '1.0', null()))]"
                 },
                 "azureLogAnalyticsAgent": {
                     "isEnabled": true,
@@ -273,12 +319,40 @@
                 },
                 "azureMonitorAgent": {
                     "isEnabled": true,
-                    "version": "[if(variables('isLinuxVm'), '1.9', if(variables('isWindowsVm'), '1.0', null()))]"
+                    "version": "[if(variables('isLinuxVirtualMachine'), '1.9', if(variables('isWindowsVirtualMachine'), '1.0', null()))]"
                 },
                 "azureNetworkWatcherAgent": {
                     "isEnabled": true,
-                    "version": "[if(variables('isLinuxVm'), '1.4', if(variables('isWindowsVm'), '1.4', null()))]"
+                    "version": "[if(variables('isLinuxVirtualMachine'), '1.4', if(variables('isWindowsVirtualMachine'), '1.4', null()))]"
                 }
+            },
+            "justInTimeAccess": {
+                "isEnabled": false,
+                "ports": [
+                    {
+                        "number": 22
+                    },
+                    {
+                        "number": 3389
+                    },
+                    {
+                        "number": 5985
+                    },
+                    {
+                        "number": 5986
+                    }
+                ]
+            },
+            "host": {
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "identity": {
+                "isEnabled": true,
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
             },
             "linuxConfiguration": {
                 "administratorUserPublicSshKey": "",
@@ -294,11 +368,16 @@
                     "addressVersion": "IPv4 ",
                     "allocationMethod": "Dynamic",
                     "applicationSecurityGroup": {
+                        "name": "",
                         "resourceGroupName": "[variables('resourceGroupName')]"
                     },
                     "loadBalancer": {
                         "backendAddressPoolName": "",
                         "inboundNatRuleName": "",
+                        "name": "",
+                        "resourceGroupName": "[variables('resourceGroupName')]"
+                    },
+                    "publicIpAddress": {
                         "name": "",
                         "resourceGroupName": "[variables('resourceGroupName')]"
                     },
@@ -328,13 +407,18 @@
                 "timeZone": "UTC"
             }
         },
+        "diskEncryptionSet": "[union(variables('defaultResourceProperties').diskEncryptionSet, parameters('diskEncryptionSet'))]",
         "extensions": "[union(variables('defaultResourceProperties').extensions, parameters('extensions'))]",
+        "host": "[union(variables('defaultResourceProperties').host, parameters('host'))]",
+        "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isBackupEnabled": "[not(empty(variables('backup').policyName))]",
-        "isLinuxVm": "[or(not(empty(parameters('linuxConfiguration'))), equals(parameters('licenseType'), 'RHEL_BYOS'), equals(parameters('licenseType'), 'SLES_BYOS'), contains(union(createObject('id', ''), parameters('imageReference')).id, 'Linux'), contains(union(createObject('offer', ''), parameters('imageReference')).offer, 'Linux'))]",
+        "isLinuxVirtualMachine": "[or(not(empty(parameters('linuxConfiguration'))), equals(parameters('licenseType'), 'RHEL_BYOS'), equals(parameters('licenseType'), 'SLES_BYOS'), contains(union(createObject('id', ''), parameters('imageReference')).id, 'Linux'), contains(union(createObject('offer', ''), parameters('imageReference')).offer, 'Linux'))]",
         "isSpotVirtualMachine": "[equals(toLower(parameters('priority')), 'spot')]",
-        "isWindowsVm": "[or(not(empty(parameters('windowsConfiguration'))), equals(parameters('licenseType'), 'Windows_Client'), equals(parameters('licenseType'), 'Windows_Server'), contains(union(createObject('id', ''), parameters('imageReference')).id, 'Windows'), contains(union(createObject('offer', ''), parameters('imageReference')).offer, 'Windows'))]",
+        "isTrustedLaunchEnabled": "[or(parameters('isSecureBootEnabled'), parameters('isVirtualTrustedPlatformModuleEnabled'))]",
+        "isWindowsVirtualMachine": "[or(not(empty(parameters('windowsConfiguration'))), equals(parameters('licenseType'), 'Windows_Client'), equals(parameters('licenseType'), 'Windows_Server'), contains(union(createObject('id', ''), parameters('imageReference')).id, 'Windows'), contains(union(createObject('offer', ''), parameters('imageReference')).offer, 'Windows'))]",
+        "justInTimeAccess": "[union(variables('defaultResourceProperties').justInTimeAccess, parameters('justInTimeAccess'))]",
         "licenseTypeIsNotEmpty": "[not(empty(parameters('licenseType')))]",
         "linuxConfiguration": {
             "disablePasswordAuthentication": "[not(variables('linuxConfigurationFriendly').isPasswordAuthenticationEnabled)]",
@@ -346,16 +430,17 @@
         },
         "linuxConfigurationFriendly": "[union(variables('defaultResourceProperties').linuxConfiguration, parameters('linuxConfiguration'))]",
         "networkInterfaceCardsCount": "[length(parameters('networkInterfaceCards'))]",
-        "osType": "[if(variables('isLinuxVm'), 'Linux', if(variables('isWindowsVm'), 'Windows', 'Unknown'))]",
+        "osType": "[if(variables('isLinuxVirtualMachine'), 'Linux', if(variables('isWindowsVirtualMachine'), 'Windows', 'Unknown'))]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
-            "insightsDataCollectionRule": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.Insights/dataCollectionRules', format('Microsoft-VMInsights-Health-{0}', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>')))]",
+            "insightsDataCollectionRule": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.Insights/dataCollectionRules', format('Microsoft-VMInsights-Health-LAW_{0}', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>')))]",
             "recoveryServicesVaultBackupPolicy": "[resourceId(variables('backup').recoveryServicesVault.subscriptionId, variables('backup').recoveryServicesVault.resourceGroupName, 'Microsoft.RecoveryServices/vaults/backupPolicies', if(variables('isBackupEnabled'), variables('backup').recoveryServicesVault.name, '<NULL>'), if(variables('isBackupEnabled'), variables('backup').policyName, '<NULL>'))]",
             "virtualMachine": "[resourceId('Microsoft.Compute/virtualMachines', parameters('name'))]",
             "virtualMachineActiveDirectoryDomainJoin": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineActiveDirectoryDomainJoinName'))]",
             "virtualMachineAntimalwareAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineAntimalwareAgentName'))]",
             "virtualMachineDependencyAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineDependencyAgentName'))]",
+            "virtualMachineGuestAttestationAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineGuestAttestationAgentName'))]",
             "virtualMachineGuestConfigurationAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineGuestConfigurationAgentName'))]",
             "virtualMachineGuestHealthAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineGuestHealthAgentName'))]",
             "virtualMachineLogAnalyticsAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineLogAnalyticsAgentName'))]",
@@ -366,6 +451,7 @@
         "virtualMachineActiveDirectoryDomainJoinName": "AzureActiveDirectoryDomainJoin",
         "virtualMachineAntimalwareAgentName": "AzureAntimalwareAgent",
         "virtualMachineDependencyAgentName": "AzureDependencyAgent",
+        "virtualMachineGuestAttestationAgentName": "AzureGuestAttestationAgent",
         "virtualMachineGuestConfigurationAgentName": "AzureGuestConfigurationAgent",
         "virtualMachineGuestHealthAgentName": "AzureGuestHealthAgent",
         "virtualMachineLogAnalyticsAgentName": "AzureLogAnalyticsAgent",
@@ -404,9 +490,10 @@
                                 "applicationSecurityGroups": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).applicationSecurityGroup.name), null(), createArray(createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).applicationSecurityGroup.resourceGroupName, 'Microsoft.Network/applicationSecurityGroups', union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).applicationSecurityGroup.name))))]",
                                 "loadBalancerBackendAddressPools": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.backendAddressPoolName), null(), createArray(createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.resourceGroupName, 'Microsoft.Network/loadBalancers/backendAddressPools', union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.name, union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.backendAddressPoolName))))]",
                                 "loadBalancerInboundNatRules": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.inboundNatRuleName), null(), createArray(createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.resourceGroupName, 'Microsoft.Network/loadBalancers/backendAddressPools', union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.name, union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.inboundNatRuleName))))]",
-                                "primary": "[if(equals(length(parameters('networkInterfaceCards')[copyIndex()].ipConfigurations), 1), json('true'), parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].isPrimary)]",
+                                "primary": "[if(equals(length(parameters('networkInterfaceCards')[copyIndex()].ipConfigurations), 1), true(), parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].isPrimary)]",
                                 "privateIPAddressVersion": "[union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).addressVersion]",
                                 "privateIPAllocationMethod": "[union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).allocationMethod]",
+                                "publicIPAddress": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).publicIpAddress.name), null(), createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).publicIpAddress.resourceGroupName, 'Microsoft.Network/publicIPAddresses', union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).publicIpAddress.name)))]",
                                 "subnet": {
                                     "id": "[resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].subnet.virtualNetworkName, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].subnet.name)]"
                                 }
@@ -457,16 +544,14 @@
                 "dataDisksCopy",
                 "networkInterfaceCardsCopy"
             ],
-            "identity": {
-                "type": "SystemAssigned"
-            },
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', if(empty(variables('identity').name), 'SystemAssigned', 'UserAssigned')), if(empty(variables('identity').name), createObject(), createObject('userAssignedIdentities', createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name))))), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
                 "additionalCapabilities": {
                     "ultraSSDEnabled": "[parameters('isUltraSsdSupportEnabled')]"
                 },
-                "availabilitySet": "[if(empty(parameters('availabilitySetName')), null(), createObject('id', resourceId(parameters('availabilitySetResourceGroupName'), 'Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))))]",
+                "availabilitySet": "[if(empty(parameters('availabilitySet')), null(), createObject('id', resourceId(variables('availabilitySet').subscriptionId, variables('availabilitySet').resourceGroupName, 'Microsoft.Compute/availabilitySets', variables('availabilitySet').name)))]",
                 "billingProfile": {
                     "maxPrice": "[if(variables('isSpotVirtualMachine'), -1, null())]"
                 },
@@ -479,8 +564,10 @@
                 "extensionsTimeBudget": "PT15M",
                 "evictionPolicy": "[if(variables('isSpotVirtualMachine'), 'Deallocate', null())]",
                 "hardwareProfile": {
-                    "vmSize": "[parameters('size')]"
+                    "vmSize": "[parameters('skuName')]"
                 },
+                "host": "[if(empty(variables('host').name), null(), createObject('id', resourceId(variables('host').subscriptionId, variables('host').resourceGroupName, 'Microsoft.Compute/hostGroups/hosts', variables('host').hostGroupName, variables('host').name)))]",
+                "hostGroup": "[if(empty(parameters('host')), null(), createObject('id', resourceId(variables('host').subscriptionId, variables('host').resourceGroupName, 'Microsoft.Compute/hostGroups', variables('host').hostGroupName)))]",
                 "licenseType": "[if(variables('licenseTypeIsNotEmpty'), parameters('licenseType'), null())]",
                 "networkProfile": {
                     "networkInterfaces": "[variables('networkInterfacesByResourceId')]"
@@ -491,15 +578,15 @@
                     "allowExtensionOperations": true,
                     "computerName": "[parameters('name')]",
                     "customData": "[null()]",
-                    "linuxConfiguration": "[if(variables('isLinuxVm'), variables('linuxConfiguration'), null())]",
+                    "linuxConfiguration": "[if(variables('isLinuxVirtualMachine'), variables('linuxConfiguration'), null())]",
                     "secrets": [],
-                    "windowsConfiguration": "[if(variables('isWindowsVm'), variables('windowsConfiguration'), null())]"
+                    "windowsConfiguration": "[if(variables('isWindowsVirtualMachine'), variables('windowsConfiguration'), null())]"
                 },
                 "priority": "[parameters('priority')]",
                 "securityProfile": {
                     "encryptionAtHost": "[parameters('isEncryptionAtHostEnabled')]",
-                    "securityType": "[null()]",
-                    "uefiSettings": "[null()]"
+                    "securityType": "[if(variables('isTrustedLaunchEnabled'), 'TrustedLaunch', null())]",
+                    "uefiSettings": "[if(variables('isTrustedLaunchEnabled'), createObject('secureBootEnabled', parameters('isSecureBootEnabled'), 'vTpmEnabled', parameters('isVirtualTrustedPlatformModuleEnabled')), null())]"
                 },
                 "storageProfile": {
                     "dataDisks": "[variables('dataDisksByResourceId')]",
@@ -508,7 +595,7 @@
                         "caching": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).cachingMode]",
                         "createOption": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).createOption]",
                         "managedDisk": {
-                            "diskEncryptionSet": "[if(empty(parameters('diskEncryptionSetName')), null(), createObject('id', resourceId(parameters('diskEncryptionSetResourceGroupName'), 'Microsoft.Compute/diskEncryptionSets', parameters('diskEncryptionSetName'))))]",
+                            "diskEncryptionSet": "[if(empty(parameters('diskEncryptionSet')), null(), createObject('id', resourceId(variables('diskEncryptionSet').subscriptionId, variables('diskEncryptionSet').resourceGroupName, 'Microsoft.Compute/diskEncryptionSets', variables('diskEncryptionSet').name)))]",
                             "storageAccountType": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).storageAccountType]"
                         },
                         "name": "[format('{0}-vmosdisk', parameters('name'))]",
@@ -518,6 +605,49 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Compute/virtualMachines"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').serverVulnerabilityAssessments]",
+            "condition": "[variables('justInTimeAccess').isEnabled]",
+            "dependsOn": [
+                "[variables('resourceIds').virtualMachine]"
+            ],
+            "kind": "Basic",
+            "name": "[format('{0}/RG_{1}-VM_{2}', parameters('location'), resourceGroup().name, parameters('name'), parameters('location'))]",
+            "properties": {
+                "virtualMachines": [
+                    {
+                        "copy": [
+                            {
+                                "count": "[length(variables('justInTimeAccess').ports)]",
+                                "input": {
+                                    "allowedSourceAddressPrefix": "[if(less(length(union(createObject('allowedSourceAddressPrefixes', createArray()), variables('justInTimeAccess').ports[copyIndex('ports')]).allowedSourceAddressPrefixes), 2), if(empty(union(createObject('allowedSourceAddressPrefixes', createArray()), variables('justInTimeAccess').ports[copyIndex('ports')]).allowedSourceAddressPrefixes), '*', variables('justInTimeAccess').ports[copyIndex('ports')].allowedSourceAddressPrefixes[0]), null())]",
+                                    "allowedSourceAddressPrefixes": "[if(greater(length(union(createObject('allowedSourceAddressPrefixes', createArray()), variables('justInTimeAccess').ports[copyIndex('ports')]).allowedSourceAddressPrefixes), 1), variables('justInTimeAccess').ports[copyIndex('ports')].allowedSourceAddressPrefixes, null())]",
+                                    "maxRequestAccessDuration": "[union(createObject('maximumAccessDuration', 'PT3H'), variables('justInTimeAccess').ports[copyIndex('ports')]).maximumAccessDuration]",
+                                    "number": "[variables('justInTimeAccess').ports[copyIndex('ports')].number]",
+                                    "protocol": "[union(createObject('protocol', '*'), variables('justInTimeAccess').ports[copyIndex('ports')]).protocol]"
+                                },
+                                "name": "ports"
+                            }
+                        ],
+                        "id": "[variables('resourceIds').virtualMachine]"
+                    }
+                ]
+            },
+            "type": "Microsoft.Security/locations/jitNetworkAccessPolicies"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').insightsDataCollectionRuleAssociations]",
+            "condition": "[variables('isAuditEnabled')]",
+            "dependsOn": [
+                "[variables('resourceIds').virtualMachine]"
+            ],
+            "name": "[format('{0}/Microsoft.Insights/VMInsights-Health-DcrAssociation', parameters('name'))]",
+            "properties": {
+                "description": "Association of data collection rule for VM Insights Health.",
+                "dataCollectionRuleId": "[variables('resourceIds').insightsDataCollectionRule]"
+            },
+            "type": "Microsoft.Compute/virtualMachines/providers/dataCollectionRuleAssociations"
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
@@ -557,21 +687,22 @@
             "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineAntimalwareAgentName'))]",
             "properties": {
                 "autoUpgradeMinorVersion": true,
+                "enableAutomaticUpgrade": false,
                 "protectedSettings": "[null()]",
                 "publisher": "Microsoft.Azure.Security",
                 "settings": {
                     "AntimalwareEnabled": "[variables('extensions').azureAntimalwareAgent.isAntimalwareEnabled]",
                     "Exclusions": {
-                        "Extensions": ".ldf;.log",
-                        "Paths": "[null()]",
-                        "Processes": "mssence.svc"
+                        "Extensions": "[variables('extensions').azureAntimalwareAgent.exclusions.extensions]",
+                        "Paths": "[variables('extensions').azureAntimalwareAgent.exclusions.paths]",
+                        "Processes": "[variables('extensions').azureAntimalwareAgent.exclusions.processes]"
                     },
                     "RealtimeProtectionEnabled": "[variables('extensions').azureAntimalwareAgent.isRealtimeProtectionEnabled]",
                     "ScheduledScanSettings": {
-                        "day": "7",
-                        "isEnabled": true,
-                        "scanType": "Quick",
-                        "time": "120"
+                        "day": "[variables('extensions').azureAntimalwareAgent.scheduledScanSettings.day]",
+                        "isEnabled": "[variables('extensions').azureAntimalwareAgent.scheduledScanSettings.isEnabled]",
+                        "scanType": "[variables('extensions').azureAntimalwareAgent.scheduledScanSettings.type]",
+                        "time": "[variables('extensions').azureAntimalwareAgent.scheduledScanSettings.time]"
                     }
                 },
                 "type": "IaaSAntimalware",
@@ -590,9 +721,41 @@
             "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineDependencyAgentName'))]",
             "properties": {
                 "autoUpgradeMinorVersion": true,
+                "enableAutomaticUpgrade": true,
                 "publisher": "Microsoft.Azure.Monitoring.DependencyAgent",
                 "type": "[format('DependencyAgent{0}', variables('osType'))]",
                 "typeHandlerVersion": "[variables('extensions').azureDependencyAgent.version]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
+            "condition": "[and(parameters('isVirtualTrustedPlatformModuleEnabled'), variables('extensions').azureGuestAttestationAgent.isEnabled)]",
+            "dependsOn": [
+                "[variables('resourceIds').virtualMachine]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineGuestAttestationAgentName'))]",
+            "properties": {
+                "autoUpgradeMinorVersion": true,
+                "enableAutomaticUpgrade": false,
+                "publisher": "Microsoft.Azure.Security.WindowsAttestation",
+                "settings": {
+                    "AttestationConfig": {
+                        "AscSettings": {
+                            "ascReportingEndpoint": "https://eus2.service.attest.azure.net/"
+                        },
+                        "disableAlerts": "false",
+                        "MaaSettings": {
+                            "maaEndpoint": "https://sharedeus2.eus2.attest.azure.net/",
+                            "maaTenantName": "GuestAttestation"
+                        },
+                        "useCustomToken": "false"
+                    }
+                },
+                "type": "GuestAttestation",
+                "typeHandlerVersion": "[variables('extensions').azureGuestAttestationAgent.version]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Compute/virtualMachines/extensions"
@@ -607,6 +770,7 @@
             "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineGuestConfigurationAgentName'))]",
             "properties": {
                 "autoUpgradeMinorVersion": true,
+                "enableAutomaticUpgrade": true,
                 "publisher": "Microsoft.GuestConfiguration",
                 "type": "[format('Configurationfor{0}', variables('osType'))]",
                 "typeHandlerVersion": "[variables('extensions').azureGuestConfigurationAgent.version]"
@@ -618,12 +782,14 @@
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
             "condition": "[and(not(equals(variables('osType'), 'Unknown')), variables('extensions').azureGuestHealthAgent.isEnabled)]",
             "dependsOn": [
-                "[variables('resourceIds').virtualMachine]"
+                "[variables('resourceIds').virtualMachine]",
+                "[variables('resourceIds').virtualMachineMonitorAgent]"
             ],
             "location": "[parameters('location')]",
             "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineGuestHealthAgentName'))]",
             "properties": {
                 "autoUpgradeMinorVersion": true,
+                "enableAutomaticUpgrade": false,
                 "publisher": "Microsoft.Azure.Monitor.VirtualMachines.GuestHealth",
                 "type": "[format('GuestHealth{0}Agent', variables('osType'))]",
                 "typeHandlerVersion": "[variables('extensions').azureGuestHealthAgent.version]"
@@ -641,6 +807,7 @@
             "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineLogAnalyticsAgentName'))]",
             "properties": {
                 "autoUpgradeMinorVersion": true,
+                "enableAutomaticUpgrade": false,
                 "protectedSettings": {
                     "workspaceKey": "[if(variables('isAuditEnabled'), listKeys(variables('resourceIds').auditLogAnalyticsWorkspace, variables('apiVersions').logAnalyticsWorkspaces).secondarySharedKey, null())]"
                 },
@@ -664,6 +831,7 @@
             "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineMonitorAgentName'))]",
             "properties": {
                 "autoUpgradeMinorVersion": true,
+                "enableAutomaticUpgrade": false,
                 "publisher": "Microsoft.Azure.Monitor",
                 "type": "[format('AzureMonitor{0}Agent', variables('osType'))]",
                 "typeHandlerVersion": "[variables('extensions').azureMonitorAgent.version]"
@@ -681,6 +849,7 @@
             "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineNetworkWatcherAgentName'))]",
             "properties": {
                 "autoUpgradeMinorVersion": true,
+                "enableAutomaticUpgrade": false,
                 "publisher": "Microsoft.Azure.NetworkWatcher",
                 "type": "[format('NetworkWatcherAgent{0}', variables('osType'))]",
                 "typeHandlerVersion": "[variables('extensions').azureNetworkWatcherAgent.version]"
@@ -695,6 +864,7 @@
                 "[variables('resourceIds').virtualMachineActiveDirectoryDomainJoin]",
                 "[variables('resourceIds').virtualMachineAntimalwareAgent]",
                 "[variables('resourceIds').virtualMachineDependencyAgent]",
+                "[variables('resourceIds').virtualMachineGuestAttestationAgent]",
                 "[variables('resourceIds').virtualMachineGuestConfigurationAgent]",
                 "[variables('resourceIds').virtualMachineGuestHealthAgent]",
                 "[variables('resourceIds').virtualMachineLogAnalyticsAgent]",
@@ -705,32 +875,13 @@
             "type": "Microsoft.Compute/virtualMachines/providers/serverVulnerabilityAssessments"
         },
         {
-            "apiVersion": "[variables('apiVersions').insightsDataCollectionRuleAssociations]",
-            "condition": "[variables('isAuditEnabled')]",
-            "dependsOn": [
-                "[variables('resourceIds').virtualMachineActiveDirectoryDomainJoin]",
-                "[variables('resourceIds').virtualMachineAntimalwareAgent]",
-                "[variables('resourceIds').virtualMachineDependencyAgent]",
-                "[variables('resourceIds').virtualMachineGuestConfigurationAgent]",
-                "[variables('resourceIds').virtualMachineGuestHealthAgent]",
-                "[variables('resourceIds').virtualMachineLogAnalyticsAgent]",
-                "[variables('resourceIds').virtualMachineMonitorAgent]",
-                "[variables('resourceIds').virtualMachineNetworkWatcherAgent]"
-            ],
-            "name": "[format('{0}/Microsoft.Insights/VMInsights-Health-DcrAssociation', parameters('name'))]",
-            "properties": {
-                "description": "Association of data collection rule for VM Insights Health.",
-                "dataCollectionRuleId": "[variables('resourceIds').insightsDataCollectionRule]"
-            },
-            "type": "Microsoft.Compute/virtualMachines/providers/dataCollectionRuleAssociations"
-        },
-        {
             "apiVersion": "[variables('apiVersions').deployments]",
             "condition": "[variables('isBackupEnabled')]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachineActiveDirectoryDomainJoin]",
                 "[variables('resourceIds').virtualMachineAntimalwareAgent]",
                 "[variables('resourceIds').virtualMachineDependencyAgent]",
+                "[variables('resourceIds').virtualMachineGuestAttestationAgent]",
                 "[variables('resourceIds').virtualMachineGuestConfigurationAgent]",
                 "[variables('resourceIds').virtualMachineGuestHealthAgent]",
                 "[variables('resourceIds').virtualMachineLogAnalyticsAgent]",

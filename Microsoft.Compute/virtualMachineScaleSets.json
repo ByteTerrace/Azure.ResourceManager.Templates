@@ -1,0 +1,510 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "administratorUserName": {
+            "defaultValue": "[uniqueString(parameters('name'))]",
+            "metadata": {
+                "description": "Specifies the user name of the administrator account to the virtual machines that are deployed within the Azure Virtual Machine Scale Set."
+            },
+            "type": "securestring"
+        },
+        "administratorUserPassword": {
+            "defaultValue": "[base64(replace(format('{0}{1}', newGuid(), newGuid()), '-', ''))]",
+            "metadata": {
+                "description": "Specifies the password of the administrator account to the virtual machines that are deployed within the Azure Virtual Machine Scale Set."
+            },
+            "type": "securestring"
+        },
+        "audit": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure Virtual Machine Scale Set."
+            },
+            "type": "object"
+        },
+        "autoscale": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the autoscale settings that will be applied to the Azure Virtual Machine Scale Set."
+            },
+            "type": "object"
+        },
+        "availabilityZones": {
+            "defaultValue": [
+                1,
+                2,
+                3
+            ],
+            "metadata": {
+                "description": "Specifies an array of availability zones that the Azure Virtual Machine Scale Set will be deployed within."
+            },
+            "type": "array"
+        },
+        "computerNamePrefix": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the prefix of the computer name that will be assigned to virtual machines that are deployed within the Azure Virtual Machine Scale Set."
+            },
+            "type": "string"
+        },
+        "diskEncryptionSet": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the properties of the Azure Disk Encryption Set that the Azure Virtual Machine Scale Set will be assigned to."
+            },
+            "type": "object"
+        },
+        "host": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the properties of the Azure Dedicated Host that the Azure Virtual Machine Scale Set will be assigned to."
+            },
+            "type": "object"
+        },
+        "identity": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the identity that will be assigned to the Azure Virtual Machine Scale Set."
+            },
+            "type": "object"
+        },
+        "imageReference": {
+            "metadata": {
+                "description": "Specifies the properties of the image that will be used to provision the virtual machines that are deployed within the Azure Virtual Machine Scale Set."
+            },
+            "type": "object"
+        },
+        "isOverprovisioningEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the Azure Virtual Machine Scale Set will overprovision resources to improve provisioning success rates and reduce deployment time."
+            },
+            "type": "bool"
+        },
+        "isUltraSsdSupportEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether support for attaching ultra SSDs is enabled on the Azure Virtual Machine Scale Set."
+            },
+            "type": "bool"
+        },
+        "licenseType": {
+            "defaultValue": "Windows_Client",
+            "metadata": {
+                "description": "Specifies the type of license that will be applied to the virtual machines that are deployed within the Azure Virtual Machine Scale Set."
+            },
+            "type": "string"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Virtual Machine Scale Set resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 61,
+            "minLength": 3,
+            "metadata": {
+                "description": "Specifies the name of the Azure Virtual Machine Scale Set."
+            },
+            "type": "string"
+        },
+        "networkInterfaceConfigurations": {
+            "metadata": {
+                "description": "An array of network interface configurations that will be applied to the Azure Virtual Machine Scale Set."
+            },
+            "type": "array"
+        },
+        "numberOfFaultDomains": {
+            "defaultValue": 1,
+            "maxValue": 5,
+            "minValue": 1,
+            "metadata": {
+                "description": "Specifies the number of fault domains that the Azure Virtual Machine Scale Set will be deployed within."
+            },
+            "type": "int"
+        },
+        "numberOfVirtualMachines": {
+            "defaultValue": 0,
+            "metadata": {
+                "description": "Specifies the number of virtual machines that will be deployed within the Azure Virtual Machine Scale Set."
+            },
+            "type": "int"
+        },
+        "orchestrationMode": {
+            "allowedValues": [
+                "Flexible",
+                "Uniform"
+            ],
+            "defaultValue": "Uniform",
+            "metadata": {
+                "description": "Specifies the orchestration mode of the Azure Virtual Machine Scale Set."
+            },
+            "type": "string"
+        },
+        "osDisk": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the properties of the operating system disk that will be provisioned and assigned to the virtual machines that are deployed within the Azure Virtual Machine Scale Set."
+            },
+            "type": "object"
+        },
+        "priority": {
+            "allowedValues": [
+                "Low",
+                "Regular",
+                "Spot"
+            ],
+            "defaultValue": "Regular",
+            "metadata": {
+                "description": "Specifies the priority of the virtual machines that are deployed within the Azure Virtual Machine Scale Set."
+            },
+            "type": "string"
+        },
+        "proximityPlacementGroup": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the properties of the Azure Proximity Placement Group that the Azure Virtual Machine Scale Set will be assigned to."
+            },
+            "type": "object"
+        },
+        "skuName": {
+            "defaultValue": "Standard_D2s_v4",
+            "metadata": {
+                "description": "Specifies the SKU name of the virtual machines that are deployed within the Azure Virtual Machine Scale Set."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Virtual Machine Scale Set."
+            },
+            "type": "object"
+        },
+        "windowsConfiguration": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the windows configuration that will be applied to the Azure Virtual Machine Scale Set."
+            },
+            "type": "secureObject"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "autoscaleSettings": "2015-04-01",
+            "diagnosticSettings": "2017-05-01-preview",
+            "virtualMachineScaleSets": "2021-04-01"
+        },
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "autoscale": "[union(variables('defaultResourceProperties').autoscale, parameters('autoscale'))]",
+        "defaultResourceProperties": {
+            "audit": {
+                "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "logNames": [
+                    "AutoscaleEvaluations",
+                    "AutoscaleScaleActions"
+                ],
+                "retentionPolicy": {
+                    "days": 137,
+                    "isEnabled": true
+                }
+            },
+            "autoscale": {
+                "isEnabled": false,
+                "name": "[format('VMSS_{0}', parameters('name'))]",
+                "notifications": [],
+                "profiles": [
+                    {
+                        "capacity": {
+                            "default": 1,
+                            "maximum": 13,
+                            "minimum": 1
+                        },
+                        "name": "Default",
+                        "rules": [
+                            {
+                                "metricTrigger": {
+                                    "Dimensions": [],
+                                    "dividePerInstance": false,
+                                    "metricName": "Percentage CPU",
+                                    "metricResourceUri": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', parameters('name'))]",
+                                    "operator": "GreaterThan",
+                                    "statistic": "Average",
+                                    "threshold": 61,
+                                    "timeAggregation": "Average",
+                                    "timeGrain": "PT1M",
+                                    "timeWindow": "PT5M"
+                                },
+                                "scaleAction": {
+                                    "cooldown": "PT5M",
+                                    "direction": "Increase",
+                                    "type": "ChangeCount",
+                                    "value": 1
+                                }
+                            },
+                            {
+                                "metricTrigger": {
+                                    "Dimensions": [],
+                                    "dividePerInstance": false,
+                                    "metricName": "Percentage CPU",
+                                    "metricResourceUri": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', parameters('name'))]",
+                                    "operator": "LessThan",
+                                    "statistic": "Average",
+                                    "threshold": 31,
+                                    "timeAggregation": "Average",
+                                    "timeGrain": "PT1M",
+                                    "timeWindow": "PT5M"
+                                },
+                                "scaleAction": {
+                                    "cooldown": "PT5M",
+                                    "direction": "Decrease",
+                                    "type": "ChangeCount",
+                                    "value": "1"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "diskEncryptionSet": {
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "host": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "identity": {
+                "isEnabled": true,
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "networkConfiguration": {
+                "dnsSettings": "[null()]",
+                "isAcceleratedNetworkingEnabled": false,
+                "isFpgaEnabled": false,
+                "isIpForwardingEnabled": false,
+                "networkSecurityGroup": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
+            },
+            "osDisk": {
+                "cachingMode": "ReadWrite",
+                "createOption": "FromImage",
+                "isWriteAcceleratorEnabled": false,
+                "storageAccountType": "Premium_LRS"
+            },
+            "proximityPlacementGroup": {
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "windowsConfiguration": {
+                "isVmAgentEnabled": true,
+                "patchSettings": {
+                    "isHotPatchingEnabled": false,
+                    "mode": "AutomaticByOS"
+                },
+                "timeZone": "UTC"
+            }
+        },
+        "diskEncryptionSet": "[union(variables('defaultResourceProperties').diskEncryptionSet, parameters('diskEncryptionSet'))]",
+        "flexibleProperties": {
+            "hostGroup": "[if(empty(parameters('host')), null(), createObject('id', resourceId(variables('host').subscriptionId, variables('host').resourceGroupName, 'Microsoft.Compute/hostGroups', variables('host').hostGroupName)))]",
+            "platformFaultDomainCount": "[parameters('numberOfFaultDomains')]",
+            "proximityPlacementGroup": "[if(empty(parameters('proximityPlacementGroup')), null(), createObject('id', resourceId(variables('proximityPlacementGroup').subscriptionId, variables('proximityPlacementGroup').resourceGroupName, 'Microsoft.Compute/proximityPlacementGroups', variables('proximityPlacementGroup').name)))]",
+            "singlePlacementGroup": false
+        },
+        "host": "[union(variables('defaultResourceProperties').host, parameters('host'))]",
+        "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "isFlexibleVirtualMachineScaleSet": "[equals(toLower(parameters('orchestrationMode')), 'flexible')]",
+        "isSpotVirtualMachineScaleSet": "[equals(toLower(parameters('priority')), 'spot')]",
+        "isWindowsVirtualMachineScaleSet": "[or(not(empty(parameters('windowsConfiguration'))), equals(parameters('licenseType'), 'Windows_Client'), equals(parameters('licenseType'), 'Windows_Server'), contains(union(createObject('id', ''), parameters('imageReference')).id, 'Windows'), contains(union(createObject('offer', ''), parameters('imageReference')).offer, 'Windows'))]",
+        "networkInterfaceConfigurationsCount": "[length(parameters('networkInterfaceConfigurations'))]",
+        "proximityPlacementGroup": "[union(variables('defaultResourceProperties').proximityPlacementGroup, parameters('proximityPlacementGroup'))]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "resourceIds": {
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
+            "autoscaleSettings": "[resourceId('Microsoft.Insights/autoscaleSettings', variables('autoscale').name)]",
+            "virtualMachineScaleSet": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', parameters('name'))]"
+        },
+        "sku": {
+            "capacity": "[parameters('numberOfVirtualMachines')]",
+            "name": "[parameters('skuName')]"
+        },
+        "subscriptionId": "[subscription().subscriptionId]",
+        "uniformProperties": {
+            "additionalCapabilities": {
+                "ultraSSDEnabled": "[parameters('isUltraSsdSupportEnabled')]"
+            },
+            "automaticRepairsPolicy": {
+                "enabled": false,
+                "gracePeriod": "PT10M"
+            },
+            "hostGroup": "[if(empty(parameters('host')), null(), createObject('id', resourceId(variables('host').subscriptionId, variables('host').resourceGroupName, 'Microsoft.Compute/hostGroups', variables('host').hostGroupName)))]",
+            "orchestrationMode": "[parameters('orchestrationMode')]",
+            "overprovision": "[parameters('isOverprovisioningEnabled')]",
+            "platformFaultDomainCount": "[parameters('numberOfFaultDomains')]",
+            "proximityPlacementGroup": "[if(empty(parameters('proximityPlacementGroup')), null(), createObject('id', resourceId(variables('proximityPlacementGroup').subscriptionId, variables('proximityPlacementGroup').resourceGroupName, 'Microsoft.Compute/proximityPlacementGroups', variables('proximityPlacementGroup').name)))]",
+            "scaleInPolicy": {
+                "rules": [
+                    "Default"
+                ]
+            },
+            "singlePlacementGroup": false,
+            "upgradePolicy": {
+                "mode": "Manual"
+            },
+            "virtualMachineProfile": {
+                "billingProfile": {
+                    "maxPrice": "[if(variables('isSpotVirtualMachineScaleSet'), -1, null())]"
+                },
+                "extensionProfile": {
+                    "extensions": []
+                },
+                "evictionPolicy": "[if(variables('isSpotVirtualMachineScaleSet'), 'Deallocate', null())]",
+                "licenseType": "[parameters('licenseType')]",
+                "networkProfile": {
+                    "copy": [
+                        {
+                            "count": "[variables('networkInterfaceConfigurationsCount')]",
+                            "input": {
+                                "name": "[parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].name]",
+                                "properties": {
+                                    "dnsSettings": "[union(variables('defaultResourceProperties').networkConfiguration, parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')]).dnsSettings]",
+                                    "enableAcceleratedNetworking": "[union(variables('defaultResourceProperties').networkConfiguration, parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')]).isAcceleratedNetworkingEnabled]",
+                                    "enableFpga": "[union(variables('defaultResourceProperties').networkConfiguration, parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')]).isFpgaEnabled]",
+                                    "enableIPForwarding": "[union(variables('defaultResourceProperties').networkConfiguration, parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')]).isIpForwardingEnabled]",
+                                    "ipConfigurations": "[parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].ipConfigurations]",
+                                    "networkSecurityGroup": "[if(empty(union(variables('defaultResourceProperties').networkConfiguration, parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')]).networkSecurityGroup.name), null(), createObject('id', resourceId(union(variables('defaultResourceProperties').networkConfiguration, parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')]).networkSecurityGroup.subscriptionId, union(variables('defaultResourceProperties').networkConfiguration, parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')]).networkSecurityGroup.resourceGroupName, 'Microsoft.Network/networkSecurityGroups', union(variables('defaultResourceProperties').networkConfiguration, parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')]).networkSecurityGroup.name)))]",
+                                    "primary": "[union(createObject('isPrimary', equals(variables('networkInterfaceConfigurationsCount'), 1)), variables('defaultResourceProperties').networkConfiguration, parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')]).isPrimary]"
+                                }
+                            },
+                            "name": "networkInterfaceConfigurations"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "adminUsername": "[parameters('administratorUserName')]",
+                    "adminPassword": "[parameters('administratorUserPassword')]",
+                    "computerNamePrefix": "[if(empty(parameters('computerNamePrefix')), if(variables('isWindowsVirtualMachineScaleSet'), toUpper(take(uniqueString(concat(variables('resourceGroupName'), parameters('name'))), 9)), parameters('name')), parameters('computerNamePrefix'))]",
+                    "windowsConfiguration": "[if(variables('isWindowsVirtualMachineScaleSet'), variables('windowsConfiguration'), null())]"
+                },
+                "priority": "[parameters('priority')]",
+                "scheduledEventsProfile": {
+                    "terminateNotificationProfile": {
+                        "enable": true,
+                        "notBeforeTimeout": "PT7M"
+                    }
+                },
+                "storageProfile": {
+                    "imageReference": "[parameters('imageReference')]",
+                    "osDisk": {
+                        "caching": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).cachingMode]",
+                        "createOption": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).createOption]",
+                        "managedDisk": {
+                            "diskEncryptionSet": "[if(empty(parameters('diskEncryptionSet')), null(), createObject('id', resourceId(variables('diskEncryptionSet').subscriptionId, variables('diskEncryptionSet').resourceGroupName, 'Microsoft.Compute/diskEncryptionSets', variables('diskEncryptionSet').name)))]",
+                            "storageAccountType": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).storageAccountType]"
+                        },
+                        "writeAcceleratorEnabled": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).isWriteAcceleratorEnabled]"
+                    }
+                }
+            }
+        },
+        "windowsConfiguration": {
+            "additionalUnattendContent": "[null()]",
+            "enableAutomaticUpdates": "[not(equals(toLower(variables('windowsConfigurationFriendly').patchSettings.mode), 'manual'))]",
+            "provisionVMAgent": "[variables('windowsConfigurationFriendly').isVmAgentEnabled]",
+            "timeZone": "[variables('windowsConfigurationFriendly').timeZone]",
+            "winRM": "[null()]"
+        },
+        "windowsConfigurationFriendly": "[union(variables('defaultResourceProperties').windowsConfiguration, parameters('windowsConfiguration'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').virtualMachineScaleSets]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', if(empty(variables('identity').name), 'SystemAssigned', 'UserAssigned')), if(empty(variables('identity').name), createObject(), createObject('userAssignedIdentities', createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name))))), null())]",
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": "[if(variables('isFlexibleVirtualMachineScaleSet'), variables('flexibleProperties'), variables('uniformProperties'))]",
+            "sku": "[if(variables('isFlexibleVirtualMachineScaleSet'), null(), variables('sku'))]",
+            "type": "Microsoft.Compute/virtualMachineScaleSets",
+            "zones": "[parameters('availabilityZones')]"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').autoscaleSettings]",
+            "condition": "[not(variables('isFlexibleVirtualMachineScaleSet'))]",
+            "dependsOn": [
+                "[variables('resourceIds').virtualMachineScaleSet]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[variables('autoscale').name]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(variables('autoscale').notifications)]",
+                        "input": {},
+                        "name": "notifications"
+                    },
+                    {
+                        "count": "[length(variables('autoscale').profiles)]",
+                        "input": {
+                            "capacity": "[variables('autoscale').profiles[copyIndex('profiles')].capacity]",
+                            "name": "[variables('autoscale').profiles[copyIndex('profiles')].name]",
+                            "rules": "[variables('autoscale').profiles[copyIndex('profiles')].rules]"
+                        },
+                        "name": "profiles"
+                    }
+                ],
+                "enabled": "[variables('autoscale').isEnabled]",
+                "predictiveAutoscalePolicy": {
+                    "scaleLookAheadTime": "[null()]",
+                    "scaleMode": "Disabled"
+                },
+                "targetResourceUri": "[variables('resourceIds').virtualMachineScaleSet]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Insights/autoscaleSettings"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[and(not(variables('isFlexibleVirtualMachineScaleSet')), or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty')))]",
+            "dependsOn": [
+                "[variables('resourceIds').autoscaleSettings]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/Microsoft.Insights/audit', variables('autoscale').name)]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(variables('audit').logNames)]",
+                        "input": {
+                            "category": "[variables('audit').logNames[copyIndex('logs')]]",
+                            "enabled": "[variables('isAuditEnabled')]",
+                            "retentionPolicy": {
+                                "days": "[variables('audit').retentionPolicy.days]",
+                                "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                            }
+                        },
+                        "name": "logs"
+                    }
+                ],
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
+            },
+            "type": "Microsoft.Insights/autoscaleSettings/providers/diagnosticsettings"
+        }
+    ]
+}

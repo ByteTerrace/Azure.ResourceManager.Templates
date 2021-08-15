@@ -62,6 +62,13 @@
             },
             "type": "array"
         },
+        "identity": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the identity that will be assigned to the Azure Storage Account."
+            },
+            "type": "object"
+        },
         "isAdvancedThreatProtectionEnabled": {
             "defaultValue": true,
             "metadata": {
@@ -282,6 +289,12 @@
                 "quotaInGigabytes": 5,
                 "rootSquash": "[null()]"
             },
+            "identity": {
+                "isEnabled": true,
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
             "privateEndpoint": {
                 "dnsZone": {
                     "resourceGroupName": "[variables('resourceGroupName')]",
@@ -324,6 +337,7 @@
         "fileShareCollectionCount": "[length(variables('fileShareCollection'))]",
         "fileShareCollectionIsNotEmpty": "[greater(variables('fileShareCollectionCount'), 0)]",
         "firewallRulesCount": "[length(parameters('firewallRules'))]",
+        "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isCustomerManagedEncryptionEnabled": "[variables('customerManagedEncryption').isEnabled]",
@@ -359,9 +373,7 @@
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').storageAccounts]",
-            "identity": {
-                "type": "SystemAssigned"
-            },
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', if(empty(variables('identity').name), 'SystemAssigned', 'UserAssigned')), if(empty(variables('identity').name), createObject(), createObject('userAssignedIdentities', createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name))))), null())]",
             "kind": "[parameters('kind')]",
             "location": "[parameters('location')]",
             "name": "[variables('storageAccountName')]",
@@ -576,9 +588,6 @@
                     "resources": [
                         {
                             "apiVersion": "[parameters('storageAccountsApiVersion')]",
-                            "identity": {
-                                "type": "SystemAssigned"
-                            },
                             "kind": "[parameters('kind')]",
                             "location": "[parameters('location')]",
                             "name": "[parameters('name')]",

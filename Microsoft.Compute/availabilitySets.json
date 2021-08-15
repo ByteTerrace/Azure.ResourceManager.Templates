@@ -26,19 +26,12 @@
             },
             "type": "int"
         },
-        "proximityPlacementGroupName": {
-            "defaultValue": "",
+        "proximityPlacementGroup": {
+            "defaultValue": {},
             "metadata": {
-                "description": "Specifies the name of the Azure Proximity Placement Group that will the the Azure Availability Set will be assigned to."
+                "description": "Specifies the properties of the Azure Proximity Placement Group that the Azure Availability Set will be assigned to."
             },
-            "type": "string"
-        },
-        "proximityPlacementGroupResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Specifies the resource group name of the Azure Proximity Placement Group that will the the Azure Availability Set will be assigned to."
-            },
-            "type": "string"
+            "type": "object"
         },
         "skuName": {
             "allowedValues": [
@@ -62,7 +55,17 @@
     "variables": {
         "apiVersions": {
             "availabilitySets": "2020-12-01"
-        }
+        },
+        "defaultResourceProperties": {
+            "proximityPlacementGroup": {
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            }
+        },
+        "proximityPlacementGroup": "[union(variables('defaultResourceProperties').proximityPlacementGroup, parameters('proximityPlacementGroup'))]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
         {
@@ -72,7 +75,7 @@
             "properties": {
                 "platformFaultDomainCount": "[parameters('numberOfFaultDomains')]",
                 "platformUpdateDomainCount": "[parameters('numberOfUpdateDomains')]",
-                "proximityPlacementGroup": "[if(empty(parameters('proximityPlacementGroupName')), null(), createObject('id', resourceId(parameters('proximityPlacementGroupResourceGroupName'), 'Microsoft.Compute/proximityPlacementGroups', parameters('proximityPlacementGroupName'))))]"
+                "proximityPlacementGroup": "[if(empty(parameters('proximityPlacementGroup')), null(), createObject('id', resourceId(variables('proximityPlacementGroup').subscriptionId, variables('proximityPlacementGroup').resourceGroupName, 'Microsoft.Compute/proximityPlacementGroups', variables('proximityPlacementGroup').name)))]"
             },
             "sku": {
                 "name": "[parameters('skuName')]"
