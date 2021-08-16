@@ -435,7 +435,7 @@
                 "isVirtualTrustedPlatformModuleEnabled": true,
                 "isVulnerabilityAssessmentEnabled": false,
                 "justInTimeAccess": {},
-                "licenseType": "Windows_Client",
+                "licenseType": "None",
                 "linuxConfiguration": {},
                 "osDisk": {},
                 "priority": "Regular",
@@ -452,11 +452,13 @@
                 ],
                 "computerNamePrefix": "",
                 "diskEncryptionSet": {},
+                "extensions": {},
                 "host": {},
                 "identity": {},
                 "isOverprovisioningEnabled": true,
                 "isUltraSsdSupportEnabled": false,
-                "licenseType": "Windows_Client",
+                "licenseType": "None",
+                "linuxConfiguration": {},
                 "numberOfFaultDomains": 1,
                 "numberOfVirtualMachines": 0,
                 "orchestrationMode": "Uniform",
@@ -2326,6 +2328,9 @@
                     "diskEncryptionSet": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).diskEncryptionSet]"
                     },
+                    "extensions": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).extensions]"
+                    },
                     "host": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).host]"
                     },
@@ -2343,6 +2348,9 @@
                     },
                     "licenseType": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).licenseType]"
+                    },
+                    "linuxConfiguration": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).linuxConfiguration]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).location]"
