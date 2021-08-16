@@ -48,7 +48,6 @@ jobs:
           INP_SECRET=$(jq -r '.inputs.secret' $GITHUB_EVENT_PATH)
           echo ::add-mask::$INP_SECRET
           echo ::set-output name=secret::$INP_SECRET
-          echo SECRET="$INP_SECRET" >> $GITHUB_ENV
       - name: 'download Azure Resource Manager template artifact'
         uses: 'actions/download-artifact@v2'
         with:
