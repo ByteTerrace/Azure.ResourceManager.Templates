@@ -42,7 +42,8 @@ jobs:
     needs: 'build'
     runs-on: 'ubuntu-latest'
     steps:
-      - name: 'mask inputs'
+      - id: 'maskInputs'
+        name: 'mask inputs'
         run: |
           INP_SECRET=$(jq -r '.inputs.secret' $GITHUB_EVENT_PATH)
           echo ::add-mask::$INP_SECRET
@@ -57,7 +58,7 @@ jobs:
         uses: 'azure/login@v1'
         with:
           allow-no-subscriptions: true
-          creds: ${{ env.SECRET }}
+          creds: ${{ steps.maskInputs.outputs.secret }}
           environment: 'AzureCloud'
       - name: 'publish template spec to Azure Resource Group'
         run: |

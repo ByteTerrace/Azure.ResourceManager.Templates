@@ -1,0 +1,153 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "audit": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure VPN Gateway."
+            },
+            "type": "object"
+        },
+        "gatewayGeneration": {
+            "allowedValues": [
+                "Generation1",
+                "Generation2",
+                "None"
+            ],
+            "defaultValue": "Generation1",
+            "metadata": {
+                "description": ""
+            },
+            "type": "string"
+        },
+        "gatewayType": {
+            "allowedValues": [
+                "ExpressRoute",
+                "LocalGateway",
+                "Vpn"
+            ],
+            "defaultValue": "Vpn",
+            "metadata": {
+                "description": ""
+            },
+            "type": "string"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure VPN Gateway resource(s) will be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 80,
+            "metadata": {
+                "description": "Specifies the name of the Azure VPN Gateway."
+            },
+            "minLength": 1,
+            "type": "string"
+        },
+        "skuName": {
+            "allowedValues": [
+                "Basic",
+                "VpnGw1",
+                "VpnGw1AZ",
+                "VpnGw2",
+                "VpnGw2AZ",
+                "VpnGw3",
+                "VpnGw3AZ",
+                "VpnGw4",
+                "VpnGw4AZ",
+                "VpnGw5",
+                "VpnGw5AZ"
+            ],
+            "defaultValue": "Basic",
+            "metadata": {
+                "description": "Specifies the SKU name of the Azure VPN Gateway."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure VPN Gateway."
+            },
+            "type": "object"
+        },
+        "vpnType": {
+            "allowedValues": [
+                "PolicyBased",
+                "RouteBased"
+            ],
+            "defaultValue": "RouteBased",
+            "metadata": {
+                "description": ""
+            },
+            "type": "string"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "diagnosticSettings": "2017-05-01-preview",
+            "virtualNetworkGateways": "2020-07-01"
+        },
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "defaultResourceProperties": {
+            "audit": {
+                "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "retentionPolicy": {
+                    "days": 137,
+                    "isEnabled": true
+                }
+            }
+        },
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "resourceIds": {
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
+            "virtualNetworkGateway": "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('name'))]"
+        },
+        "subscriptionId": "[subscription().subscriptionId]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').virtualNetworkGateways]",
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "",
+                        "input": {
+                            "name": "",
+                            "properties": {
+                                "privateIPAllocationMethod": "Dynamic",
+                                "publicIpAddress": {
+                                    "id": ""
+                                },
+                                "subnet": {
+                                    "id": ""
+                                }
+                            }
+                        },
+                        "name": "ipConfigurations"
+                    }
+                ],
+                "gatewayType": "[parameters('gatewayType')]",
+                "sku": {
+                    "name": "[parameters('skuName')]"
+                },
+                "vpnGatewayGeneration": "[parameters('gatewayGeneration')]",
+                "vpnType": "[parameters('vpnType')]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Network/virtualNetworkGateways"
+        }
+    ]
+}

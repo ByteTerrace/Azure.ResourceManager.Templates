@@ -354,6 +354,23 @@
                 "enabled": false,
                 "gracePeriod": "PT10M"
             },
+            "copy": [
+                {
+                    "count": 0,
+                    "input": {
+                        "sourceVault": {
+                            "id": "[resourceId('', '')]",
+                            "vaultCertificates": [
+                                {
+                                    "certificateStore": "",
+                                    "certificateUrl": ""
+                                }
+                            ]
+                        }
+                    },
+                    "name": "secrets"
+                }
+            ],
             "hostGroup": "[if(empty(parameters('host')), null(), createObject('id', resourceId(variables('host').subscriptionId, variables('host').resourceGroupName, 'Microsoft.Compute/hostGroups', variables('host').hostGroupName)))]",
             "orchestrationMode": "[parameters('orchestrationMode')]",
             "overprovision": "[parameters('isOverprovisioningEnabled')]",
