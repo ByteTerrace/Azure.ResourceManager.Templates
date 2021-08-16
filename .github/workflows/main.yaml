@@ -84,7 +84,7 @@ jobs:
               --resource-group ${Env:RESOURCEGROUP_NAME} `
               --subscription ${Env:SUBSCRIPTION_ID_OR_NAME} `
               --template-file "${Env:GITHUB_WORKSPACE}/downloads/arm-templates/resourceGroupDeployment.json" `
-              --version ${Env:CONTENTVERSION} `
+              --version ${Env:contentVersion} `
               --yes;
         shell: 'pwsh'
       - name: 'logout of Azure'
