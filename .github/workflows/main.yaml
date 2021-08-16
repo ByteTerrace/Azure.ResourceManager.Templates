@@ -51,7 +51,7 @@ jobs:
           TEMPLATESPEC_CREDENTIALS: ${{ secrets.AZURE_APPLICATION_CREDENTIALS }}
         name: 'mask inputs'
         run: |
-          if [[ -z "${TEMPLATESPEC_CREDENTIALS}" ]]; then
+          if [ -z "${TEMPLATESPEC_CREDENTIALS}" ]; then
               TEMPLATESPEC_CREDENTIALS=$(jq -r '.inputs.templateSpecCredentials' $GITHUB_EVENT_PATH)
               echo ::add-mask::$TEMPLATESPEC_CREDENTIALS
           fi
@@ -72,25 +72,19 @@ jobs:
           RESOURCEGROUP_NAME: ${{ fromJSON(secrets.AZURE_RESOURCEGROUP_PROPERTIES).resourceGroupName }}
           SUBSCRIPTION_ID_OR_NAME: ${{ fromJSON(secrets.AZURE_RESOURCEGROUP_PROPERTIES).subscriptionIdOrName }}
         run: |
-          if [[ -z "${RESOURCEGROUP_NAME}" ]]; then
+          if [ -z "${RESOURCEGROUP_NAME}" ]; then
               RESOURCEGROUP_NAME=$(jq -r '.inputs.templateSpecResourceGroupName' $GITHUB_EVENT_PATH)
           fi
-          if [[ -z "${SUBSCRIPTION_ID_OR_NAME}" ]]; then
+          if [ -z "${SUBSCRIPTION_ID_OR_NAME}" ]; then
               SUBSCRIPTION_ID_OR_NAME=$(jq -r '.inputs.templateSpecSubscriptionIdOrName' $GITHUB_EVENT_PATH)
           fi
 
-          $resourceGroupName = "${RESOURCEGROUP_NAME}";
-          $subscriptionIdOrName = "${SUBSCRIPTION_ID_OR_NAME}";
-          $templateFilePath = "${GITHUB_WORKSPACE}/downloads/arm-templates/resourceGroupDeployment.json";
-          $templateName = 'ResourceGroupDeployment';
-          $version = "${CONTENTVERSION}";
-
           az ts create `
               --name $templateName `
-              --resource-group $resourceGroupName `
-              --subscription $subscriptionIdOrName `
-              --template-file $templateFilePath `
-              --version $version `
+              --resource-group "${RESOURCEGROUP_NAME}" `
+              --subscription "${SUBSCRIPTION_ID_OR_NAME}" `
+              --template-file "${GITHUB_WORKSPACE}/downloads/arm-templates/resourceGroupDeployment.json" `
+              --version "${CONTENTVERSION}" `
               --yes;
         shell: 'pwsh'
       - name: 'logout of Azure'
