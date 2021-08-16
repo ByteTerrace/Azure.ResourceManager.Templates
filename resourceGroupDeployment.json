@@ -2281,7 +2281,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
-                    "relativePath": "./Microsoft.Compute/automationAccounts.json"
+                    "relativePath": "./Microsoft.Automation/automationAccounts.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
