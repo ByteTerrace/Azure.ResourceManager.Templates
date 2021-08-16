@@ -1,7 +1,20 @@
 env:
   contentVersion: '3.0.0.0'
 name: 'Azure Resource Manager Templates'
-on: [push]
+on:
+  workflow_dispatch:
+    inputs:
+      templateSpecCredentials:
+        description: 'Template Spec Credentials'
+        required: true
+      templateSpecResourceGroupName:
+        default: 'byteterrace'
+        description: 'Template Spec Resource Group Name'
+        required: true
+      templateSpecSubscriptionNameOrId:
+        default: 'byteterrace'
+        description: 'Template Spec Subscription Name Or Id'
+        required: true
 jobs:
   build:
     runs-on: 'ubuntu-latest'
@@ -29,6 +42,17 @@ jobs:
     needs: 'build'
     runs-on: 'ubuntu-latest'
     steps:
+      - name: 'mask inputs'
+        id: mask_inputs
+        run: |
+          INPUT_SECRET_TEMPLATESPEC_APPLICATION_CREDENTIALS=$(jq -r '.inputs.templateSpecSubscriptionNameOrId' $GITHUB_EVENT_PATH)
+          echo $INPUT_SECRET_TEMPLATESPEC_APPLICATION_CREDENTIALS
+          echo ::add-mask::$INPUT_SECRET_TEMPLATESPEC_APPLICATION_CREDENTIALS
+          echo After mask
+          echo $INPUT_SECRET_TEMPLATESPEC_APPLICATION_CREDENTIALS
+          echo Setting output
+          echo ::set-output name=templateSpecSubscriptionNameOrId::$INPUT_SECRET_TEMPLATESPEC_APPLICATION_CREDENTIALS
+          echo SECRET_TOKEN="$INPUT_SECRET_TEMPLATESPEC_APPLICATION_CREDENTIALS" >> $GITHUB_ENV
       - name: 'download Azure Resource Manager template artifact'
         uses: 'actions/download-artifact@v2'
         with:
@@ -38,12 +62,12 @@ jobs:
         uses: 'azure/login@v1'
         with:
           allow-no-subscriptions: true
-          creds: ${{ secrets.AZURE_APPLICATION_CREDENTIALS }}
+          creds: ${{ env.INPUT_SECRET_TEMPLATESPEC_APPLICATION_CREDENTIALS }}
           environment: 'AzureCloud'
       - name: 'publish template spec to Azure Resource Group'
         run: |
-          $resourceGroupName = ${{ format('''{0}''', fromJSON(secrets.AZURE_TEMPLATESPEC_PROPERTIES).resourceGroupName) }};
-          $subscriptionIdOrName = ${{ format('''{0}''', fromJSON(secrets.AZURE_TEMPLATESPEC_PROPERTIES).subscriptionIdOrName) }};
+          $resourceGroupName = ${{ format('''{0}''', env.templateSpecResourceGroupName) }};
+          $subscriptionIdOrName = ${{ format('''{0}''', fromJSON(env.templateSpecSubscriptionNameOrId).subscriptionIdOrName) }};
           $templateFilePath = ${{ format('''{0}/downloads/arm-templates/resourceGroupDeployment.json''', github.workspace) }};
           $templateName = 'ResourceGroupDeployment';
           $version = ${{ format('''{0}''', env.contentVersion) }};
