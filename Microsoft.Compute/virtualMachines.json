@@ -393,6 +393,7 @@
             "osDisk": {
                 "cachingMode": "ReadWrite",
                 "createOption": "FromImage",
+                "isEphemeral": false,
                 "isWriteAcceleratorEnabled": false,
                 "storageAccountType": "Premium_LRS"
             },
@@ -596,6 +597,7 @@
                     "osDisk": {
                         "caching": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).cachingMode]",
                         "createOption": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).createOption]",
+                        "diffDiskSettings": "[if(union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).isEphemeral, createObject('option', 'Local'), null())]",
                         "managedDisk": {
                             "diskEncryptionSet": "[if(empty(parameters('diskEncryptionSet')), null(), createObject('id', resourceId(variables('diskEncryptionSet').subscriptionId, variables('diskEncryptionSet').resourceGroupName, 'Microsoft.Compute/diskEncryptionSets', variables('diskEncryptionSet').name)))]",
                             "storageAccountType": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).storageAccountType]"
