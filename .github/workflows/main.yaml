@@ -1,7 +1,7 @@
 env:
   contentVersion: '3.0.0.0'
 name: 'Azure Resource Manager Templates'
-on: [push]
+on: [push,workflow_run]
 jobs:
   build:
     runs-on: 'ubuntu-latest'
