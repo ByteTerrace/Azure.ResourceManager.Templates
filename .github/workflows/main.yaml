@@ -2,6 +2,10 @@ env:
   contentVersion: '3.0.0.0'
 name: 'Azure Resource Manager Templates'
 on:
+  push:
+    branches:
+      - 'features/**'
+      - 'main'
   workflow_dispatch:
     inputs:
       templateSpecCredentials:
