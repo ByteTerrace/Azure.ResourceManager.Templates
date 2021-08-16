@@ -44,9 +44,9 @@ jobs:
     steps:
       - name: 'mask inputs'
         run: |
-          INPUT_SECRET_TEMPLATESPEC_APPLICATION_CREDENTIALS=$(jq -r '.inputs.templateSpecSubscriptionNameOrId' $GITHUB_EVENT_PATH)
+          INPUT_SECRET_TEMPLATESPEC_APPLICATION_CREDENTIALS=$(jq -r '.inputs.templateSpecCredentials' $GITHUB_EVENT_PATH)
           echo ::add-mask::$INPUT_SECRET_TEMPLATESPEC_APPLICATION_CREDENTIALS
-          echo ::set-output name=templateSpecSubscriptionNameOrId::$INPUT_SECRET_TEMPLATESPEC_APPLICATION_CREDENTIALS
+          echo ::set-output name=templateSpecCredentials::$INPUT_SECRET_TEMPLATESPEC_APPLICATION_CREDENTIALS
           echo INPUT_SECRET_TEMPLATESPEC_APPLICATION_CREDENTIALS="$INPUT_SECRET_TEMPLATESPEC_APPLICATION_CREDENTIALS" >> $GITHUB_ENV
       - name: 'download Azure Resource Manager template artifact'
         uses: 'actions/download-artifact@v2'
