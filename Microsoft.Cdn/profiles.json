@@ -9,13 +9,6 @@
             },
             "type": "object"
         },
-        "endpoints": {
-            "defaultValue": [],
-            "metadata": {
-                "description": ""
-            },
-            "type": "array"
-        },
         "name": {
             "maxLength": 260,
             "metadata": {
@@ -47,7 +40,6 @@
     "variables": {
         "apiVersions": {
             "cdnProfiles": "2020-09-01",
-            "cdnProfilesEndpoints": "2020-09-01",
             "diagnosticSettings": "2017-05-01-preview"
         },
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
@@ -63,20 +55,8 @@
                     "days": 137,
                     "isEnabled": true
                 }
-            },
-            "endpoint": {
-                "contentTypesToCompress": [],
-                "isCompressionEnabled": true,
-                "isHttpAllowed": true,
-                "isHttpsAllowed": true
-            },
-            "endpointOrigin": {
-                "isEnabled": true
             }
         },
-        "endpoints": "[if(variables('endpointsIsNotEmpty'), parameters('endpoints'), createArray(createObject('name', '<NULL>')))]",
-        "endpointsCount": "[length(parameters('endpoints'))]",
-        "endpointsIsNotEmpty": "[greater(variables('endpointsCount'), 0)]",
         "frontDoorDiagnosticsLogs": [
             {
                 "category": "FrontDoorAccessLog",
@@ -147,46 +127,6 @@
                 "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
             "type": "Microsoft.Cdn/profiles/providers/diagnosticsettings"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').cdnProfilesEndpoints]",
-            "condition": "[variables('endpointsIsNotEmpty')]",
-            "copy": {
-                "count": "[variables('endpointsCount')]",
-                "name": "endpointsCopy"
-            },
-            "dependsOn": [
-                "[variables('resourceIds').cdnProfile]"
-            ],
-            "name": "[format('{0}/{1}', parameters('name'), '')]",
-            "location": "global",
-            "properties": {
-                "contentTypesToCompress": "[union(variables('defaultResourceProperties').endpoint, variables('endpoints')[copyIndex()]).contentTypesToCompress]",
-                "copy": [
-                    {
-                        "count": "[length(variables('endpoints')[copyIndex()].origins)]",
-                        "input": {
-                            "name": "[variables('endpoints')[copyIndex()].origins[copyIndex('origins')].name]",
-                            "properties": {
-                                "enabled": "[union(variables('defaultResourceProperties').endpointOrigin, variables('endpoints')[copyIndex()].origins[copyIndex('origins')]).isEnabled]",
-                                "hostName": "",
-                                "httpPort": 80,
-                                "httpsPort": 443,
-                                "originHostHeader": "[variables('endpoints')[copyIndex()].origins[copyIndex('origins')].originHostHeader]",
-                                "priority": 1,
-                                "weight": 1000
-                            }
-                        },
-                        "name": "origins"
-                    }
-                ],
-                "isCompressionEnabled": "[union(variables('defaultResourceProperties').endpoint, variables('endpoints')[copyIndex()]).isCompressionEnabled]",
-                "isHttpAllowed": "[union(variables('defaultResourceProperties').endpoint, variables('endpoints')[copyIndex()]).isHttpAllowed]",
-                "isHttpsAllowed": "[union(variables('defaultResourceProperties').endpoint, variables('endpoints')[copyIndex()]).isHttpsAllowed]",
-                "originHostHeader": "[variables('endpoints')[copyIndex()].originHostHeader]"
-            },
-            "tags": "[parameters('tags')]",
-            "type": "Microsoft.Cdn/profiles/endpoints"
         }
     ]
 }
