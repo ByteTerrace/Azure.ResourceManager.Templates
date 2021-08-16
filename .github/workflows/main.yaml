@@ -5,6 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       templateSpecCredentials:
+        default: ''
         description: 'Template Spec Credentials'
         required: true
       templateSpecResourceGroupName:
@@ -43,10 +44,15 @@ jobs:
     runs-on: 'ubuntu-latest'
     steps:
       - id: 'maskInputs'
+        env:
+          TEMPLATESPEC_CREDENTIALS: ${{ secrets.AZURE_APPLICATION_CREDENTIALS }}
         name: 'mask inputs'
         run: |
-          TEMPLATESPEC_CREDENTIALS=$(jq -r '.inputs.templateSpecCredentials' $GITHUB_EVENT_PATH)
-          echo ::add-mask::$TEMPLATESPEC_CREDENTIALS
+          if [ -z "${TEMPLATESPEC_CREDENTIALS}" ]
+          then
+              TEMPLATESPEC_CREDENTIALS=$(jq -r '.inputs.templateSpecCredentials' $GITHUB_EVENT_PATH)
+              echo ::add-mask::$TEMPLATESPEC_CREDENTIALS
+          fi
           echo ::set-output name=templateSpecCredentials::$TEMPLATESPEC_CREDENTIALS
       - name: 'download Azure Resource Manager template artifact'
         uses: 'actions/download-artifact@v2'
