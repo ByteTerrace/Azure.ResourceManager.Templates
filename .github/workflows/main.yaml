@@ -80,7 +80,7 @@ jobs:
           }
 
           az ts create `
-              --name $templateName `
+              --name 'ResourceGroupDeployment' `
               --resource-group ${Env:RESOURCEGROUP_NAME} `
               --subscription ${Env:SUBSCRIPTION_ID_OR_NAME} `
               --template-file "${Env:GITHUB_WORKSPACE}/downloads/arm-templates/resourceGroupDeployment.json" `
