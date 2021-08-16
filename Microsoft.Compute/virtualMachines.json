@@ -269,12 +269,10 @@
             },
             "extensions": {
                 "azureActiveDirectoryDomainJoin": {
-                    "isEnabled": false,
                     "isRestartAfterJoinEnabled": false,
                     "domainName": "",
                     "numberOfRetries": 3,
                     "options": 1,
-                    "restart": true,
                     "retryIntervalInSeconds": 17,
                     "userName": "",
                     "userPassword": "",
@@ -287,7 +285,6 @@
                         "processes": "mssence.svc"
                     },
                     "isAntimalwareEnabled": true,
-                    "isEnabled": true,
                     "isRealtimeProtectionEnabled": true,
                     "scheduledScanSettings": {
                         "day": 0,
@@ -298,43 +295,35 @@
                     "version": "1.5"
                 },
                 "azureCustomScript": {
+                    "isDos2UnixTransformEnabled": true,
                     "fileUris": "[null()]",
-                    "isEnabled": false,
                     "script": "[null()]",
                     "timestamp": "[null()]",
                     "version": "[if(variables('isLinuxVirtualMachine'), '2.1', if(variables('isWindowsVirtualMachine'), '1.10', null()))]"
                 },
                 "azureDependencyAgent": {
-                    "isEnabled": true,
                     "version": "[if(variables('isLinuxVirtualMachine'), '9.9', if(variables('isWindowsVirtualMachine'), '9.9', null()))]"
                 },
                 "azureGuestAttestationAgent": {
-                    "isEnabled": true,
-                    "version": "1.0"
+                    "version": "[if(variables('isLinuxVirtualMachine'), '1.0', if(variables('isWindowsVirtualMachine'), '1.0', null()))]"
                 },
                 "azureGuestConfigurationAgent": {
-                    "isEnabled": true,
                     "version": "[if(variables('isLinuxVirtualMachine'), '1.9', if(variables('isWindowsVirtualMachine'), '1.9', null()))]"
                 },
                 "azureGuestHealthAgent": {
-                    "isEnabled": true,
                     "version": "[if(variables('isLinuxVirtualMachine'), '1.0', if(variables('isWindowsVirtualMachine'), '1.0', null()))]"
                 },
                 "azureKeyVaultAgent": {
-                    "isEnabled": false,
                     "isInitialSyncRequired": true,
                     "version": "[if(variables('isLinuxVirtualMachine'), '2.0', if(variables('isWindowsVirtualMachine'), '1.0', null()))]"
                 },
                 "azureLogAnalyticsAgent": {
-                    "isEnabled": true,
-                    "version": "1.0"
+                    "version": "[if(variables('isLinuxVirtualMachine'), '1.13', if(variables('isWindowsVirtualMachine'), '1.0', null()))]"
                 },
                 "azureMonitorAgent": {
-                    "isEnabled": true,
                     "version": "[if(variables('isLinuxVirtualMachine'), '1.9', if(variables('isWindowsVirtualMachine'), '1.0', null()))]"
                 },
                 "azureNetworkWatcherAgent": {
-                    "isEnabled": true,
                     "version": "[if(variables('isLinuxVirtualMachine'), '1.4', if(variables('isWindowsVirtualMachine'), '1.4', null()))]"
                 }
             },
@@ -667,35 +656,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
-            "condition": "[variables('extensions').azureActiveDirectoryDomainJoin.isEnabled]",
-            "dependsOn": [
-                "[variables('resourceIds').virtualMachine]"
-            ],
-            "location": "[parameters('location')]",
-            "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineActiveDirectoryDomainJoinName'))]",
-            "properties": {
-                "autoUpgradeMinorVersion": true,
-                "publisher": "Microsoft.Compute",
-                "protectedSettings": "[if(empty(variables('extensions').azureActiveDirectoryDomainJoin.userPassword), null(), createObject('Password', variables('extensions').azureActiveDirectoryDomainJoin.userPassword))]",
-                "settings": {
-                    "Name": "[variables('extensions').azureActiveDirectoryDomainJoin.domainName]",
-                    "NumberOfRetries": "[variables('extensions').azureActiveDirectoryDomainJoin.numberOfRetries]",
-                    "Options": "[variables('extensions').azureActiveDirectoryDomainJoin.options]",
-                    "UnjoinDomainUser": "[null()]",
-                    "OUPath": "[variables('extensions').azureActiveDirectoryDomainJoin.ouPath]",
-                    "Restart": "[variables('extensions').azureActiveDirectoryDomainJoin.isRestartAfterJoinEnabled]",
-                    "RetryIntervalInMilliseconds": "[mul(variables('extensions').azureActiveDirectoryDomainJoin.retryIntervalInSeconds, 1000)]",
-                    "User": "[variables('extensions').azureActiveDirectoryDomainJoin.userName]"
-                },
-                "type": "JsonADDomainExtension",
-                "typeHandlerVersion": "[variables('extensions').azureActiveDirectoryDomainJoin.version]"
-            },
-            "tags": "[parameters('tags')]",
-            "type": "Microsoft.Compute/virtualMachines/extensions"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
-            "condition": "[variables('extensions').azureAntimalwareAgent.isEnabled]",
+            "condition": "[and(variables('isWindowsVirtualMachine'), union(createObject('isEnabled', true()), variables('extensions').azureAntimalwareAgent).isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
             ],
@@ -729,7 +690,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
-            "condition": "[and(not(equals(variables('osType'), 'Unknown')), variables('extensions').azureDependencyAgent.isEnabled)]",
+            "condition": "[and(not(equals(variables('osType'), 'Unknown')), union(createObject('isEnabled', true()), variables('extensions').azureDependencyAgent).isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
             ],
@@ -747,7 +708,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
-            "condition": "[and(parameters('isVirtualTrustedPlatformModuleEnabled'), variables('extensions').azureGuestAttestationAgent.isEnabled)]",
+            "condition": "[and(not(equals(variables('osType'), 'Unknown')), parameters('isVirtualTrustedPlatformModuleEnabled'), union(createObject('isEnabled', true()), variables('extensions').azureGuestAttestationAgent).isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
             ],
@@ -756,18 +717,19 @@
             "properties": {
                 "autoUpgradeMinorVersion": true,
                 "enableAutomaticUpgrade": false,
-                "publisher": "Microsoft.Azure.Security.WindowsAttestation",
+                "publisher": "[format('Microsoft.Azure.Security.{0}Attestation', variables('osType'))]",
                 "settings": {
                     "AttestationConfig": {
                         "AscSettings": {
-                            "ascReportingEndpoint": "https://eus2.service.attest.azure.net/"
+                            "ascReportingEndpoint": "https://eus2.service.attest.azure.net/",
+                            "ascReportingFrequency": ""
                         },
-                        "disableAlerts": "false",
+                        "disableAlerts": false,
                         "MaaSettings": {
                             "maaEndpoint": "https://sharedeus2.eus2.attest.azure.net/",
                             "maaTenantName": "GuestAttestation"
                         },
-                        "useCustomToken": "false"
+                        "useCustomToken": false
                     }
                 },
                 "type": "GuestAttestation",
@@ -778,7 +740,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
-            "condition": "[and(not(equals(variables('osType'), 'Unknown')), variables('extensions').azureGuestConfigurationAgent.isEnabled)]",
+            "condition": "[and(not(equals(variables('osType'), 'Unknown')), union(createObject('isEnabled', true()), variables('extensions').azureGuestConfigurationAgent).isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
             ],
@@ -796,7 +758,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
-            "condition": "[and(not(equals(variables('osType'), 'Unknown')), variables('extensions').azureGuestHealthAgent.isEnabled)]",
+            "condition": "[and(not(equals(variables('osType'), 'Unknown')), union(createObject('isEnabled', true()), variables('extensions').azureGuestHealthAgent).isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]",
                 "[variables('resourceIds').virtualMachineMonitorAgent]"
@@ -815,7 +777,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
-            "condition": "[and(variables('isAuditEnabled'), variables('extensions').azureKeyVaultAgent.isEnabled)]",
+            "condition": "[and(not(equals(variables('osType'), 'Unknown')), union(createObject('isEnabled', false()), variables('extensions').azureKeyVaultAgent).isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
             ],
@@ -842,7 +804,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
-            "condition": "[and(variables('isAuditEnabled'), variables('extensions').azureLogAnalyticsAgent.isEnabled)]",
+            "condition": "[and(not(equals(variables('osType'), 'Unknown')), variables('isAuditEnabled'), union(createObject('isEnabled', true()), variables('extensions').azureLogAnalyticsAgent).isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
             ],
@@ -858,7 +820,7 @@
                 "settings": {
                     "workspaceId": "[if(variables('isAuditEnabled'), reference(variables('resourceIds').auditLogAnalyticsWorkspace, variables('apiVersions').logAnalyticsWorkspaces).customerId, null())]"
                 },
-                "type": "MicrosoftMonitoringAgent",
+                "type": "[if(variables('isLinuxVirtualMachine'), 'OmsAgentForLinux', if(variables('isWindowsVirtualMachine'), 'MicrosoftMonitoringAgent', null()))]",
                 "typeHandlerVersion": "[variables('extensions').azureLogAnalyticsAgent.version]"
             },
             "tags": "[parameters('tags')]",
@@ -866,7 +828,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
-            "condition": "[and(not(equals(variables('osType'), 'Unknown')), variables('extensions').azureMonitorAgent.isEnabled)]",
+            "condition": "[and(not(equals(variables('osType'), 'Unknown')), union(createObject('isEnabled', true()), variables('extensions').azureMonitorAgent).isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
             ],
@@ -884,7 +846,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
-            "condition": "[and(not(equals(variables('osType'), 'Unknown')), variables('extensions').azureNetworkWatcherAgent.isEnabled)]",
+            "condition": "[and(not(equals(variables('osType'), 'Unknown')), union(createObject('isEnabled', true()), variables('extensions').azureNetworkWatcherAgent).isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
             ],
@@ -902,8 +864,46 @@
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
-            "condition": "[and(not(equals(variables('osType'), 'Unknown')), variables('extensions').azureCustomScript.isEnabled)]",
+            "condition": "[union(createObject('isEnabled', false()), variables('extensions').azureActiveDirectoryDomainJoin).isEnabled]",
             "dependsOn": [
+                "[variables('resourceIds').virtualMachine]",
+                "[variables('resourceIds').virtualMachineAntimalwareAgent]",
+                "[variables('resourceIds').virtualMachineDependencyAgent]",
+                "[variables('resourceIds').virtualMachineGuestAttestationAgent]",
+                "[variables('resourceIds').virtualMachineGuestConfigurationAgent]",
+                "[variables('resourceIds').virtualMachineGuestHealthAgent]",
+                "[variables('resourceIds').virtualMachineKeyVaultAgent]",
+                "[variables('resourceIds').virtualMachineLogAnalyticsAgent]",
+                "[variables('resourceIds').virtualMachineMonitorAgent]",
+                "[variables('resourceIds').virtualMachineNetworkWatcherAgent]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineActiveDirectoryDomainJoinName'))]",
+            "properties": {
+                "autoUpgradeMinorVersion": true,
+                "publisher": "Microsoft.Compute",
+                "protectedSettings": "[if(empty(variables('extensions').azureActiveDirectoryDomainJoin.userPassword), null(), createObject('Password', variables('extensions').azureActiveDirectoryDomainJoin.userPassword))]",
+                "settings": {
+                    "Name": "[variables('extensions').azureActiveDirectoryDomainJoin.domainName]",
+                    "NumberOfRetries": "[variables('extensions').azureActiveDirectoryDomainJoin.numberOfRetries]",
+                    "Options": "[variables('extensions').azureActiveDirectoryDomainJoin.options]",
+                    "UnjoinDomainUser": "[null()]",
+                    "OUPath": "[variables('extensions').azureActiveDirectoryDomainJoin.ouPath]",
+                    "Restart": "[variables('extensions').azureActiveDirectoryDomainJoin.isRestartAfterJoinEnabled]",
+                    "RetryIntervalInMilliseconds": "[mul(variables('extensions').azureActiveDirectoryDomainJoin.retryIntervalInSeconds, 1000)]",
+                    "User": "[variables('extensions').azureActiveDirectoryDomainJoin.userName]"
+                },
+                "type": "JsonADDomainExtension",
+                "typeHandlerVersion": "[variables('extensions').azureActiveDirectoryDomainJoin.version]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
+            "condition": "[and(not(equals(variables('osType'), 'Unknown')), union(createObject('isEnabled', false()), variables('extensions').azureCustomScript).isEnabled)]",
+            "dependsOn": [
+                "[variables('resourceIds').virtualMachine]",
                 "[variables('resourceIds').virtualMachineActiveDirectoryDomainJoin]",
                 "[variables('resourceIds').virtualMachineAntimalwareAgent]",
                 "[variables('resourceIds').virtualMachineDependencyAgent]",
@@ -928,7 +928,7 @@
                 },
                 "publisher": "[if(variables('isLinuxVirtualMachine'), 'Microsoft.Azure.Extensions', if(variables('isWindowsVirtualMachine'), 'Microsoft.Compute', null()))]",
                 "settings": {
-                    "skipDos2Unix": "[if(variables('isLinuxVirtualMachine'), false(), null())]",
+                    "skipDos2Unix": "[if(variables('isLinuxVirtualMachine'), not(variables('extensions').azureCustomScript.isDos2UnixTransformEnabled), null())]",
                     "timestamp": "[variables('extensions').azureCustomScript.timestamp]"
                 },
                 "type": "[if(variables('isLinuxVirtualMachine'), 'CustomScript', if(variables('isWindowsVirtualMachine'), 'CustomScriptExtension', null()))]",
@@ -941,6 +941,7 @@
             "apiVersion": "[variables('apiVersions').serverVulnerabilityAssessments]",
             "condition": "[parameters('isVulnerabilityAssessmentEnabled')]",
             "dependsOn": [
+                "[variables('resourceIds').virtualMachine]",
                 "[variables('resourceIds').virtualMachineActiveDirectoryDomainJoin]",
                 "[variables('resourceIds').virtualMachineAntimalwareAgent]",
                 "[variables('resourceIds').virtualMachineCustomScript]",
@@ -960,6 +961,7 @@
             "apiVersion": "[variables('apiVersions').deployments]",
             "condition": "[variables('isBackupEnabled')]",
             "dependsOn": [
+                "[variables('resourceIds').virtualMachine]",
                 "[variables('resourceIds').virtualMachineActiveDirectoryDomainJoin]",
                 "[variables('resourceIds').virtualMachineAntimalwareAgent]",
                 "[variables('resourceIds').virtualMachineCustomScript]",
