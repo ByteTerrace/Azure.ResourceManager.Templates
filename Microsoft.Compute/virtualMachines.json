@@ -297,6 +297,13 @@
                     },
                     "version": "1.5"
                 },
+                "azureCustomScript": {
+                    "fileUris": "[null()]",
+                    "isEnabled": false,
+                    "script": "[null()]",
+                    "timestamp": "[null()]",
+                    "version": "[if(variables('isLinuxVirtualMachine'), '2.1', if(variables('isWindowsVirtualMachine'), '1.10', null()))]"
+                },
                 "azureDependencyAgent": {
                     "isEnabled": true,
                     "version": "[if(variables('isLinuxVirtualMachine'), '9.9', if(variables('isWindowsVirtualMachine'), '9.9', null()))]"
@@ -312,6 +319,11 @@
                 "azureGuestHealthAgent": {
                     "isEnabled": true,
                     "version": "[if(variables('isLinuxVirtualMachine'), '1.0', if(variables('isWindowsVirtualMachine'), '1.0', null()))]"
+                },
+                "azureKeyVaultAgent": {
+                    "isEnabled": false,
+                    "isInitialSyncRequired": true,
+                    "version": "[if(variables('isLinuxVirtualMachine'), '2.0', if(variables('isWindowsVirtualMachine'), '1.0', null()))]"
                 },
                 "azureLogAnalyticsAgent": {
                     "isEnabled": true,
@@ -439,21 +451,25 @@
             "virtualMachine": "[resourceId('Microsoft.Compute/virtualMachines', parameters('name'))]",
             "virtualMachineActiveDirectoryDomainJoin": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineActiveDirectoryDomainJoinName'))]",
             "virtualMachineAntimalwareAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineAntimalwareAgentName'))]",
+            "virtualMachineCustomScript": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineCustomScriptName'))]",
             "virtualMachineDependencyAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineDependencyAgentName'))]",
             "virtualMachineGuestAttestationAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineGuestAttestationAgentName'))]",
             "virtualMachineGuestConfigurationAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineGuestConfigurationAgentName'))]",
             "virtualMachineGuestHealthAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineGuestHealthAgentName'))]",
             "virtualMachineLogAnalyticsAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineLogAnalyticsAgentName'))]",
+            "virtualMachineKeyVaultAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineKeyVaultAgentName'))]",
             "virtualMachineMonitorAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineMonitorAgentName'))]",
             "virtualMachineNetworkWatcherAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineNetworkWatcherAgentName'))]"
         },
         "subscriptionId": "[subscription().subscriptionId]",
         "virtualMachineActiveDirectoryDomainJoinName": "AzureActiveDirectoryDomainJoin",
         "virtualMachineAntimalwareAgentName": "AzureAntimalwareAgent",
+        "virtualMachineCustomScriptName": "AzureCustomScript",
         "virtualMachineDependencyAgentName": "AzureDependencyAgent",
         "virtualMachineGuestAttestationAgentName": "AzureGuestAttestationAgent",
         "virtualMachineGuestConfigurationAgentName": "AzureGuestConfigurationAgent",
         "virtualMachineGuestHealthAgentName": "AzureGuestHealthAgent",
+        "virtualMachineKeyVaultAgentName": "AzureKeyVaultAgent",
         "virtualMachineLogAnalyticsAgentName": "AzureLogAnalyticsAgent",
         "virtualMachineMonitorAgentName": "AzureMonitorAgent",
         "virtualMachineNetworkWatcherAgentName": "AzureNetworkWatcherAgent",
@@ -799,6 +815,33 @@
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
+            "condition": "[and(variables('isAuditEnabled'), variables('extensions').azureKeyVaultAgent.isEnabled)]",
+            "dependsOn": [
+                "[variables('resourceIds').virtualMachine]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineKeyVaultAgentName'))]",
+            "properties": {
+                "autoUpgradeMinorVersion": true,
+                "enableAutomaticUpgrade": true,
+                "publisher": "Microsoft.Azure.KeyVault",
+                "settings": {
+                    "secretsManagementSettings": {
+                        "certificateStoreLocation": "[if(variables('isLinuxVirtualMachine'), '/var/lib/waagent/Microsoft.Azure.KeyVault', if(variables('isWindowsVirtualMachine'), 'LocalMachine', null()))]",
+                        "certificateStoreName": "[if(variables('isLinuxVirtualMachine'), null(), if(variables('isWindowsVirtualMachine'), 'MY', null()))]",
+                        "linkOnRenewal": "[if(variables('isLinuxVirtualMachine'), null(), if(variables('isWindowsVirtualMachine'), false(), null()))]",
+                        "observedCertificates": "[variables('extensions').azureKeyVaultAgent.observedCertificates]",
+                        "requireInitialSync": "[variables('extensions').azureKeyVaultAgent.isInitialSyncRequired]"
+                    }
+                },
+                "type": "[format('KeyVaultFor{0}', variables('osType'))]",
+                "typeHandlerVersion": "[variables('extensions').azureKeyVaultAgent.version]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
             "condition": "[and(variables('isAuditEnabled'), variables('extensions').azureLogAnalyticsAgent.isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
@@ -858,8 +901,8 @@
             "type": "Microsoft.Compute/virtualMachines/extensions"
         },
         {
-            "apiVersion": "[variables('apiVersions').serverVulnerabilityAssessments]",
-            "condition": "[parameters('isVulnerabilityAssessmentEnabled')]",
+            "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
+            "condition": "[and(not(equals(variables('osType'), 'Unknown')), variables('extensions').azureCustomScript.isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachineActiveDirectoryDomainJoin]",
                 "[variables('resourceIds').virtualMachineAntimalwareAgent]",
@@ -867,6 +910,45 @@
                 "[variables('resourceIds').virtualMachineGuestAttestationAgent]",
                 "[variables('resourceIds').virtualMachineGuestConfigurationAgent]",
                 "[variables('resourceIds').virtualMachineGuestHealthAgent]",
+                "[variables('resourceIds').virtualMachineKeyVaultAgent]",
+                "[variables('resourceIds').virtualMachineLogAnalyticsAgent]",
+                "[variables('resourceIds').virtualMachineMonitorAgent]",
+                "[variables('resourceIds').virtualMachineNetworkWatcherAgent]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/{1}', parameters('name'), variables('virtualMachineCustomScriptName'))]",
+            "properties": {
+                "autoUpgradeMinorVersion": true,
+                "enableAutomaticUpgrade": false,
+                "protectedSettings": {
+                    "commandToExecute": "[variables('extensions').azureCustomScript.commandToExecute]",
+                    "fileUris": "[variables('extensions').azureCustomScript.fileUris]",
+                    "managedIdentity": {},
+                    "script": "[if(variables('isLinuxVirtualMachine'), variables('extensions').azureCustomScript.script, null())]"
+                },
+                "publisher": "[if(variables('isLinuxVirtualMachine'), 'Microsoft.Azure.Extensions', if(variables('isWindowsVirtualMachine'), 'Microsoft.Compute', null()))]",
+                "settings": {
+                    "skipDos2Unix": "[if(variables('isLinuxVirtualMachine'), false(), null())]",
+                    "timestamp": "[variables('extensions').azureCustomScript.timestamp]"
+                },
+                "type": "[if(variables('isLinuxVirtualMachine'), 'CustomScript', if(variables('isWindowsVirtualMachine'), 'CustomScriptExtension', null()))]",
+                "typeHandlerVersion": "[variables('extensions').azureCustomScript.version]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').serverVulnerabilityAssessments]",
+            "condition": "[parameters('isVulnerabilityAssessmentEnabled')]",
+            "dependsOn": [
+                "[variables('resourceIds').virtualMachineActiveDirectoryDomainJoin]",
+                "[variables('resourceIds').virtualMachineAntimalwareAgent]",
+                "[variables('resourceIds').virtualMachineCustomScript]",
+                "[variables('resourceIds').virtualMachineDependencyAgent]",
+                "[variables('resourceIds').virtualMachineGuestAttestationAgent]",
+                "[variables('resourceIds').virtualMachineGuestConfigurationAgent]",
+                "[variables('resourceIds').virtualMachineGuestHealthAgent]",
+                "[variables('resourceIds').virtualMachineKeyVaultAgent]",
                 "[variables('resourceIds').virtualMachineLogAnalyticsAgent]",
                 "[variables('resourceIds').virtualMachineMonitorAgent]",
                 "[variables('resourceIds').virtualMachineNetworkWatcherAgent]"
@@ -880,10 +962,12 @@
             "dependsOn": [
                 "[variables('resourceIds').virtualMachineActiveDirectoryDomainJoin]",
                 "[variables('resourceIds').virtualMachineAntimalwareAgent]",
+                "[variables('resourceIds').virtualMachineCustomScript]",
                 "[variables('resourceIds').virtualMachineDependencyAgent]",
                 "[variables('resourceIds').virtualMachineGuestAttestationAgent]",
                 "[variables('resourceIds').virtualMachineGuestConfigurationAgent]",
                 "[variables('resourceIds').virtualMachineGuestHealthAgent]",
+                "[variables('resourceIds').virtualMachineKeyVaultAgent]",
                 "[variables('resourceIds').virtualMachineLogAnalyticsAgent]",
                 "[variables('resourceIds').virtualMachineMonitorAgent]",
                 "[variables('resourceIds').virtualMachineNetworkWatcherAgent]"

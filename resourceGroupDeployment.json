@@ -38,6 +38,7 @@
             "applicationSecurityGroups": [],
             "applicationServiceEnvironments": [],
             "applicationServicePlans": [],
+            "automationAccounts": [],
             "availabilitySets": [],
             "bastionHosts": [],
             "cdnProfiles": [],
@@ -118,6 +119,12 @@
                 "operatingSystemName": "Linux",
                 "serviceEnvironment": {},
                 "skuName": "P1v2"
+            },
+            "automationAccount": {
+                "desiredStateConfiguration": {},
+                "identity": {},
+                "isPublicNetworkAccessEnabled": true,
+                "webWorker": {}
             },
             "availabilitySet": {
                 "proximityPlacementGroup": {},
@@ -503,6 +510,7 @@
             "applicationSecurityGroup": "[format('{0}-AppSecurityGroup', deployment().name)]",
             "applicationServiceEnvironment": "[format('{0}-AppServiceEnvironment', deployment().name)]",
             "applicationServicePlan": "[format('{0}-AppServicePlan', deployment().name)]",
+            "automationAccount": "[format('{0}-AutomationAccount', deployment().name)]",
             "availabilitySet": "[format('{0}-AvailabilitySet', deployment().name)]",
             "bastionHost": "[format('{0}-BastionHost', deployment().name)]",
             "cdnProfile": "[format('{0}-CdnProfile', deployment().name)]",
@@ -2230,6 +2238,56 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').automationAccounts))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').automationAccounts)]",
+                "mode": "Parallel",
+                "name": "automationAccountsCopy"
+            },
+            "dependsOn": [
+                "applicationSecurityGroupsCopy",
+                "diskEncryptionSetsCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "scriptsPreDeployCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').automationAccount, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "desiredStateConfiguration": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).desiredStateConfiguration]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).identity]"
+                    },
+                    "isPublicNetworkAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).isPublicNetworkAccessEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').automationAccounts[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').automationAccounts[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "webWorker": {
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).webWorker]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Automation/automationAccounts.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').virtualMachineScaleSets))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').virtualMachineScaleSets)]",
@@ -3216,6 +3274,7 @@
                 "applicationSecurityGroupsCopy",
                 "applicationServiceEnvironmentsCopy",
                 "applicationServicePlansCopy",
+                "automationAccountsCopy",
                 "availabilitySetsCopy",
                 "bastionHostsCopy",
                 "cdnProfilesCopy",
