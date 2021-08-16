@@ -44,8 +44,8 @@ jobs:
         env:
           azureTemplateSpecProperties: ${{ fromJSON(secrets.AZURE_TEMPLATESPEC_PROPERTIES) }}
         run: |
-          $resourceGroupName = ${{format('''{0}''', azureTemplateSpecProperties.resoourceGroupName)}};
-          $subscriptionIdOrName = ${{format('''{0}''', azureTemplateSpecProperties.subscriptionIdOrName)}};
+          $resourceGroupName = ${{format('''{0}''', env.azureTemplateSpecProperties.resoourceGroupName)}};
+          $subscriptionIdOrName = ${{format('''{0}''', env.azureTemplateSpecProperties.subscriptionIdOrName)}};
           $templateFilePath = ${{ format('''{0}/downloads/arm-templates/resourceGroupDeployment.json''', github.workspace) }};
           $templateName = 'ResourceGroupDeployment';
           $version = ${{ format('''{0}''', env.contentVersion) }};
