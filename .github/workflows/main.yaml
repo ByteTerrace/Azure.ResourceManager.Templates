@@ -72,11 +72,13 @@ jobs:
           RESOURCEGROUP_NAME: ${{ fromJSON(secrets.AZURE_RESOURCEGROUP_PROPERTIES).resourceGroupName }}
           SUBSCRIPTION_ID_OR_NAME: ${{ fromJSON(secrets.AZURE_RESOURCEGROUP_PROPERTIES).subscriptionIdOrName }}
         run: |
-          if ([string]:IsNullOrEmpty(${Env:RESOURCEGROUP_NAME})) {
-              ${Env:RESOURCEGROUP_NAME} = (ConvertFrom-Json ${Env:GITHUB_EVENT_PATH}).github.event.inputs.templateSpecResourceGroupName;
+          $gitHubEventPath = (ConvertFrom-Json ${Env:GITHUB_EVENT_PATH});
+
+          if ([string]::IsNullOrEmpty(${Env:RESOURCEGROUP_NAME})) {
+              ${Env:RESOURCEGROUP_NAME} = $gitHubEventPath.github.event.inputs.templateSpecResourceGroupName;
           }
-          if ([string]:IsNullOrEmpty(${Env:SUBSCRIPTION_ID_OR_NAME})) {
-              ${Env:SUBSCRIPTION_ID_OR_NAME} = (ConvertFrom-Json ${Env:GITHUB_EVENT_PATH}).github.event.inputs.templateSpecSubscriptionIdOrName;
+          if ([string]::IsNullOrEmpty(${Env:SUBSCRIPTION_ID_OR_NAME})) {
+              ${Env:SUBSCRIPTION_ID_OR_NAME} = $gitHubEventPath.github.event.inputs.templateSpecSubscriptionIdOrName;
           }
 
           az ts create `
