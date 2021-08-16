@@ -41,11 +41,9 @@ jobs:
           creds: ${{ secrets.AZURE_APPLICATION_CREDENTIALS }}
           environment: 'AzureCloud'
       - name: 'publish template spec to Azure Resource Group'
-        env:
-          azureTemplateSpecProperties: ${{ fromJSON(secrets.AZURE_TEMPLATESPEC_PROPERTIES) }}
         run: |
-          $resourceGroupName = ${{format('''{0}''', env.azureTemplateSpecProperties.resoourceGroupName)}};
-          $subscriptionIdOrName = ${{format('''{0}''', env.azureTemplateSpecProperties.subscriptionIdOrName)}};
+          $resourceGroupName = ${{ format('''{0}''', secrets.AZURE_TEMPLATESPEC_PROPERTIES.resourceGroupName) }};
+          $subscriptionIdOrName = ${{ format('''{0}''', secrets.AZURE_TEMPLATESPEC_PROPERTIES.subscriptionIdOrName) }};
           $templateFilePath = ${{ format('''{0}/downloads/arm-templates/resourceGroupDeployment.json''', github.workspace) }};
           $templateName = 'ResourceGroupDeployment';
           $version = ${{ format('''{0}''', env.contentVersion) }};
