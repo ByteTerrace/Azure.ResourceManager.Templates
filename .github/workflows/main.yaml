@@ -57,7 +57,7 @@ jobs:
         uses: 'azure/login@v1'
         with:
           allow-no-subscriptions: true
-          creds: ${{ env.templateSpecCredentials }}
+          creds: ${{ env.secretTemplateSpecCredentials }}
           environment: 'AzureCloud'
       - name: 'publish template spec to Azure Resource Group'
         run: |
