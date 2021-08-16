@@ -5,9 +5,8 @@ on:
   workflow_dispatch:
     inputs:
       templateSpecCredentials:
-        default: ''
         description: 'Template Spec Credentials'
-        required: true
+        required: false
       templateSpecResourceGroupName:
         default: 'byteterrace'
         description: 'Template Spec Resource Group Name'
