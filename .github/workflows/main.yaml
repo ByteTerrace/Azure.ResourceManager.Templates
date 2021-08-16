@@ -72,19 +72,19 @@ jobs:
           RESOURCEGROUP_NAME: ${{ fromJSON(secrets.AZURE_RESOURCEGROUP_PROPERTIES).resourceGroupName }}
           SUBSCRIPTION_ID_OR_NAME: ${{ fromJSON(secrets.AZURE_RESOURCEGROUP_PROPERTIES).subscriptionIdOrName }}
         run: |
-          if [ -z "${RESOURCEGROUP_NAME}" ]; then
-              RESOURCEGROUP_NAME=$(jq -r '.inputs.templateSpecResourceGroupName' $GITHUB_EVENT_PATH)
-          fi
-          if [ -z "${SUBSCRIPTION_ID_OR_NAME}" ]; then
-              SUBSCRIPTION_ID_OR_NAME=$(jq -r '.inputs.templateSpecSubscriptionIdOrName' $GITHUB_EVENT_PATH)
-          fi
+          if $([string]:IsNullOrEmpty(${Env:RESOURCEGROUP_NAME})) {
+              ${Env:RESOURCEGROUP_NAME}=$(jq -r '.inputs.templateSpecResourceGroupName' $GITHUB_EVENT_PATH)
+          }
+          if $([string]:IsNullOrEmpty(${Env:SUBSCRIPTION_ID_OR_NAME})) {
+              ${Env:SUBSCRIPTION_ID_OR_NAME}=$(jq -r '.inputs.templateSpecSubscriptionIdOrName' $GITHUB_EVENT_PATH)
+          }
 
           az ts create `
               --name $templateName `
-              --resource-group "${RESOURCEGROUP_NAME}" `
-              --subscription "${SUBSCRIPTION_ID_OR_NAME}" `
-              --template-file "${GITHUB_WORKSPACE}/downloads/arm-templates/resourceGroupDeployment.json" `
-              --version "${CONTENTVERSION}" `
+              --resource-group ${Env:RESOURCEGROUP_NAME} `
+              --subscription ${Env:SUBSCRIPTION_ID_OR_NAME} `
+              --template-file "${Env:GITHUB_WORKSPACE}/downloads/arm-templates/resourceGroupDeployment.json" `
+              --version ${Env:CONTENTVERSION} `
               --yes;
         shell: 'pwsh'
       - name: 'logout of Azure'
