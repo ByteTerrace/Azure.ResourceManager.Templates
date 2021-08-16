@@ -1,7 +1,24 @@
 env:
   contentVersion: '3.0.0.0'
 name: 'Azure Resource Manager Templates'
-on: [push,workflow_run]
+on:
+  push:
+    branches:
+      - 'features/**'
+      - 'main'
+  workflow_dispatch:
+    inputs:
+      templateSpecCredentials:
+        description: 'Template Spec Credentials'
+        required: false
+      templateSpecResourceGroupName:
+        default: 'byteterrace'
+        description: 'Template Spec Resource Group Name'
+        required: true
+      templateSpecSubscriptionIdOrName:
+        default: 'byteterrace'
+        description: 'Template Spec Subscription Name Or Id'
+        required: true
 jobs:
   build:
     runs-on: 'ubuntu-latest'
@@ -29,6 +46,16 @@ jobs:
     needs: 'build'
     runs-on: 'ubuntu-latest'
     steps:
+      - id: 'maskInputs'
+        env:
+          TEMPLATESPEC_CREDENTIALS: ${{ secrets.AZURE_APPLICATION_CREDENTIALS }}
+        name: 'mask inputs'
+        run: |
+          if [ -z "${TEMPLATESPEC_CREDENTIALS}" ]; then
+              TEMPLATESPEC_CREDENTIALS=$(jq -r '.inputs.templateSpecCredentials' $GITHUB_EVENT_PATH)
+              echo ::add-mask::$TEMPLATESPEC_CREDENTIALS
+          fi
+          echo ::set-output name=templateSpecCredentials::$TEMPLATESPEC_CREDENTIALS
       - name: 'download Azure Resource Manager template artifact'
         uses: 'actions/download-artifact@v2'
         with:
@@ -38,22 +65,26 @@ jobs:
         uses: 'azure/login@v1'
         with:
           allow-no-subscriptions: true
-          creds: ${{ secrets.AZURE_APPLICATION_CREDENTIALS }}
+          creds: ${{ steps.maskInputs.outputs.templateSpecCredentials }}
           environment: 'AzureCloud'
       - name: 'publish template spec to Azure Resource Group'
+        env:
+          RESOURCEGROUP_NAME: ${{ fromJSON(secrets.AZURE_RESOURCEGROUP_PROPERTIES).resourceGroupName }}
+          SUBSCRIPTION_ID_OR_NAME: ${{ fromJSON(secrets.AZURE_RESOURCEGROUP_PROPERTIES).subscriptionIdOrName }}
         run: |
-          $resourceGroupName = ${{ format('''{0}''', fromJSON(secrets.AZURE_TEMPLATESPEC_PROPERTIES).resourceGroupName) }};
-          $subscriptionIdOrName = ${{ format('''{0}''', fromJSON(secrets.AZURE_TEMPLATESPEC_PROPERTIES).subscriptionIdOrName) }};
-          $templateFilePath = ${{ format('''{0}/downloads/arm-templates/resourceGroupDeployment.json''', github.workspace) }};
-          $templateName = 'ResourceGroupDeployment';
-          $version = ${{ format('''{0}''', env.contentVersion) }};
+          if ([string]::IsNullOrEmpty(${Env:RESOURCEGROUP_NAME})) {
+              ${Env:RESOURCEGROUP_NAME} = $(jq -r '.inputs.templateSpecResourceGroupName' ${Env:GITHUB_EVENT_PATH});
+          }
+          if ([string]::IsNullOrEmpty(${Env:SUBSCRIPTION_ID_OR_NAME})) {
+              ${Env:SUBSCRIPTION_ID_OR_NAME} = $(jq -r '.inputs.templateSpecSubscriptionIdOrName' ${Env:GITHUB_EVENT_PATH});
+          }
 
           az ts create `
-              --name $templateName `
-              --resource-group $resourceGroupName `
-              --subscription $subscriptionIdOrName `
-              --template-file $templateFilePath `
-              --version $version `
+              --name 'ResourceGroupDeployment' `
+              --resource-group ${Env:RESOURCEGROUP_NAME} `
+              --subscription ${Env:SUBSCRIPTION_ID_OR_NAME} `
+              --template-file "${Env:GITHUB_WORKSPACE}/downloads/arm-templates/resourceGroupDeployment.json" `
+              --version ${Env:contentVersion} `
               --yes;
         shell: 'pwsh'
       - name: 'logout of Azure'
