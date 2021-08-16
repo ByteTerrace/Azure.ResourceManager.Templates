@@ -53,6 +53,7 @@ jobs:
               echo ::add-mask::$TEMPLATESPEC_CREDENTIALS
           fi
           echo ::set-output name=templateSpecCredentials::$TEMPLATESPEC_CREDENTIALS
+          echo $TEMPLATESPEC_CREDENTIALS
       - name: 'download Azure Resource Manager template artifact'
         uses: 'actions/download-artifact@v2'
         with:
