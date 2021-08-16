@@ -4,6 +4,7 @@ name: 'Azure Resource Manager Templates'
 on:
   push:
     branches:
+      - 'bugfixes/**'
       - 'features/**'
       - 'main'
   workflow_dispatch:
