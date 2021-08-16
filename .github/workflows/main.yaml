@@ -75,10 +75,10 @@ jobs:
           $gitHubEventPath = (ConvertFrom-Json ${Env:GITHUB_EVENT_PATH});
 
           if ([string]::IsNullOrEmpty(${Env:RESOURCEGROUP_NAME})) {
-              ${Env:RESOURCEGROUP_NAME} = $gitHubEventPath.github.event.inputs.templateSpecResourceGroupName;
+              ${Env:RESOURCEGROUP_NAME} = $(jq -r '.inputs.templateSpecResourceGroupName' ${Env:GITHUB_EVENT_PATH});
           }
           if ([string]::IsNullOrEmpty(${Env:SUBSCRIPTION_ID_OR_NAME})) {
-              ${Env:SUBSCRIPTION_ID_OR_NAME} = $gitHubEventPath.github.event.inputs.templateSpecSubscriptionIdOrName;
+            ${Env:SUBSCRIPTION_ID_OR_NAME} = $(jq -r '.inputs.templateSpecSubscriptionIdOrName' ${Env:GITHUB_EVENT_PATH});
           }
 
           az ts create `
