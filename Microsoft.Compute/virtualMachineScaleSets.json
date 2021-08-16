@@ -414,7 +414,7 @@
         "extensions": "[union(variables('defaultResourceProperties').extensions, parameters('extensions'))]",
         "extensionsArrays": {
             "azureActiveDirectoryDomainJoin": "[if(variables('extensions').azureActiveDirectoryDomainJoin.isEnabled, createArray(variables('extensionsProfiles').azureActiveDirectoryDomainJoin), createArray())]",
-            "azureAntimalwareAgent": "[if(variables('extensions').azureAntimalwareAgent.isEnabled, createArray(variables('extensionsProfiles').azureAntimalwareAgent), createArray())]",
+            "azureAntimalwareAgent": "[if(and(variables('isWindowsVirtualMachineScaleSet'), variables('extensions').azureAntimalwareAgent.isEnabled), createArray(variables('extensionsProfiles').azureAntimalwareAgent), createArray())]",
             "azureDependencyAgent": "[if(variables('extensions').azureDependencyAgent.isEnabled, createArray(variables('extensionsProfiles').azureDependencyAgent), createArray())]",
             "azureCustomScript": "[if(variables('extensions').azureCustomScript.isEnabled, createArray(variables('extensionsProfiles').azureCustomScript), createArray())]",
             "azureGuestConfigurationAgent": "[if(variables('extensions').azureGuestConfigurationAgent.isEnabled, createArray(variables('extensionsProfiles').azureGuestConfigurationAgent), createArray())]",
