@@ -68,12 +68,22 @@ jobs:
           creds: ${{ steps.maskInputs.outputs.templateSpecCredentials }}
           environment: 'AzureCloud'
       - name: 'publish template spec to Azure Resource Group'
+        enc:
+          RESOURCEGROUP_NAME: ${{ fromJSON(secrets.AZURE_RESOURCEGROUP_PROPERTIES).resourceGroupName }}
+          SUBSCRIPTION_ID_OR_NAME: ${{ fromJSON(secrets.AZURE_RESOURCEGROUP_PROPERTIES).subscriptionIdOrName }}
         run: |
-          $resourceGroupName = ${{ format('''{0}''', github.event.inputs.templateSpecResourceGroupName) }};
-          $subscriptionIdOrName = ${{ format('''{0}''', github.event.inputs.templateSpecSubscriptionIdOrName) }};
-          $templateFilePath = ${{ format('''{0}/downloads/arm-templates/resourceGroupDeployment.json''', github.workspace) }};
+          if [[ -z "${RESOURCEGROUP_NAME}" ]]; then
+              RESOURCEGROUP_NAME=$(jq -r '.inputs.templateSpecCredentials' $GITHUB_EVENT_PATH)
+          fi
+          if [[ -z "${SUBSCRIPTION_ID_OR_NAME}" ]]; then
+              SUBSCRIPTION_ID_OR_NAME=$(jq -r '.inputs.templateSpecCredentials' $GITHUB_EVENT_PATH)
+          fi
+
+          $resourceGroupName = '${RESOURCEGROUP_NAME}';
+          $subscriptionIdOrName = '${SUBSCRIPTION_ID_OR_NAME}';
+          $templateFilePath = '${GITHUB_WORKSPACE}/downloads/arm-templates/resourceGroupDeployment.json';
           $templateName = 'ResourceGroupDeployment';
-          $version = ${{ format('''{0}''', env.contentVersion) }};
+          $version = '${CONTENTVERSION}';
 
           az ts create `
               --name $templateName `
