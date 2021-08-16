@@ -11,7 +11,7 @@ on:
         default: 'byteterrace'
         description: 'Template Spec Resource Group Name'
         required: true
-      templateSpecSubscriptionNameOrId:
+      templateSpecSubscriptionIdOrName:
         default: 'byteterrace'
         description: 'Template Spec Subscription Name Or Id'
         required: true
@@ -42,7 +42,8 @@ jobs:
     needs: 'build'
     runs-on: 'ubuntu-latest'
     steps:
-      - name: 'mask inputs'
+      - id: 'maskInputs'
+        name: 'mask inputs'
         run: |
           INP_SECRET=$(jq -r '.inputs.secret' $GITHUB_EVENT_PATH)
           echo ::add-mask::$INP_SECRET
@@ -56,12 +57,12 @@ jobs:
         uses: 'azure/login@v1'
         with:
           allow-no-subscriptions: true
-          creds: ${{ env.SECRET }}
+          creds: ${{ steps.maskInputs.outputs.secret }}
           environment: 'AzureCloud'
       - name: 'publish template spec to Azure Resource Group'
         run: |
-          $resourceGroupName = ${{ format('''{0}''', env.templateSpecResourceGroupName) }};
-          $subscriptionIdOrName = ${{ format('''{0}''', fromJSON(env.templateSpecSubscriptionNameOrId).subscriptionIdOrName) }};
+          $resourceGroupName = ${{ format('''{0}''', github.event.inputs.templateSpecResourceGroupName) }};
+          $subscriptionIdOrName = ${{ format('''{0}''', github.event.inputs.templateSpecSubscriptionIdOrName) }};
           $templateFilePath = ${{ format('''{0}/downloads/arm-templates/resourceGroupDeployment.json''', github.workspace) }};
           $templateName = 'ResourceGroupDeployment';
           $version = ${{ format('''{0}''', env.contentVersion) }};
