@@ -4,7 +4,7 @@ name: 'Azure Resource Manager Templates'
 on:
   workflow_dispatch:
     inputs:
-      secret:
+      templateSpecCredentials:
         description: 'Template Spec Credentials'
         required: true
       templateSpecResourceGroupName:
@@ -45,9 +45,9 @@ jobs:
       - id: 'maskInputs'
         name: 'mask inputs'
         run: |
-          INP_SECRET=$(jq -r '.inputs.secret' $GITHUB_EVENT_PATH)
-          echo ::add-mask::$INP_SECRET
-          echo ::set-output name=secret::$INP_SECRET
+          TEMPLATESPEC_CREDENTIALS=$(jq -r '.inputs.templateSpecCredentials' $GITHUB_EVENT_PATH)
+          echo ::add-mask::$TEMPLATESPEC_CREDENTIALS
+          echo ::set-output name=templateSpecCredentials::$TEMPLATESPEC_CREDENTIALS
       - name: 'download Azure Resource Manager template artifact'
         uses: 'actions/download-artifact@v2'
         with:
@@ -57,7 +57,7 @@ jobs:
         uses: 'azure/login@v1'
         with:
           allow-no-subscriptions: true
-          creds: ${{ steps.maskInputs.outputs.secret }}
+          creds: ${{ steps.maskInputs.outputs.templateSpecCredentials }}
           environment: 'AzureCloud'
       - name: 'publish template spec to Azure Resource Group'
         run: |
