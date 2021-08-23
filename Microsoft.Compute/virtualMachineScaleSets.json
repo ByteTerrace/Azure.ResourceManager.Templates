@@ -540,6 +540,9 @@
                 "properties": {
                     "autoUpgradeMinorVersion": true,
                     "enableAutomaticUpgrade": false,
+                    "provisionAfterExtensions": [
+                        "AzureMonitorAgent"
+                    ],
                     "publisher": "Microsoft.Azure.Monitor.VirtualMachines.GuestHealth",
                     "type": "[format('GuestHealth{0}Agent', variables('osType'))]",
                     "typeHandlerVersion": "[variables('extensions').azureGuestHealthAgent.version]"
