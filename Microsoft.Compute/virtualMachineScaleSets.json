@@ -349,7 +349,7 @@
                     "version": "[if(variables('isLinuxVirtualMachineScaleSet'), '2.0', if(variables('isWindowsVirtualMachineScaleSet'), '1.0', null()))]"
                 },
                 "azureLogAnalyticsAgent": {
-                    "isEnabled": true,
+                    "isEnabled": false,
                     "version": "[if(variables('isLinuxVirtualMachineScaleSet'), '1.13', if(variables('isWindowsVirtualMachineScaleSet'), '1.0', null()))]"
                 },
                 "azureMonitorAgent": {
@@ -434,6 +434,16 @@
                     "protectedSettings": {
                         "Password": "[if(variables('extensions').azureActiveDirectoryDomainJoin.isEnabled, variables('extensions').azureActiveDirectoryDomainJoin.userPassword, null())]"
                     },
+                    "provisionAfterExtensions": [
+                        "AzureAntimalwareAgent",
+                        "AzureDependencyAgent",
+                        "AzureGuestConfigurationAgent",
+                        "AzureGuestHealthAgent",
+                        "AzureKeyVaultAgent",
+                        "AzureLogAnalyticsAgent",
+                        "AzureMonitorAgent",
+                        "AzureNetworkWatcherAgent"
+                    ],
                     "settings": {
                         "Name": "[if(variables('extensions').azureActiveDirectoryDomainJoin.isEnabled, variables('extensions').azureActiveDirectoryDomainJoin.domainName, null())]",
                         "NumberOfRetries": "[variables('extensions').azureActiveDirectoryDomainJoin.numberOfRetries]",
@@ -485,6 +495,17 @@
                         "managedIdentity": {},
                         "script": "[if(variables('isLinuxVirtualMachineScaleSet'), variables('extensions').azureCustomScript.script, null())]"
                     },
+                    "provisionAfterExtensions": [
+                        "AzureActiveDirectoryDomainJoin",
+                        "AzureAntimalwareAgent",
+                        "AzureDependencyAgent",
+                        "AzureGuestConfigurationAgent",
+                        "AzureGuestHealthAgent",
+                        "AzureKeyVaultAgent",
+                        "AzureLogAnalyticsAgent",
+                        "AzureMonitorAgent",
+                        "AzureNetworkWatcherAgent"
+                    ],
                     "publisher": "[if(variables('isLinuxVirtualMachineScaleSet'), 'Microsoft.Azure.Extensions', if(variables('isWindowsVirtualMachineScaleSet'), 'Microsoft.Compute', null()))]",
                     "settings": {
                         "skipDos2Unix": "[if(variables('isLinuxVirtualMachineScaleSet'), not(variables('extensions').azureCustomScript.isDos2UnixTransformEnabled), null())]",

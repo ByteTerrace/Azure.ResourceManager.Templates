@@ -803,7 +803,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').virtualMachinesExtensions]",
-            "condition": "[and(not(equals(variables('osType'), 'Unknown')), variables('isAuditEnabled'), union(createObject('isEnabled', true()), variables('extensions').azureLogAnalyticsAgent).isEnabled)]",
+            "condition": "[and(not(equals(variables('osType'), 'Unknown')), variables('isAuditEnabled'), union(createObject('isEnabled', false()), variables('extensions').azureLogAnalyticsAgent).isEnabled)]",
             "dependsOn": [
                 "[variables('resourceIds').virtualMachine]"
             ],
