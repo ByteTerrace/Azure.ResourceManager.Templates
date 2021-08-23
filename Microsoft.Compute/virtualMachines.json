@@ -938,7 +938,7 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Compute/virtualMachines/extensions"
-        }
+        },
         {
             "apiVersion": "[variables('apiVersions').serverVulnerabilityAssessments]",
             "condition": "[parameters('isVulnerabilityAssessmentEnabled')]",
