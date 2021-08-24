@@ -156,6 +156,7 @@
             "deployments": "2021-04-01",
             "diagnosticSettings": "2017-05-01-preview",
             "keyVaults": "2019-09-01",
+            "keyVaultsKeys": "2019-09-01",
             "privateEndpoints": "2020-07-01",
             "privateEndpointsPrivateDnsZoneGroups": "2020-07-01",
             "roleAssignments": "2020-04-01-preview",
@@ -638,7 +639,7 @@
             "name": "[format('{0}/{1}', variables('serverName'), variables('serverKeyName'))]",
             "properties": {
                 "serverKeyType": "[variables('serverKeyType')]",
-                "uri": "[if(variables('isCustomerManagedEncryptionEnabled'), format('{0}keys/{1}/{2}', reference(variables('resourceIds').sqlServerCustomerManagedEncryptionKeyVault, variables('apiVersions').keyVaults).vaultUri, variables('customerManagedEncryption').keyName, variables('customerManagedEncryption').keyVersion), null())]"
+                "uri": "[if(variables('isCustomerManagedEncryptionEnabled'), reference(format('{0}/keys/{1}{2}', variables('resourceIds').sqlServerCustomerManagedEncryptionKeyVault, variables('customerManagedEncryption').keyName, if(empty(variables('customerManagedEncryption').keyVersion), '', format('/versions/{0}', variables('customerManagedEncryption').keyVersion))), variables('apiVersions').keyVaultsKeys).keyUriWithVersion, null())]"
             },
             "type": "Microsoft.Sql/servers/keys"
         },

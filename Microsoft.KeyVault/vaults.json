@@ -65,6 +65,13 @@
             },
             "type": "bool"
         },
+        "keys": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the array of keys that will be stored within the Azure Key Vault."
+            },
+            "type": "secureObject"
+        },
         "location": {
             "metadata": {
                 "description": "Specifies the location in which the Azure Key Vault resource(s) will be deployed."
@@ -137,6 +144,7 @@
         "apiVersions": {
             "diagnosticSettings": "2017-05-01-preview",
             "keyVaults": "2019-09-01",
+            "keyVaultKeysApiVersion": "2019-09-01",
             "keyVaultSecretsApiVersion": "2019-09-01",
             "privateEndpoints": "2020-07-01",
             "privateEndpointsPrivateDnsZoneGroups": "2020-07-01"
@@ -174,6 +182,9 @@
                     "isEnabled": true
                 }
             },
+            "key": {
+                "isEnabled": true
+            },
             "privateEndpoint": {
                 "dnsZone": {
                     "resourceGroupName": "[variables('resourceGroupName')]",
@@ -192,6 +203,8 @@
         },
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "keysCollectionCount": "[length(union(createObject('collection', createArray()), parameters('keys')).collection)]",
+        "keysCollectionIsNotEmpty": "[greater(variables('keysCollectionCount'), 0)]",
         "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('dnsZones', createArray(), 'name', '<NULL>')))]",
         "privateEndpointsCount": "[length(parameters('privateEndpoints'))]",
         "privateEndpointsIsNotEmpty": "[greater(variables('privateEndpointsCount'), 0)]",
@@ -323,16 +336,42 @@
             "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings"
         },
         {
+            "apiVersion": "[variables('apiVersions').keyVaultKeysApiVersion]",
+            "condition": "[variables('keysCollectionIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('keysCollectionCount')]",
+                "mode": "Parallel",
+                "name": "keysCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').keyVault]"
+            ],
+            "name": "[format('{0}/{1}', parameters('name'), if(variables('keysCollectionIsNotEmpty'), parameters('keys').collection[copyIndex()].name, '<NULL>'))]",
+            "properties": {
+                "attributes": {
+                    "enabled": "[union(variables('defaultResourceProperties').key, parameters('keys').collection[copyIndex()]).isEnabled]",
+                    "exp": "[null()]",
+                    "nbf": "[null()]"
+                },
+                "curveName": "[null()]",
+                "keyOps": "[parameters('keys').collection[copyIndex()].allowedOperations]",
+                "keySize": "[parameters('keys').collection[copyIndex()].size]",
+                "kty": "[parameters('keys').collection[copyIndex()].type]"
+            },
+            "type": "Microsoft.KeyVault/vaults/keys"
+        },
+        {
             "apiVersion": "[variables('apiVersions').keyVaultSecretsApiVersion]",
             "condition": "[variables('secretsCollectionIsNotEmpty')]",
             "copy": {
                 "count": "[variables('secretsCollectionCount')]",
+                "mode": "Parallel",
                 "name": "secretsCopy"
             },
             "dependsOn": [
                 "[variables('resourceIds').keyVault]"
             ],
-            "name": "[format('{0}/{1}', parameters('name'), if(variables('secretsCollectionIsNotEmpty'), parameters('secrets').collection[copyIndex()].name, 'dummySecret'))]",
+            "name": "[format('{0}/{1}', parameters('name'), if(variables('secretsCollectionIsNotEmpty'), parameters('secrets').collection[copyIndex()].name, '<NULL>'))]",
             "properties": {
                 "value": "[parameters('secrets').collection[copyIndex()].value]"
             },
