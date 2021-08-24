@@ -435,7 +435,7 @@
                 "isSecureBootEnabled": true,
                 "isUltraSsdSupportEnabled": false,
                 "isVirtualTrustedPlatformModuleEnabled": true,
-                "isVulnerabilityAssessmentEnabled": false,
+                "isVulnerabilityAssessmentEnabled": true,
                 "justInTimeAccess": {},
                 "licenseType": "None",
                 "linuxConfiguration": {},

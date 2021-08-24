@@ -107,7 +107,7 @@
             "type": "bool"
         },
         "isVulnerabilityAssessmentEnabled": {
-            "defaultValue": false,
+            "defaultValue": true,
             "metadata": {
                 "description": "Indicates whether the vulnerability assessment feature is enabled on the Azure Virtual Machine."
             },
