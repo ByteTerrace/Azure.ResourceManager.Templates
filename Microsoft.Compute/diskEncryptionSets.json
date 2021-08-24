@@ -43,6 +43,7 @@
             "type": "string"
         },
         "keyVersion": {
+            "defaultValue": "",
             "metadata": {
                 "description": "Specifies the version of the key that the Azure Disk Encryption Set will get from the Azure Key Vault."
             },
@@ -73,6 +74,7 @@
             "deployments": "2021-04-01",
             "diskEncryptionSets": "2020-12-01",
             "keyVaults": "2019-09-01",
+            "keyVaultsKeys": "2019-09-01",
             "roleAssignments": "2020-04-01-preview"
         },
         "defaultResourceProperties": {
@@ -100,7 +102,7 @@
             "name": "[parameters('name')]",
             "properties": {
                 "activeKey": {
-                    "keyUrl": "[format('{0}keys/{1}/{2}', reference(variables('resourceIds').diskEncryptionSetKeyVault, variables('apiVersions').keyVaults).vaultUri, parameters('keyName'), parameters('keyVersion'))]",
+                    "keyUrl": "[reference(format('{0}/keys/{1}{2}', variables('resourceIds').diskEncryptionSetKeyVault, parameters('keyName'), if(empty(parameters('keyVersion')), '', format('/versions/{0}', parameters('keyVersion')))), variables('apiVersions').keyVaultsKeys).keyUriWithVersion]",
                     "sourceVault": {
                         "id": "[variables('resourceIds').diskEncryptionSetKeyVault]"
                     }

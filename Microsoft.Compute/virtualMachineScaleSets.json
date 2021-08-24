@@ -349,7 +349,7 @@
                     "version": "[if(variables('isLinuxVirtualMachineScaleSet'), '2.0', if(variables('isWindowsVirtualMachineScaleSet'), '1.0', null()))]"
                 },
                 "azureLogAnalyticsAgent": {
-                    "isEnabled": true,
+                    "isEnabled": false,
                     "version": "[if(variables('isLinuxVirtualMachineScaleSet'), '1.13', if(variables('isWindowsVirtualMachineScaleSet'), '1.0', null()))]"
                 },
                 "azureMonitorAgent": {
@@ -393,6 +393,7 @@
             "osDisk": {
                 "cachingMode": "ReadWrite",
                 "createOption": "FromImage",
+                "isEphemeral": false,
                 "isWriteAcceleratorEnabled": false,
                 "storageAccountType": "Premium_LRS"
             },
@@ -433,6 +434,16 @@
                     "protectedSettings": {
                         "Password": "[if(variables('extensions').azureActiveDirectoryDomainJoin.isEnabled, variables('extensions').azureActiveDirectoryDomainJoin.userPassword, null())]"
                     },
+                    "provisionAfterExtensions": [
+                        "AzureAntimalwareAgent",
+                        "AzureDependencyAgent",
+                        "AzureGuestConfigurationAgent",
+                        "AzureGuestHealthAgent",
+                        "AzureKeyVaultAgent",
+                        "AzureLogAnalyticsAgent",
+                        "AzureMonitorAgent",
+                        "AzureNetworkWatcherAgent"
+                    ],
                     "settings": {
                         "Name": "[if(variables('extensions').azureActiveDirectoryDomainJoin.isEnabled, variables('extensions').azureActiveDirectoryDomainJoin.domainName, null())]",
                         "NumberOfRetries": "[variables('extensions').azureActiveDirectoryDomainJoin.numberOfRetries]",
@@ -484,6 +495,17 @@
                         "managedIdentity": {},
                         "script": "[if(variables('isLinuxVirtualMachineScaleSet'), variables('extensions').azureCustomScript.script, null())]"
                     },
+                    "provisionAfterExtensions": [
+                        "AzureActiveDirectoryDomainJoin",
+                        "AzureAntimalwareAgent",
+                        "AzureDependencyAgent",
+                        "AzureGuestConfigurationAgent",
+                        "AzureGuestHealthAgent",
+                        "AzureKeyVaultAgent",
+                        "AzureLogAnalyticsAgent",
+                        "AzureMonitorAgent",
+                        "AzureNetworkWatcherAgent"
+                    ],
                     "publisher": "[if(variables('isLinuxVirtualMachineScaleSet'), 'Microsoft.Azure.Extensions', if(variables('isWindowsVirtualMachineScaleSet'), 'Microsoft.Compute', null()))]",
                     "settings": {
                         "skipDos2Unix": "[if(variables('isLinuxVirtualMachineScaleSet'), not(variables('extensions').azureCustomScript.isDos2UnixTransformEnabled), null())]",
@@ -518,6 +540,9 @@
                 "properties": {
                     "autoUpgradeMinorVersion": true,
                     "enableAutomaticUpgrade": false,
+                    "provisionAfterExtensions": [
+                        "AzureMonitorAgent"
+                    ],
                     "publisher": "Microsoft.Azure.Monitor.VirtualMachines.GuestHealth",
                     "type": "[format('GuestHealth{0}Agent', variables('osType'))]",
                     "typeHandlerVersion": "[variables('extensions').azureGuestHealthAgent.version]"
@@ -683,6 +708,7 @@
                     "osDisk": {
                         "caching": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).cachingMode]",
                         "createOption": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).createOption]",
+                        "diffDiskSettings": "[if(union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).isEphemeral, createObject('option', 'Local'), null())]",
                         "managedDisk": {
                             "diskEncryptionSet": "[if(empty(parameters('diskEncryptionSet')), null(), createObject('id', resourceId(variables('diskEncryptionSet').subscriptionId, variables('diskEncryptionSet').resourceGroupName, 'Microsoft.Compute/diskEncryptionSets', variables('diskEncryptionSet').name)))]",
                             "storageAccountType": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).storageAccountType]"
