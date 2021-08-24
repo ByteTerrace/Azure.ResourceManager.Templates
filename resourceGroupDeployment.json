@@ -179,7 +179,8 @@
             "diskEncryptionSet": {
                 "isDoubleEncryptionAtRestEnabled": true,
                 "keyVaultResourceGroupName": "[variables('resourceGroupName')]",
-                "keyVaultSubscriptionId": "[variables('subscriptionId')]"
+                "keyVaultSubscriptionId": "[variables('subscriptionId')]",
+                "keyVersion": ""
             },
             "dnsZone": {
                 "private": {
@@ -248,6 +249,7 @@
                 "isRbacAuthorizationEnabled": true,
                 "isTemplateDeploymentEnabled": false,
                 "isVirtualMachineDeploymentEnabled": false,
+                "keys": {},
                 "privateEndpoints": [],
                 "secrets": {},
                 "skuName": "Premium",
@@ -1738,6 +1740,9 @@
                     "isVirtualMachineDeploymentEnabled": {
                         "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).isVirtualMachineDeploymentEnabled]"
                     },
+                    "keys": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).keys]"
+                    },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').keyVaults[copyIndex()]).location]"
                     },
@@ -2174,7 +2179,7 @@
                         "value": "[union(variables('defaultResourceProperties').diskEncryptionSet, variables('resourceDefinitions').diskEncryptionSets[copyIndex()]).keyVaultSubscriptionId]"
                     },
                     "keyVersion": {
-                        "value": "[variables('resourceDefinitions').diskEncryptionSets[copyIndex()].keyVersion]"
+                        "value": "[union(variables('defaultResourceProperties').diskEncryptionSet, variables('resourceDefinitions').diskEncryptionSets[copyIndex()]).keyVersion]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').diskEncryptionSets[copyIndex()]).location]"

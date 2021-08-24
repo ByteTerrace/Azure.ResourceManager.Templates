@@ -101,7 +101,8 @@
                 "name": "privateEndpointsCopy"
             },
             "dependsOn": [
-                "[variables('privateLinkScopeResourceId')]"
+                "[variables('privateLinkScopeResourceId')]",
+                "scopedResourcesCopy"
             ],
             "location": "[union(variables('defaultResourceProperties').privateEndpoint, variables('privateEndpoints')[copyIndex()]).location]",
             "name": "[variables('privateEndpoints')[copyIndex()].name]",
