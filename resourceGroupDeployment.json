@@ -1664,7 +1664,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
-                    "relativePath": "./Microsoft.EventHub/hubs.json"
+                    "relativePath": "./Microsoft.EventHub/eventhubs.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
