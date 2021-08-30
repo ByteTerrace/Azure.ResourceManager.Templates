@@ -10,7 +10,7 @@
             "type": "object"
         },
         "isPublicNetworkAccessEnabled": {
-            "defaultValue": true,
+            "defaultValue": false,
             "metadata": {
                 "description": "Indicates whether the Azure Application Configuration Store is accessible from the internet."
             },

@@ -31,7 +31,7 @@
             "type": "bool"
         },
         "isPublicNetworkAccessEnabled": {
-            "defaultValue": true,
+            "defaultValue": false,
             "metadata": {
                 "description": "Indicates whether the Azure Key Vault is accessible from the internet."
             },

@@ -14,7 +14,7 @@
             "type": "object"
         },
         "isPublicNetworkAccessEnabled": {
-            "defaultValue": true,
+            "defaultValue": false,
             "metadata": {
                 "description": "Indicates whether the Azure Automation Account is accessible from the internet."
             },
