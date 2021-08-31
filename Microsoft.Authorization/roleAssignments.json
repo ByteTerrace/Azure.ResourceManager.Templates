@@ -25,6 +25,8 @@
         "apiVersions": {
             "roleAssignments": "2020-04-01-preview"
         },
+        "assigneeResourceSegments": "[split(variables('resourceIds').assignee, '/')]",
+        "assignorResourceSegments": "[split(variables('resourceIds').assignor, '/')]",
         "defaultResourceProperties": {
             "resource": {
                 "id": "",
@@ -38,15 +40,14 @@
             "assignor": "[if(empty(union(variables('defaultResourceProperties').resource, parameters('assignor')).id), resourceId(union(variables('defaultResourceProperties').resource, parameters('assignor')).subscriptionId, union(variables('defaultResourceProperties').resource, parameters('assignor')).resourceGroupName, parameters('assignor').type, parameters('assignor').name), parameters('assignor').id)]"
         },
         "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleDefinitionGuid'))]",
-        "subscriptionId": "[subscription().subscriptionId]",
-        "assignorResourceSegments": "[split(variables('resourceIds').assignor, '/')]"
+        "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').roleAssignments]",
             "name": "[guid(variables('resourceIds').assignee, variables('roleDefinitionId'), variables('resourceIds').assignor)]",
             "properties": {
-                "principalId": "[reference(variables('resourceIds').assignee, parameters('assignee').apiVersion, 'Full').identity.principalId]",
+                "principalId": "[reference(variables('resourceIds').assignee, if(empty(union(createObject('apiVersion', ''), parameters('assignee')).apiVersion), first(providers(variables('assigneeResourceSegments')[6], variables('assigneeResourceSegments')[7]).apiVersions), parameters('assignee').apiVersion), 'Full').identity.principalId]",
                 "roleDefinitionId": "[variables('roleDefinitionId')]"
             },
             "scope": "[format('{0}/{1}/{2}', variables('assignorResourceSegments')[6], variables('assignorResourceSegments')[7], variables('assignorResourceSegments')[8])]",
