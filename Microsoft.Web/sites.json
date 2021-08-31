@@ -402,7 +402,7 @@
         "healthCheck": "[union(variables('defaultResourceProperties').healthCheck, parameters('healthCheck'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
-        "linuxFxVersion": "[if(and(equals(variables('currentStack'), 'dotnetcore'), endsWith(parameters('frameworkVersion'), '5.0')), 'DOTNETCORE|5.0', parameters('frameworkVersion'))]",
+        "linuxFxVersion": "[parameters('frameworkVersion')]",
         "logging": "[union(variables('defaultResourceProperties').logging, parameters('logging'))]",
         "metadata": "[union(createArray(createObject('name', 'CURRENT_STACK', 'value', variables('currentStack'))), parameters('metadata'))]",
         "privateCertificatesCount": "[length(parameters('privateCertificates'))]",

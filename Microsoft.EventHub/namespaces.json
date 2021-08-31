@@ -2,101 +2,106 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "administratorObjectIds":{
-            "metadata": {
-                "description": "A list of object ids that will be assigned as administrators of the the Azure Managed HSM."
-            },
-            "type": "array"
-        },
         "audit": {
             "defaultValue": {},
             "metadata": {
-                "description": "An object that encapsulates the audit settings that will be applied to the Azure Managed HSM."
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure Event Hub Namespace."
+            },
+            "type": "object"
+        },
+        "cluster": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the cluster that will be the Azure Event Hub Namespace will be created within."
             },
             "type": "object"
         },
         "firewallRules": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of firewall rules that will be assigned to the Azure Managed HSM."
+                "description": "An array of firewall rules that will be assigned to the Azure Event Hub Namespace."
             },
             "type": "array"
+        },
+        "identity": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the identity that will be assigned to the Azure Event Hub Namespace."
+            },
+            "type": "object"
         },
         "isAllowTrustedMicrosoftServicesEnabled": {
             "defaultValue": false,
             "metadata": {
-                "description": "Indicates whether trusted Microsoft services are allowed to access the Azure Managed HSM."
+                "description": "Indicates whether trusted Azure services and resources are allowed to access the Azure Event Hub Namespace."
+            },
+            "type": "bool"
+        },
+        "isKafkaSupportEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether Apache Kafka messaging support is enabled on the Azure Event Hub Namespace."
             },
             "type": "bool"
         },
         "isPublicNetworkAccessEnabled": {
             "defaultValue": false,
             "metadata": {
-                "description": "Indicates whether the Azure Managed HSM is accessible from the internet."
+                "description": "Indicates whether the Azure Event Hub Namespace is accessible from the internet."
             },
             "type": "bool"
         },
-        "isPurgeProtectionEnabled": {
+        "isZoneRedundant": {
             "defaultValue": true,
             "metadata": {
-                "description": "Indicates whether the purge protection feature is enabled on the Azure Managed HSM."
+                "description": "Indicates whether the Azure Event Hub Namespace will be zone redundant."
             },
             "type": "bool"
         },
         "location": {
             "metadata": {
-                "description": "Specifies the location in which the Azure Managed HSM resource(s) should be deployed."
+                "description": "Specifies the location in which the Azure Event Hub Namespace resource(s) will be deployed."
             },
             "type": "string"
         },
         "name": {
+            "maxLength": 50,
             "metadata": {
-                "description": "Specifies the name of the Azure Managed HSM."
+                "description": "Specifies the name of the Azure Event Hub Namespace."
             },
+            "minLength": 6,
             "type": "string"
         },
         "privateEndpoints": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of private endpoints that will be linked with the Azure Managed HSM."
+                "description": "An array of private endpoints that will be linked with the Azure Event Hub Namespace."
             },
             "type": "array"
         },
         "skuName": {
             "allowedValues": [
-                "Standard_B1"
+                "Basic",
+                "Standard",
+                "Premium"
             ],
-            "defaultValue": "Standard_B1",
+            "defaultValue": "Standard",
             "metadata": {
-                "description": "Specifies the SKU name of the Azure Managed HSM."
+                "description": "Specifies the SKU name of the Azure Event Hub Namespace."
             },
             "type": "string"
-        },
-        "softDeleteRetentionInDays": {
-            "defaultValue": 13,
-            "metadata": {
-                "description": "Specifies the amount of time, in days, that items will remain soft deleted within the Azure Managed HSM."
-            },
-            "type": "int"
         },
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Managed HSM."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Event Hub Namespace."
             },
             "type": "object"
-        },
-        "tenantId": {
-            "defaultValue": "[subscription().tenantId]",
-            "metadata": {
-                "description": "Specifies the Azure Active Directory tenant GUID that will be used for authenticating requests to the Azure Managed HSM."
-            },
-            "type": "string"
         },
         "virtualNetworkRules": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of virtual network rules that will be assigned to the Azure Managed HSM."
+                "description": "An array of virtual network rules that will be assigned to the Azure Event Hub Namespace."
             },
             "type": "array"
         }
@@ -104,7 +109,8 @@
     "variables": {
         "apiVersions": {
             "diagnosticSettings": "2017-05-01-preview",
-            "managedHsms": "2021-04-01-preview",
+            "eventHubNamespaces": "2021-06-01-preview",
+            "eventHubNamespacesNetworkRulesets": "2021-06-01-preview",
             "privateEndpoints": "2020-07-01",
             "privateEndpointsPrivateDnsZoneGroups": "2020-07-01"
         },
@@ -118,12 +124,28 @@
                     "subscriptionId": "[variables('subscriptionId')]"
                 },
                 "logNames": [
-                    "AuditEvent"
+                    "ArchiveLogs",
+                    "AutoScaleLogs",
+                    "CustomerManagedKeyUserLogs",
+                    "EventHubVNetConnectionEvent",
+                    "KafkaCoordinatorLogs",
+                    "KafkaUserErrorLogs",
+                    "OperationalLogs"
                 ],
                 "retentionPolicy": {
                     "days": 137,
                     "isEnabled": true
                 }
+            },
+            "cluster": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "identity": {
+                "isEnabled": true,
+                "name": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
             },
             "privateEndpoint": {
                 "dnsZone": {
@@ -136,11 +158,15 @@
                     "subscriptionId": "[variables('subscriptionId')]"
                 }
             },
-            "subnet": {
-                "resourceGroupName": "[variables('resourceGroupName')]",
-                "subscriptionId": "[variables('subscriptionId')]"
+            "virtualNetworkRule": {
+                "ignoreMissingVnetServiceEndpoint": true,
+                "subnet": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
             }
         },
+        "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('dnsZones', createArray(), 'name', '<NULL>')))]",
@@ -149,50 +175,29 @@
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
-            "managedHsm": "[resourceId('Microsoft.KeyVault/managedHSMs', parameters('name'))]"
+            "eventHubNamespace": "[resourceId('Microsoft.EventHub/namespaces', parameters('name'))]"
         },
         "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
         {
-            "apiVersion": "[variables('apiVersions').managedHsms]",
+            "apiVersion": "[variables('apiVersions').eventHubNamespaces]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', if(empty(variables('identity').name), 'SystemAssigned', 'UserAssigned')), if(empty(variables('identity').name), createObject(), createObject('userAssignedIdentities', createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name))))), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
-                "createMode": "default",
-                "enablePurgeProtection": "[parameters('isPurgeProtectionEnabled')]",
-                "enableSoftDelete": true,
-                "initialAdminObjectIds": "[parameters('administratorObjectIds')]",
-                "networkAcls": {
-                    "copy": [
-                        {
-                            "count": "[length(parameters('firewallRules'))]",
-                            "input": {
-                                "value": "[parameters('firewallRules')[copyIndex('ipRules')]]"
-                            },
-                            "name": "ipRules"
-                        },
-                        {
-                            "count": "[length(parameters('virtualNetworkRules'))]",
-                            "input": {
-                                "id": "[resourceId(union(variables('defaultResourceProperties').subnet, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subscriptionId, union(variables('defaultResourceProperties').subnet, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].name)]"
-                            },
-                            "name": "virtualNetworkRules"
-                        }
-                    ],
-                    "bypass": "[if(parameters('isAllowTrustedMicrosoftServicesEnabled'), 'AzureServices', 'None')]",
-                    "defaultAction": "[if(parameters('isPublicNetworkAccessEnabled'), 'Allow', 'Deny')]"
-                },
-                "publicNetworkAccess": "Enabled",
-                "softDeleteRetentionInDays": "[parameters('softDeleteRetentionInDays')]",
-                "tenantId": "[parameters('tenantId')]"
+                "clusterArmId": "[if(empty(parameters('cluster')), null(), resourceId(union(variables('defaultResourceProperties').cluster, parameters('cluster')).subscriptionId, union(variables('defaultResourceProperties').cluster, parameters('cluster')).resourceGroupName, 'Microsoft.EventHub/clusters', union(variables('defaultResourceProperties').cluster, parameters('cluster')).name))]",
+                "disableLocalAuth": true,
+                "isAutoInflateEnabled": false,
+                "kafkaEnabled": "[parameters('isKafkaSupportEnabled')]",
+                "maximumThroughputUnits": 0,
+                "zoneRedundant": "[parameters('isZoneRedundant')]"
             },
             "sku": {
-                "family": "B",
                 "name": "[parameters('skuName')]"
             },
             "tags": "[parameters('tags')]",
-            "type": "Microsoft.KeyVault/managedHSMs"
+            "type": "Microsoft.EventHub/namespaces"
         },
         {
             "apiVersion": "[variables('apiVersions').privateEndpoints]",
@@ -203,7 +208,7 @@
                 "name": "privateEndpointsCopy"
             },
             "dependsOn": [
-                "[variables('resourceIds').managedHsm]"
+                "[variables('resourceIds').eventHubNamespace]"
             ],
             "location": "[union(variables('defaultResourceProperties').privateEndpoint, variables('privateEndpoints')[copyIndex()]).location]",
             "name": "[variables('privateEndpoints')[copyIndex()].name]",
@@ -214,9 +219,9 @@
                         "name": "[variables('privateEndpoints')[copyIndex()].name]",
                         "properties": {
                             "groupIds": [
-                                "managedhsm"
+                                "namespace"
                             ],
-                            "privateLinkServiceId": "[variables('resourceIds').managedHsm]"
+                            "privateLinkServiceId": "[variables('resourceIds').eventHubNamespace]"
                         }
                     }
                 ],
@@ -257,10 +262,44 @@
             "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups"
         },
         {
+            "apiVersion": "[variables('apiVersions').eventHubNamespacesNetworkRulesets]",
+            "dependsOn": [
+                "privateDnsZoneGroupsCopy",
+                "[variables('resourceIds').eventHubNamespace]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/default', parameters('name'))]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(parameters('firewallRules'))]",
+                        "input": {
+                            "action": "Allow",
+                            "ipMask": "[parameters('firewallRules')[copyIndex('ipRules')]]"
+                        },
+                        "name": "ipRules"
+                    },
+                    {
+                        "count": "[length(parameters('virtualNetworkRules'))]",
+                        "input": {
+                            "name": "[union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).ignoreMissingVnetServiceEndpoint]",
+                            "subnet": {
+                                "id": "[resourceId(union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subnet.subscriptionId, union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnet.virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnet.name)]"
+                            }
+                        },
+                        "name": "virtualNetworkRules"
+                    }
+                ],
+                "defaultAction": "[if(parameters('isPublicNetworkAccessEnabled'), 'Allow', 'Deny')]",
+                "trustedServiceAccessEnabled": "[parameters('isAllowTrustedMicrosoftServicesEnabled')]"
+            },
+            "type": "Microsoft.EventHub/namespaces/networkRuleSets"
+        },
+        {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
             "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
             "dependsOn": [
-                "[variables('resourceIds').managedHsm]"
+                "[variables('resourceIds').eventHubNamespace]"
             ],
             "location": "[parameters('location')]",
             "name": "[format('{0}/Microsoft.Insights/audit', parameters('name'))]",
@@ -281,7 +320,7 @@
                 ],
                 "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
-            "type": "Microsoft.KeyVault/managedHSMs/providers/diagnosticsettings"
+            "type": "Microsoft.EventHub/namespaces/providers/diagnosticsettings"
         }
     ]
 }
