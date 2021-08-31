@@ -221,13 +221,13 @@
                 },
                 "namespace": {
                     "audit": "[variables('audit')]",
-                    "firewallRules": "",
+                    "firewallRules": [],
                     "identity": {},
                     "isAllowTrustedMicrosoftServicesEnabled": false,
                     "isPublicNetworkAccessEnabled": false,
                     "isZoneRedundant": true,
                     "privateEndpoints": [],
-                    "skuName": "",
+                    "skuName": "Standard",
                     "virtualNetworkRules": []
                 }
             },

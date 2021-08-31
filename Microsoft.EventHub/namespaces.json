@@ -66,7 +66,12 @@
             "type": "array"
         },
         "skuName": {
-            "defaultValue": "Standard_D2s_v4",
+            "allowedValues": [
+                "Basic",
+                "Standard",
+                "Premium"
+            ],
+            "defaultValue": "Standard",
             "metadata": {
                 "description": "Specifies the SKU name of the Azure Event Hub Namespace."
             },
