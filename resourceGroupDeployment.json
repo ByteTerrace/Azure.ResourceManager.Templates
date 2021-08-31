@@ -1620,7 +1620,7 @@
                 "name": "eventHubsNamespacesCopy"
             },
             "dependsOn": [
-                "eventHubClustersCopy",
+                "eventHubsClustersCopy",
                 "logAnalyticsWorkspacesCopy",
                 "scriptsPreDeployCopy"
             ],
