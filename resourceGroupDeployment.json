@@ -3684,8 +3684,8 @@
                     "assignor": {
                         "value": "[variables('resourceDefinitions').roleAssignments[copyIndex()].assignor]"
                     },
-                    "roleDefinitionGuid": {
-                        "value": "[variables('resourceDefinitions').roleAssignments[copyIndex()].roleDefinitionGuid]"
+                    "roleDefinition": {
+                        "value": "[variables('resourceDefinitions').roleAssignments[copyIndex()].roleDefinition]"
                     }
                 },
                 "templateLink": {
