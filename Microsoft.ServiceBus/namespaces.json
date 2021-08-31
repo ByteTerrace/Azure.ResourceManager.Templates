@@ -71,7 +71,7 @@
                 "Standard",
                 "Premium"
             ],
-            "defaultValue": "Standard",
+            "defaultValue": "Premium",
             "metadata": {
                 "description": "Specifies the SKU name of the Azure Service Bus Namespace."
             },

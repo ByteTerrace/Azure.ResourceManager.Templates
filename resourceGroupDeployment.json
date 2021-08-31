@@ -83,6 +83,7 @@
             "publicIpAddresses": [],
             "publicIpPrefixes": [],
             "recoveryServicesVaults": [],
+            "redisCaches": [],
             "routeTables": [],
             "scripts": {
                 "postDeploy": [],
@@ -240,7 +241,7 @@
                     "virtualNetworkRules": []
                 }
             },
-            "firewalls": {
+            "firewall": {
                 "availabilityZones": [
                     1,
                     2,
@@ -387,6 +388,17 @@
                 "audit": "[variables('audit')]",
                 "backup": {},
                 "customerManagedEncryption": {}
+            },
+            "redisCache": {
+                "audit": "[variables('audit')]",
+                "firewallRules": [],
+                "identity": {},
+                "isPublicNetworkAccessEnabled": false,
+                "numberOfCapacityUnits": 1,
+                "privateEndpoints": [],
+                "skuName": "Premium",
+                "subnet": {},
+                "version": "6"
             },
             "routeTable": {
                 "isBgpRoutePropagationEnabled": false,
@@ -593,6 +605,7 @@
             "publicIpAddress": "[format('{0}-PublicIpAddress', deployment().name)]",
             "publicIpPrefix": "[format('{0}-PublicIpPrefix', deployment().name)]",
             "recoveryServicesVault": "[format('{0}-RecoveryServicesVault', deployment().name)]",
+            "redisCache": "[format('{0}-RedisCache', deployment().name)]",
             "routeTable": "[format('{0}-RouteTable', deployment().name)]",
             "scriptPostDeploy": "[format('{0}-ScriptPostDeploy', deployment().name)]",
             "scriptPreDeploy": "[format('{0}-ScriptPreDeploy', deployment().name)]",
@@ -1365,13 +1378,13 @@
                 "mode": "Incremental",
                 "parameters": {
                     "availabilityZones": {
-                        "value": "[union(variables('defaultResourceProperties').firewalls, variables('resourceDefinitions').firewalls[copyIndex()]).availabilityZones]"
+                        "value": "[union(variables('defaultResourceProperties').firewall, variables('resourceDefinitions').firewalls[copyIndex()]).availabilityZones]"
                     },
                     "ipConfigurations": {
-                        "value": "[union(variables('defaultResourceProperties').firewalls, variables('resourceDefinitions').firewalls[copyIndex()]).ipConfigurations]"
+                        "value": "[union(variables('defaultResourceProperties').firewall, variables('resourceDefinitions').firewalls[copyIndex()]).ipConfigurations]"
                     },
                     "managementIpConfiguration": {
-                        "value": "[union(variables('defaultResourceProperties').firewalls, variables('resourceDefinitions').firewalls[copyIndex()]).managementIpConfiguration]"
+                        "value": "[union(variables('defaultResourceProperties').firewall, variables('resourceDefinitions').firewalls[copyIndex()]).managementIpConfiguration]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').firewalls[copyIndex()]).location]"
@@ -1380,10 +1393,10 @@
                         "value": "[variables('resourceDefinitions').firewalls[copyIndex()].name]"
                     },
                     "skuName": {
-                        "value": "[union(variables('defaultResourceProperties').firewalls, variables('resourceDefinitions').firewalls[copyIndex()]).skuName]"
+                        "value": "[union(variables('defaultResourceProperties').firewall, variables('resourceDefinitions').firewalls[copyIndex()]).skuName]"
                     },
                     "skuTier": {
-                        "value": "[union(variables('defaultResourceProperties').firewalls, variables('resourceDefinitions').firewalls[copyIndex()]).skuTier]"
+                        "value": "[union(variables('defaultResourceProperties').firewall, variables('resourceDefinitions').firewalls[copyIndex()]).skuTier]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
@@ -1605,7 +1618,6 @@
                 "name": "eventHubsClustersCopy"
             },
             "dependsOn": [
-                "logAnalyticsWorkspacesCopy",
                 "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').cluster, copyIndex())]",
@@ -1640,7 +1652,9 @@
             "dependsOn": [
                 "eventHubsClustersCopy",
                 "logAnalyticsWorkspacesCopy",
-                "scriptsPreDeployCopy"
+                "scriptsPreDeployCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').eventHubNamespace, copyIndex())]",
             "properties": {
@@ -1703,7 +1717,6 @@
             },
             "dependsOn": [
                 "eventHubsNamespacesCopy",
-                "logAnalyticsWorkspacesCopy",
                 "scriptsPreDeployCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').eventHub, copyIndex())]",
@@ -1743,7 +1756,9 @@
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
-                "scriptsPreDeployCopy"
+                "scriptsPreDeployCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').serviceBusNamespace, copyIndex())]",
             "properties": {
@@ -1786,6 +1801,65 @@
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.ServiceBus/namespaces.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').redisCaches))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').redisCaches)]",
+                "mode": "Parallel",
+                "name": "redisCachesCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "scriptsPreDeployCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').redisCache, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).audit]"
+                    },
+                    "firewallRules": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).firewallRules]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).identity]"
+                    },
+                    "isPublicNetworkAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).isPublicNetworkAccessEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').redisCaches[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').redisCaches[copyIndex()].name]"
+                    },
+                    "numberOfCapacityUnits": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).numberOfCapacityUnits]"
+                    },
+                    "privateEndpoints": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).privateEndpoints]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).skuName]"
+                    },
+                    "subnet": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).subnet]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Cache/redis.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
