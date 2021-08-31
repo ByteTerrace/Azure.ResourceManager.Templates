@@ -1,0 +1,56 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "assignee": {
+            "metadata": {
+                "description": "An object that encapsulates the properties of the assignee resource."
+            },
+            "type": "object"
+        },
+        "assignor": {
+            "metadata": {
+                "description": "An object that encapsulates the properties of the assignor resource."
+            },
+            "type": "object"
+        },
+        "roleDefinitionGuid": {
+            "metadata": {
+                "description": "Specifies the GUID of the role definition that will be assigned."
+            },
+            "type": "string"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "roleAssignments": "2020-04-01-preview"
+        },
+        "defaultResourceProperties": {
+            "resource": {
+                "id": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            }
+        },
+        "resourceGroupName": "[resourceGroup().name]",
+        "resourceIds": {
+            "assignee": "[if(empty(union(variables('defaultResourceProperties').resource, parameters('assignee')).id), resourceId(union(variables('defaultResourceProperties').resource, parameters('assignee')).subscriptionId, union(variables('defaultResourceProperties').resource, parameters('assignee')).resourceGroupName, parameters('assignee').type, parameters('assignee').name), parameters('assignee').id)]",
+            "assignor": "[if(empty(union(variables('defaultResourceProperties').resource, parameters('assignor')).id), resourceId(union(variables('defaultResourceProperties').resource, parameters('assignor')).subscriptionId, union(variables('defaultResourceProperties').resource, parameters('assignor')).resourceGroupName, parameters('assignor').type, parameters('assignor').name), parameters('assignor').id)]"
+        },
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleDefinitionGuid'))]",
+        "subscriptionId": "[subscription().subscriptionId]",
+        "assignorResourceSegments": "[split(variables('resourceIds').assignor, '/')]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').roleAssignments]",
+            "name": "[guid(variables('resourceIds').assignee, variables('roleDefinitionId'), variables('resourceIds').assignor)]",
+            "properties": {
+                "principalId": "[reference(variables('resourceIds').assignee, parameters('assignee').apiVersion, 'Full').identity.principalId]",
+                "roleDefinitionId": "[variables('roleDefinitionId')]"
+            },
+            "scope": "[format('{0}/{1}/{2}', variables('assignorResourceSegments')[6], variables('assignorResourceSegments')[7], variables('assignorResourceSegments')[8])]",
+            "type": "Microsoft.Authorization/roleAssignments"
+        }
+    ]
+}
