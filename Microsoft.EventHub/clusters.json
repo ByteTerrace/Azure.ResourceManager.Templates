@@ -1,0 +1,47 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "numberOfCapacityUnits": {
+            "defaultValue": 1,
+            "maxValue": 20,
+            "metadata": {
+                "description": "Specifies the number of capacity units that will be dedicated to the Azure Event Hub Cluster."
+            },
+            "minValue": 1,
+            "type": "int"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Event Hub Cluster resource(s) will be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "maxLength": 50,
+            "metadata": {
+                "description": "Specifies the name of the Azure Event Hub Cluster."
+            },
+            "minLength": 6,
+            "type": "string"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "eventHubsCluster": "2018-01-01-preview"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').eventHubsCluster]",
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {},
+            "sku": {
+                "name": "Dedicated",
+                "capacity": "[parameters('numberOfCapacityUnits')]"
+            },
+            "type": "Microsoft.EventHub/clusters"
+        }
+    ]
+}

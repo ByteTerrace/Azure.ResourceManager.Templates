@@ -57,6 +57,7 @@
                 "topics": []
             },
             "eventHub": {
+                "clusters": [],
                 "hubs": [],
                 "namespaces": []
             },
@@ -214,6 +215,9 @@
                 }
             },
             "eventHub": {
+                "cluster": {
+                    "numberOfCapacityUnits": 1
+                },
                 "hub": {
                     "consumerGroups": [],
                     "messageRetentionInDays": 1,
@@ -221,6 +225,7 @@
                 },
                 "namespace": {
                     "audit": "[variables('audit')]",
+                    "cluster": {},
                     "firewallRules": [],
                     "identity": {},
                     "isAllowTrustedMicrosoftServicesEnabled": false,
@@ -550,6 +555,7 @@
             "eventGridDomain": "[format('{0}-EventGridDomain', deployment().name)]",
             "eventGridEventSubscription": "[format('{0}-EventGridEventSub', deployment().name)]",
             "eventGridTopic": "[format('{0}-EventGridTopic', deployment().name)]",
+            "eventHubCluster": "[format('{0}-EventHubCluster', deployment().name)]",
             "eventHub": "[format('{0}-EventHub', deployment().name)]",
             "eventHubNamespace": "[format('{0}-EventHubNamespace', deployment().name)]",
             "firewall": "[format('{0}-Firewall', deployment().name)]",
@@ -1574,13 +1580,47 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').eventHub.clusters))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').eventHub.clusters)]",
+                "mode": "Parallel",
+                "name": "eventHubsClustersCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "scriptsPreDeployCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').cluster, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "numberOfCapacityUnits": {
+                        "value": "[union(variables('defaultResourceProperties').eventHub.cluster, variables('resourceDefinitions').eventHub.clusters[copyIndex()]).numberOfCapacityUnits]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').eventHub.clusters[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').eventHub.clusters[copyIndex()].name]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.EventHub/clusters.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').eventHub.namespaces))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').eventHub.namespaces)]",
                 "mode": "Parallel",
-                "name": "eventHubNamespacesCopy"
+                "name": "eventHubsNamespacesCopy"
             },
             "dependsOn": [
+                "eventHubClustersCopy",
                 "logAnalyticsWorkspacesCopy",
                 "scriptsPreDeployCopy"
             ],
@@ -1590,6 +1630,9 @@
                 "parameters": {
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).audit]"
+                    },
+                    "cluster": {
+                        "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).cluster]"
                     },
                     "firewallRules": {
                         "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).firewallRules]"
@@ -1638,7 +1681,7 @@
                 "name": "eventHubsCopy"
             },
             "dependsOn": [
-                "eventHubNamespacesCopy",
+                "eventHubsNamespacesCopy",
                 "logAnalyticsWorkspacesCopy",
                 "scriptsPreDeployCopy"
             ],
@@ -3420,8 +3463,9 @@
                 "eventGridDomainsCopy",
                 "eventGridEventSubcriptionsCopy",
                 "eventGridTopicsCopy",
+                "eventHubsClustersCopy",
                 "eventHubsCopy",
-                "eventHubNamespacesCopy",
+                "eventHubsNamespacesCopy",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
                 "hostGroupsCopy",

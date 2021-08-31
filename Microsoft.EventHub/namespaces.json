@@ -9,6 +9,13 @@
             },
             "type": "object"
         },
+        "cluster": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the cluster that will be the Azure Event Hub Namespace will be created within."
+            },
+            "type": "object"
+        },
         "firewallRules": {
             "defaultValue": [],
             "metadata": {
@@ -123,6 +130,10 @@
                     "isEnabled": true
                 }
             },
+            "cluster": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
             "identity": {
                 "isEnabled": true,
                 "name": "",
@@ -168,6 +179,7 @@
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
+                "clusterArmId": "[if(empty(parameters('cluster')), null(), resourceId(union(variables('defaultResourceProperties').cluster, parameters('cluster')).subscriptionId, union(variables('defaultResourceProperties').cluster, parameters('cluster')).resourceGroupName, '', union(variables('defaultResourceProperties').cluster, parameters('cluster')).name))]",
                 "disableLocalAuth": false,
                 "isAutoInflateEnabled": true,
                 "kafkaEnabled": true,
