@@ -181,8 +181,6 @@
                 "minimumTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
                 "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]",
                 "redisVersion": "[parameters('version')]",
-                "replicasPerMaster": "[if(variables('isClusteringEnabled'), 2, null())]",
-                "replicasPerPrimary": "[if(variables('isClusteringEnabled'), 2, null())]",
                 "shardCount": "[if(variables('isClusteringEnabled'), parameters('numberOfShards'), null())]",
                 "sku": {
                     "capacity": "[parameters('numberOfCapacityUnits')]",
@@ -194,7 +192,7 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Cache/Redis",
-            "zones": "[parameters('availabilityZones')]"
+            "zones": "[if(empty(parameters('availabilityZones')), null(), parameters('availabilityZones'))]"
         },
         {
             "apiVersion": "[variables('apiVersions').privateEndpoints]",
