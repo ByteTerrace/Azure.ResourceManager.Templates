@@ -9,6 +9,17 @@
             },
             "type": "object"
         },
+        "availabilityZones": {
+            "defaultValue": [
+                1,
+                2,
+                3
+            ],
+            "metadata": {
+                "description": "Specifies an array of availability zones that the Azure Redis Cache will be deployed within."
+            },
+            "type": "array"
+        },
         "firewallRules": {
             "defaultValue": [],
             "metadata": {
@@ -29,6 +40,16 @@
             },
             "type": "string"
         },
+        "minimumSupportedTlsVersion": {
+            "allowedValues": [
+                "1.2"
+            ],
+            "defaultValue": "1.2",
+            "metadata": {
+                "description": "Specifies the minimum version of the TLS protocol that will be supported within the Azure Redis Cache."
+            },
+            "type": "string"
+        },
         "name": {
             "maxLength": 63,
             "metadata": {
@@ -42,6 +63,15 @@
             "maxValue": 6,
             "metadata": {
                 "description": "Specifies the number of capacity units that will be dedicated to the Azure Redis Cache."
+            },
+            "minValue": 0,
+            "type": "int"
+        },
+        "numberOfShards": {
+            "defaultValue": 0,
+            "maxValue": 10,
+            "metadata": {
+                "description": "Specifies the number of cluster shards that will be dedicated to the Azure Redis Cache."
             },
             "minValue": 0,
             "type": "int"
@@ -132,6 +162,7 @@
         },
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "isClusteringEnabled": "[greater(parameters('numberOfShards'), 0)]",
         "privateEndpointsCount": "[length(parameters('privateEndpoints'))]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
@@ -147,9 +178,12 @@
             "name": "[parameters('name')]",
             "properties": {
                 "enableNonSslPort": false,
-                "minimumTlsVersion": "1.2",
+                "minimumTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
                 "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]",
                 "redisVersion": "[parameters('version')]",
+                "replicasPerMaster": "[if(variables('isClusteringEnabled'), 2, null())]",
+                "replicasPerPrimary": "[if(variables('isClusteringEnabled'), 2, null())]",
+                "shardCount": "[if(variables('isClusteringEnabled'), parameters('numberOfShards'), null())]",
                 "sku": {
                     "capacity": "[parameters('numberOfCapacityUnits')]",
                     "family": "[if(startsWith(parameters('skuName'), 'P'), 'P', 'C')]",
@@ -159,7 +193,8 @@
                 "subnetId": "[if(empty(parameters('subnet')), null(), resourceId(union(variables('defaultResourceProperties').subnet, parameters('subnet')).subscriptionId, union(variables('defaultResourceProperties').subnet, parameters('subnet')).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('subnet').virtualNetworkName, parameters('subnet').name))]"
             },
             "tags": "[parameters('tags')]",
-            "type": "Microsoft.Cache/Redis"
+            "type": "Microsoft.Cache/Redis",
+            "zones": "[parameters('availabilityZones')]"
         },
         {
             "apiVersion": "[variables('apiVersions').privateEndpoints]",
@@ -234,10 +269,10 @@
             ],
             "name": "[format('{0}/{1}', parameters('name'), parameters('firewallRules')[copyIndex()].name)]",
             "properties": {
-                "endIpAddress": "[parameters('firewallRules')[copyIndex()].endIpAddress]",
-                "startIpAddress": "[parameters('firewallRules')[copyIndex()].startIpAddress]"
+                "endIp": "[parameters('firewallRules')[copyIndex()].endIpAddress]",
+                "startIp": "[parameters('firewallRules')[copyIndex()].startIpAddress]"
             },
-            "type": "Microsoft.Sql/servers/firewallRules"
+            "type": "Microsoft.Cache/Redis/firewallRules"
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",

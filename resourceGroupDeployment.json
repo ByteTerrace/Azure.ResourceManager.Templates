@@ -391,10 +391,17 @@
             },
             "redisCache": {
                 "audit": "[variables('audit')]",
+                "availabilityZones": [
+                    1,
+                    2,
+                    3
+                ],
                 "firewallRules": [],
                 "identity": {},
                 "isPublicNetworkAccessEnabled": false,
+                "minimumSupportedTlsVersion": "1.2",
                 "numberOfCapacityUnits": 1,
+                "numberOfShards": 0,
                 "privateEndpoints": [],
                 "skuName": "Premium",
                 "subnet": {},
@@ -1826,6 +1833,9 @@
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).audit]"
                     },
+                    "availabilityZones": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).availabilityZones]"
+                    },
                     "firewallRules": {
                         "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).firewallRules]"
                     },
@@ -1838,11 +1848,17 @@
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').redisCaches[copyIndex()]).location]"
                     },
+                    "minimumSupportedTlsVersion": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).minimumSupportedTlsVersion]"
+                    },
                     "name": {
                         "value": "[variables('resourceDefinitions').redisCaches[copyIndex()].name]"
                     },
                     "numberOfCapacityUnits": {
                         "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).numberOfCapacityUnits]"
+                    },
+                    "numberOfShards": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).numberOfShards]"
                     },
                     "privateEndpoints": {
                         "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).privateEndpoints]"
