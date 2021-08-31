@@ -88,6 +88,9 @@
                 "postDeploy": [],
                 "preDeploy": []
             },
+            "serviceBus": {
+                "namespaces": []
+            },
             "sharedImageGalleries": [],
             "sqlServers": [],
             "staticWebApplications": [],
@@ -392,6 +395,19 @@
             "script": {
                 "kind": "AzurePowerShell"
             },
+            "serviceBus": {
+                "namespace": {
+                    "audit": "[variables('audit')]",
+                    "firewallRules": [],
+                    "identity": {},
+                    "isAllowTrustedMicrosoftServicesEnabled": false,
+                    "isPublicNetworkAccessEnabled": false,
+                    "isZoneRedundant": true,
+                    "privateEndpoints": [],
+                    "skuName": "Premium",
+                    "virtualNetworkRules": []
+                }
+            },
             "sharedImageGallery": {
                 "description": ""
             },
@@ -580,6 +596,7 @@
             "routeTable": "[format('{0}-RouteTable', deployment().name)]",
             "scriptPostDeploy": "[format('{0}-ScriptPostDeploy', deployment().name)]",
             "scriptPreDeploy": "[format('{0}-ScriptPreDeploy', deployment().name)]",
+            "serviceBusNamespace": "[format('{0}-ServiceBusNamespace', deployment().name)]",
             "sharedImageGallery": "[format('{0}-SharedImageGallery', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
             "staticWebApplication": "[format('{0}-StaticWebApplication', deployment().name)]",
@@ -1712,6 +1729,63 @@
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.EventHub/eventhubs.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').serviceBus.namespaces))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').serviceBus.namespaces)]",
+                "mode": "Parallel",
+                "name": "serviceBusNamespacesCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "scriptsPreDeployCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').serviceBusNamespace, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).audit]"
+                    },
+                    "firewallRules": {
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).firewallRules]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).identity]"
+                    },
+                    "isAllowTrustedMicrosoftServicesEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
+                    },
+                    "isPublicNetworkAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).isPublicNetworkAccessEnabled]"
+                    },
+                    "isZoneRedundant": {
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).isZoneRedundant]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').serviceBus.namespaces[copyIndex()].name]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "virtualNetworkRules": {
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).virtualNetworkRules]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.ServiceBus/namespaces.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -3493,6 +3567,7 @@
                 "recoveryServicesVaultsCopy",
                 "routeTablesCopy",
                 "scriptsPreDeployCopy",
+                "serviceBusNamespacesCopy",
                 "sharedImageGalleriesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",
