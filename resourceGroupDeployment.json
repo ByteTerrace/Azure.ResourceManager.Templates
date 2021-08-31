@@ -56,6 +56,11 @@
                 "eventSubscriptions": [],
                 "topics": []
             },
+            "eventHub": {
+                "clusters": [],
+                "hubs": [],
+                "namespaces": []
+            },
             "firewalls": [],
             "hdInsightClusters": [],
             "hostGroups": [],
@@ -78,10 +83,14 @@
             "publicIpAddresses": [],
             "publicIpPrefixes": [],
             "recoveryServicesVaults": [],
+            "redisCaches": [],
             "routeTables": [],
             "scripts": {
                 "postDeploy": [],
                 "preDeploy": []
+            },
+            "serviceBus": {
+                "namespaces": []
             },
             "sharedImageGalleries": [],
             "sqlServers": [],
@@ -96,7 +105,7 @@
         "defaultResourceProperties": {
             "applicationConfigurationStore": {
                 "customerManagedEncryption": {},
-                "isPublicNetworkAccessEnabled": true,
+                "isPublicNetworkAccessEnabled": false,
                 "privateEndpoints": [],
                 "settings": {},
                 "skuName": "Standard"
@@ -123,7 +132,7 @@
             "automationAccount": {
                 "desiredStateConfiguration": {},
                 "identity": {},
-                "isPublicNetworkAccessEnabled": true,
+                "isPublicNetworkAccessEnabled": false,
                 "webWorker": {}
             },
             "availabilitySet": {
@@ -160,8 +169,8 @@
                 "customerManagedEncryption": {},
                 "firewallRules": [],
                 "isAdministratorAccountEnabled": false,
-                "isPublicNetworkAccessEnabled": true,
-                "isTrustedMicrosoftResourceAccessEnabled": false,
+                "isAllowTrustedMicrosoftServicesEnabled": false,
+                "isPublicNetworkAccessEnabled": false,
                 "privateEndpoints": [],
                 "skuName": "Standard",
                 "virtualNetworkRules": []
@@ -209,7 +218,30 @@
                     "audit": "[variables('audit')]"
                 }
             },
-            "firewalls": {
+            "eventHub": {
+                "cluster": {
+                    "numberOfCapacityUnits": 1
+                },
+                "hub": {
+                    "consumerGroups": [],
+                    "messageRetentionInDays": 1,
+                    "numberOfPartitions": 3
+                },
+                "namespace": {
+                    "audit": "[variables('audit')]",
+                    "cluster": {},
+                    "firewallRules": [],
+                    "identity": {},
+                    "isAllowTrustedMicrosoftServicesEnabled": false,
+                    "isKafkaSupportEnabled": false,
+                    "isPublicNetworkAccessEnabled": false,
+                    "isZoneRedundant": true,
+                    "privateEndpoints": [],
+                    "skuName": "Standard",
+                    "virtualNetworkRules": []
+                }
+            },
+            "firewall": {
                 "availabilityZones": [
                     1,
                     2,
@@ -242,7 +274,7 @@
             "keyVault": {
                 "audit": "[variables('audit')]",
                 "firewallRules": [],
-                "isAllowTrustedMicrosoftServicesEnabled": true,
+                "isAllowTrustedMicrosoftServicesEnabled": false,
                 "isDiskEncryptionEnabled": false,
                 "isPublicNetworkAccessEnabled": false,
                 "isPurgeProtectionEnabled": true,
@@ -291,7 +323,7 @@
             "managedHsm": {
                 "audit": "[variables('audit')]",
                 "firewallRules": [],
-                "isAllowTrustedMicrosoftServicesEnabled": true,
+                "isAllowTrustedMicrosoftServicesEnabled": false,
                 "isPublicNetworkAccessEnabled": false,
                 "isPurgeProtectionEnabled": true,
                 "privateEndpoints": [],
@@ -357,12 +389,43 @@
                 "backup": {},
                 "customerManagedEncryption": {}
             },
+            "redisCache": {
+                "audit": "[variables('audit')]",
+                "availabilityZones": [
+                    1,
+                    2,
+                    3
+                ],
+                "firewallRules": [],
+                "identity": {},
+                "isPublicNetworkAccessEnabled": false,
+                "minimumSupportedTlsVersion": "1.2",
+                "numberOfCapacityUnits": 1,
+                "numberOfShards": 0,
+                "privateEndpoints": [],
+                "skuName": "Premium",
+                "subnet": {},
+                "version": "6"
+            },
             "routeTable": {
                 "isBgpRoutePropagationEnabled": false,
                 "routes": []
             },
             "script": {
                 "kind": "AzurePowerShell"
+            },
+            "serviceBus": {
+                "namespace": {
+                    "audit": "[variables('audit')]",
+                    "firewallRules": [],
+                    "identity": {},
+                    "isAllowTrustedMicrosoftServicesEnabled": false,
+                    "isPublicNetworkAccessEnabled": false,
+                    "isZoneRedundant": true,
+                    "privateEndpoints": [],
+                    "skuName": "Premium",
+                    "virtualNetworkRules": []
+                }
             },
             "sharedImageGallery": {
                 "description": ""
@@ -377,8 +440,8 @@
                 "databases": [],
                 "dnsAliases": [],
                 "firewallRules": [],
-                "isPublicNetworkAccessEnabled": true,
-                "isTrustedMicrosoftResourceAccessEnabled": false,
+                "isAllowTrustedMicrosoftServicesEnabled": false,
+                "isPublicNetworkAccessEnabled": false,
                 "privateEndpoints": [],
                 "serverVersion": "12.0",
                 "virtualNetworkRules": [],
@@ -399,8 +462,8 @@
                 "firewallRules": [],
                 "identity": {},
                 "isAdvancedThreatProtectionEnabled": true,
-                "isAllowTrustedMicrosoftServicesEnabled": true,
-                "isPublicNetworkAccessEnabled": true,
+                "isAllowTrustedMicrosoftServicesEnabled": false,
+                "isPublicNetworkAccessEnabled": false,
                 "isSharedKeyAccessEnabled": false,
                 "kind": "StorageV2",
                 "queueServices": {},
@@ -435,7 +498,7 @@
                 "isSecureBootEnabled": true,
                 "isUltraSsdSupportEnabled": false,
                 "isVirtualTrustedPlatformModuleEnabled": true,
-                "isVulnerabilityAssessmentEnabled": false,
+                "isVulnerabilityAssessmentEnabled": true,
                 "justInTimeAccess": {},
                 "licenseType": "None",
                 "linuxConfiguration": {},
@@ -528,6 +591,9 @@
             "eventGridDomain": "[format('{0}-EventGridDomain', deployment().name)]",
             "eventGridEventSubscription": "[format('{0}-EventGridEventSub', deployment().name)]",
             "eventGridTopic": "[format('{0}-EventGridTopic', deployment().name)]",
+            "eventHubCluster": "[format('{0}-EventHubCluster', deployment().name)]",
+            "eventHub": "[format('{0}-EventHub', deployment().name)]",
+            "eventHubNamespace": "[format('{0}-EventHubNamespace', deployment().name)]",
             "firewall": "[format('{0}-Firewall', deployment().name)]",
             "hdInsightCluster": "[format('{0}-HdInsightCluster', deployment().name)]",
             "hostGroup": "[format('{0}-HostGroup', deployment().name)]",
@@ -546,9 +612,11 @@
             "publicIpAddress": "[format('{0}-PublicIpAddress', deployment().name)]",
             "publicIpPrefix": "[format('{0}-PublicIpPrefix', deployment().name)]",
             "recoveryServicesVault": "[format('{0}-RecoveryServicesVault', deployment().name)]",
+            "redisCache": "[format('{0}-RedisCache', deployment().name)]",
             "routeTable": "[format('{0}-RouteTable', deployment().name)]",
             "scriptPostDeploy": "[format('{0}-ScriptPostDeploy', deployment().name)]",
             "scriptPreDeploy": "[format('{0}-ScriptPreDeploy', deployment().name)]",
+            "serviceBusNamespace": "[format('{0}-ServiceBusNamespace', deployment().name)]",
             "sharedImageGallery": "[format('{0}-SharedImageGallery', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
             "staticWebApplication": "[format('{0}-StaticWebApplication', deployment().name)]",
@@ -1317,13 +1385,13 @@
                 "mode": "Incremental",
                 "parameters": {
                     "availabilityZones": {
-                        "value": "[union(variables('defaultResourceProperties').firewalls, variables('resourceDefinitions').firewalls[copyIndex()]).availabilityZones]"
+                        "value": "[union(variables('defaultResourceProperties').firewall, variables('resourceDefinitions').firewalls[copyIndex()]).availabilityZones]"
                     },
                     "ipConfigurations": {
-                        "value": "[union(variables('defaultResourceProperties').firewalls, variables('resourceDefinitions').firewalls[copyIndex()]).ipConfigurations]"
+                        "value": "[union(variables('defaultResourceProperties').firewall, variables('resourceDefinitions').firewalls[copyIndex()]).ipConfigurations]"
                     },
                     "managementIpConfiguration": {
-                        "value": "[union(variables('defaultResourceProperties').firewalls, variables('resourceDefinitions').firewalls[copyIndex()]).managementIpConfiguration]"
+                        "value": "[union(variables('defaultResourceProperties').firewall, variables('resourceDefinitions').firewalls[copyIndex()]).managementIpConfiguration]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').firewalls[copyIndex()]).location]"
@@ -1332,10 +1400,10 @@
                         "value": "[variables('resourceDefinitions').firewalls[copyIndex()].name]"
                     },
                     "skuName": {
-                        "value": "[union(variables('defaultResourceProperties').firewalls, variables('resourceDefinitions').firewalls[copyIndex()]).skuName]"
+                        "value": "[union(variables('defaultResourceProperties').firewall, variables('resourceDefinitions').firewalls[copyIndex()]).skuName]"
                     },
                     "skuTier": {
-                        "value": "[union(variables('defaultResourceProperties').firewalls, variables('resourceDefinitions').firewalls[copyIndex()]).skuTier]"
+                        "value": "[union(variables('defaultResourceProperties').firewall, variables('resourceDefinitions').firewalls[copyIndex()]).skuTier]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
@@ -1544,6 +1612,270 @@
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.EventGrid/eventSubscriptions.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').eventHub.clusters))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').eventHub.clusters)]",
+                "mode": "Parallel",
+                "name": "eventHubsClustersCopy"
+            },
+            "dependsOn": [
+                "scriptsPreDeployCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').cluster, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "numberOfCapacityUnits": {
+                        "value": "[union(variables('defaultResourceProperties').eventHub.cluster, variables('resourceDefinitions').eventHub.clusters[copyIndex()]).numberOfCapacityUnits]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').eventHub.clusters[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').eventHub.clusters[copyIndex()].name]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.EventHub/clusters.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').eventHub.namespaces))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').eventHub.namespaces)]",
+                "mode": "Parallel",
+                "name": "eventHubsNamespacesCopy"
+            },
+            "dependsOn": [
+                "eventHubsClustersCopy",
+                "logAnalyticsWorkspacesCopy",
+                "scriptsPreDeployCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').eventHubNamespace, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).audit]"
+                    },
+                    "cluster": {
+                        "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).cluster]"
+                    },
+                    "firewallRules": {
+                        "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).firewallRules]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).identity]"
+                    },
+                    "isAllowTrustedMicrosoftServicesEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
+                    },
+                    "isKafkaSupportEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).isKafkaSupportEnabled]"
+                    },
+                    "isPublicNetworkAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).isPublicNetworkAccessEnabled]"
+                    },
+                    "isZoneRedundant": {
+                        "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).isZoneRedundant]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').eventHub.namespaces[copyIndex()].name]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "virtualNetworkRules": {
+                        "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).virtualNetworkRules]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.EventHub/namespaces.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').eventHub.hubs))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').eventHub.hubs)]",
+                "mode": "Parallel",
+                "name": "eventHubsCopy"
+            },
+            "dependsOn": [
+                "eventHubsNamespacesCopy",
+                "scriptsPreDeployCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').eventHub, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "consumerGroups": {
+                        "value": "[union(variables('defaultResourceProperties').eventHub.hub, variables('resourceDefinitions').eventHub.hubs[copyIndex()]).consumerGroups]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').eventHub.hubs[copyIndex()]).location]"
+                    },
+                    "messageRetentionInDays": {
+                        "value": "[union(variables('defaultResourceProperties').eventHub.hub, variables('resourceDefinitions').eventHub.hubs[copyIndex()]).messageRetentionInDays]"
+                    },
+                    "numberOfPartitions": {
+                        "value": "[union(variables('defaultResourceProperties').eventHub.hub, variables('resourceDefinitions').eventHub.hubs[copyIndex()]).numberOfPartitions]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').eventHub.hubs[copyIndex()].name]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.EventHub/eventhubs.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').serviceBus.namespaces))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').serviceBus.namespaces)]",
+                "mode": "Parallel",
+                "name": "serviceBusNamespacesCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "scriptsPreDeployCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').serviceBusNamespace, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).audit]"
+                    },
+                    "firewallRules": {
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).firewallRules]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).identity]"
+                    },
+                    "isAllowTrustedMicrosoftServicesEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
+                    },
+                    "isPublicNetworkAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).isPublicNetworkAccessEnabled]"
+                    },
+                    "isZoneRedundant": {
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).isZoneRedundant]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').serviceBus.namespaces[copyIndex()].name]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    },
+                    "virtualNetworkRules": {
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).virtualNetworkRules]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.ServiceBus/namespaces.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').redisCaches))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').redisCaches)]",
+                "mode": "Parallel",
+                "name": "redisCachesCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "scriptsPreDeployCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').redisCache, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).audit]"
+                    },
+                    "availabilityZones": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).availabilityZones]"
+                    },
+                    "firewallRules": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).firewallRules]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).identity]"
+                    },
+                    "isPublicNetworkAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).isPublicNetworkAccessEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').redisCaches[copyIndex()]).location]"
+                    },
+                    "minimumSupportedTlsVersion": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).minimumSupportedTlsVersion]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').redisCaches[copyIndex()].name]"
+                    },
+                    "numberOfCapacityUnits": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).numberOfCapacityUnits]"
+                    },
+                    "numberOfShards": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).numberOfShards]"
+                    },
+                    "privateEndpoints": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).privateEndpoints]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).skuName]"
+                    },
+                    "subnet": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).subnet]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Cache/redis.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -2003,11 +2335,11 @@
                     "isAdministratorAccountEnabled": {
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isAdministratorAccountEnabled]"
                     },
+                    "isAllowTrustedMicrosoftServicesEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
+                    },
                     "isPublicNetworkAccessEnabled": {
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isPublicNetworkAccessEnabled]"
-                    },
-                    "isTrustedMicrosoftResourceAccessEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isTrustedMicrosoftResourceAccessEnabled]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').containerRegistries[copyIndex()]).location]"
@@ -2709,11 +3041,11 @@
                     "firewallRules": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).firewallRules]"
                     },
+                    "isAllowTrustedMicrosoftServicesEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
+                    },
                     "isPublicNetworkAccessEnabled": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).isPublicNetworkAccessEnabled]"
-                    },
-                    "isTrustedMicrosoftResourceAccessEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).isTrustedMicrosoftResourceAccessEnabled]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').sqlServers[copyIndex()]).location]"
@@ -3299,6 +3631,9 @@
                 "eventGridDomainsCopy",
                 "eventGridEventSubcriptionsCopy",
                 "eventGridTopicsCopy",
+                "eventHubsClustersCopy",
+                "eventHubsCopy",
+                "eventHubsNamespacesCopy",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
                 "hostGroupsCopy",
@@ -3322,6 +3657,7 @@
                 "recoveryServicesVaultsCopy",
                 "routeTablesCopy",
                 "scriptsPreDeployCopy",
+                "serviceBusNamespacesCopy",
                 "sharedImageGalleriesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",

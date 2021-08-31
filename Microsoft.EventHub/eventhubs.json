@@ -1,0 +1,85 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "consumerGroups": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of consumer groups that will be created within the Azure Event Hub."
+            },
+            "type": "array"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Event Hub resource(s) will be deployed."
+            },
+            "type": "string"
+        },
+        "messageRetentionInDays": {
+            "defaultValue": 1,
+            "maxValue": 7,
+            "metadata": {
+                "description": "Specifies the number of days that events will be retained within the Azure Event Hub."
+            },
+            "minValue": 1,
+            "type": "int"
+        },
+        "numberOfPartitions": {
+            "defaultValue": 3,
+            "maxValue": 32,
+            "metadata": {
+                "description": "Specifies the number of partitions that will be created within the Azure Event Hub."
+            },
+            "minValue": 1,
+            "type": "int"
+        },
+        "name": {
+            "maxLength": 50,
+            "metadata": {
+                "description": "Specifies the name of the Azure Event Hub."
+            },
+            "minLength": 1,
+            "type": "string"
+        },
+        "namespace": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Event Hub Namespace."
+            },
+            "type": "string"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "eventHubs": "2021-06-01-preview",
+            "eventHubsConsumerGroups": "2021-06-01-preview"
+        },
+        "resourceIds": {
+            "eventHub": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('namespace'), parameters('name'))]"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').eventHubs]",
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/{1}', parameters('namespace'), parameters('name'))]",
+            "properties": {
+                "messageRetentionInDays": "[parameters('messageRetentionInDays')]",
+                "partitionCount": "[parameters('numberOfPartitions')]"
+            },
+            "type": "Microsoft.EventHub/namespaces/eventhubs"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').eventHubsConsumerGroups]",
+            "copy": {
+                "count": "[length(parameters('consumerGroups'))]",
+                "name": "consumerGroupsCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').eventHub]"
+            ],
+            "name": "[format('{0}/{1}/{2}', parameters('namespace'), parameters('name'), parameters('consumerGroups')[copyIndex()].name)]",
+            "properties": {},
+            "type": "Microsoft.EventHub/namespaces/eventhubs/consumergroups"
+        }
+    ]
+}

@@ -70,17 +70,17 @@
             },
             "type": "array"
         },
-        "isPublicNetworkAccessEnabled": {
-            "defaultValue": true,
-            "metadata": {
-                "description": "Indicates whether the Azure SQL Server is accessible from the internet."
-            },
-            "type": "bool"
-        },
-        "isTrustedMicrosoftResourceAccessEnabled": {
+        "isAllowTrustedMicrosoftServicesEnabled": {
             "defaultValue": false,
             "metadata": {
                 "description": "Indicates whether trusted Azure services and resources are allowed to access the Azure SQL Server."
+            },
+            "type": "bool"
+        },
+        "isPublicNetworkAccessEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the Azure SQL Server is accessible from the internet."
             },
             "type": "bool"
         },
@@ -570,7 +570,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').sqlServersFirewallRules]",
-            "condition": "[and(parameters('isPublicNetworkAccessEnabled'), parameters('isTrustedMicrosoftResourceAccessEnabled'))]",
+            "condition": "[and(parameters('isPublicNetworkAccessEnabled'), parameters('isAllowTrustedMicrosoftServicesEnabled'))]",
             "dependsOn": [
                 "privateDnsZoneGroupsCopy",
                 "[variables('resourceIds').sqlServer]",

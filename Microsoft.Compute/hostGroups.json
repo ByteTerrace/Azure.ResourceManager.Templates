@@ -35,10 +35,10 @@
         "numberOfFaultDomains": {
             "defaultValue": 1,
             "maxValue": 3,
-            "minValue": 1,
             "metadata": {
                 "description": "Specifies the number of fault domains that the Azure Dedicated Host Group will support."
             },
+            "minValue": 1,
             "type": "int"
         },
         "tags": {
