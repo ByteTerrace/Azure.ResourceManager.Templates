@@ -37,6 +37,13 @@
             },
             "type": "bool"
         },
+        "isKafkaSupportEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether Apache Kafka messaging support is enabled on the Azure Event Hub Namespace."
+            },
+            "type": "bool"
+        },
         "isPublicNetworkAccessEnabled": {
             "defaultValue": false,
             "metadata": {
@@ -179,11 +186,11 @@
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
-                "clusterArmId": "[if(empty(parameters('cluster')), null(), resourceId(union(variables('defaultResourceProperties').cluster, parameters('cluster')).subscriptionId, union(variables('defaultResourceProperties').cluster, parameters('cluster')).resourceGroupName, '', union(variables('defaultResourceProperties').cluster, parameters('cluster')).name))]",
-                "disableLocalAuth": false,
-                "isAutoInflateEnabled": true,
-                "kafkaEnabled": true,
-                "maximumThroughputUnits": 3,
+                "clusterArmId": "[if(empty(parameters('cluster')), null(), resourceId(union(variables('defaultResourceProperties').cluster, parameters('cluster')).subscriptionId, union(variables('defaultResourceProperties').cluster, parameters('cluster')).resourceGroupName, 'Microsoft.EventHub/clusters', union(variables('defaultResourceProperties').cluster, parameters('cluster')).name))]",
+                "disableLocalAuth": true,
+                "isAutoInflateEnabled": false,
+                "kafkaEnabled": "[parameters('isKafkaSupportEnabled')]",
+                "maximumThroughputUnits": 0,
                 "zoneRedundant": "[parameters('isZoneRedundant')]"
             },
             "sku": {

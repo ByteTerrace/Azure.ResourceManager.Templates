@@ -229,6 +229,7 @@
                     "firewallRules": [],
                     "identity": {},
                     "isAllowTrustedMicrosoftServicesEnabled": false,
+                    "isKafkaSupportEnabled": false,
                     "isPublicNetworkAccessEnabled": false,
                     "isZoneRedundant": true,
                     "privateEndpoints": [],
@@ -1642,6 +1643,9 @@
                     },
                     "isAllowTrustedMicrosoftServicesEnabled": {
                         "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
+                    },
+                    "isKafkaSupportEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).isKafkaSupportEnabled]"
                     },
                     "isPublicNetworkAccessEnabled": {
                         "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).isPublicNetworkAccessEnabled]"
