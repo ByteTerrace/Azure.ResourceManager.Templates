@@ -87,7 +87,7 @@
             "apiVersion": "[variables('apiVersions').roleAssignments]",
             "name": "[guid(variables('resourceIds').assignee, variables('roleDefinitionId'), variables('resourceIds').assignor)]",
             "properties": {
-                "principalId": "[reference(variables('resourceIds').assignee, if(empty(union(createObject('apiVersion', ''), parameters('assignee')).apiVersion), first(providers(variables('assigneeResourceSegments')[6], variables('assigneeResourceSegments')[7]).apiVersions), parameters('assignee').apiVersion), 'Full').identity.principalId]",
+                "principalId": "[reference(variables('resourceIds').assignee, if(empty(union(createObject('apiVersion', ''), parameters('assignee')).apiVersion), first(providers(variables('assigneeResourceSegments')[6], variables('assigneeResourceSegments')[7]).apiVersions), parameters('assignee').apiVersion), 'Full')[if(equals(format('{0}/{1}', variables('assigneeResourceSegments')[6], variables('assigneeResourceSegments')[7]), 'Microsoft.ManagedIdentity/userAssignedIdentities'), 'properties', 'identity')].principalId]",
                 "roleDefinitionId": "[variables('roleDefinitionId')]"
             },
             "scope": "[format('{0}/{1}/{2}', variables('assignorResourceSegments')[6], variables('assignorResourceSegments')[7], variables('assignorResourceSegments')[8])]",
