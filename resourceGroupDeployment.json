@@ -2005,6 +2005,7 @@
             "dependsOn": [
                 "applicationInsightsComponentsCopy",
                 "logAnalyticsWorkspacesCopy",
+                "privateDnsZonesCopy",
                 "scriptsPreDeployCopy",
                 "subnetsCopy",
                 "virtualNetworksCopy"
@@ -2043,6 +2044,7 @@
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
+                "privateDnsZonesCopy",
                 "scriptsPreDeployCopy",
                 "subnetsCopy",
                 "virtualNetworksCopy"
