@@ -84,6 +84,7 @@
             "publicIpPrefixes": [],
             "recoveryServicesVaults": [],
             "redisCaches": [],
+            "roleAssignments": [],
             "routeTables": [],
             "scripts": {
                 "postDeploy": [],
@@ -407,6 +408,10 @@
                 "subnet": {},
                 "version": "6"
             },
+            "roleAssignment": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
             "routeTable": {
                 "isBgpRoutePropagationEnabled": false,
                 "routes": []
@@ -613,6 +618,7 @@
             "publicIpPrefix": "[format('{0}-PublicIpPrefix', deployment().name)]",
             "recoveryServicesVault": "[format('{0}-RecoveryServicesVault', deployment().name)]",
             "redisCache": "[format('{0}-RedisCache', deployment().name)]",
+            "roleAssignment": "[format('{0}-RoleAssignment', deployment().name)]",
             "routeTable": "[format('{0}-RouteTable', deployment().name)]",
             "scriptPostDeploy": "[format('{0}-ScriptPostDeploy', deployment().name)]",
             "scriptPreDeploy": "[format('{0}-ScriptPreDeploy', deployment().name)]",
@@ -3604,9 +3610,95 @@
                 }
             },
             "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').roleAssignments))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').roleAssignments)]",
+                "mode": "parallel",
+                "name": "roleAssignmentsCopy"
+            },
+            "dependsOn": [
+                "applicationConfigurationStoresCopy",
+                "applicationInsightsComponentsCopy",
+                "applicationSecurityGroupsCopy",
+                "applicationServiceEnvironmentsCopy",
+                "applicationServicePlansCopy",
+                "automationAccountsCopy",
+                "availabilitySetsCopy",
+                "bastionHostsCopy",
+                "cdnProfilesCopy",
+                "communicationServicesCopy",
+                "containerInstancesCopy",
+                "containerRegistriesCopy",
+                "cosmosDbAccountsCopy",
+                "diskEncryptionSetsCopy",
+                "eventGridDomainsCopy",
+                "eventGridEventSubcriptionsCopy",
+                "eventGridTopicsCopy",
+                "eventHubsClustersCopy",
+                "eventHubsCopy",
+                "eventHubsNamespacesCopy",
+                "firewallsCopy",
+                "hdInsightClustersCopy",
+                "hostGroupsCopy",
+                "keyVaultsCopy",
+                "kubernetesServiceClustersCopy",
+                "loadBalancersCopy",
+                "logAnalyticsWorkspacesCopy",
+                "logAnalyticsWorkspacesLinkedStorageJoinCopy",
+                "logAnalyticsWorkspacesLinkedStorageRbacCopy",
+                "logicApplicationWorkflowsCopy",
+                "managedHsmsCopy",
+                "managedIdentitiesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
+                "networkSecurityGroupsCopy",
+                "privateDnsZonesCopy",
+                "proximityPlacementGroupsCopy",
+                "publicDnsZonesCopy",
+                "publicIpAddressesCopy",
+                "publicIpPrefixesCopy",
+                "recoveryServicesVaultsCopy",
+                "routeTablesCopy",
+                "scriptsPreDeployCopy",
+                "serviceBusNamespacesCopy",
+                "sharedImageGalleriesCopy",
+                "sqlServersCopy",
+                "staticWebApplicationsCopy",
+                "storageAccountsCopy",
+                "subnetsCopy",
+                "virtualMachinesCopy",
+                "virtualMachineScaleSetsCopy",
+                "virtualNetworksCopy",
+                "webApplicationsCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').roleAssignment, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "assignee": {
+                        "value": "[variables('resourceDefinitions').roleAssignments[copyIndex()].assignee]"
+                    },
+                    "assignor": {
+                        "value": "[variables('resourceDefinitions').roleAssignments[copyIndex()].assignor]"
+                    },
+                    "roleDefinition": {
+                        "value": "[variables('resourceDefinitions').roleAssignments[copyIndex()].roleDefinition]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Authorization/roleAssignments.json"
+                }
+            },
+            "resourceGroup": "[union(variables('defaultResourceProperties').roleAssignment, variables('resourceDefinitions').roleAssignments[copyIndex()]).resourceGroupName]",
+            "subscriptionId": "[union(variables('defaultResourceProperties').roleAssignment, variables('resourceDefinitions').roleAssignments[copyIndex()]).subscriptionId]",
+            "type": "Microsoft.Resources/deployments"
         }/*,
         {
-            "apiVersion": "[variables('deploymentApiVersion')]",
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').scripts.postDeploy))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').scripts.postDeploy)]",
@@ -3655,6 +3747,7 @@
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
                 "recoveryServicesVaultsCopy",
+                "roleAssignmentsCopy",
                 "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "serviceBusNamespacesCopy",
