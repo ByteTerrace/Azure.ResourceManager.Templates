@@ -214,7 +214,7 @@
                         {
                             "count": "[length(parameters('firewallRules'))]",
                             "input": {
-                                "value": "[parameters('firewallRules')[copyIndex('firewallRules')]]"
+                                "value": "[parameters('firewallRules')[copyIndex('ipRules')]]"
                             },
                             "name": "ipRules"
                         },
