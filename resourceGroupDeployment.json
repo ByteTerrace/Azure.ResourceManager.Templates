@@ -167,7 +167,8 @@
                 ],
                 "restartPolicy": "Always",
                 "skuName": "Standard",
-                "subnet": {}
+                "subnet": {},
+                "volumes": []
             },
             "containerRegistry": {
                 "customerManagedEncryption": {},
@@ -2967,6 +2968,9 @@
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
+                    },
+                    "volumes": {
+                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).volumes]"
                     }
                 },
                 "templateLink": {
