@@ -194,6 +194,7 @@
                 "subscriptionId": "[variables('subscriptionId')]"
             },
             "volume": {
+                "isEphemeral": false,
                 "gitRepository": {
                     "directory": ".",
                     "url": "",
@@ -201,7 +202,7 @@
                 },
                 "storageAccount": {
                     "fileShareName": "",
-                    "isReadOnlyModeEnabled": true,
+                    "isReadOnly": true,
                     "name": "",
                     "resourceGroupName": "[variables('resourceGroupName')]",
                     "subscriptionId": "[variables('subscriptionId')]"
@@ -302,8 +303,8 @@
                     {
                         "count": "[length(parameters('volumes'))]",
                         "input": {
-                            "azureFile": "[if(empty(union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.name), null(), createObject('readOnly', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.isReadOnlyModeEnabled, 'shareName', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.fileShareName, 'storageAccountKey', listKeys(resourceId(union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.subscriptionId, union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.resourceGroupName, 'Microsoft.Storage/storageAccounts', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.name), variables('apiVersions').storageAccounts).keys[1].value, 'storageAccountName', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.name))]",
-                            "emptyDir": "[if(empty(union(createObject('emptyDir', null()), parameters('volumes')[copyIndex('volumes')]).emptyDir), createObject(), null())]",
+                            "azureFile": "[if(empty(union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.name), null(), createObject('readOnly', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.isReadOnly, 'shareName', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.fileShareName, 'storageAccountKey', listKeys(resourceId(union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.subscriptionId, union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.resourceGroupName, 'Microsoft.Storage/storageAccounts', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.name), variables('apiVersions').storageAccounts).keys[1].value, 'storageAccountName', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.name))]",
+                            "emptyDir": "[if(union(createObject('emptyDir', null()), parameters('volumes')[copyIndex('volumes')]).isEphemeral, createObject(), null())]",
                             "gitRepo": "[if(empty(union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).gitRepository.url), null(), createObject('directory', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).gitRepository.directory, 'repository', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).gitRepository.url, 'revision', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).gitRepository.revision))]",
                             "name": "[parameters('volumes')[copyIndex('volumes')].name]",
                             "secret": "[if(empty(union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).secrets), null(), union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).secrets)]"
