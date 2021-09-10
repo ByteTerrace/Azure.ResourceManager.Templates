@@ -51,7 +51,7 @@
             "type": "string"
         },
         "createMode": {
-            "defaultValue": "Create",
+            "defaultValue": "Default",
             "metadata": {
                 "description": "Specifies the mode that will be used when provisioning the Azure Sql Server Database."
             },
