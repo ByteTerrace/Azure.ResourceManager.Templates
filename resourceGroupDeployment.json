@@ -720,30 +720,6 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
-            "condition": "[not(empty(variables('resourceDefinitions').deployments))]",
-            "dependsOn": [
-                "scriptsPreDeployCopy"
-            ],
-            "copy": {
-                "count": "[length(variables('resourceDefinitions').deployments)]",
-                "mode": "Parallel",
-                "name": "deploymentsCopy"
-            },
-            "name": "[union(createObject('name', format('{0}_{1}', variables('deploymentNames').deployment, copyIndex())), variables('resourceDefinitions').deployments[copyIndex()]).name]",
-            "properties": {
-                "mode": "Incremental",
-                "parameters": "[union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).parameters]",
-                "templateLink": {
-                    "contentVersion": "[variables('contentVersion')]",
-                    "id": "[resourceId(union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).templateSpec.subscriptionId, union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).templateSpec.resourceGroupName, 'Microsoft.Resources/templateSpecs/versions', union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).templateSpec.name, union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).templateSpec.version)]"
-                }
-            },
-            "resourceGroup": "[union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).resourceGroupName]",
-            "subscriptionId": "[union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).subscriptionId]",
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').managedIdentities))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').managedIdentities)]",
@@ -3853,6 +3829,84 @@
             },
             "resourceGroup": "[union(variables('defaultResourceProperties').roleAssignment, variables('resourceDefinitions').roleAssignments[copyIndex()]).resourceGroupName]",
             "subscriptionId": "[union(variables('defaultResourceProperties').roleAssignment, variables('resourceDefinitions').roleAssignments[copyIndex()]).subscriptionId]",
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').deployments))]",
+            "dependsOn": [
+                "applicationConfigurationStoresCopy",
+                "applicationInsightsComponentsCopy",
+                "applicationSecurityGroupsCopy",
+                "applicationServiceEnvironmentsCopy",
+                "applicationServicePlansCopy",
+                "automationAccountsCopy",
+                "availabilitySetsCopy",
+                "bastionHostsCopy",
+                "cdnProfilesCopy",
+                "communicationServicesCopy",
+                "containerInstancesCopy",
+                "containerRegistriesCopy",
+                "cosmosDbAccountsCopy",
+                "diskEncryptionSetsCopy",
+                "eventGridDomainsCopy",
+                "eventGridEventSubcriptionsCopy",
+                "eventGridTopicsCopy",
+                "eventHubsClustersCopy",
+                "eventHubsCopy",
+                "eventHubsNamespacesCopy",
+                "firewallsCopy",
+                "hdInsightClustersCopy",
+                "hostGroupsCopy",
+                "keyVaultsCopy",
+                "kubernetesServiceClustersCopy",
+                "loadBalancersCopy",
+                "logAnalyticsWorkspacesCopy",
+                "logAnalyticsWorkspacesLinkedStorageJoinCopy",
+                "logAnalyticsWorkspacesLinkedStorageRbacCopy",
+                "logicApplicationWorkflowsCopy",
+                "managedHsmsCopy",
+                "managedIdentitiesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
+                "networkSecurityGroupsCopy",
+                "privateDnsZonesCopy",
+                "proximityPlacementGroupsCopy",
+                "publicDnsZonesCopy",
+                "publicIpAddressesCopy",
+                "publicIpPrefixesCopy",
+                "recoveryServicesVaultsCopy",
+                "roleAssignmentsCopy",
+                "routeTablesCopy",
+                "scriptsPreDeployCopy",
+                "serviceBusNamespacesCopy",
+                "sharedImageGalleriesCopy",
+                "sqlDatabasesCopy",
+                "sqlServersCopy",
+                "staticWebApplicationsCopy",
+                "storageAccountsCopy",
+                "subnetsCopy",
+                "virtualMachinesCopy",
+                "virtualMachineScaleSetsCopy",
+                "virtualNetworksCopy",
+                "webApplicationsCopy"
+            ],
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').deployments)]",
+                "mode": "Parallel",
+                "name": "deploymentsCopy"
+            },
+            "name": "[union(createObject('name', format('{0}_{1}', variables('deploymentNames').deployment, copyIndex())), variables('resourceDefinitions').deployments[copyIndex()]).name]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": "[union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).parameters]",
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "id": "[resourceId(union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).templateSpec.subscriptionId, union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).templateSpec.resourceGroupName, 'Microsoft.Resources/templateSpecs/versions', union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).templateSpec.name, union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).templateSpec.version)]"
+                }
+            },
+            "resourceGroup": "[union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).resourceGroupName]",
+            "subscriptionId": "[union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).subscriptionId]",
             "type": "Microsoft.Resources/deployments"
         }/*,
         {
