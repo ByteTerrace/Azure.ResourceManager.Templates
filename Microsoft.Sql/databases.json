@@ -211,6 +211,8 @@
             "sqlServerElasticPool": "[resourceId('Microsoft.Sql/servers/elasticpools', parameters('serverName'), parameters('elasticPoolName'))]"
         },
         "skuCapacity": "[skip(last(split(parameters('skuName'), '_')), 1)]",
+        "skuName": "[if(variables('isAutoScaleEnabled'), format('{0}_S{1}', variables('skuPrefix'), substring(parameters('skuName'), indexOf(parameters('skuName'), '_')), ''), parameters('skuName'))]",
+        "skuPrefix": "[substring(parameters('skuName'), 0, indexOf(parameters('skuName'), '_'))]",
         "sourceDatabase": "[union(variables('defaultResourceProperties').sourceDatabase, parameters('sourceDatabase'))]",
         "subscriptionId": "[subscription().subscriptionId]"
     },
@@ -238,7 +240,7 @@
                 "zoneRedundant": "[parameters('isZoneRedundant')]"
             },
             "sku": {
-                "name": "[if(variables('isElasticPoolNameNotEmpty'), 'ElasticPool', parameters('skuName'))]"
+                "name": "[if(variables('isElasticPoolNameNotEmpty'), 'ElasticPool', variables('skuName'))]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Sql/servers/databases"
