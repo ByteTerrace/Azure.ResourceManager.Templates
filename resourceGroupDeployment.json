@@ -171,9 +171,13 @@
             "containerRegistry": {
                 "customerManagedEncryption": {},
                 "firewallRules": [],
+                "identity": {},
                 "isAdministratorAccountEnabled": false,
+                "isAnonymousPullEnabled": false,
+                "isDedicatedDataEndpointEnabled": false,
                 "isAllowTrustedMicrosoftServicesEnabled": false,
                 "isPublicNetworkAccessEnabled": false,
+                "isZoneRedundant": true,
                 "privateEndpoints": [],
                 "skuName": "Standard",
                 "virtualNetworkRules": []
@@ -443,6 +447,7 @@
                 "defaultCollation": "",
                 "elasticPoolName": "",
                 "isAzureHybridBenefitEnabled": false,
+                "isZoneRedundant": true,
                 "skuName": "Basic",
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
@@ -457,6 +462,7 @@
                 "dnsAliases": [],
                 "elasticPools": [],
                 "firewallRules": [],
+                "identity": {},
                 "isAllowTrustedMicrosoftServicesEnabled": false,
                 "isPublicNetworkAccessEnabled": false,
                 "privateEndpoints": [],
@@ -2353,14 +2359,26 @@
                     "firewallRules": {
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).firewallRules]"
                     },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).identity]"
+                    },
                     "isAdministratorAccountEnabled": {
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isAdministratorAccountEnabled]"
                     },
                     "isAllowTrustedMicrosoftServicesEnabled": {
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
                     },
+                    "isAnonymousPullEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isAnonymousPullEnabled]"
+                    },
+                    "isDedicatedDataEndpointEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isDedicatedDataEndpointEnabled]"
+                    },
                     "isPublicNetworkAccessEnabled": {
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isPublicNetworkAccessEnabled]"
+                    },
+                    "isZoneRedundant": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isZoneRedundant]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').containerRegistries[copyIndex()]).location]"
@@ -3071,6 +3089,9 @@
                     "firewallRules": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).firewallRules]"
                     },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).identity]"
+                    },
                     "isAllowTrustedMicrosoftServicesEnabled": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
                     },
@@ -3142,6 +3163,9 @@
                     },
                     "isAzureHybridBenefitEnabled": {
                         "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).isAzureHybridBenefitEnabled]"
+                    },
+                    "isZoneRedundant": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).isZoneRedundant]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').sqlDatabases[copyIndex()]).location]"
