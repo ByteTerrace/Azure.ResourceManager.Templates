@@ -548,7 +548,7 @@
             },
             "sqlDatabase": {
                 "audit": "[variables('audit')]",
-                "backupStorageRedundancyType": "",
+                "backupStorageRedundancyType": "Geo",
                 "catalogCollation": "DATABASE_DEFAULT",
                 "createMode": "Create",
                 "defaultCollation": "SQL_Latin1_General_CP1_CI_AS",
