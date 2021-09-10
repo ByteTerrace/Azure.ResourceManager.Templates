@@ -24,6 +24,13 @@
         ]
     },
     "parameters": {
+        "autoscale": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the autoscale settings that will be applied to the Azure Sql Server Database."
+            },
+            "type": "object"
+        },
         "audit": {
             "defaultValue": {},
             "metadata": {
@@ -104,6 +111,13 @@
             },
             "type": "string"
         },
+        "numberOfCapacityUnits": {
+            "defaultValue": 5,
+            "metadata": {
+                "description": "Specifies the number of capacity units that will be dedicated to the Azure Sql Server."
+            },
+            "type": "int"
+        },
         "restorePointInTime": {
             "defaultValue": "",
             "metadata": {
@@ -156,6 +170,7 @@
             "sqlServersDatabases": "2021-02-01-preview"
         },
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "autoscale": "[union(variables('defaultResourceProperties').autoscale, parameters('autoscale'))]",
         "defaultResourceProperties": {
             "audit": {
                 "actionAndGroupNames": [
@@ -182,11 +197,17 @@
                     "isEnabled": true
                 }
             },
+            "autoscale": {
+                "autoPauseDelayInMinutes": 60,
+                "isEnabled": false,
+                "minimumCapacity": "[float(parameters('numberOfCapacityUnits'))]"
+            },
             "sourceDatabase": {
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
             }
         },
+        "isAutoScaleEnabled": "[variables('autoscale').isEnabled]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isElasticPoolNameNotEmpty": "[not(empty(parameters('elasticPoolName')))]",
@@ -206,7 +227,7 @@
             "location": "[parameters('location')]",
             "name": "[format('{0}/{1}', parameters('serverName'), parameters('name'))]",
             "properties": {
-                "autoPauseDelay": "[null()]",
+                "autoPauseDelay": "[if(variables('isAutoScaleEnabled'), variables('autoscale').autoPauseDelayInMinutes, null())]",
                 "catalogCollation": "[parameters('catalogCollation')]",
                 "collation": "[parameters('defaultCollation')]",
                 "createMode": "[parameters('createMode')]",
@@ -215,7 +236,7 @@
                 "licenseType": "[if(variables('isElasticPoolNameNotEmpty'), null(), if(parameters('isAzureHybridBenefitEnabled'), 'BasePrice', 'LicenseIncluded'))]",
                 "maintenanceConfigurationId": "[null()]",
                 "maxSizeBytes": "[null()]",
-                "minCapacity": "[null()]",
+                "minCapacity": "[if(variables('isAutoScaleEnabled'), variables('autoscale').minimumCapacity, null())]",
                 "secondaryType": "[if(contains(parameters('createMode'), 'Secondary'), parameters('secondaryType'), null())]",
                 "sourceDatabaseId": "[if(empty(parameters('sourceDatabase')), null(), resourceId(variables('sourceDatabase').subscriptionId, variables('sourceDatabase').resourceGroupName, 'Microsoft.Sql/servers/databases', variables('sourceDatabase').serverName, variables('sourceDatabase').name))]",
                 "readScale": "[if(parameters('isReadScaleOutEnabled'), 'Enabled', 'Disabled')]",
@@ -224,6 +245,7 @@
                 "zoneRedundant": "[parameters('isZoneRedundant')]"
             },
             "sku": {
+                "capacity": "[parameters('numberOfCapacityUnits')]",
                 "name": "[if(variables('isElasticPoolNameNotEmpty'), 'ElasticPool', parameters('skuName'))]"
             },
             "tags": "[parameters('tags')]",

@@ -548,6 +548,7 @@
             },
             "sqlDatabase": {
                 "audit": "[variables('audit')]",
+                "autoscale": {},
                 "backupStorageRedundancyType": "Geo",
                 "catalogCollation": "DATABASE_DEFAULT",
                 "createMode": "Default",
@@ -556,6 +557,7 @@
                 "isAzureHybridBenefitEnabled": false,
                 "isReadScaleOutEnabled": false,
                 "isZoneRedundant": true,
+                "numberOfCapacityUnits": 5,
                 "restorePointInTime": "",
                 "secondaryType": "Geo",
                 "skuName": "Basic",
@@ -3270,6 +3272,9 @@
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').sqlDatabase, createObject('audit', createObject('isEnabled', false())), variables('resourceDefinitions').sqlDatabases[copyIndex()]).audit]"
                     },
+                    "autoscale": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, createObject('audit', createObject('isEnabled', false())), variables('resourceDefinitions').sqlDatabases[copyIndex()]).autoscale]"
+                    },
                     "backupStorageRedundancyType": {
                         "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).backupStorageRedundancyType]"
                     },
@@ -3299,6 +3304,9 @@
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').sqlDatabases[copyIndex()].name]"
+                    },
+                    "numberOfCapacityUnits": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, createObject('audit', createObject('isEnabled', false())), variables('resourceDefinitions').sqlDatabases[copyIndex()]).numberOfCapacityUnits]"
                     },
                     "restorePointInTime": {
                         "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).restorePointInTime]"
