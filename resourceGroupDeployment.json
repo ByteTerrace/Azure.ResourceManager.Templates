@@ -1470,6 +1470,7 @@
                 "name": "bastionHostsCopy"
             },
             "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
                 "scriptsPreDeployCopy",
@@ -2458,6 +2459,7 @@
                 "name": "containerRegistriesCopy"
             },
             "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
                 "scriptsPreDeployCopy",
                 "subnetsCopy",
                 "virtualNetworksCopy"
@@ -2793,6 +2795,7 @@
                 "diskEncryptionSetsCopy",
                 "hostGroupsCopy",
                 "loadBalancersCopy",
+                "logAnalyticsWorkspacesCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "recoveryServicesVaultsCopy",
@@ -2902,6 +2905,7 @@
                 "diskEncryptionSetsCopy",
                 "hostGroupsCopy",
                 "loadBalancersCopy",
+                "logAnalyticsWorkspacesCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "recoveryServicesVaultsCopy",
@@ -3015,7 +3019,7 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "customerManagedEncryption": {
+                    "audit": {
                         "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).audit]"
                     },
                     "customerManagedEncryption": {
@@ -3402,6 +3406,7 @@
             "dependsOn": [
                 "diskEncryptionSetsCopy",
                 "keyVaultsCopy",
+                "logAnalyticsWorkspacesCopy",
                 "managedIdentitiesCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
@@ -3534,6 +3539,7 @@
             },
             "dependsOn": [
                 "cdnProfilesCopy",
+                "logAnalyticsWorkspacesCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "scriptsPreDeployCopy",
@@ -3598,6 +3604,7 @@
             },
             "dependsOn": [
                 "applicationServiceEnvironmentsCopy",
+                "logAnalyticsWorkspacesCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "scriptsPreDeployCopy",
@@ -3709,6 +3716,7 @@
                 "cdnProfilesCopy",
                 "containerRegistriesCopy",
                 "keyVaultsCopy",
+                "logAnalyticsWorkspacesCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "scriptsPreDeployCopy",
