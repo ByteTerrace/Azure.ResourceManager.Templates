@@ -34,8 +34,8 @@
                             ],
                             "name": "MyPrivateEndpoint",
                             "subnet": {
-                                "name":"MySubnet",
-                                "virtualNetworkName": "MyVirtualNetwork"
+                                "name":"ByteTerraceSubnet",
+                                "virtualNetworkName": "byteterrace.net"
                             }
                         }
                     ],
@@ -142,7 +142,7 @@
                 "Premium",
                 "Standard"
             ],
-            "defaultValue": "Standard",
+            "defaultValue": "Premium",
             "metadata": {
                 "description": "Specifies the SKU name of the Azure Container Registry."
             },
@@ -165,12 +165,13 @@
     },
     "variables": {
         "apiVersions": {
+            "diagnosticSettings": "2017-05-01-preview",
             "containerRegistries": "2019-12-01-preview",
             "keyVaults": "2019-09-01",
             "privateEndpoints": "2020-07-01",
             "privateEndpointsPrivateDnsZoneGroups": "2020-07-01"
         },
-        "containerRegistryManagedIdentityName": "[format('{0}-containerregistery-managedidentity', parameters('name'))]",
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
         "copy": [
             {
                 "count": "[length(parameters('firewallRules'))]",
@@ -190,8 +191,23 @@
             }
         ],
         "customerManagedEncryption": "[union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption'))]",
-        "customerManagedEncryptionKeyVaultRbacDeploymentName": "[format('{0}-KvRbac', deployment().name)]",
         "defaultResourceProperties": {
+            "audit": {
+                "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "logNames": [
+                    "ContainerRegistryRepositoryEvents",
+                    "ContainerRegistryLoginEvents"
+                ],
+                "retentionPolicy": {
+                    "days": 137,
+                    "isEnabled": true
+                }
+            },
             "customerManagedEncryption": {
                 "isEnabled": false,
                 "keyName": "",
@@ -227,6 +243,8 @@
         },
         "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
         "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isCustomerManagedEncryptionEnabled": "[variables('customerManagedEncryption').isEnabled]",
         "networkRuleSetProperties": {
             "defaultAction": "[if(or(variables('firewallRulesIsNotEmpty'), variables('virtualNetworkRulesIsNotEmpty')), 'Deny', 'Allow')]",
@@ -238,6 +256,7 @@
         "privateEndpointsIsNotEmpty": "[greater(variables('privateEndpointsCount'), 0)]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
             "containerRegistry": "[resourceId('Microsoft.ContainerRegistry/registries', parameters('name'))]",
             "containerRegistryCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', if(variables('isCustomerManagedEncryptionEnabled'), variables('customerManagedEncryption').keyVault.name, 'dummyKeyVault'))]"
         },
@@ -357,7 +376,7 @@
                 ],
                 "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
-            "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings"
+            "type": "Microsoft.ContainerRegistry/registries/providers/diagnosticsettings"
         }
     ]
 }

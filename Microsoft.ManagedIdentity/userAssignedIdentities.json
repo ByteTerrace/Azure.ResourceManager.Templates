@@ -38,11 +38,5 @@
             "tags": "[parameters('tags')]",
             "type": "Microsoft.ManagedIdentity/userAssignedIdentities"
         }
-    ],
-    "outputs": {
-        "principalId": {
-            "type": "string",
-            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name')), variables('apiVersions').userAssignedIdentities, 'Full').properties.principalId]"
-        }
-    }
+    ]
 }

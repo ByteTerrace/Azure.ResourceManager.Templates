@@ -1,6 +1,67 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "",
+                "name": "Advanced - Sequenced Deployments",
+                "value": {
+                    "deployments": [
+                        {
+                            "parameters": {
+                                "resourceDefinitions": {
+                                    "value": {
+                                        "managedIdentities": [
+                                            {
+                                                "name": "MyManagedIdentity"
+                                            }
+                                        ],
+                                        "roleAssignments": [
+                                            {
+                                                "assignee": {
+                                                    "name": "MyManagedIdentity",
+                                                    "type": "Microsoft.ManagedIdentity/userAssignedIdentities"
+                                                },
+                                                "assignor": {
+                                                    "name": "MyKeyVault",
+                                                    "type": "Microsoft.KeyVault/vaults"
+                                                },
+                                                "roleDefinition": {
+                                                    "name": "Key Vault Crypto Service Encryption User"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "parameters": {
+                                "resourceDefinitions": {
+                                    "value": {
+                                        "storageAccounts": {
+                                            "audit": {
+                                                "isEnabled": false
+                                            },
+                                            "identity": {
+                                                "userAssignedIdentities": [
+                                                    {
+                                                        "name": "MyManagedIdentity"
+                                                    }
+                                                ]
+                                            },
+                                            "name": "MyStorageAccount"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
     "parameters": {
         "diagnosticServicesTrustedStorageAccessObjectId": {
             "type": "string"
@@ -171,17 +232,18 @@
                 "volumes": []
             },
             "containerRegistry": {
+                "audit": "[variables('audit')]",
                 "customerManagedEncryption": {},
                 "firewallRules": [],
                 "identity": {},
                 "isAdministratorAccountEnabled": false,
                 "isAnonymousPullEnabled": false,
-                "isDedicatedDataEndpointEnabled": false,
+                "isDedicatedDataEndpointEnabled": true,
                 "isAllowTrustedMicrosoftServicesEnabled": false,
                 "isPublicNetworkAccessEnabled": false,
                 "isZoneRedundant": true,
                 "privateEndpoints": [],
-                "skuName": "Standard",
+                "skuName": "Premium",
                 "virtualNetworkRules": []
             },
             "cosmosDbAccount": {
@@ -2378,6 +2440,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).audit]"
+                    },
                     "customerManagedEncryption": {
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).customerManagedEncryption]"
                     },
@@ -3898,7 +3963,7 @@
             ],
             "copy": {
                 "count": "[length(variables('resourceDefinitions').deployments)]",
-                "mode": "Parallel",
+                "mode": "Serial",
                 "name": "deploymentsCopy"
             },
             "name": "[union(createObject('name', format('{0}_{1}', variables('deploymentNames').deployment, copyIndex())), variables('resourceDefinitions').deployments[copyIndex()]).name]",
@@ -3919,7 +3984,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').scripts.postDeploy))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').scripts.postDeploy)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "scriptsPostDeployCopy"
             },
             "dependsOn": [
