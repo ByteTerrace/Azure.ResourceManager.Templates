@@ -111,13 +111,6 @@
             },
             "type": "string"
         },
-        "numberOfCapacityUnits": {
-            "defaultValue": 5,
-            "metadata": {
-                "description": "Specifies the number of capacity units that will be dedicated to the Azure Sql Server."
-            },
-            "type": "int"
-        },
         "restorePointInTime": {
             "defaultValue": "",
             "metadata": {
@@ -200,7 +193,7 @@
             "autoscale": {
                 "autoPauseDelayInMinutes": 60,
                 "isEnabled": false,
-                "minimumCapacity": "[float(parameters('numberOfCapacityUnits'))]"
+                "minimumCapacity": "[variables('skuCapacity')]"
             },
             "sourceDatabase": {
                 "resourceGroupName": "[variables('resourceGroupName')]",
@@ -217,13 +210,13 @@
             "sqlServerDatabase": "[resourceId('Microsoft.Sql/servers/databases', parameters('serverName'), parameters('name'))]",
             "sqlServerElasticPool": "[resourceId('Microsoft.Sql/servers/elasticpools', parameters('serverName'), parameters('elasticPoolName'))]"
         },
+        "skuCapacity": "[skip(last(split(parameters('skuName'), '_')), 1)]",
         "sourceDatabase": "[union(variables('defaultResourceProperties').sourceDatabase, parameters('sourceDatabase'))]",
         "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').sqlServersDatabases]",
-            "kind": "[format('serverless')]",
             "location": "[parameters('location')]",
             "name": "[format('{0}/{1}', parameters('serverName'), parameters('name'))]",
             "properties": {
@@ -233,7 +226,7 @@
                 "createMode": "[parameters('createMode')]",
                 "elasticPoolId": "[if(variables('isElasticPoolNameNotEmpty'), variables('resourceIds').sqlServerElasticPool, null())]",
                 "isLedgerOn": "[null()]",
-                "licenseType": "[if(variables('isElasticPoolNameNotEmpty'), null(), if(parameters('isAzureHybridBenefitEnabled'), 'BasePrice', 'LicenseIncluded'))]",
+                "licenseType": "[if(parameters('isAzureHybridBenefitEnabled'), 'BasePrice', 'LicenseIncluded')]",
                 "maintenanceConfigurationId": "[null()]",
                 "maxSizeBytes": "[null()]",
                 "minCapacity": "[if(variables('isAutoScaleEnabled'), variables('autoscale').minimumCapacity, null())]",
@@ -245,7 +238,6 @@
                 "zoneRedundant": "[parameters('isZoneRedundant')]"
             },
             "sku": {
-                "capacity": "[parameters('numberOfCapacityUnits')]",
                 "name": "[if(variables('isElasticPoolNameNotEmpty'), 'ElasticPool', parameters('skuName'))]"
             },
             "tags": "[parameters('tags')]",
