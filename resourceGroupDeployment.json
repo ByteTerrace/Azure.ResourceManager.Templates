@@ -729,7 +729,7 @@
                 "mode": "Parallel",
                 "name": "deploymentsCopy"
             },
-            "name": "[format('{0}_{1}', variables('deploymentNames').deployment, copyIndex())]",
+            "name": "[union(createObject('name', format('{0}_{1}', variables('deploymentNames').deployment, copyIndex())), variables('resourceDefinitions').deployments[copyIndex()]).name]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": "[union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).parameters]",
