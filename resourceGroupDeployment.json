@@ -4,7 +4,24 @@
     "metadata": {
         "examples": [
             {
-                "description": "",
+                "description": "Demonstrates how to use the 'deployments' keyword to deploy custom template specifications.",
+                "name": "Advanced - Bring Your Own Template (BYOT)",
+                "value": {
+                    "deployments": [
+                        {
+                            "contentVersion": "1.0.0.0",
+                            "parameters": {},
+                            "templateSpec": {
+                                "name": "MyTemplateSpec",
+                                "resourceGroupName": "MyResourceGroup",
+                                "subscriptionId": "MySubscription"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "description": "Demonstrates how to use the 'deployments' keyword to deploy resources in sequence.",
                 "name": "Advanced - Sequenced Deployments",
                 "value": {
                     "deployments": [
@@ -40,19 +57,21 @@
                             "parameters": {
                                 "resourceDefinitions": {
                                     "value": {
-                                        "storageAccounts": {
-                                            "audit": {
-                                                "isEnabled": false
-                                            },
-                                            "identity": {
-                                                "userAssignedIdentities": [
-                                                    {
-                                                        "name": "MyManagedIdentity"
-                                                    }
-                                                ]
-                                            },
-                                            "name": "MyStorageAccount"
-                                        }
+                                        "storageAccounts": [
+                                                {
+                                                "audit": {
+                                                    "isEnabled": false
+                                                },
+                                                "identity": {
+                                                    "userAssignedIdentities": [
+                                                        {
+                                                            "name": "MyManagedIdentity"
+                                                        }
+                                                    ]
+                                                },
+                                                "name": "MyStorageAccount"
+                                            }
+                                        ]
                                     }
                                 }
                             }
