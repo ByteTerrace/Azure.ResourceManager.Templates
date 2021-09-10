@@ -213,7 +213,7 @@
                 }
             },
             "customerManagedEncryption": {
-                "isEnabled": true,
+                "isEnabled": false,
                 "keyName": "",
                 "keyVault": {
                     "name": "",

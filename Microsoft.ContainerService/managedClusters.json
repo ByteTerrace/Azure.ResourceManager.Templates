@@ -158,7 +158,7 @@
                 }
             },
             "customerManagedEncryption": {
-                "isEnabled": true,
+                "isEnabled": false,
                 "diskEncryptionSet": {
                     "name": "[null()]",
                     "resourceGroupName": "[variables('resourceGroupName')]",

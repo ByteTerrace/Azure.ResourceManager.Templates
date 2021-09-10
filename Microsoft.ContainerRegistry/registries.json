@@ -1,7 +1,57 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a standard container registry with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "audit": {
+                        "isEnabled": false
+                    },
+                    "name": "MyContainerRegistry",
+                    "skuName": "Basic"
+                }
+            },
+            {
+                "description": "Deploys a premium container registry with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "isAllowTrustedMicrosoftServicesEnabled": true,
+                    "name": "MyContainerRegistry",
+                    "privateEndpoints": [
+                        {
+                            "dnsZones": [
+                                {
+                                    "name": "privatelink.azurecr.io"
+                                }
+                            ],
+                            "name": "MyPrivateEndpoint",
+                            "subnet": {
+                                "name":"MySubnet",
+                                "virtualNetworkName": "MyVirtualNetwork"
+                            }
+                        }
+                    ],
+                    "skuName": "Premium"
+                }
+            }
+        ]
+    },
     "parameters": {
+        "audit": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure Container Registry."
+            },
+            "type": "object"
+        },
         "customerManagedEncryption": {
             "defaultValue": {},
             "metadata": {
@@ -118,7 +168,7 @@
         "customerManagedEncryptionKeyVaultRbacDeploymentName": "[format('{0}-KvRbac', deployment().name)]",
         "defaultResourceProperties": {
             "customerManagedEncryption": {
-                "isEnabled": true,
+                "isEnabled": false,
                 "keyName": "",
                 "keyVault": {
                     "name": "",
@@ -339,6 +389,33 @@
                 ]
             },
             "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
+            "dependsOn": [
+                "[variables('resourceIds').containerRegistry]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/Microsoft.Insights/audit', parameters('name'))]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(variables('audit').logNames)]",
+                        "input": {
+                            "category": "[variables('audit').logNames[copyIndex('logs')]]",
+                            "enabled": "[variables('isAuditEnabled')]",
+                            "retentionPolicy": {
+                                "days": "[variables('audit').retentionPolicy.days]",
+                                "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                            }
+                        },
+                        "name": "logs"
+                    }
+                ],
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
+            },
+            "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings"
         }
     ]
 }

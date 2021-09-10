@@ -94,6 +94,7 @@
                 "privateEndpoints": []
             },
             "customerManagedEncryption": {
+                "isEnabled": false,
                 "isDoubleEncryptionAtRestEnabled": true,
                 "keyName": "",
                 "keyVault": {
@@ -117,7 +118,7 @@
         },
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
-        "isCustomerManagedEncryptionEnabled": "[not(empty(variables('customerManagedEncryption').keyName))]",
+        "isCustomerManagedEncryptionEnabled": "[variables('customerManagedEncryption').isEnabled]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceGroups": "[union(variables('privateEndpointResourceGroups'), createArray())]",
         "resourceIds": {

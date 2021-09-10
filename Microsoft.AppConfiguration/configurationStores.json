@@ -79,7 +79,7 @@
         "customerManagedEncryptionKeyVaultRbacDeploymentName": "[format('{0}-KvRbac', deployment().name)]",
         "defaultResourceProperties": {
             "customerManagedEncryption": {
-                "isEnabled": true,
+                "isEnabled": false,
                 "keyName": "",
                 "keyVault": {
                     "name": "",

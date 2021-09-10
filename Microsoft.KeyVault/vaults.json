@@ -1,6 +1,55 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a standard key vault with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "audit": {
+                        "isEnabled": false
+                    },
+                    "isPurgeProtectionEnabled": false,
+                    "name": "MyKeyVault",
+                    "skuName": "Standard"
+                }
+            },
+            {
+                "description": "Deploys a premium key vault with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "keys": {
+                        "container": []
+                    },
+                    "name": "MyKeyVault",
+                    "privateEndpoints": [
+                        {
+                            "dnsZones": [
+                                {
+                                    "name": "privatelink.vaultcore.azure.net"
+                                }
+                            ],
+                            "name": "MyPrivateEndpoint",
+                            "subnet": {
+                                "name":"MySubnet",
+                                "virtualNetworkName": "MyVirtualNetwork"
+                            }
+                        }
+                    ],
+                    "secrets": {
+                        "container": []
+                    },
+                    "skuName": "Premium"
+                }
+            }
+        ]
+    },
     "parameters": {
         "audit": {
             "defaultValue": {},
