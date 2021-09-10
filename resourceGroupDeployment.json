@@ -556,6 +556,7 @@
                 "isAzureHybridBenefitEnabled": false,
                 "isReadScaleOutEnabled": false,
                 "isZoneRedundant": true,
+                "restorePointInTime": "",
                 "secondaryType": "Geo",
                 "skuName": "Basic",
                 "sourceDatabase": {},
@@ -3298,6 +3299,9 @@
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').sqlDatabases[copyIndex()].name]"
+                    },
+                    "restorePointInTime": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).restorePointInTime]"
                     },
                     "secondaryType": {
                         "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).secondaryType]"

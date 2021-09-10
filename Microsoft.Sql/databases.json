@@ -104,6 +104,13 @@
             },
             "type": "string"
         },
+        "restorePointInTime": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the point in time to restore the Azure Sql Server Database to."
+            },
+            "type": "string"
+        },
         "secondaryType": {
             "allowedValues": [
                 "Geo",
@@ -213,6 +220,7 @@
                 "sourceDatabaseId": "[if(empty(parameters('sourceDatabase')), null(), resourceId(variables('sourceDatabase').subscriptionId, variables('sourceDatabase').resourceGroupName, 'Microsoft.Sql/servers/databases', variables('sourceDatabase').serverName, variables('sourceDatabase').name))]",
                 "readScale": "[if(parameters('isReadScaleOutEnabled'), 'Enabled', 'Disabled')]",
                 "requestedBackupStorageRedundancy": "[parameters('backupStorageRedundancyType')]",
+                "restorePointInTime": "[if(empty(parameters('restorePointInTime')), null(), parameters('restorePointInTime'))]",
                 "zoneRedundant": "[parameters('isZoneRedundant')]"
             },
             "sku": {
