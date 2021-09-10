@@ -66,6 +66,13 @@
             },
             "type": "array"
         },
+        "identity": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the identity that will be assigned to the Azure Container Registry."
+            },
+            "type": "object"
+        },
         "isAdministratorAccountEnabled": {
             "defaultValue": false,
             "metadata": {
@@ -80,10 +87,31 @@
             },
             "type": "bool"
         },
+        "isAnonymousPullEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the Azure Container Registry will allow anonymous pull requests."
+            },
+            "type": "bool"
+        },
+        "isDedicatedDataEndpointEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether dedicated data endpoints are enabled for the Azure Container Registry."
+            },
+            "type": "bool"
+        },
         "isPublicNetworkAccessEnabled": {
             "defaultValue": false,
             "metadata": {
                 "description": "Indicates whether the Azure Container Registry is accessible from the internet."
+            },
+            "type": "bool"
+        },
+        "isZoneRedundant": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the Azure Container Registry will be zone redundant."
             },
             "type": "bool"
         },
@@ -138,12 +166,9 @@
     "variables": {
         "apiVersions": {
             "containerRegistries": "2019-12-01-preview",
-            "deployments": "2021-04-01",
             "keyVaults": "2019-09-01",
             "privateEndpoints": "2020-07-01",
-            "privateEndpointsPrivateDnsZoneGroups": "2020-07-01",
-            "roleAssignments": "2020-04-01-preview",
-            "userAssignedIdentities": "2018-11-30"
+            "privateEndpointsPrivateDnsZoneGroups": "2020-07-01"
         },
         "containerRegistryManagedIdentityName": "[format('{0}-containerregistery-managedidentity', parameters('name'))]",
         "copy": [
@@ -177,6 +202,11 @@
                 },
                 "keyVersion": ""
             },
+            "identity": {
+                "isEnabled": true,
+                "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
+                "userAssignedIdentities": []
+            },
             "privateEndpoint": {
                 "dnsZone": {
                     "resourceGroupName": "[variables('resourceGroupName')]",
@@ -196,6 +226,7 @@
             }
         },
         "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
+        "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isCustomerManagedEncryptionEnabled": "[variables('customerManagedEncryption').isEnabled]",
         "networkRuleSetProperties": {
             "defaultAction": "[if(or(variables('firewallRulesIsNotEmpty'), variables('virtualNetworkRulesIsNotEmpty')), 'Deny', 'Allow')]",
@@ -208,111 +239,22 @@
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
             "containerRegistry": "[resourceId('Microsoft.ContainerRegistry/registries', parameters('name'))]",
-            "containerRegistryCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', if(variables('isCustomerManagedEncryptionEnabled'), variables('customerManagedEncryption').keyVault.name, 'dummyKeyVault'))]",
-            "containerRegistryCustomerManagedEncryptionKeyVaultRbacDeployment": "[resourceId('Microsoft.Resources/deployments', variables('customerManagedEncryptionKeyVaultRbacDeploymentName'))]",
-            "containerRegistryManagedIdentity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('containerRegistryManagedIdentityName'))]",
-            "keyVaultCryptoServiceEncryptionUserRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]"
+            "containerRegistryCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', if(variables('isCustomerManagedEncryptionEnabled'), variables('customerManagedEncryption').keyVault.name, 'dummyKeyVault'))]"
         },
         "subscriptionId": "[subscription().subscriptionId]",
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]",
         "virtualNetworkRulesIsNotEmpty": "[greater(length(parameters('virtualNetworkRules')), 0)]"
     },
     "resources": [
         {
-            "apiVersion": "[variables('apiVersions').userAssignedIdentities]",
-            "location": "[parameters('location')]",
-            "name": "[variables('containerRegistryManagedIdentityName')]",
-            "properties": {},
-            "tags": "[parameters('tags')]",
-            "type": "Microsoft.ManagedIdentity/userAssignedIdentities"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').deployments]",
-            "condition": "[variables('isCustomerManagedEncryptionEnabled')]",
-            "dependsOn": [
-                "[variables('resourceIds').containerRegistryManagedIdentity]"
-            ],
-            "name": "[variables('customerManagedEncryptionKeyVaultRbacDeploymentName')]",
-            "properties": {
-                "expressionEvaluationOptions": {
-                    "scope": "inner"
-                },
-                "mode": "Incremental",
-                "parameters": {
-                    "keyVaultCryptoServiceEncryptionUserRoleDefinitionId": {
-                        "value": "[variables('resourceIds').keyVaultCryptoServiceEncryptionUserRoleDefinition]"
-                    },
-                    "keyVaultId": {
-                        "value": "[variables('resourceIds').containerRegistryCustomerManagedEncryptionKeyVault]"
-                    },
-                    "keyVaultName": {
-                        "value": "[variables('customerManagedEncryption').keyVault.name]"
-                    },
-                    "roleAssignmentsApiVersion": {
-                        "value": "[variables('apiVersions').roleAssignments]"
-                    },
-                    "userAssignedIdentitiesApiVersion": {
-                        "value": "[variables('apiVersions').userAssignedIdentities]"
-                    },
-                    "userAssignedIdentityId": {
-                        "value": "[variables('resourceIds').containerRegistryManagedIdentity]"
-                    }
-                },
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {
-                        "keyVaultCryptoServiceEncryptionUserRoleDefinitionId": {
-                            "type": "string"
-                        },
-                        "keyVaultId": {
-                            "type": "string"
-                        },
-                        "keyVaultName": {
-                            "type": "string"
-                        },
-                        "roleAssignmentsApiVersion":{
-                            "type": "string"
-                        },
-                        "userAssignedIdentitiesApiVersion": {
-                            "type": "string"
-                        },
-                        "userAssignedIdentityId": {
-                            "type": "string"
-                        }
-                    },
-                    "resources": [
-                        {
-                            "apiVersion": "[parameters('roleAssignmentsApiVersion')]",
-                            "name": "[guid(parameters('userAssignedIdentityId'), parameters('keyVaultCryptoServiceEncryptionUserRoleDefinitionId'), parameters('keyVaultId'))]",
-                            "properties": {
-                                "principalId": "[reference(parameters('userAssignedIdentityId'), parameters('userAssignedIdentitiesApiVersion'), 'Full').properties.principalId]",
-                                "roleDefinitionId": "[parameters('keyVaultCryptoServiceEncryptionUserRoleDefinitionId')]"
-                            },
-                            "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
-                            "type": "Microsoft.Authorization/roleAssignments"
-                        }
-                    ]
-                }
-            },
-            "resourceGroup": "[variables('customerManagedEncryption').keyVault.resourceGroupName]",
-            "subscriptionId": "[variables('customerManagedEncryption').keyVault.subscriptionId]",
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
             "apiVersion": "[variables('apiVersions').containerRegistries]",
-            "dependsOn": [
-                "[variables('resourceIds').containerRegistryCustomerManagedEncryptionKeyVaultRbacDeployment]"
-            ],
-            "identity": {
-                "type": "UserAssigned",
-                "userAssignedIdentities": {
-                    "[variables('resourceIds').containerRegistryManagedIdentity]": {}
-                }
-            },
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
                 "adminUserEnabled": "[parameters('isAdministratorAccountEnabled')]",
+                "anonymousPullEnabled": "[parameters('isAnonymousPullEnabled')]",
+                "dataEndpointEnabled": "[parameters('isDedicatedDataEndpointEnabled')]",
                 "encryption": {
                     "keyVaultProperties": "[if(variables('isCustomerManagedEncryptionEnabled'), createObject('identity', reference(variables('resourceIds').containerRegistryManagedIdentity, variables('apiVersions').userAssignedIdentities).clientId, 'keyIdentifier', format('{0}keys/{1}{2}', reference(variables('resourceIds').containerRegistryCustomerManagedEncryptionKeyVault, variables('apiVersions').keyVaults).vaultUri, variables('customerManagedEncryption').keyName, if(empty(variables('customerManagedEncryption').keyVersion), '', format('/{1}', variables('customerManagedEncryption').keyVersion)))), null())]",
                     "status": "[if(variables('isCustomerManagedEncryptionEnabled'), 'Enabled', 'Disabled')]"
@@ -320,7 +262,7 @@
                 "networkRuleBypassOptions": "[if(parameters('isAllowTrustedMicrosoftServicesEnabled'), 'AzureServices', 'None')]",
                 "networkRuleSet": "[if(equals(parameters('skuName'), 'Premium'), variables('networkRuleSetProperties'), null())]",
                 "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]",
-                "zoneRedundancy": "Disabled"
+                "zoneRedundancy": "[if(parameters('isZoneRedundant'), 'Enabled', 'Disabled')]"
             },
             "sku": {
                 "name": "[parameters('skuName')]"

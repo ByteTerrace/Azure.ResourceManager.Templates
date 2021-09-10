@@ -116,6 +116,13 @@
                 "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Container Group."
             },
             "type": "object"
+        },
+        "volumes": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of volumes that will be attached to the containers within the Azure Container Group."
+            },
+            "type": "array"
         }
     },
     "variables": {
@@ -126,11 +133,10 @@
             "keyVaultsKeys": "2019-09-01",
             "logAnalyticsWorkspaces": "2020-08-01",
             "networkProfiles": "2021-02-01",
-            "roleAssignments": "2020-04-01-preview"
+            "storageAccounts": "2021-02-01"
         },
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
         "customerManagedEncryption": "[union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption'))]",
-        "customerManagedEncryptionKeyVaultRbacDeploymentName": "[format('{0}-KvRbac', deployment().name)]",
         "defaultResourceProperties": {
             "audit": {
                 "isEnabled": true,
@@ -184,6 +190,22 @@
             "userAssignedIdentity": {
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "volume": {
+                "isEphemeral": false,
+                "gitRepository": {
+                    "directory": ".",
+                    "url": "",
+                    "revision": "HEAD"
+                },
+                "storageAccount": {
+                    "fileShareName": "",
+                    "isReadOnly": true,
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "secrets": {}
             }
         },
         "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
@@ -270,20 +292,20 @@
                     {
                         "count": "[length(union(createObject('collection', createArray()), parameters('imageRegistryCredentials')).collection)]",
                         "input": {
-                            "password": "[parameters('imageRegistryCredentials').collection[copyIndex()].password]",
-                            "server": "[parameters('imageRegistryCredentials').collection[copyIndex()].server]",
-                            "username": "[parameters('imageRegistryCredentials').collection[copyIndex()].userName]"
+                            "password": "[parameters('imageRegistryCredentials').collection[copyIndex('imageRegistryCredentials')].password]",
+                            "server": "[parameters('imageRegistryCredentials').collection[copyIndex('imageRegistryCredentials')].server]",
+                            "username": "[parameters('imageRegistryCredentials').collection[copyIndex('imageRegistryCredentials')].userName]"
                         },
                         "name": "imageRegistryCredentials"
                     },
                     {
-                        "count": 0,
+                        "count": "[length(parameters('volumes'))]",
                         "input": {
-                            "azureFile": "[null()]",
-                            "emptyDir": "[null()]",
-                            "gitRepo": "[null()]",
-                            "name": "[null()]",
-                            "secret": "[null()]"
+                            "azureFile": "[if(empty(union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.name), null(), createObject('readOnly', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.isReadOnly, 'shareName', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.fileShareName, 'storageAccountKey', listKeys(resourceId(union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.subscriptionId, union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.resourceGroupName, 'Microsoft.Storage/storageAccounts', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.name), variables('apiVersions').storageAccounts).keys[1].value, 'storageAccountName', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.name))]",
+                            "emptyDir": "[if(union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).isEphemeral, createObject(), null())]",
+                            "gitRepo": "[if(empty(union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).gitRepository.url), null(), createObject('directory', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).gitRepository.directory, 'repository', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).gitRepository.url, 'revision', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).gitRepository.revision))]",
+                            "name": "[parameters('volumes')[copyIndex('volumes')].name]",
+                            "secret": "[if(empty(union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).secrets), null(), union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).secrets)]"
                         },
                         "name": "volumes"
                     }

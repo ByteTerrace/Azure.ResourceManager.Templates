@@ -46,6 +46,7 @@
             "containerInstances": [],
             "containerRegistries": [],
             "cosmosDbAccounts": [],
+            "deployments": [],
             "diskEncryptionSets": [],
             "dnsZones": {
                 "private": [],
@@ -166,14 +167,19 @@
                 ],
                 "restartPolicy": "Always",
                 "skuName": "Standard",
-                "subnet": {}
+                "subnet": {},
+                "volumes": []
             },
             "containerRegistry": {
                 "customerManagedEncryption": {},
                 "firewallRules": [],
+                "identity": {},
                 "isAdministratorAccountEnabled": false,
+                "isAnonymousPullEnabled": false,
+                "isDedicatedDataEndpointEnabled": false,
                 "isAllowTrustedMicrosoftServicesEnabled": false,
                 "isPublicNetworkAccessEnabled": false,
+                "isZoneRedundant": true,
                 "privateEndpoints": [],
                 "skuName": "Standard",
                 "virtualNetworkRules": []
@@ -187,6 +193,28 @@
                 "isFreeTierEnabled": false,
                 "kind": "GlobalDocumentDB",
                 "virtualNetworkRules": []
+            },
+            "deployment": {
+                "contentVersion": "[variables('contentVersion')]",
+                "parameters": {
+                    "diagnosticServicesTrustedStorageAccessObjectId": {
+                        "value": "[parameters('diagnosticServicesTrustedStorageAccessObjectId')]"
+                    },
+                    "resourceDefinitions": {
+                        "value": {}
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]",
+                "templateSpec": {
+                    "name": "ResourceGroupDeployment",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]",
+                    "version": "[variables('contentVersion')]"
+                }
             },
             "diskEncryptionSet": {
                 "isDoubleEncryptionAtRestEnabled": true,
@@ -443,6 +471,7 @@
                 "defaultCollation": "",
                 "elasticPoolName": "",
                 "isAzureHybridBenefitEnabled": false,
+                "isZoneRedundant": true,
                 "skuName": "Basic",
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
@@ -457,6 +486,7 @@
                 "dnsAliases": [],
                 "elasticPools": [],
                 "firewallRules": [],
+                "identity": {},
                 "isAllowTrustedMicrosoftServicesEnabled": false,
                 "isPublicNetworkAccessEnabled": false,
                 "privateEndpoints": [],
@@ -602,6 +632,7 @@
             "containerInstance": "[format('{0}-ContainerInstance', deployment().name)]",
             "containerRegistry": "[format('{0}-ContainerRegistry', deployment().name)]",
             "cosmosDbAccount": "[format('{0}-CosmosDbAccount', deployment().name)]",
+            "deployment": "[format('{0}-Deployment', deployment().name)]",
             "diskEncryptionSet": "[format('{0}-DiskEncryptionSet', deployment().name)]",
             "dnsPrivateZone": "[format('{0}-DnsPrivateZone', deployment().name)]",
             "dnsPublicZone": "[format('{0}-DnsPublicZone', deployment().name)]",
@@ -2353,14 +2384,26 @@
                     "firewallRules": {
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).firewallRules]"
                     },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).identity]"
+                    },
                     "isAdministratorAccountEnabled": {
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isAdministratorAccountEnabled]"
                     },
                     "isAllowTrustedMicrosoftServicesEnabled": {
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
                     },
+                    "isAnonymousPullEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isAnonymousPullEnabled]"
+                    },
+                    "isDedicatedDataEndpointEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isDedicatedDataEndpointEnabled]"
+                    },
                     "isPublicNetworkAccessEnabled": {
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isPublicNetworkAccessEnabled]"
+                    },
+                    "isZoneRedundant": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).isZoneRedundant]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').containerRegistries[copyIndex()]).location]"
@@ -2925,6 +2968,9 @@
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
+                    },
+                    "volumes": {
+                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).volumes]"
                     }
                 },
                 "templateLink": {
@@ -3071,6 +3117,9 @@
                     "firewallRules": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).firewallRules]"
                     },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).identity]"
+                    },
                     "isAllowTrustedMicrosoftServicesEnabled": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
                     },
@@ -3142,6 +3191,9 @@
                     },
                     "isAzureHybridBenefitEnabled": {
                         "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).isAzureHybridBenefitEnabled]"
+                    },
+                    "isZoneRedundant": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).isZoneRedundant]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').sqlDatabases[copyIndex()]).location]"
@@ -3782,6 +3834,84 @@
             },
             "resourceGroup": "[union(variables('defaultResourceProperties').roleAssignment, variables('resourceDefinitions').roleAssignments[copyIndex()]).resourceGroupName]",
             "subscriptionId": "[union(variables('defaultResourceProperties').roleAssignment, variables('resourceDefinitions').roleAssignments[copyIndex()]).subscriptionId]",
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').deployments))]",
+            "dependsOn": [
+                "applicationConfigurationStoresCopy",
+                "applicationInsightsComponentsCopy",
+                "applicationSecurityGroupsCopy",
+                "applicationServiceEnvironmentsCopy",
+                "applicationServicePlansCopy",
+                "automationAccountsCopy",
+                "availabilitySetsCopy",
+                "bastionHostsCopy",
+                "cdnProfilesCopy",
+                "communicationServicesCopy",
+                "containerInstancesCopy",
+                "containerRegistriesCopy",
+                "cosmosDbAccountsCopy",
+                "diskEncryptionSetsCopy",
+                "eventGridDomainsCopy",
+                "eventGridEventSubcriptionsCopy",
+                "eventGridTopicsCopy",
+                "eventHubsClustersCopy",
+                "eventHubsCopy",
+                "eventHubsNamespacesCopy",
+                "firewallsCopy",
+                "hdInsightClustersCopy",
+                "hostGroupsCopy",
+                "keyVaultsCopy",
+                "kubernetesServiceClustersCopy",
+                "loadBalancersCopy",
+                "logAnalyticsWorkspacesCopy",
+                "logAnalyticsWorkspacesLinkedStorageJoinCopy",
+                "logAnalyticsWorkspacesLinkedStorageRbacCopy",
+                "logicApplicationWorkflowsCopy",
+                "managedHsmsCopy",
+                "managedIdentitiesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
+                "networkSecurityGroupsCopy",
+                "privateDnsZonesCopy",
+                "proximityPlacementGroupsCopy",
+                "publicDnsZonesCopy",
+                "publicIpAddressesCopy",
+                "publicIpPrefixesCopy",
+                "recoveryServicesVaultsCopy",
+                "roleAssignmentsCopy",
+                "routeTablesCopy",
+                "scriptsPreDeployCopy",
+                "serviceBusNamespacesCopy",
+                "sharedImageGalleriesCopy",
+                "sqlDatabasesCopy",
+                "sqlServersCopy",
+                "staticWebApplicationsCopy",
+                "storageAccountsCopy",
+                "subnetsCopy",
+                "virtualMachinesCopy",
+                "virtualMachineScaleSetsCopy",
+                "virtualNetworksCopy",
+                "webApplicationsCopy"
+            ],
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').deployments)]",
+                "mode": "Parallel",
+                "name": "deploymentsCopy"
+            },
+            "name": "[union(createObject('name', format('{0}_{1}', variables('deploymentNames').deployment, copyIndex())), variables('resourceDefinitions').deployments[copyIndex()]).name]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": "[union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).parameters]",
+                "templateLink": {
+                    "contentVersion": "[union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).contentVersion]",
+                    "id": "[resourceId(union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).templateSpec.subscriptionId, union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).templateSpec.resourceGroupName, 'Microsoft.Resources/templateSpecs/versions', union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).templateSpec.name, union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).templateSpec.version)]"
+                }
+            },
+            "resourceGroup": "[union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).resourceGroupName]",
+            "subscriptionId": "[union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).subscriptionId]",
             "type": "Microsoft.Resources/deployments"
         }/*,
         {

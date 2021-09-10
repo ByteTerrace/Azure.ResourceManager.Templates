@@ -37,6 +37,13 @@
             },
             "type": "bool"
         },
+        "isZoneRedundant": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the Azure Sql Server Database will be zone redundant."
+            },
+            "type": "bool"
+        },
         "location": {
             "metadata": {
                 "description": "Specifies the location in which the Azure Sql Server Database resource(s) should be deployed."
@@ -124,7 +131,8 @@
                 "collation": "[parameters('defaultCollation')]",
                 "createMode": "Default",
                 "elasticPoolId": "[if(variables('isElasticPoolNameNotEmpty'), variables('resourceIds').sqlServerElasticPool, null())]",
-                "licenseType": "[if(variables('isElasticPoolNameNotEmpty'), null(), if(parameters('isAzureHybridBenefitEnabled'), 'BasePrice', 'LicenseIncluded'))]"
+                "licenseType": "[if(variables('isElasticPoolNameNotEmpty'), null(), if(parameters('isAzureHybridBenefitEnabled'), 'BasePrice', 'LicenseIncluded'))]",
+                "zoneRedundant": "[parameters('isZoneRedundant')]"
             },
             "sku": {
                 "name": "[if(variables('isElasticPoolNameNotEmpty'), 'ElasticPool', parameters('skuName'))]"
