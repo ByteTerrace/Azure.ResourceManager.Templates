@@ -1,6 +1,99 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a locally-redundant storage account with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "audit": {
+                        "isEnabled": false
+                    },
+                    "name": "MyStorageAccount",
+                    "skuName": "Standard_LRS"
+                }
+            },
+            {
+                "description": "Deploys a zone-redundant storage account with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "blobServices": {
+                        "privateEndpoints": [
+                            {
+                                "dnsZones": [
+                                    {
+                                        "name": "privatelink.blob.core.windows.net"
+                                    }
+                                ],
+                                "name": "MyBlobServicesPrivateEndpoint",
+                                "subnet": {
+                                    "name":"MySubnet",
+                                    "virtualNetworkName": "MyVirtualNetwork"
+                                }
+                            }
+                        ]
+                    },
+                    "fileServices": {
+                        "privateEndpoints": [
+                            {
+                                "dnsZones": [
+                                    {
+                                        "name": "privatelink.file.core.windows.net"
+                                    }
+                                ],
+                                "name": "MyFileServicesPrivateEndpoint",
+                                "subnet": {
+                                    "name":"MySubnet",
+                                    "virtualNetworkName": "MyVirtualNetwork"
+                                }
+                            }
+                        ]
+                    },
+                    "isAllowTrustedMicrosoftServicesEnabled": true,
+                    "name": "MyStorageAccount",
+                    "queueServices": {
+                        "privateEndpoints": [
+                            {
+                                "dnsZones": [
+                                    {
+                                        "name": "privatelink.queue.core.windows.net"
+                                    }
+                                ],
+                                "name": "MyQueueServicesPrivateEndpoint",
+                                "subnet": {
+                                    "name":"MySubnet",
+                                    "virtualNetworkName": "MyVirtualNetwork"
+                                }
+                            }
+                        ]
+                    },
+                    "skuName": "Standard_ZRS",
+                    "tableServices": {
+                        "privateEndpoints": [
+                            {
+                                "dnsZones": [
+                                    {
+                                        "name": "privatelink.table.core.windows.net"
+                                    }
+                                ],
+                                "name": "MyTableServicesPrivateEndpoint",
+                                "subnet": {
+                                    "name":"MySubnet",
+                                    "virtualNetworkName": "MyVirtualNetwork"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    },
     "parameters": {
         "accessTier": {
             "allowedValues": [

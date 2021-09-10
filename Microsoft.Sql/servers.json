@@ -1,6 +1,40 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a logical SQL Server with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "audit": {
+                        "isEnabled": false
+                    },
+                    "name": "MySqlServer",
+                    "vulnerabilityAssessment": {
+                        "isEnabled": false
+                    }
+                }
+            },
+            {
+                "description": "Deploys a logical SQL Server with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "activeDirectoryAdministratorObjectId": "MyActiveDirectoryAdministratorUserId",
+                    "activeDirectoryAdministratorUserName": "MyActiveDirectoryAdministratorUserName",
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "name": "MySqlServer",
+                    "vulnerabilityAssessment": {
+                        "storageAccountName": "MyStorageAccount"
+                    }
+                }
+            }
+        ]
+    },
     "parameters": {
         "activeDirectoryAdministratorObjectId": {
             "defaultValue": "",

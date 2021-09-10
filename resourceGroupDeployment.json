@@ -548,12 +548,17 @@
             },
             "sqlDatabase": {
                 "audit": "[variables('audit')]",
-                "catalogCollation": "",
-                "defaultCollation": "",
+                "backupStorageRedundancyType": "",
+                "catalogCollation": "DATABASE_DEFAULT",
+                "createMode": "Create",
+                "defaultCollation": "SQL_Latin1_General_CP1_CI_AS",
                 "elasticPoolName": "",
                 "isAzureHybridBenefitEnabled": false,
+                "isReadScaleOutEnabled": false,
                 "isZoneRedundant": true,
+                "secondaryType": "Geo",
                 "skuName": "Basic",
+                "sourceDatabase": {},
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
             },
@@ -3262,10 +3267,16 @@
                 "mode": "Incremental",
                 "parameters": {
                     "audit": {
-                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).audit]"
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, createObject('audit', createObject('isEnabled', false())), variables('resourceDefinitions').sqlDatabases[copyIndex()]).audit]"
+                    },
+                    "backupStorageRedundancyType": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).backupStorageRedundancyType]"
                     },
                     "catalogCollation": {
                         "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).catalogCollation]"
+                    },
+                    "createMode": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).createMode]"
                     },
                     "defaultCollation": {
                         "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).defaultCollation]"
@@ -3276,6 +3287,9 @@
                     "isAzureHybridBenefitEnabled": {
                         "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).isAzureHybridBenefitEnabled]"
                     },
+                    "isReadScaleOutEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).isReadScaleOutEnabled]"
+                    },
                     "isZoneRedundant": {
                         "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).isZoneRedundant]"
                     },
@@ -3285,11 +3299,17 @@
                     "name": {
                         "value": "[variables('resourceDefinitions').sqlDatabases[copyIndex()].name]"
                     },
+                    "secondaryType": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).secondaryType]"
+                    },
                     "serverName": {
                         "value": "[variables('resourceDefinitions').sqlDatabases[copyIndex()].name]"
                     },
                     "skuName": {
                         "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).skuName]"
+                    },
+                    "sourceDatabase": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).sourceDatabase]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
