@@ -94,6 +94,7 @@
                 "namespaces": []
             },
             "sharedImageGalleries": [],
+            "sqlDatabases": [],
             "sqlServers": [],
             "staticWebApplications": [],
             "storageAccounts": [],
@@ -152,6 +153,10 @@
                 "dataLocation": "United States"
             },
             "containerInstance": {
+                "audit": "[variables('audit')]",
+                "customerManagedEncryption": {},
+                "identity": {},
+                "imageRegistryCredentials": {},
                 "operatingSystemName": "Linux",
                 "ports": [
                     {
@@ -161,10 +166,7 @@
                 ],
                 "restartPolicy": "Always",
                 "skuName": "Standard",
-                "subnetName": "",
-                "virtualNetworkName": "",
-                "virtualNetworkResourceGroupName": "[variables('resourceGroupName')]",
-                "virtualNetworkSubscriptionId": "[variables('subscriptionId')]"
+                "subnet": {}
             },
             "containerRegistry": {
                 "customerManagedEncryption": {},
@@ -435,6 +437,14 @@
             "sharedImageGallery": {
                 "description": ""
             },
+            "sqlDatabase": {
+                "audit": "[variables('audit')]",
+                "catalogCollation": "",
+                "defaultCollation": "",
+                "elasticPoolName": "",
+                "isAzureHybridBenefitEnabled": false,
+                "skuName": "Basic"
+            },
             "sqlServer": {
                 "activeDirectoryAdministratorObjectId": "",
                 "activeDirectoryAdministratorTenantId": "[subscription().tenantId]",
@@ -442,8 +452,8 @@
                 "audit": "[variables('audit')]",
                 "connectionPolicy": "Default",
                 "customerManagedEncryption": {},
-                "databases": [],
                 "dnsAliases": [],
+                "elasticPools": [],
                 "firewallRules": [],
                 "isAllowTrustedMicrosoftServicesEnabled": false,
                 "isPublicNetworkAccessEnabled": false,
@@ -624,6 +634,7 @@
             "scriptPreDeploy": "[format('{0}-ScriptPreDeploy', deployment().name)]",
             "serviceBusNamespace": "[format('{0}-ServiceBusNamespace', deployment().name)]",
             "sharedImageGallery": "[format('{0}-SharedImageGallery', deployment().name)]",
+            "sqlDatabases": "[format('{0}-SqlDatabase', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
             "staticWebApplication": "[format('{0}-StaticWebApplication', deployment().name)]",
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
@@ -2868,8 +2879,26 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "customerManagedEncryption": {
+                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).audit]"
+                    },
+                    "customerManagedEncryption": {
+                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).customerManagedEncryption]"
+                    },
                     "containers": {
                         "value": "[variables('resourceDefinitions').containerInstances[copyIndex()].containers]"
+                    },
+                    "customerManagedEncryption": {
+                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).customerManagedEncryption]"
+                    },
+                    "dnsPrefix": {
+                        "value": "[union(createObject('dnsPrefix', toLower(variables('resourceDefinitions').containerInstances[copyIndex()].name)), variables('resourceDefinitions').containerInstances[copyIndex()]).dnsPrefix]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).identity]"
+                    },
+                    "imageRegistryCredentials": {
+                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).imageRegistryCredentials]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').containerInstances[copyIndex()]).location]"
@@ -2889,20 +2918,11 @@
                     "skuName": {
                         "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).skuName]"
                     },
-                    "subnetName": {
-                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).subnetName]"
+                    "subnet": {
+                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).subnet]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
-                    },
-                    "virtualNetworkName": {
-                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).virtualNetworkName]"
-                    },
-                    "virtualNetworkResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).virtualNetworkResourceGroupName]"
-                    },
-                    "virtualNetworkSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).virtualNetworkSubscriptionId]"
                     }
                 },
                 "templateLink": {
@@ -3040,11 +3060,11 @@
                     "customerManagedEncryption": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).customerManagedEncryption]"
                     },
-                    "databases": {
-                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).databases]"
-                    },
                     "dnsAliases": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).dnsAliases]"
+                    },
+                    "elasticPools": {
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).elasticPools]"
                     },
                     "firewallRules": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).firewallRules]"
@@ -3080,6 +3100,66 @@
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Sql/servers.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').sqlDatabases))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').sqlDatabases)]",
+                "mode": "Parallel",
+                "name": "sqlDatabasesCopy"
+            },
+            "dependsOn": [
+                "keyVaultsCopy",
+                "logAnalyticsWorkspacesCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "scriptsPreDeployCopy",
+                "sqlServersCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').sqlDatabases, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).audit]"
+                    },
+                    "catalogCollation": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).catalogCollation]"
+                    },
+                    "defaultCollation": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).defaultCollation]"
+                    },
+                    "elasticPoolName": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).elasticPoolName]"
+                    },
+                    "isAzureHybridBenefitEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).isAzureHybridBenefitEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').sqlDatabases[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').sqlDatabases[copyIndex()].name]"
+                    },
+                    "serverName": {
+                        "value": "[variables('resourceDefinitions').sqlDatabases[copyIndex()].name]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Sql/databases.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -3667,6 +3747,7 @@
                 "scriptsPreDeployCopy",
                 "serviceBusNamespacesCopy",
                 "sharedImageGalleriesCopy",
+                "sqlDatabasesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",
                 "storageAccountsCopy",
@@ -3754,6 +3835,7 @@
                 "scriptsPreDeployCopy",
                 "serviceBusNamespacesCopy",
                 "sharedImageGalleriesCopy",
+                "sqlDatabasesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",
                 "storageAccountsCopy",

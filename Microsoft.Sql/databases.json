@@ -1,0 +1,162 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "audit": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure Sql Server Database."
+            },
+            "type": "object"
+        },
+        "catalogCollation": {
+            "defaultValue": "DATABASE_DEFAULT",
+            "metadata": {
+                "description": "Specifies the name of the catalog collation that will be used by Azure Sql Server Database."
+            },
+            "type": "string"
+        },
+        "defaultCollation": {
+            "defaultValue": "SQL_Latin1_General_CP1_CI_AS",
+            "metadata": {
+                "description": "Specifies the name of the default collation that will be used by Azure Sql Server Database."
+            },
+            "type": "string"
+        },
+        "elasticPoolName": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the name of the Azure Sql Server Elastic Pool that the database will be deployed within."
+            },
+            "type": "string"
+        },
+        "isAzureHybridBenefitEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the Azure Hybrid Benefit feature enabled on Azure Sql Server Database."
+            },
+            "type": "bool"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Sql Server Database resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Sql Server Database."
+            },
+            "type": "string"
+        },
+        "serverName": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Sql Server that the database will be deployed within."
+            },
+            "type": "string"
+        },
+        "skuName": {
+            "defaultValue": "Basic",
+            "metadata": {
+                "description": "Specifies the SKU name of the Azure Sql Server Database."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Sql Server Database."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "diagnosticSettings": "2017-05-01-preview",
+            "sqlServersDatabases": "2021-02-01-preview"
+        },
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "defaultResourceProperties": {
+            "audit": {
+                "actionAndGroupNames": [
+                    "BATCH_COMPLETED_GROUP",
+                    "FAILED_DATABASE_AUTHENTICATION_GROUP",
+                    "SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP"
+                ],
+                "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "logNames": [
+                    "Blocks",
+                    "Deadlocks",
+                    "DevOpsOperationsAudit",
+                    "Errors",
+                    "SQLSecurityAuditEvents",
+                    "Timeouts"
+                ],
+                "retentionPolicy": {
+                    "days": 137,
+                    "isEnabled": true
+                }
+            }
+        },
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "isElasticPoolNameNotEmpty": "[not(empty(parameters('elasticPoolName')))]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "resourceIds": {
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
+            "sqlServerDatabase": "[resourceId('Microsoft.Sql/servers/databases', parameters('serverName'), parameters('name'))]",
+            "sqlServerElasticPool": "[resourceId('Microsoft.Sql/servers/elasticpools', parameters('serverName'), parameters('elasticPoolName'))]"
+        },
+        "subscriptionId": "[subscription().subscriptionId]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').sqlServersDatabases]",
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/{1}', parameters('serverName'), parameters('name'))]",
+            "properties": {
+                "catalogCollation": "[parameters('catalogCollation')]",
+                "collation": "[parameters('defaultCollation')]",
+                "createMode": "Default",
+                "elasticPoolId": "[if(variables('isElasticPoolNameNotEmpty'), variables('resourceIds').sqlServerElasticPool, null())]",
+                "licenseType": "[if(variables('isElasticPoolNameNotEmpty'), null(), if(parameters('isAzureHybridBenefitEnabled'), 'BasePrice', 'LicenseIncluded'))]"
+            },
+            "sku": {
+                "name": "[if(variables('isElasticPoolNameNotEmpty'), 'ElasticPool', parameters('skuName'))]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Sql/servers/databases"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
+            "dependsOn": [
+                "[variables('resourceIds').sqlServerDatabase]"
+            ],
+            "name": "[format('{0}/{1}/Microsoft.Insights/audit', parameters('serverName'), parameters('name'))]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(variables('audit').logNames)]",
+                        "input": {
+                            "category": "[variables('audit').logNames[copyIndex('logs')]]",
+                            "enabled": "[variables('isAuditEnabled')]",
+                            "retentionPolicy": {
+                                "days": "[variables('audit').retentionPolicy.days]",
+                                "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                            }
+                        },
+                        "name": "logs"
+                    }
+                ],
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
+            },
+            "type": "Microsoft.Sql/servers/databases/providers/diagnosticSettings"
+        }
+    ]
+}
