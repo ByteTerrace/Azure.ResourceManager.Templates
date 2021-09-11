@@ -52,29 +52,16 @@
     },
     "variables": {
         "apiVersions": {
-            "deployments": "2021-04-01",
             "diagnosticSettings": "2017-05-01-preview",
             "keyVaults": "2019-09-01",
             "privateEndpoints": "2020-07-01",
             "privateEndpointsPrivateDnsZoneGroups": "2020-07-01",
-            "recoveryServicesVaults": "2020-02-02",
-            "resourceGroups": "2021-04-01",
-            "roleAssignments": "2020-04-01-preview"
+            "recoveryServicesVaults": "2020-02-02"
         },
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
         "backupPrivateEndpoints": "[union(variables('defaultResourceProperties').backup, parameters('backup')).privateEndpoints]",
         "backupPrivateEndpointsCount": "[length(variables('backupPrivateEndpoints'))]",
         "backupPrivateEndpointsIsNotEmpty": "[greater(variables('backupPrivateEndpointsCount'), 0)]",
-        "copy": [
-            {
-                "count": "[variables('backupPrivateEndpointsCount')]",
-                "input": {
-                    "name": "[union(variables('defaultResourceProperties').privateEndpoint, variables('backupPrivateEndpoints')[copyIndex('privateEndpointResourceGroups')]).subnet.resourceGroupName]",
-                    "subscriptionId": "[union(variables('defaultResourceProperties').privateEndpoint, variables('backupPrivateEndpoints')[copyIndex('privateEndpointResourceGroups')]).subnet.subscriptionId]"
-                },
-                "name": "privateEndpointResourceGroups"
-            }
-        ],
         "customerManagedEncryption": "[union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption'))]",
         "defaultResourceProperties": {
             "audit": {
@@ -143,7 +130,6 @@
         "resourceGroups": "[union(variables('privateEndpointResourceGroups'), createArray())]",
         "resourceIds": {
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
-            "contributorRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
             "recoveryServicesVault": "[resourceId('Microsoft.RecoveryServices/vaults', parameters('name'))]",
             "recoveryServicesVaultCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', union(createObject('name', 'dummyKeyVault'), variables('customerManagedEncryption').keyVault).name)]"
         },
@@ -163,77 +149,6 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.RecoveryServices/vaults"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').deployments]",
-            "condition": "[variables('backupPrivateEndpointsIsNotEmpty')]",
-            "copy": {
-                "count": "[variables('backupPrivateEndpointsCount')]",
-                "mode": "Parallel",
-                "name": "resourceGroupsRbacCopy"
-            },
-            "dependsOn": [
-                "[variables('resourceIds').recoveryServicesVault]"
-            ],
-            "name": "[format('{0}-RgRbac_{1}', deployment().name, copyIndex())]",
-            "properties": {
-                "expressionEvaluationOptions": {
-                    "scope": "inner"
-                },
-                "mode": "Incremental",
-                "parameters": {
-                    "contributorRoleDefinitionId": {
-                        "value": "[variables('resourceIds').contributorRoleDefinition]"
-                    },
-                    "resourceGroupId": {
-                        "value": "[subscriptionResourceId(variables('resourceGroups')[copyIndex()].subscriptionId, 'Microsoft.Resources/resourceGroups', variables('resourceGroups')[copyIndex()].name)]"
-                    },
-                    "roleAssignmentsApiVersion": {
-                        "value": "[variables('apiVersions').roleAssignments]"
-                    },
-                    "recoveryServicesVaultsApiVersion": {
-                        "value": "[variables('apiVersions').recoveryServicesVaults]"
-                    },
-                    "recoveryServicesVaultId": {
-                        "value": "[variables('resourceIds').recoveryServicesVault]"
-                    }
-                },
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {
-                        "contributorRoleDefinitionId": {
-                            "type": "string"
-                        },
-                        "resourceGroupId": {
-                            "type": "string"
-                        },
-                        "roleAssignmentsApiVersion":{
-                            "type": "string"
-                        },
-                        "recoveryServicesVaultsApiVersion": {
-                            "type": "string"
-                        },
-                        "recoveryServicesVaultId": {
-                            "type": "string"
-                        }
-                    },
-                    "resources": [
-                        {
-                            "apiVersion": "[parameters('roleAssignmentsApiVersion')]",
-                            "name": "[guid(parameters('recoveryServicesVaultId'), parameters('contributorRoleDefinitionId'), parameters('resourceGroupId'))]",
-                            "properties": {
-                                "principalId": "[reference(parameters('recoveryServicesVaultId'), parameters('recoveryServicesVaultsApiVersion'), 'Full').identity.principalId]",
-                                "roleDefinitionId": "[parameters('contributorRoleDefinitionId')]"
-                            },
-                            "type": "Microsoft.Authorization/roleAssignments"
-                        }
-                    ]
-                }
-            },
-            "resourceGroup": "[if(variables('backupPrivateEndpointsIsNotEmpty'), variables('resourceGroups')[copyIndex()].name, variables('resourceGroupName'))]",
-            "subscriptionId": "[if(variables('backupPrivateEndpointsIsNotEmpty'), variables('resourceGroups')[copyIndex()].subscriptionId, variables('subscriptionId'))]",
-            "type": "Microsoft.Resources/deployments"
         },
         {
             "apiVersion": "[variables('apiVersions').privateEndpoints]",
