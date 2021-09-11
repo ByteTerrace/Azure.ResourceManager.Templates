@@ -1,6 +1,17 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a managed identity with the recommended set of properties for any environment.",
+                "name": "Generic",
+                "value": {
+                    "name": "MyManagedIdentity"
+                }
+            }
+        ]
+    },
     "parameters": {
         "location": {
             "metadata": {

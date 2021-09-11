@@ -1,6 +1,103 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a virtual machine scale set with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "audit": {
+                        "isEnabled": false
+                    },
+                    "availabilityZones": [
+                        "1",
+                        "2",
+                        "3"
+                    ],
+                    "imageReference": {
+                        "id": "MyImageReference"
+                    },
+                    "licenseType": "Windows_Server",
+                    "name": "MyVirtualMachine",
+                    "networkInterfaceConfigurations": [
+                        {
+                            "ipConfigurations": [
+                                {
+                                    "name": "default",
+                                    "properties": {
+                                        "primary": true,
+                                        "privateIPAddressVersion": "IPv4",
+                                        "subnet": {
+                                            "id": "MySubnetId"
+                                        }
+                                    }
+                                }
+                            ],
+                            "name": "default",
+                            "networkSecurityGroup": {
+                                "name": "MyNetworkSecurityGroup"
+                            }
+                        }
+                    ],
+                    "numberOfFaultDomains": 1,
+                    "numberOfVirtualMachines": 0,
+                    "osDisk": {},
+                    "skuName": "Standard_D2s_v4",
+                    "windowsConfiguration": {}
+                }
+            },
+            {
+                "description": "Deploys a virtual machine scale set with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "availabilityZones": [
+                        "1",
+                        "2",
+                        "3"
+                    ],
+                    "diskEncryptionSet": {
+                        "name": "MyDiskEncryptionSet"
+                    },
+                    "imageReference": {
+                        "id": "MyImageReference"
+                    },
+                    "licenseType": "Windows_Server",
+                    "name": "MyVirtualMachine",
+                    "networkInterfaceConfigurations": [
+                        {
+                            "ipConfigurations": [
+                                {
+                                    "name": "default",
+                                    "properties": {
+                                        "primary": true,
+                                        "privateIPAddressVersion": "IPv4",
+                                        "subnet": {
+                                            "id": "MySubnetId"
+                                        }
+                                    }
+                                }
+                            ],
+                            "name": "default",
+                            "networkSecurityGroup": {
+                                "name": "MyNetworkSecurityGroup"
+                            }
+                        }
+                    ],
+                    "numberOfFaultDomains": 1,
+                    "numberOfVirtualMachines": 0,
+                    "osDisk": {},
+                    "skuName": "Standard_D4s_v4",
+                    "windowsConfiguration": {}
+                }
+            }
+        ]
+    },
     "parameters": {
         "administratorUserName": {
             "defaultValue": "[uniqueString(parameters('name'))]",

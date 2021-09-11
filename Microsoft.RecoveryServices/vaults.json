@@ -1,6 +1,48 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a recovery services vault with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "audit": {
+                        "isEnabled": false
+                    },
+                    "name": "MyRecoveryServicesVault"
+                }
+            },
+            {
+                "description": "Deploys a recovery services vault with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "backup": {
+                        "privateEndpoints": [
+                            {
+                                "dnsZones": [
+                                    {
+                                        "name": "privatelink.scus.backup.windowsazure.com"
+                                    }
+                                ],
+                                "name": "MyPrivateEndpoint",
+                                "subnet": {
+                                    "name":"MySubnet",
+                                    "virtualNetworkName": "MyVirtualNetwork"
+                                }
+                            }
+                        ]
+                    },
+                    "name": "MyRecoveryServicesVault"
+                }
+            }
+        ]
+    },
     "parameters": {
         "audit": {
             "defaultValue": {},
