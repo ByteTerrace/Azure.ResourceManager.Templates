@@ -48,8 +48,8 @@
                         }
                     ],
                     "subnet": {
-                        "name":"ByteTerraceSubnet",
-                        "virtualNetworkName": "byteterrace.net"
+                        "name":"MySubnet",
+                        "virtualNetworkName": "MyVirtualNetwork"
                     }
                 }
             }

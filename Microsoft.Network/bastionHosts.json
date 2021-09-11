@@ -33,7 +33,7 @@
                 "value": {
                     "audit": {
                         "logAnalyticsWorkspace": {
-                            "name": "byteterrace"
+                            "name": "MyLogAnalyticsWorkspace"
                         }
                     },
                     "ipConfigurations": [

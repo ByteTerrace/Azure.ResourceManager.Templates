@@ -1,6 +1,48 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a service bus namespace with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "audit": {
+                        "isEnabled": false
+                    },
+                    "name": "MyServiceBus",
+                    "skuName": "Basic"
+                }
+            },
+            {
+                "description": "Deploys a service bus namespace with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "name": "MyServiceBus",
+                    "privateEndpoints": [
+                        {
+                            "dnsZones": [
+                                {
+                                    "name": "privatelink.servicebus.windows.net"
+                                }
+                            ],
+                            "name": "MyPrivateEndpoint",
+                            "subnet": {
+                                "name":"MySubnet",
+                                "virtualNetworkName": "MyVirtualNetwork"
+                            }
+                        }
+                    ],
+                    "skuName": "Premium"
+                }
+            }
+        ]
+    },
     "parameters": {
         "audit": {
             "defaultValue": {},
