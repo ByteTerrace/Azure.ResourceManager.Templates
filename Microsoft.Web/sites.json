@@ -1,6 +1,126 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a function application with the recommended set of properties for any environment.",
+                "name": "Function Application",
+                "value": {
+                    "applicationSettings": {
+                        "collection": []
+                    },
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "connectionStrings": {
+                        "collection": []
+                    },
+                    "cors": {
+                        "allowedOrigins": []
+                    },
+                    "customDomains": [],
+                    "frameworkVersion": "DOTNETCORE|3.1",
+                    "functionExtension": {
+                        "isEnabled": true,
+                        "storageAccount": {
+                            "name": "MyStorageAccount"
+                        }
+                    },
+                    "ipSecurityRestrictions": [
+                        {
+                            "action": "Allow",
+                            "name": "default",
+                            "priority": 0,
+                            "subnet":{
+                                "name": "MySubnet",
+                                "virtualNetworkName": "MyVirtualNetwork"
+                            }
+                        }
+                    ],
+                    "name": "MyWebApplication",
+                    "privateEndpoints": [
+                        {
+                            "dnsZones": [
+                                {
+                                    "name": "privatelink.azurewebsites.net"
+                                }
+                            ],
+                            "name": "MyPrivateEndpoint",
+                            "subnet": {
+                                "name":"MySubnet",
+                                "virtualNetworkName": "MyVirtualNetwork"
+                            }
+                        }
+                    ],
+                    "servicePlan": {
+                        "name": "MyServicePlan"
+                    },
+                    "subnet": {
+                        "name":"MySubnet",
+                        "virtualNetworkName": "MyVirtualNetwork"
+                    }
+                }
+            },
+            {
+                "description": "Deploys a web application with the recommended set of properties for any environment.",
+                "name": "Web Application",
+                "value": {
+                    "applicationSettings": {
+                        "collection": []
+                    },
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "connectionStrings": {
+                        "collection": []
+                    },
+                    "cors": {
+                        "allowedOrigins": []
+                    },
+                    "customDomains": [],
+                    "frameworkVersion": "DOTNETCORE|3.1",
+                    "ipSecurityRestrictions": [
+                        {
+                            "action": "Allow",
+                            "name": "default",
+                            "priority": 0,
+                            "subnet":{
+                                "name": "MySubnet",
+                                "virtualNetworkName": "MyVirtualNetwork"
+                            }
+                        }
+                    ],
+                    "name": "MyWebApplication",
+                    "privateEndpoints": [
+                        {
+                            "dnsZones": [
+                                {
+                                    "name": "privatelink.azurewebsites.net"
+                                }
+                            ],
+                            "name": "MyPrivateEndpoint",
+                            "subnet": {
+                                "name":"MySubnet",
+                                "virtualNetworkName": "MyVirtualNetwork"
+                            }
+                        }
+                    ],
+                    "servicePlan": {
+                        "name": "MyServicePlan"
+                    },
+                    "subnet": {
+                        "name":"MySubnet",
+                        "virtualNetworkName": "MyVirtualNetwork"
+                    }
+                }
+            }
+        ]
+    },
     "parameters": {
         "audit": {
             "defaultValue": {},
