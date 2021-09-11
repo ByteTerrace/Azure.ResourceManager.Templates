@@ -2,11 +2,46 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "audit": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure Container Group."
+            },
+            "type": "object"
+        },
+        "customerManagedEncryption": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the customer-managed encryption settings that will be applied to the Azure Container Group."
+            },
+            "type": "object"
+        },
         "containers": {
             "metadata": {
                 "description": "An array of containers that will be deployed within the Azure Container Group."
             },
             "type": "array"
+        },
+        "dnsPrefix": {
+            "defaultValue": "[parameters('name')]",
+            "metadata": {
+                "description": "Specifies the DNS prefix to that will be assigned to the Azure Container Group."
+            },
+            "type": "string"
+        },
+        "identity": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the identity that will be assigned to the Azure Container Group."
+            },
+            "type": "object"
+        },
+        "imageRegistryCredentials": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the array of image registry credentials that will be stored within the Azure Container Group."
+            },
+            "type": "secureObject"
         },
         "location": {
             "metadata": {
@@ -36,7 +71,7 @@
         "ports": {
             "defaultValue": [
                 {
-                    "port": 80,
+                    "port": 443,
                     "protocol": "tcp"
                 }
             ],
@@ -68,12 +103,12 @@
             },
             "type": "string"
         },
-        "subnetName": {
-            "defaultValue": "",
+        "subnet": {
+            "defaultValue": {},
             "metadata": {
-                "description": "Specifies the subnet name within the virtual network that the Azure Container Group will be associated with."
+                "description": "An object that encapsulates the properties of the subnet that the Azure Container Group will be integrated with."
             },
-            "type": "string"
+            "type": "object"
         },
         "tags": {
             "defaultValue": {},
@@ -82,30 +117,41 @@
             },
             "type": "object"
         },
-        "virtualNetworkName": {
-            "defaultValue": "",
+        "volumes": {
+            "defaultValue": [],
             "metadata": {
-                "description": "Specifies the name of the virtual network that the Azure Container Group will be associated with."
+                "description": "An array of volumes that will be attached to the containers within the Azure Container Group."
             },
-            "type": "string"
-        },
-        "virtualNetworkResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Specifies the resource group name of the virtual network that the Azure Container Group will be associated with."
-            },
-            "type": "string"
-        },
-        "virtualNetworkSubscriptionId": {
-            "defaultValue": "[subscription().subscriptionId]",
-            "metadata": {
-                "description": "Specifies the subscription id of the virtual network that the Azure Container Group will be associated with."
-            },
-            "type": "string"
+            "type": "array"
         }
     },
     "variables": {
+        "apiVersions": {
+            "containerGroups": "2021-03-01",
+            "deployments": "2021-04-01",
+            "keyVaults": "2019-09-01",
+            "keyVaultsKeys": "2019-09-01",
+            "logAnalyticsWorkspaces": "2020-08-01",
+            "networkProfiles": "2021-02-01",
+            "roleAssignments": "2020-04-01-preview",
+            "storageAccounts": "2021-02-01"
+        },
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "customerManagedEncryption": "[union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption'))]",
+        "customerManagedEncryptionKeyVaultRbacDeploymentName": "[format('{0}-KvRbac', deployment().name)]",
         "defaultResourceProperties": {
+            "audit": {
+                "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "retentionPolicy": {
+                    "days": 137,
+                    "isEnabled": true
+                }
+            },
             "container": {
                 "command": "[null()]",
                 "environmentVariables": [],
@@ -123,20 +169,70 @@
                         "memorySizeInGigabytes": 1.5
                     }
                 }
+            },
+            "customerManagedEncryption": {
+                "isEnabled": true,
+                "keyName": "",
+                "keyVault": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "keyVersion": ""
+            },
+            "identity": {
+                "isEnabled": true,
+                "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
+                "userAssignedIdentities": []
+            },
+            "subnet": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "userAssignedIdentity": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "volume": {
+                "isEphemeral": false,
+                "gitRepository": {
+                    "directory": ".",
+                    "url": "",
+                    "revision": "HEAD"
+                },
+                "storageAccount": {
+                    "fileShareName": "",
+                    "isReadOnly": true,
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "secrets": {}
             }
         },
-        "isAttachedToNetworkProfile": "[or(variables('subnetNameIsNotEmpty'), variables('virtualNetworkNameIsNotEmpty'))]",
+        "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "isCustomerManagedEncryptionEnabled": "[variables('customerManagedEncryption').isEnabled]",
         "networkProfileName": "[format('{0}-containernic', parameters('name'))]",
+        "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
+            "containerGroups": "[resourceId('Microsoft.ContainerInstance/containerGroups', parameters('name'))]",
+            "containerGroupsCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', if(variables('isCustomerManagedEncryptionEnabled'), variables('customerManagedEncryption').keyVault.name, '<NULL>'))]",
+            "containerGroupsCustomerManagedEncryptionKeyVaultRbacDeployment": "[resourceId('Microsoft.Resources/deployments', variables('customerManagedEncryptionKeyVaultRbacDeploymentName'))]",
+            "keyVaultCryptoServiceEncryptionUserRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]",
             "networkProfile": "[resourceId('Microsoft.Network/networkProfiles', variables('networkProfileName'))]"
         },
-        "subnetNameIsNotEmpty": "[not(empty(parameters('subnetName')))]",
-        "virtualNetworkNameIsNotEmpty": "[not(empty(parameters('virtualNetworkName')))]"
+        "subnet": "[union(variables('defaultResourceProperties').subnet, parameters('subnet'))]",
+        "subnetIsNotEmpty": "[not(empty(parameters('subnet')))]",
+        "subscriptionId": "[subscription().subscriptionId]",
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]"
     },
     "resources": [
         {
-            "apiVersion": "2020-07-01",
-            "condition": "[variables('isAttachedToNetworkProfile')]",
+            "apiVersion": "[variables('apiVersions').networkProfiles]",
+            "condition": "[variables('subnetIsNotEmpty')]",
             "location": "[parameters('location')]",
             "name": "[variables('networkProfileName')]",
             "properties": {
@@ -149,7 +245,7 @@
                                     "name": "default",
                                     "properties": {
                                         "subnet": {
-                                            "id": "[resourceId(parameters('virtualNetworkSubscriptionId'), parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+                                            "id": "[resourceId(variables('subnet').subscriptionId, variables('subnet').resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('subnet').virtualNetworkName, variables('subnet').name)]"
                                         }
                                     }
                                 }
@@ -161,13 +257,11 @@
             "type": "Microsoft.Network/networkProfiles"
         },
         {
-            "apiVersion": "2019-12-01",
+            "apiVersion": "[variables('apiVersions').containerGroups]",
             "dependsOn": [
                 "[variables('resourceIds').networkProfile]"
             ],
-            "identity": {
-                "type": "SystemAssigned"
-            },
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
@@ -196,13 +290,39 @@
                             }
                         },
                         "name": "containers"
+                    },
+                    {
+                        "count": "[length(union(createObject('collection', createArray()), parameters('imageRegistryCredentials')).collection)]",
+                        "input": {
+                            "password": "[parameters('imageRegistryCredentials').collection[copyIndex('imageRegistryCredentials')].password]",
+                            "server": "[parameters('imageRegistryCredentials').collection[copyIndex('imageRegistryCredentials')].server]",
+                            "username": "[parameters('imageRegistryCredentials').collection[copyIndex('imageRegistryCredentials')].userName]"
+                        },
+                        "name": "imageRegistryCredentials"
+                    },
+                    {
+                        "count": "[length(parameters('volumes'))]",
+                        "input": {
+                            "azureFile": "[if(empty(union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.name), null(), createObject('readOnly', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.isReadOnly, 'shareName', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.fileShareName, 'storageAccountKey', listKeys(resourceId(union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.subscriptionId, union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.resourceGroupName, 'Microsoft.Storage/storageAccounts', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.name), variables('apiVersions').storageAccounts).keys[1].value, 'storageAccountName', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).storageAccount.name))]",
+                            "emptyDir": "[if(union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).isEphemeral, createObject(), null())]",
+                            "gitRepo": "[if(empty(union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).gitRepository.url), null(), createObject('directory', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).gitRepository.directory, 'repository', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).gitRepository.url, 'revision', union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).gitRepository.revision))]",
+                            "name": "[parameters('volumes')[copyIndex('volumes')].name]",
+                            "secret": "[if(empty(union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).secrets), null(), union(variables('defaultResourceProperties').volume, parameters('volumes')[copyIndex('volumes')]).secrets)]"
+                        },
+                        "name": "volumes"
                     }
                 ],
-                "ipAddress": {
-                    "ports": "[parameters('ports')]",
-                    "type": "[if(variables('isAttachedToNetworkProfile'), 'Private', 'Public')]"
+                "diagnostics": {
+                    "logAnalytics": "[if(variables('isAuditEnabled'), createObject('logType', 'ContainerInstance', 'workspaceId', reference(variables('resourceIds').auditLogAnalyticsWorkspace, variables('apiVersions').logAnalyticsWorkspaces).customerId, 'workspaceKey', listKeys(variables('resourceIds').auditLogAnalyticsWorkspace, variables('apiVersions').logAnalyticsWorkspaces).primarySharedKey), null())]"
                 },
-                "networkProfile": "[if(variables('isAttachedToNetworkProfile'), createObject('id', variables('resourceIds').networkProfile), null())]",
+                "dnsConfig": "[null()]",
+                "encryptionProperties": "[if(variables('isCustomerManagedEncryptionEnabled'), createObject('keyName', variables('customerManagedEncryption').keyName, 'keyVersion', last(split(reference(format('{0}/keys/{1}{2}', variables('resourceIds').containerGroupsCustomerManagedEncryptionKeyVault, variables('customerManagedEncryption').keyName, if(empty(variables('customerManagedEncryption').keyVersion), '', format('/versions/{0}', variables('customerManagedEncryption').keyVersion))), variables('apiVersions').keyVaultsKeys).keyUriWithVersion, '/')), 'vaultBaseUrl', reference(variables('resourceIds').containerGroupsCustomerManagedEncryptionKeyVault, variables('apiVersions').keyVaults).vaultUri), null())]",
+                "ipAddress": {
+                    "dnsNameLabel": "[if(variables('subnetIsNotEmpty'), null(), toLower(parameters('dnsPrefix')))]",
+                    "ports": "[parameters('ports')]",
+                    "type": "[if(variables('subnetIsNotEmpty'), 'Private', 'Public')]"
+                },
+                "networkProfile": "[if(variables('subnetIsNotEmpty'), createObject('id', variables('resourceIds').networkProfile), null())]",
                 "osType": "[parameters('operatingSystemName')]",
                 "restartPolicy": "[parameters('restartPolicy')]",
                 "sku": "[parameters('skuName')]"
