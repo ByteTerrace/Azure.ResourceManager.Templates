@@ -23,6 +23,13 @@
             },
             "type": "object"
         },
+        "identity": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the identity that will be assigned to the Azure Recovery Services Vault."
+            },
+            "type": "object"
+        },
         "location": {
             "metadata": {
                 "description": "Specifies the location in which the Azure Recovery Services Vault resource(s) should be deployed."
@@ -104,6 +111,11 @@
                 },
                 "keyVersion": ""
             },
+            "identity": {
+                "isEnabled": true,
+                "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
+                "userAssignedIdentities": []
+            },
             "privateEndpoint": {
                 "dnsZone": {
                     "resourceGroupName": "[variables('resourceGroupName')]",
@@ -116,6 +128,7 @@
                 }
             }
         },
+        "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isCustomerManagedEncryptionEnabled": "[variables('customerManagedEncryption').isEnabled]",
@@ -128,14 +141,13 @@
             "recoveryServicesVault": "[resourceId('Microsoft.RecoveryServices/vaults', parameters('name'))]",
             "recoveryServicesVaultCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', union(createObject('name', 'dummyKeyVault'), variables('customerManagedEncryption').keyVault).name)]"
         },
-        "subscriptionId": "[subscription().subscriptionId]"
+        "subscriptionId": "[subscription().subscriptionId]",
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]"
     },
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').recoveryServicesVaults]",
-            "identity": {
-                "type": "SystemAssigned"
-            },
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {

@@ -367,9 +367,8 @@
             },
             "identity": {
                 "isEnabled": true,
-                "name": "",
-                "resourceGroupName": "[variables('resourceGroupName')]",
-                "subscriptionId": "[variables('subscriptionId')]"
+                "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
+                "userAssignedIdentities": []
             },
             "linuxConfiguration": {
                 "administratorUserPublicSshKey": "",
@@ -730,7 +729,7 @@
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').virtualMachineScaleSets]",
-            "identity": "[if(variables('identity').isEnabled, union(createObject('type', if(empty(variables('identity').name), 'SystemAssigned', 'UserAssigned')), if(empty(variables('identity').name), createObject(), createObject('userAssignedIdentities', createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name))))), null())]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": "[if(variables('isFlexibleVirtualMachineScaleSet'), variables('flexibleProperties'), variables('uniformProperties'))]",

@@ -72,6 +72,13 @@
             },
             "type": "object"
         },
+        "identity": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the identity that will be assigned to the Azure Web Site."
+            },
+            "type": "object"
+        },
         "ipSecurityRestrictions": {
             "defaultValue": [],
             "metadata": {
@@ -304,6 +311,23 @@
                 "path": "/",
                 "unhealthyInstanceLifetimeInMinutes": 7
             },
+            "identity": {
+                "isEnabled": true,
+                "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
+                "userAssignedIdentities": []
+            },
+            "ipSecurityRestriction": {
+                "description": "",
+                "headers": {},
+                "ipAddress": "[null()]",
+                "subnet": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "subnetMask": "[null()]",
+                "tag": "[null()]"
+            },
             "logging": {
                 "application": {
                     "azureBlobStorage": {
@@ -330,6 +354,12 @@
                     "isFailedRequestTracingEnabled": false
                 }
             },
+            "privateCertificate": {
+                "keyVault": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
+            },
             "privateDnsZone": {
                 "endpoint": {
                     "name": "",
@@ -339,25 +369,6 @@
                 "name": "",
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
-            },
-            "publicDnsZone": {
-                "name": "",
-                "isARecordEnabled": true,
-                "isCnameRecordEnabled": true,
-                "resourceGroupName": "[variables('resourceGroupName')]",
-                "subscriptionId": "[variables('subscriptionId')]"
-            },
-            "ipSecurityRestriction": {
-                "description": "",
-                "headers": {},
-                "ipAddress": "[null()]",
-                "subnet": {
-                    "name": "",
-                    "resourceGroupName": "[variables('resourceGroupName')]",
-                    "subscriptionId": "[variables('subscriptionId')]"
-                },
-                "subnetMask": "[null()]",
-                "tag": "[null()]"
             },
             "privateEndpoint": {
                 "dnsZone": {
@@ -370,14 +381,15 @@
                     "subscriptionId": "[variables('subscriptionId')]"
                 }
             },
-            "privateCertificate": {
-                "keyVault": {
-                    "resourceGroupName": "[variables('resourceGroupName')]",
-                    "subscriptionId": "[variables('subscriptionId')]"
-                }
-            },
             "publicCertificate": {
                 "location": "CurrentUserMy"
+            },
+            "publicDnsZone": {
+                "name": "",
+                "isARecordEnabled": true,
+                "isCnameRecordEnabled": true,
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
             },
             "remoteDebugging": {
                 "isEnabled": false,
@@ -400,6 +412,7 @@
         "functionExtension": "[union(variables('defaultResourceProperties').functionExtension, parameters('functionExtension'))]",
         "functionWorkerRuntime": "[if(and(equals(variables('currentStack'), 'dotnetcore'), or(endsWith(parameters('frameworkVersion'), '5.0'), endsWith(parameters('frameworkVersion'), '6.0'))), 'dotnet-isolated', if(equals(variables('currentStack'), 'dotnetcore'), 'dotnet', if(equals(variables('currentStack'), 'java'), 'java', if(equals(variables('currentStack'), 'powershellcore'), 'powershell', if(equals(variables('currentStack'), 'python'), 'python', null())))))]",
         "healthCheck": "[union(variables('defaultResourceProperties').healthCheck, parameters('healthCheck'))]",
+        "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "linuxFxVersion": "[parameters('frameworkVersion')]",
@@ -437,14 +450,13 @@
         "servicePlan": "[union(variables('defaultResourceProperties').servicePlan, parameters('servicePlan'))]",
         "subnet": "[union(variables('defaultResourceProperties').subnet, parameters('subnet'))]",
         "subnetIsNotEmpty": "[not(empty(parameters('subnet')))]",
-        "subscriptionId": "[subscription().subscriptionId]"
+        "subscriptionId": "[subscription().subscriptionId]",
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]"
     },
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').sites]",
-            "identity": {
-                "type": "SystemAssigned"
-            },
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
             "kind": "[if(variables('functionExtension').isEnabled, 'functionapp', '')]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",

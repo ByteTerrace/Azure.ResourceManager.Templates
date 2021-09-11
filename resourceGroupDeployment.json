@@ -188,6 +188,7 @@
         "defaultResourceProperties": {
             "applicationConfigurationStore": {
                 "customerManagedEncryption": {},
+                "identity": {},
                 "isPublicNetworkAccessEnabled": false,
                 "privateEndpoints": [],
                 "settings": {},
@@ -298,6 +299,7 @@
                 }
             },
             "diskEncryptionSet": {
+                "identity": {},
                 "isDoubleEncryptionAtRestEnabled": true,
                 "keyVaultResourceGroupName": "[variables('resourceGroupName')]",
                 "keyVaultSubscriptionId": "[variables('subscriptionId')]",
@@ -499,7 +501,8 @@
             "recoveryServicesVault": {
                 "audit": "[variables('audit')]",
                 "backup": {},
-                "customerManagedEncryption": {}
+                "customerManagedEncryption": {},
+                "identity": {}
             },
             "redisCache": {
                 "audit": "[variables('audit')]",
@@ -687,6 +690,7 @@
                 "frameworkVersion": "DOTNETCORE|3.1",
                 "functionExtension": {},
                 "healthCheck": {},
+                "identity": {},
                 "ipSecurityRestrictions": [],
                 "isAlwaysOnEnabled": true,
                 "isClientAffinityEnabled": false,
@@ -2376,6 +2380,9 @@
                     "customerManagedEncryption": {
                         "value": "[union(variables('defaultResourceProperties').applicationConfigurationStore, variables('resourceDefinitions').applicationConfigurationStores[copyIndex()]).customerManagedEncryption]"
                     },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').applicationConfigurationStore, variables('resourceDefinitions').applicationConfigurationStores[copyIndex()]).identity]"
+                    },
                     "isPublicNetworkAccessEnabled": {
                         "value": "[union(variables('defaultResourceProperties').applicationConfigurationStore, variables('resourceDefinitions').applicationConfigurationStores[copyIndex()]).isPublicNetworkAccessEnabled]"
                     },
@@ -2432,6 +2439,9 @@
                     },
                     "customerManagedEncryption": {
                         "value": "[union(variables('defaultResourceProperties').recoveryServicesVault, variables('resourceDefinitions').recoveryServicesVaults[copyIndex()]).customerManagedEncryption]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').recoveryServicesVault, variables('resourceDefinitions').recoveryServicesVaults[copyIndex()]).identity]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').recoveryServicesVaults[copyIndex()]).location]"
@@ -2652,6 +2662,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').diskEncryptionSet, variables('resourceDefinitions').diskEncryptionSets[copyIndex()]).identity]"
+                    },
                     "isDoubleEncryptionAtRestEnabled": {
                         "value": "[union(variables('defaultResourceProperties').diskEncryptionSet, variables('resourceDefinitions').diskEncryptionSets[copyIndex()]).isDoubleEncryptionAtRestEnabled]"
                     },
@@ -3759,6 +3772,9 @@
                     "healthCheck": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).healthCheck]"
                     },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).identity]"
+                    },
                     "ipSecurityRestrictions": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).ipSecurityRestrictions]"
                     },
@@ -4033,7 +4049,7 @@
             "resourceGroup": "[union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).resourceGroupName]",
             "subscriptionId": "[union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).subscriptionId]",
             "type": "Microsoft.Resources/deployments"
-        }/*,
+        },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').scripts.postDeploy))]",
@@ -4125,6 +4141,6 @@
                 }
             },
             "type": "Microsoft.Resources/deployments"
-        }*/
+        }
     ]
 }
