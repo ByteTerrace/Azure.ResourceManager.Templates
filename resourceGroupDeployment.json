@@ -331,7 +331,8 @@
                 "topic": {
                     "audit": "[variables('audit')]",
                     "identity": {},
-                    "isPublicNetworkAccessEnabled": false
+                    "isPublicNetworkAccessEnabled": false,
+                    "privateEndpoints": []
                 }
             },
             "eventHub": {
@@ -1722,6 +1723,9 @@
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').eventGrid.topics[copyIndex()].name]"
+                    },
+                    "privateEndpoints": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.topic, variables('resourceDefinitions').eventGrid.topics[copyIndex()]).privateEndpoints]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
