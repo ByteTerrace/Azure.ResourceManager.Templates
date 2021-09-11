@@ -4049,7 +4049,7 @@
             "resourceGroup": "[union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).resourceGroupName]",
             "subscriptionId": "[union(variables('defaultResourceProperties').deployment, variables('resourceDefinitions').deployments[copyIndex()]).subscriptionId]",
             "type": "Microsoft.Resources/deployments"
-        },
+        }/*,
         {
             "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').scripts.postDeploy))]",
@@ -4141,6 +4141,6 @@
                 }
             },
             "type": "Microsoft.Resources/deployments"
-        }
+        }*/
     ]
 }
