@@ -124,7 +124,8 @@
         "settings": "[if(variables('settingsIsNotEmpty'), parameters('settings').array, createArray(createObject('name', 'dummySetting')))]",
         "settingsCount": "[length(union(createObject('array', createArray()), parameters('settings')).array)]",
         "settingsIsNotEmpty": "[greater(variables('settingsCount'), 0)]",
-        "subscriptionId": "[subscription().subscriptionId]"
+        "subscriptionId": "[subscription().subscriptionId]",
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]"
     },
     "resources": [
         {

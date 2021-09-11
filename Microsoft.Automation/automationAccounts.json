@@ -84,6 +84,7 @@
             "automationAccount": "[resourceId('Microsoft.Automation/automationAccounts', parameters('name'))]"
         },
         "subscriptionId": "[subscription().subscriptionId]",
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]",
         "webWorkerPrivateEndpoints": "[union(variables('defaultResourceProperties').webWorker, parameters('webWorker')).privateEndpoints]",
         "webWorkerPrivateEndpointsCount": "[length(variables('webWorkerPrivateEndpoints'))]",
         "webWorkerPrivateEndpointsIsNotEmpty": "[greater(variables('webWorkerPrivateEndpointsCount'), 0)]"
@@ -91,7 +92,7 @@
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').automationAccounts]",
-            "identity": "[if(variables('identity').isEnabled, union(createObject('type', if(empty(variables('identity').name), 'SystemAssigned', 'UserAssigned')), if(empty(variables('identity').name), createObject(), createObject('userAssignedIdentities', createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name))))), null())]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {

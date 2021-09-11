@@ -717,6 +717,7 @@
                 }
             }
         },
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]",
         "windowsConfiguration": {
             "additionalUnattendContent": "[null()]",
             "enableAutomaticUpdates": "[not(equals(toLower(variables('windowsConfigurationFriendly').patchSettings.mode), 'manual'))]",
