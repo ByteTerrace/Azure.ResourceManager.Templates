@@ -56,9 +56,8 @@
             },
             "identity": {
                 "isEnabled": true,
-                "name": "",
-                "resourceGroupName": "[variables('resourceGroupName')]",
-                "subscriptionId": "[variables('subscriptionId')]"
+                "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
+                "userAssignedIdentities": []
             },
             "privateEndpoint": {
                 "dnsZone": {
