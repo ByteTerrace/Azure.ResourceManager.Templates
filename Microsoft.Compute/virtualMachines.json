@@ -1,6 +1,78 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a virtual machine with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "audit": {
+                        "isEnabled": false
+                    },
+                    "dataDisks": [],
+                    "imageReference": {
+                        "id": "MyImageReference"
+                    },
+                    "licenseType": "Windows_Server",
+                    "name": "MyVirtualMachine",
+                    "osDisk": {},
+                    "skuName": "Standard_D2s_v4",
+                    "windowsConfiguration": {}
+                }
+            },
+            {
+                "description": "Deploys a virtual machine with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "availabilitySet": {
+                        "name": "MyAvailabilitySet"
+                    },
+                    "backup": {
+                        "policyName": "MyBackupPolicy",
+                        "recoveryServicesVault": {
+                            "name": "MyRecoveryServicesVault"
+                        }
+                    },
+                    "dataDisks": [],
+                    "diskEncryptionSet": {
+                        "name": "MyDiskEncryptionSet"
+                    },
+                    "imageReference": {
+                        "id": "MyImageReference"
+                    },
+                    "licenseType": "Windows_Server",
+                    "name": "MyVirtualMachine",
+                    "networkInterfaceCards": [
+                        {
+                            "ipConfigurations": [
+                                {
+                                    "addressVersion": "IPv4",
+                                    "allocationMethod": "Dynamic",
+                                    "applicationSecurityGroup": {
+                                        "name": "MyApplicationSecurityGroup"
+                                    },
+                                    "name": "default",
+                                    "subnet": {
+                                        "name": "MySubnet",
+                                        "virtualNetworkName": "MyVirtualNetwork"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "osDisk": {},
+                    "skuName": "Standard_D4s_v4",
+                    "windowsConfiguration": {}
+                }
+            }
+        ]
+    },
     "parameters": {
         "administratorUserName": {
             "defaultValue": "[uniqueString(parameters('name'))]",
