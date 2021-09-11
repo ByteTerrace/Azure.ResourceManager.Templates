@@ -1,6 +1,20 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys an availability set with the recommended set of properties for any environment.",
+                "name": "Generic",
+                "value": {
+                    "name": "MyAvailabilitySet",
+                    "numberOfFaultDomains": 3,
+                    "numberOfUpdateDomains": 5,
+                    "proximityPlacementGroup": "MyProximityPlacementGroup"
+                }
+            }
+        ]
+    },
     "parameters": {
         "location": {
             "metadata": {

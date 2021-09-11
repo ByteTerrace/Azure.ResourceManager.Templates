@@ -1,6 +1,44 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a role assignment for system managed identity.",
+                "name": "System Identity",
+                "value": {
+                    "assignee": {
+                        "name": "MyStorageAccount",
+                        "type": "Microsoft.Storage/storageAccounts"
+                    },
+                    "assignor": {
+                        "name": "MyKeyVault",
+                        "type": "Microsoft.KeyVault/vaults"
+                    },
+                    "roleDefinition": {
+                        "name": "Key Vault Crypto Service Encryption User"
+                    }
+                }
+            },
+            {
+                "description": "Deploys a role assignment for user-assigned managed identity.",
+                "name": "User-Assigned Identity",
+                "value": {
+                    "assignee": {
+                        "name": "MyManagedIdentity",
+                        "type": "Microsoft.ManagedIdentity/userAssignedIdentities"
+                    },
+                    "assignor": {
+                        "name": "MyKeyVault",
+                        "type": "Microsoft.KeyVault/vaults"
+                    },
+                    "roleDefinition": {
+                        "name": "Key Vault Crypto Service Encryption User"
+                    }
+                }
+            }
+        ]
+    },
     "parameters": {
         "assignee": {
             "metadata": {

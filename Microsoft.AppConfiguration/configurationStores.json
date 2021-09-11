@@ -1,6 +1,43 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys an application configuration store with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "name": "MyAppConfig",
+                    "skuName": "Free"
+                }
+            },
+            {
+                "description": "Deploys an application configuration store with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "name": "MyAppConfig",
+                    "privateEndpoints": [
+                        {
+                            "dnsZones": [
+                                {
+                                    "name": "privatelink.azconfig.io"
+                                }
+                            ],
+                            "name": "MyPrivateEndpoint",
+                            "subnet": {
+                                "name":"MySubnet",
+                                "virtualNetworkName": "MyVirtualNetwork"
+                            }
+                        }
+                    ],
+                    "settings": {
+                        "collection": []
+                    },
+                    "skuName": "Standard"
+                }
+            }
+        ]
+    },
     "parameters": {
         "customerManagedEncryption": {
             "defaultValue": {},
@@ -121,9 +158,6 @@
             "configurationStore": "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('name'))]",
             "configurationStoreCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', if(variables('isCustomerManagedEncryptionEnabled'), variables('customerManagedEncryption').keyVault.name, 'dummyKeyVault'))]"
         },
-        "settings": "[if(variables('settingsIsNotEmpty'), parameters('settings').array, createArray(createObject('name', 'dummySetting')))]",
-        "settingsCount": "[length(union(createObject('array', createArray()), parameters('settings')).array)]",
-        "settingsIsNotEmpty": "[greater(variables('settingsCount'), 0)]",
         "subscriptionId": "[subscription().subscriptionId]",
         "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]"
     },
@@ -212,9 +246,8 @@
         },
         {
             "apiVersion": "[variables('apiVersions').configurationStoresKeyValues]",
-            "condition": "[variables('settingsIsNotEmpty')]",
             "copy": {
-                "count": "[variables('settingsCount')]",
+                "count": "[length(union(createObject('collection', createArray()), parameters('settings')).collection)]",
                 "mode": "Parallel",
                 "name": "settingsCopy"
             },

@@ -301,8 +301,7 @@
             "diskEncryptionSet": {
                 "identity": {},
                 "isDoubleEncryptionAtRestEnabled": true,
-                "keyVaultResourceGroupName": "[variables('resourceGroupName')]",
-                "keyVaultSubscriptionId": "[variables('subscriptionId')]",
+                "keyVault": {},
                 "keyVersion": ""
             },
             "dnsZone": {
@@ -2684,14 +2683,8 @@
                     "keyName": {
                         "value": "[variables('resourceDefinitions').diskEncryptionSets[copyIndex()].keyName]"
                     },
-                    "keyVaultName": {
-                        "value": "[variables('resourceDefinitions').diskEncryptionSets[copyIndex()].keyVaultName]"
-                    },
-                    "keyVaultResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').diskEncryptionSet, variables('resourceDefinitions').diskEncryptionSets[copyIndex()]).keyVaultResourceGroupName]"
-                    },
-                    "keyVaultSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').diskEncryptionSet, variables('resourceDefinitions').diskEncryptionSets[copyIndex()]).keyVaultSubscriptionId]"
+                    "keyVault": {
+                        "value": "[variables('resourceDefinitions').diskEncryptionSets[copyIndex()].keyVault]"
                     },
                     "keyVersion": {
                         "value": "[union(variables('defaultResourceProperties').diskEncryptionSet, variables('resourceDefinitions').diskEncryptionSets[copyIndex()]).keyVersion]"
