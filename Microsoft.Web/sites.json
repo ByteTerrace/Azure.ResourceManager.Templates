@@ -4,8 +4,40 @@
     "metadata": {
         "examples": [
             {
-                "description": "Deploys a function application with the recommended set of properties for any environment.",
-                "name": "Function Application",
+                "description": "Deploys a function application with the recommended set of properties for a development environment.",
+                "name": "Function Application - Development",
+                "value": {
+                    "applicationSettings": {
+                        "collection": []
+                    },
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "isEnabled": false
+                        }
+                    },
+                    "connectionStrings": {
+                        "collection": []
+                    },
+                    "cors": {
+                        "allowedOrigins": []
+                    },
+                    "customDomains": [],
+                    "frameworkVersion": "DOTNETCORE|3.1",
+                    "functionExtension": {
+                        "isEnabled": true,
+                        "storageAccount": {
+                            "name": "MyStorageAccount"
+                        }
+                    },
+                    "name": "MyFunctionApplication",
+                    "servicePlan": {
+                        "name": "MyServicePlan"
+                    }
+                }
+            },
+            {
+                "description": "Deploys a function application with the recommended set of properties for a production environment.",
+                "name": "Function Application - Production",
                 "value": {
                     "applicationSettings": {
                         "collection": []
@@ -40,7 +72,7 @@
                             }
                         }
                     ],
-                    "name": "MyWebApplication",
+                    "name": "MyFunctionApplication",
                     "privateEndpoints": [
                         {
                             "dnsZones": [
@@ -65,8 +97,34 @@
                 }
             },
             {
-                "description": "Deploys a web application with the recommended set of properties for any environment.",
-                "name": "Web Application",
+                "description": "Deploys a web application with the recommended set of properties for a development environment.",
+                "name": "Web Application - Development",
+                "value": {
+                    "applicationSettings": {
+                        "collection": []
+                    },
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "isEnabled": false
+                        }
+                    },
+                    "connectionStrings": {
+                        "collection": []
+                    },
+                    "cors": {
+                        "allowedOrigins": []
+                    },
+                    "customDomains": [],
+                    "frameworkVersion": "DOTNETCORE|3.1",
+                    "name": "MyWebApplication",
+                    "servicePlan": {
+                        "name": "MyServicePlan"
+                    }
+                }
+            },
+            {
+                "description": "Deploys a web application with the recommended set of properties for a production environment.",
+                "name": "Web Application - Production",
                 "value": {
                     "applicationSettings": {
                         "collection": []
