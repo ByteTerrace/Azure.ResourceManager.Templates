@@ -1,6 +1,56 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys an automation account with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "name": "MyAutomationAccount"
+                }
+            },
+            {
+                "description": "Deploys an automation account with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "desiredStateConfiguration": {
+                        "privateEndpoints": [
+                            {
+                                "dnsZones": [
+                                    {
+                                        "name": "privatelink.azure-automation.net"
+                                    }
+                                ],
+                                "name": "MyDesiredStateConfigurationPrivateEndpoint",
+                                "subnet": {
+                                    "name":"MySubnet",
+                                    "virtualNetworkName": "MyVirtualNetwork"
+                                }
+                            }
+                        ]
+                    },
+                    "name": "MyAutomationAccount",
+                    "webWorker": {
+                        "privateEndpoints": [
+                            {
+                                "dnsZones": [
+                                    {
+                                        "name": "privatelink.azure-automation.net"
+                                    }
+                                ],
+                                "name": "MyWebWorkerPrivateEndpoint",
+                                "subnet": {
+                                    "name":"MySubnet",
+                                    "virtualNetworkName": "MyVirtualNetwork"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    },
     "parameters": {
         "desiredStateConfiguration": {
             "defaultValue": {},
