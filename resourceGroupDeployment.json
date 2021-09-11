@@ -330,7 +330,9 @@
                     "eventDeliverySchema": "EventGridSchema"
                 },
                 "topic": {
-                    "audit": "[variables('audit')]"
+                    "audit": "[variables('audit')]",
+                    "identity": {},
+                    "isPublicNetworkAccessEnabled": false
                 }
             },
             "eventHub": {
@@ -430,8 +432,9 @@
             "location": "[resourceGroup().location]",
             "logic": {
                 "application": {
-                    "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
-                    "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
+                    "audit": "[variables('audit')]",
+                    "connections": {},
+                    "identity": {},
                     "isEnabled": true
                 }
             },
@@ -586,6 +589,7 @@
                 "vulnerabilityAssessment": {}
             },
             "staticWebApplication": {
+                "identity": {},
                 "privateEndpoints": [],
                 "skuName": "Standard"
             },
@@ -1707,6 +1711,12 @@
                 "parameters": {
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').eventGrid.topic, variables('resourceDefinitions').eventGrid.topics[copyIndex()]).audit]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.topic, variables('resourceDefinitions').eventGrid.topics[copyIndex()]).identity]"
+                    },
+                    "isPublicNetworkAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.topic, variables('resourceDefinitions').eventGrid.topics[copyIndex()]).isPublicNetworkAccessEnabled]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').eventGrid.topics[copyIndex()]).location]"
@@ -3694,6 +3704,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').staticWebApplication, variables('resourceDefinitions').staticWebApplications[copyIndex()]).identity]"
+                    },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').staticWebApplications[copyIndex()]).location]"
                     },
@@ -3867,6 +3880,12 @@
                 "parameters": {
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').logic.application, variables('resourceDefinitions').logic.applications[copyIndex()]).audit]"
+                    },
+                    "connections": {
+                        "value": "[union(variables('defaultResourceProperties').logic.application, variables('resourceDefinitions').logic.applications[copyIndex()]).connections]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').logic.application, variables('resourceDefinitions').logic.applications[copyIndex()]).identity]"
                     },
                     "isEnabled": {
                         "value": "[union(variables('defaultResourceProperties').logic.application, variables('resourceDefinitions').logic.applications[copyIndex()]).isEnabled]"

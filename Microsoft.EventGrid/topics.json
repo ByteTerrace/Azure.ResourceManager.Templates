@@ -9,6 +9,20 @@
             },
             "type": "object"
         },
+        "identity": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the identity that will be assigned to the Azure Event Grid Topic."
+            },
+            "type": "object"
+        },
+        "isPublicNetworkAccessEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the Azure Event Grid Topic is accessible from the internet."
+            },
+            "type": "bool"
+        },
         "location": {
             "metadata": {
                 "description": "Specifies the location in which the Azure Event Grid Topic resource(s) will be deployed."
@@ -53,8 +67,14 @@
                     "days": 137,
                     "isEnabled": true
                 }
+            },
+            "identity": {
+                "isEnabled": true,
+                "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
+                "userAssignedIdentities": []
             }
         },
+        "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "resourceGroupName": "[resourceGroup().name]",
@@ -62,19 +82,18 @@
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
             "eventGridTopic": "[resourceId('Microsoft.EventGrid/topics', parameters('name'))]"
         },
-        "subscriptionId": "[subscription().subscriptionId]"
+        "subscriptionId": "[subscription().subscriptionId]",
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]"
     },
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').eventGridTopics]",
-            "identity": {
-                "type": "SystemAssigned"
-            },
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
                 "inputSchema": "EventGridSchema",
-                "publicNetworkAccess": "Enabled"
+                "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.EventGrid/topics"
