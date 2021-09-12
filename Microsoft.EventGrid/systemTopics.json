@@ -1,6 +1,39 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
+    "contentVersion": "1.0.0.0","metadata": {
+        "examples": [
+            {
+                "description": "Deploys an event grid system topic with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "audit": {
+                        "isEnabled": false
+                    },
+                    "name": "MyEventGridTopic",
+                    "source": {
+                        "name": "MyResourceName",
+                        "type": "MyResourceType"
+                    }
+                }
+            },
+            {
+                "description": "Deploys an event grid system topic with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "name": "MyEventGridTopic",
+                    "source": {
+                        "name": "MyResourceName",
+                        "type": "MyResourceType"
+                    }
+                }
+            }
+        ]
+    },
     "parameters": {
         "audit": {
             "defaultValue": {},
