@@ -135,7 +135,8 @@
             "eventGrid": {
                 "domains": [],
                 "eventSubscriptions": [],
-                "topics": []
+                "topics": [],
+                "systemTopics": []
             },
             "eventHub": {
                 "clusters": [],
@@ -333,6 +334,9 @@
                     "identity": {},
                     "isPublicNetworkAccessEnabled": false,
                     "privateEndpoints": []
+                },
+                "systemTopic": {
+                    "audit": "[variables('audit')]"
                 }
             },
             "eventHub": {
@@ -3993,6 +3997,98 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').eventGrid.systemTopics))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').eventGrid.systemTopics)]",
+                "mode": "Parallel",
+                "name": "eventGridSystemTopicsCopy"
+            },
+            "dependsOn": [
+                "applicationConfigurationStoresCopy",
+                "applicationInsightsComponentsCopy",
+                "applicationSecurityGroupsCopy",
+                "applicationServiceEnvironmentsCopy",
+                "applicationServicePlansCopy",
+                "automationAccountsCopy",
+                "availabilitySetsCopy",
+                "bastionHostsCopy",
+                "cdnProfilesCopy",
+                "communicationServicesCopy",
+                "containerInstancesCopy",
+                "containerRegistriesCopy",
+                "cosmosDbAccountsCopy",
+                "diskEncryptionSetsCopy",
+                "eventGridDomainsCopy",
+                "eventGridEventSubcriptionsCopy",
+                "eventGridTopicsCopy",
+                "eventHubsClustersCopy",
+                "eventHubsCopy",
+                "eventHubsNamespacesCopy",
+                "firewallsCopy",
+                "hdInsightClustersCopy",
+                "hostGroupsCopy",
+                "keyVaultsCopy",
+                "kubernetesServiceClustersCopy",
+                "loadBalancersCopy",
+                "logAnalyticsWorkspacesCopy",
+                "logAnalyticsWorkspacesLinkedStorageJoinCopy",
+                "logAnalyticsWorkspacesLinkedStorageRbacCopy",
+                "logicApplicationWorkflowsCopy",
+                "managedHsmsCopy",
+                "managedIdentitiesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
+                "networkSecurityGroupsCopy",
+                "privateDnsZonesCopy",
+                "proximityPlacementGroupsCopy",
+                "publicDnsZonesCopy",
+                "publicIpAddressesCopy",
+                "publicIpPrefixesCopy",
+                "recoveryServicesVaultsCopy",
+                "roleAssignmentsCopy",
+                "routeTablesCopy",
+                "scriptsPreDeployCopy",
+                "serviceBusNamespacesCopy",
+                "sharedImageGalleriesCopy",
+                "sqlDatabasesCopy",
+                "sqlServersCopy",
+                "staticWebApplicationsCopy",
+                "storageAccountsCopy",
+                "subnetsCopy",
+                "virtualMachinesCopy",
+                "virtualMachineScaleSetsCopy",
+                "virtualNetworksCopy",
+                "webApplicationsCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').eventGridSystemTopic, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.systemTopic, variables('resourceDefinitions').eventGrid.systemTopics[copyIndex()]).audit]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').eventGrid.systemTopics[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').eventGrid.systemTopics[copyIndex()].name]"
+                    },
+                    "source": {
+                        "value": "[variables('resourceDefinitions').eventGrid.systemTopics[copyIndex()].source]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.EventGrid/systemTopics.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').deployments))]",
             "dependsOn": [
                 "applicationConfigurationStoresCopy",
@@ -4011,6 +4107,7 @@
                 "diskEncryptionSetsCopy",
                 "eventGridDomainsCopy",
                 "eventGridEventSubcriptionsCopy",
+                "eventGridSystemTopicsCopy",
                 "eventGridTopicsCopy",
                 "eventHubsClustersCopy",
                 "eventHubsCopy",
@@ -4094,6 +4191,7 @@
                 "diskEncryptionSetsCopy",
                 "eventGridDomainsCopy",
                 "eventGridEventSubcriptionsCopy",
+                "eventGridSystemTopicsCopy",
                 "eventGridTopicsCopy",
                 "eventHubsClustersCopy",
                 "eventHubsCopy",
