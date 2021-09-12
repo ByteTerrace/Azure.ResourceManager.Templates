@@ -1,7 +1,36 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a SQL database with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "name": "MySqlDatabase",
+                    "serverName": "MySqlServer"
+                }
+            },
+            {
+                "description": "Deploys a SQL database with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "isAzureHybridBenefitEnabled": true,
+                    "name": "MySqlDatabase",
+                    "serverName": "MySqlServer",
+                    "skuName": "GP_Gen5_2"
+                }
+            }
+        ]
+    },
     "parameters": {
+        "autoscale": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the autoscale settings that will be applied to the Azure Sql Server Database."
+            },
+            "type": "object"
+        },
         "audit": {
             "defaultValue": {},
             "metadata": {
@@ -9,10 +38,29 @@
             },
             "type": "object"
         },
+        "backupStorageRedundancyType": {
+            "allowedValues": [
+                "Geo",
+                "Local",
+                "Zone"
+            ],
+            "defaultValue": "Geo",
+            "metadata": {
+                "description": "Specifies the storage redundancy type of the backups that will be taken of the Azure Sql Server Database."
+            },
+            "type": "string"
+        },
         "catalogCollation": {
             "defaultValue": "DATABASE_DEFAULT",
             "metadata": {
                 "description": "Specifies the name of the catalog collation that will be used by Azure Sql Server Database."
+            },
+            "type": "string"
+        },
+        "createMode": {
+            "defaultValue": "Default",
+            "metadata": {
+                "description": "Specifies the mode that will be used when provisioning the Azure Sql Server Database."
             },
             "type": "string"
         },
@@ -37,6 +85,13 @@
             },
             "type": "bool"
         },
+        "isReadScaleOutEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the read scale-out feature is enabled on Azure Sql Server Database."
+            },
+            "type": "bool"
+        },
         "isZoneRedundant": {
             "defaultValue": true,
             "metadata": {
@@ -56,6 +111,24 @@
             },
             "type": "string"
         },
+        "restorePointInTime": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the point in time to restore the Azure Sql Server Database to."
+            },
+            "type": "string"
+        },
+        "secondaryType": {
+            "allowedValues": [
+                "Geo",
+                "Named"
+            ],
+            "defaultValue": "Geo",
+            "metadata": {
+                "description": "Specifies the seconary type of the Azure Sql Server Database (if the datase is not a primary)."
+            },
+            "type": "string"
+        },
         "serverName": {
             "metadata": {
                 "description": "Specifies the name of the Azure Sql Server that the database will be deployed within."
@@ -68,6 +141,13 @@
                 "description": "Specifies the SKU name of the Azure Sql Server Database."
             },
             "type": "string"
+        },
+        "sourceDatabase": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the source database that will be referenced when provisioning the Azure Sql Server Database."
+            },
+            "type": "object"
         },
         "tags": {
             "defaultValue": {},
@@ -83,6 +163,7 @@
             "sqlServersDatabases": "2021-02-01-preview"
         },
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "autoscale": "[union(variables('defaultResourceProperties').autoscale, parameters('autoscale'))]",
         "defaultResourceProperties": {
             "audit": {
                 "actionAndGroupNames": [
@@ -90,7 +171,7 @@
                     "FAILED_DATABASE_AUTHENTICATION_GROUP",
                     "SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP"
                 ],
-                "isEnabled": true,
+                "isEnabled": false,
                 "logAnalyticsWorkspace": {
                     "name": "",
                     "resourceGroupName": "[variables('resourceGroupName')]",
@@ -108,8 +189,18 @@
                     "days": 137,
                     "isEnabled": true
                 }
+            },
+            "autoscale": {
+                "autoPauseDelayInMinutes": 60,
+                "isEnabled": false,
+                "minimumCapacity": "[variables('skuCapacity')]"
+            },
+            "sourceDatabase": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
             }
         },
+        "isAutoScaleEnabled": "[variables('autoscale').isEnabled]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isElasticPoolNameNotEmpty": "[not(empty(parameters('elasticPoolName')))]",
@@ -119,6 +210,10 @@
             "sqlServerDatabase": "[resourceId('Microsoft.Sql/servers/databases', parameters('serverName'), parameters('name'))]",
             "sqlServerElasticPool": "[resourceId('Microsoft.Sql/servers/elasticpools', parameters('serverName'), parameters('elasticPoolName'))]"
         },
+        "skuCapacity": "[skip(last(split(parameters('skuName'), '_')), 1)]",
+        "skuName": "[if(variables('isAutoScaleEnabled'), format('{0}_S{1}', variables('skuPrefix'), substring(parameters('skuName'), indexOf(parameters('skuName'), '_')), ''), parameters('skuName'))]",
+        "skuPrefix": "[substring(parameters('skuName'), 0, indexOf(parameters('skuName'), '_'))]",
+        "sourceDatabase": "[union(variables('defaultResourceProperties').sourceDatabase, parameters('sourceDatabase'))]",
         "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
@@ -127,15 +222,25 @@
             "location": "[parameters('location')]",
             "name": "[format('{0}/{1}', parameters('serverName'), parameters('name'))]",
             "properties": {
+                "autoPauseDelay": "[if(variables('isAutoScaleEnabled'), variables('autoscale').autoPauseDelayInMinutes, null())]",
                 "catalogCollation": "[parameters('catalogCollation')]",
                 "collation": "[parameters('defaultCollation')]",
-                "createMode": "Default",
+                "createMode": "[parameters('createMode')]",
                 "elasticPoolId": "[if(variables('isElasticPoolNameNotEmpty'), variables('resourceIds').sqlServerElasticPool, null())]",
-                "licenseType": "[if(variables('isElasticPoolNameNotEmpty'), null(), if(parameters('isAzureHybridBenefitEnabled'), 'BasePrice', 'LicenseIncluded'))]",
+                "isLedgerOn": "[null()]",
+                "licenseType": "[if(parameters('isAzureHybridBenefitEnabled'), 'BasePrice', 'LicenseIncluded')]",
+                "maintenanceConfigurationId": "[null()]",
+                "maxSizeBytes": "[null()]",
+                "minCapacity": "[if(variables('isAutoScaleEnabled'), variables('autoscale').minimumCapacity, null())]",
+                "secondaryType": "[if(contains(parameters('createMode'), 'Secondary'), parameters('secondaryType'), null())]",
+                "sourceDatabaseId": "[if(empty(parameters('sourceDatabase')), null(), resourceId(variables('sourceDatabase').subscriptionId, variables('sourceDatabase').resourceGroupName, 'Microsoft.Sql/servers/databases', variables('sourceDatabase').serverName, variables('sourceDatabase').name))]",
+                "readScale": "[if(parameters('isReadScaleOutEnabled'), 'Enabled', 'Disabled')]",
+                "requestedBackupStorageRedundancy": "[parameters('backupStorageRedundancyType')]",
+                "restorePointInTime": "[if(empty(parameters('restorePointInTime')), null(), parameters('restorePointInTime'))]",
                 "zoneRedundant": "[parameters('isZoneRedundant')]"
             },
             "sku": {
-                "name": "[if(variables('isElasticPoolNameNotEmpty'), 'ElasticPool', parameters('skuName'))]"
+                "name": "[if(variables('isElasticPoolNameNotEmpty'), 'ElasticPool', variables('skuName'))]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Sql/servers/databases"

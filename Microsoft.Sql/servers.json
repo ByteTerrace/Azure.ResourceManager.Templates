@@ -1,6 +1,40 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a logical SQL Server with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "audit": {
+                        "isEnabled": false
+                    },
+                    "name": "MySqlServer",
+                    "vulnerabilityAssessment": {
+                        "isEnabled": false
+                    }
+                }
+            },
+            {
+                "description": "Deploys a logical SQL Server with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "activeDirectoryAdministratorObjectId": "MyActiveDirectoryAdministratorUserId",
+                    "activeDirectoryAdministratorUserName": "MyActiveDirectoryAdministratorUserName",
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "name": "MySqlServer",
+                    "vulnerabilityAssessment": {
+                        "storageAccountName": "MyStorageAccount"
+                    }
+                }
+            }
+        ]
+    },
     "parameters": {
         "activeDirectoryAdministratorObjectId": {
             "defaultValue": "",
@@ -166,7 +200,6 @@
             "keyVaultsKeys": "2019-09-01",
             "privateEndpoints": "2020-07-01",
             "privateEndpointsPrivateDnsZoneGroups": "2020-07-01",
-            "roleAssignments": "2020-04-01-preview",
             "sqlServers": "2020-11-01-preview",
             "sqlServersAdministrators": "2020-11-01-preview",
             "sqlServersAuditingSettings": "2020-11-01-preview",
@@ -185,7 +218,6 @@
         },
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
         "customerManagedEncryption": "[union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption'))]",
-        "customerManagedEncryptionKeyVaultRbacDeploymentName": "[format('{0}-KvRbac', deployment().name)]",
         "defaultResourceProperties": {
             "audit": {
                 "actionAndGroupNames": [
@@ -213,7 +245,7 @@
                 }
             },
             "customerManagedEncryption": {
-                "isEnabled": true,
+                "isEnabled": false,
                 "keyName": "",
                 "keyVault": {
                     "name": "",
@@ -277,17 +309,13 @@
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
-            "keyVaultCryptoServiceEncryptionUserRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]",
             "sqlServer": "[resourceId('Microsoft.Sql/servers', variables('serverName'))]",
             "sqlServerAdministrator": "[resourceId('Microsoft.Sql/servers/administrators', variables('serverName'), 'activeDirectory')]",
             "sqlServerAuditingSettings": "[resourceId('Microsoft.Sql/servers/auditingSettings', variables('serverName'), 'default')]",
             "sqlServerCustomerManagedEncryptionKey": "[resourceId('Microsoft.Sql/servers/keys', variables('serverName'), variables('serverKeyName'))]",
             "sqlServerCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', if(variables('isCustomerManagedEncryptionEnabled'), variables('customerManagedEncryption').keyVault.name, '<NULL>'))]",
-            "sqlServerCustomerManagedEncryptionKeyVaultRbacDeployment": "[resourceId('Microsoft.Resources/deployments', variables('customerManagedEncryptionKeyVaultRbacDeploymentName'))]",
             "sqlServerSecurityAlertPolicies": "[resourceId('Microsoft.Sql/servers/securityAlertPolicies', variables('serverName'), 'default')]",
-            "sqlServerVulnerabilityAssessmentStorageAccount": "[resourceId(variables('vulnerabilityAssessment').storageAccount.subscriptionId, variables('vulnerabilityAssessment').storageAccount.resourceGroupName, 'Microsoft.Storage/storageAccounts', if(variables('isVulnerabilityAssessmentEnabled'), variables('vulnerabilityAssessment').storageAccount.name, '<NULL>'))]",
-            "sqlServerVulnerabilityAssessmentStorageAccountRbacDeployment": "[resourceId('Microsoft.Resources/deployments', variables('vulnerabilityAssessmentStorageAccountRbacDeploymentName'))]",
-            "storageAccountBlobContributorRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]"
+            "sqlServerVulnerabilityAssessmentStorageAccount": "[resourceId(variables('vulnerabilityAssessment').storageAccount.subscriptionId, variables('vulnerabilityAssessment').storageAccount.resourceGroupName, 'Microsoft.Storage/storageAccounts', if(variables('isVulnerabilityAssessmentEnabled'), variables('vulnerabilityAssessment').storageAccount.name, '<NULL>'))]"
         },
         "serverKeyName": "[if(variables('isCustomerManagedEncryptionEnabled'), format('{0}_{1}_{2}', variables('customerManagedEncryption').keyVault.name, variables('customerManagedEncryption').keyName, variables('customerManagedEncryption').keyVersion), 'ServiceManaged')]",
         "serverKeyType": "[if(variables('isCustomerManagedEncryptionEnabled'), 'AzureKeyVault', 'ServiceManaged')]",
@@ -314,152 +342,6 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Sql/servers"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').deployments]",
-            "condition": "[variables('isCustomerManagedEncryptionEnabled')]",
-            "dependsOn": [
-                "[variables('resourceIds').sqlServer]"
-            ],
-            "name": "[variables('customerManagedEncryptionKeyVaultRbacDeploymentName')]",
-            "properties": {
-                "expressionEvaluationOptions": {
-                    "scope": "inner"
-                },
-                "mode": "Incremental",
-                "parameters": {
-                    "keyVaultCryptoServiceEncryptionUserRoleDefinitionId": {
-                        "value": "[variables('resourceIds').keyVaultCryptoServiceEncryptionUserRoleDefinition]"
-                    },
-                    "keyVaultId": {
-                        "value": "[variables('resourceIds').sqlServerCustomerManagedEncryptionKeyVault]"
-                    },
-                    "keyVaultName": {
-                        "value": "[variables('customerManagedEncryption').keyVault.name]"
-                    },
-                    "roleAssignmentsApiVersion": {
-                        "value": "[variables('apiVersions').roleAssignments]"
-                    },
-                    "sqlServerApiVersion": {
-                        "value": "[variables('apiVersions').sqlServers]"
-                    },
-                    "sqlServerId": {
-                        "value": "[variables('resourceIds').sqlServer]"
-                    }
-                },
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {
-                        "keyVaultCryptoServiceEncryptionUserRoleDefinitionId": {
-                            "type": "string"
-                        },
-                        "keyVaultId": {
-                            "type": "string"
-                        },
-                        "keyVaultName": {
-                            "type": "string"
-                        },
-                        "roleAssignmentsApiVersion":{
-                            "type": "string"
-                        },
-                        "sqlServerApiVersion": {
-                            "type": "string"
-                        },
-                        "sqlServerId": {
-                            "type": "string"
-                        }
-                    },
-                    "resources": [
-                        {
-                            "apiVersion": "[parameters('roleAssignmentsApiVersion')]",
-                            "name": "[guid(parameters('sqlServerId'), parameters('keyVaultCryptoServiceEncryptionUserRoleDefinitionId'), parameters('keyVaultId'))]",
-                            "properties": {
-                                "principalId": "[reference(parameters('sqlServerId'), parameters('sqlServerApiVersion'), 'Full').identity.principalId]",
-                                "roleDefinitionId": "[parameters('keyVaultCryptoServiceEncryptionUserRoleDefinitionId')]"
-                            },
-                            "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
-                            "type": "Microsoft.Authorization/roleAssignments"
-                        }
-                    ]
-                }
-            },
-            "resourceGroup": "[variables('customerManagedEncryption').keyVault.resourceGroupName]",
-            "subscriptionId": "[variables('customerManagedEncryption').keyVault.subscriptionId]",
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').deployments]",
-            "condition": "[variables('isVulnerabilityAssessmentEnabled')]",
-            "dependsOn": [
-                "[variables('resourceIds').sqlServer]"
-            ],
-            "name": "[variables('vulnerabilityAssessmentStorageAccountRbacDeploymentName')]",
-            "properties": {
-                "expressionEvaluationOptions": {
-                    "scope": "inner"
-                },
-                "mode": "Incremental",
-                "parameters": {
-                    "roleAssignmentsApiVersion": {
-                        "value": "[variables('apiVersions').roleAssignments]"
-                    },
-                    "sqlServerApiVersion": {
-                        "value": "[variables('apiVersions').sqlServers]"
-                    },
-                    "sqlServerId": {
-                        "value": "[variables('resourceIds').sqlServer]"
-                    },
-                    "storageAccountBlobContributorRoleDefinitionId": {
-                        "value": "[variables('resourceIds').storageAccountBlobContributorRoleDefinition]"
-                    },
-                    "storageAccountId": {
-                        "value": "[variables('resourceIds').sqlServerVulnerabilityAssessmentStorageAccount]"
-                    },
-                    "storageAccountName": {
-                        "value": "[variables('vulnerabilityAssessment').storageAccount.name]"
-                    }
-                },
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {
-                        "roleAssignmentsApiVersion":{
-                            "type": "string"
-                        },
-                        "sqlServerApiVersion": {
-                            "type": "string"
-                        },
-                        "sqlServerId": {
-                            "type": "string"
-                        },
-                        "storageAccountBlobContributorRoleDefinitionId": {
-                            "type": "string"
-                        },
-                        "storageAccountId": {
-                            "type": "string"
-                        },
-                        "storageAccountName": {
-                            "type": "string"
-                        }
-                    },
-                    "resources": [
-                        {
-                            "apiVersion": "[parameters('roleAssignmentsApiVersion')]",
-                            "name": "[guid(parameters('sqlServerId'), parameters('storageAccountBlobContributorRoleDefinitionId'), parameters('storageAccountId'))]",
-                            "properties": {
-                                "principalId": "[reference(parameters('sqlServerId'), parameters('sqlServerApiVersion'), 'Full').identity.principalId]",
-                                "roleDefinitionId": "[parameters('storageAccountBlobContributorRoleDefinitionId')]"
-                            },
-                            "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storageAccountName'))]",
-                            "type": "Microsoft.Authorization/roleAssignments"
-                        }
-                    ]
-                }
-            },
-            "resourceGroup": "[variables('vulnerabilityAssessment').storageAccount.resourceGroupName]",
-            "subscriptionId": "[variables('vulnerabilityAssessment').storageAccount.subscriptionId]",
-            "type": "Microsoft.Resources/deployments"
         },
         {
             "apiVersion": "[variables('apiVersions').sqlServersAdministrators]",
@@ -643,8 +525,7 @@
                 "privateDnsZoneGroupsCopy",
                 "virtualNetworkRulesCopy",
                 "[variables('resourceIds').sqlServer]",
-                "[variables('resourceIds').sqlServerAdministrator]",
-                "[variables('resourceIds').sqlServerCustomerManagedEncryptionKeyVaultRbacDeployment]"
+                "[variables('resourceIds').sqlServerAdministrator]"
             ],
             "kind": "[variables('serverKeyType')]",
             "name": "[format('{0}/{1}', variables('serverName'), variables('serverKeyName'))]",
@@ -743,8 +624,7 @@
             "apiVersion": "[variables('apiVersions').sqlServersVulnerabilityAssessments]",
             "condition": "[variables('isVulnerabilityAssessmentEnabled')]",
             "dependsOn": [
-                "[variables('resourceIds').sqlServerSecurityAlertPolicies]",
-                "[variables('resourceIds').sqlServerVulnerabilityAssessmentStorageAccountRbacDeployment]"
+                "[variables('resourceIds').sqlServerSecurityAlertPolicies]"
             ],
             "name": "[format('{0}/default', parameters('name'))]",
             "properties": {

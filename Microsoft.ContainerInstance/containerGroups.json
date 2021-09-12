@@ -1,6 +1,60 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a container instance with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "audit": {
+                        "isEnabled": false
+                    },
+                    "containers": [
+                        {
+                            "name": "HelloAci"
+                        }
+                    ],
+                    "name": "MyContainerInstance",
+                    "operatingSystemName": "Linux",
+                    "ports": [
+                        {
+                            "port": 443,
+                            "protocol": "tcp"
+                        }
+                    ]
+                }
+            },
+            {
+                "description": "Deploys a container instance with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "containers": [
+                        {
+                            "name": "HelloAci"
+                        }
+                    ],
+                    "name": "MyContainerInstance",
+                    "operatingSystemName": "Linux",
+                    "ports": [
+                        {
+                            "port": 443,
+                            "protocol": "tcp"
+                        }
+                    ],
+                    "subnet": {
+                        "name":"MySubnet",
+                        "virtualNetworkName": "MyVirtualNetwork"
+                    }
+                }
+            }
+        ]
+    },
     "parameters": {
         "audit": {
             "defaultValue": {},
@@ -133,12 +187,10 @@
             "keyVaultsKeys": "2019-09-01",
             "logAnalyticsWorkspaces": "2020-08-01",
             "networkProfiles": "2021-02-01",
-            "roleAssignments": "2020-04-01-preview",
             "storageAccounts": "2021-02-01"
         },
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
         "customerManagedEncryption": "[union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption'))]",
-        "customerManagedEncryptionKeyVaultRbacDeploymentName": "[format('{0}-KvRbac', deployment().name)]",
         "defaultResourceProperties": {
             "audit": {
                 "isEnabled": true,
@@ -171,7 +223,7 @@
                 }
             },
             "customerManagedEncryption": {
-                "isEnabled": true,
+                "isEnabled": false,
                 "keyName": "",
                 "keyVault": {
                     "name": "",
@@ -220,7 +272,6 @@
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
             "containerGroups": "[resourceId('Microsoft.ContainerInstance/containerGroups', parameters('name'))]",
             "containerGroupsCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', if(variables('isCustomerManagedEncryptionEnabled'), variables('customerManagedEncryption').keyVault.name, '<NULL>'))]",
-            "containerGroupsCustomerManagedEncryptionKeyVaultRbacDeployment": "[resourceId('Microsoft.Resources/deployments', variables('customerManagedEncryptionKeyVaultRbacDeploymentName'))]",
             "keyVaultCryptoServiceEncryptionUserRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]",
             "networkProfile": "[resourceId('Microsoft.Network/networkProfiles', variables('networkProfileName'))]"
         },

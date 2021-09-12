@@ -1,6 +1,21 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a disk encryption set with the recommended set of properties for any environment.",
+                "name": "Generic",
+                "value": {
+                    "keyName": "MyDiskEncryptionSetKey",
+                    "keyVault": {
+                        "name": "MyKeyVault"
+                    },
+                    "name": "MyDiskEncryptionSet"
+                }
+            }
+        ]
+    },
     "parameters": {
         "identity": {
             "defaultValue": {},
@@ -22,25 +37,11 @@
             },
             "type": "string"
         },
-        "keyVaultName": {
+        "keyVault": {
             "metadata": {
-                "description": "Specifies the name of the Azure Key Vault that the Azure Disk Encryption Set will get its encryption key from."
+                "description": "An object that encapsulates the properties of the key vault that the Azure Disk Encryption Set will get its encryption key from."
             },
-            "type": "string"
-        },
-        "keyVaultResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Specifies the resource group name of the Azure Key Vault that the Azure Disk Encryption Set will get its encryption key from."
-            },
-            "type": "string"
-        },
-        "keyVaultSubscriptionId": {
-            "defaultValue": "[subscription().subscriptionId]",
-            "metadata": {
-                "description": "Specifies the subscription id of the Azure Key Vault that the Azure Disk Encryption Set will get its encryption key from."
-            },
-            "type": "string"
+            "type": "object"
         },
         "keyVersion": {
             "defaultValue": "",
@@ -71,33 +72,35 @@
     },
     "variables": {
         "apiVersions": {
-            "deployments": "2021-04-01",
             "diskEncryptionSets": "2020-12-01",
             "keyVaults": "2019-09-01",
-            "keyVaultsKeys": "2019-09-01",
-            "roleAssignments": "2020-04-01-preview"
+            "keyVaultsKeys": "2019-09-01"
         },
         "defaultResourceProperties": {
             "identity": {
                 "isEnabled": true,
-                "name": "",
+                "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
+                "userAssignedIdentities": []
+            },
+            "keyVault": {
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
             }
         },
         "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
+        "keyVault": "[union(variables('defaultResourceProperties').keyVault, parameters('keyVault'))]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
             "diskEncryptionSet": "[resourceId('Microsoft.Compute/diskEncryptionSets', parameters('name'))]",
-            "diskEncryptionSetKeyVault": "[resourceId(parameters('keyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
-            "keyVaultCryptoServiceEncryptionUserRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]"
+            "diskEncryptionSetKeyVault": "[resourceId(variables('keyVault').subscriptionId, variables('keyVault').resourceGroupName, 'Microsoft.KeyVault/vaults', variables('keyVault').name)]"
         },
-        "subscriptionId": "[subscription().subscriptionId]"
+        "subscriptionId": "[subscription().subscriptionId]",
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]"
     },
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').diskEncryptionSets]",
-            "identity": "[if(variables('identity').isEnabled, union(createObject('type', if(empty(variables('identity').name), 'SystemAssigned', 'UserAssigned')), if(empty(variables('identity').name), createObject(), createObject('userAssignedIdentities', createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name))))), null())]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
@@ -112,78 +115,6 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Compute/diskEncryptionSets"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').deployments]",
-            "dependsOn": [
-                "[variables('resourceIds').diskEncryptionSet]"
-            ],
-            "name": "[format('{0}-KvRbac', deployment().name)]",
-            "properties": {
-                "expressionEvaluationOptions": {
-                    "scope": "inner"
-                },
-                "mode": "Incremental",
-                "parameters": {
-                    "diskEncryptionSetApiVersion": {
-                        "value": "[variables('apiVersions').diskEncryptionSets]"
-                    },
-                    "diskEncryptionSetId": {
-                        "value": "[variables('resourceIds').diskEncryptionSet]"
-                    },
-                    "keyVaultCryptoServiceEncryptionUserRoleDefinitionId": {
-                        "value": "[variables('resourceIds').keyVaultCryptoServiceEncryptionUserRoleDefinition]"
-                    },
-                    "keyVaultName": {
-                        "value": "[parameters('keyVaultName')]"
-                    },
-                    "keyVaultResourceId": {
-                        "value": "[variables('resourceIds').diskEncryptionSetKeyVault]"
-                    },
-                    "roleAssignmentsApiVersion": {
-                        "value": "[variables('apiVersions').roleAssignments]"
-                    }
-                },
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {
-                        "diskEncryptionSetApiVersion": {
-                            "type": "string"
-                        },
-                        "diskEncryptionSetId": {
-                            "type": "string"
-                        },
-                        "keyVaultCryptoServiceEncryptionUserRoleDefinitionId": {
-                            "type": "string"
-                        },
-                        "keyVaultName": {
-                            "type": "string"
-                        },
-                        "keyVaultResourceId": {
-                            "type": "string"
-                        },
-                        "roleAssignmentsApiVersion":{
-                            "type": "string"
-                        }
-                    },
-                    "resources": [
-                        {
-                            "apiVersion": "[parameters('roleAssignmentsApiVersion')]",
-                            "name": "[guid(parameters('diskEncryptionSetId'), parameters('keyVaultCryptoServiceEncryptionUserRoleDefinitionId'), parameters('keyVaultResourceId'))]",
-                            "properties": {
-                                "principalId": "[reference(parameters('diskEncryptionSetId'), parameters('diskEncryptionSetApiVersion'), 'Full').identity.principalId]",
-                                "roleDefinitionId": "[parameters('keyVaultCryptoServiceEncryptionUserRoleDefinitionId')]"
-                            },
-                            "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
-                            "type": "Microsoft.Authorization/roleAssignments"
-                        }
-                    ]
-                }
-            },
-            "resourceGroup": "[parameters('keyVaultResourceGroupName')]",
-            "subscriptionId": "[parameters('keyVaultSubscriptionId')]",
-            "type": "Microsoft.Resources/deployments"
         }
     ]
 }

@@ -1,6 +1,58 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a Bastion host with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "isEnabled": false
+                        }
+                    },
+                    "ipConfigurations": [
+                        {
+                            "name": "default",
+                            "publicIpAddress": {
+                                "name": "MyPublicIpAddress"
+                            },
+                            "subnet": {
+                                "name": "MySubnet",
+                                "virtualNetworkName": "MyVirtualNetwork"
+                            }
+                        }
+                    ],
+                    "name": "MyBastionHost"
+                }
+            },
+            {
+                "description": "Deploys a Bastion host with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "ipConfigurations": [
+                        {
+                            "name": "default",
+                            "publicIpAddress": {
+                                "name": "MyPublicIpAddress"
+                            },
+                            "subnet": {
+                                "name": "MySubnet",
+                                "virtualNetworkName": "MyVirtualNetwork"
+                            }
+                        }
+                    ],
+                    "name": "MyBastionHost"
+                }
+            }
+        ]
+    },
     "parameters": {
         "audit": {
             "defaultValue": {},
@@ -95,7 +147,7 @@
                                     "id": "[resourceId(union(variables('defaultResourceProperties'), parameters('ipConfigurations')[copyIndex('ipConfigurations')]).publicIpAddress.subscriptionId, union(variables('defaultResourceProperties'), parameters('ipConfigurations')[copyIndex('ipConfigurations')]).publicIpAddress.resourceGroupName, 'Microsoft.Network/publicIPAddresses', parameters('ipConfigurations')[copyIndex('ipConfigurations')].publicIpAddress.name)]"
                                 },
                                 "subnet": {
-                                    "id": "[resourceId(union(variables('defaultResourceProperties'), parameters('ipConfigurations')[copyIndex('ipConfigurations')]).subnet.subscriptionId, union(variables('defaultResourceProperties'), parameters('ipConfigurations')[copyIndex('ipConfigurations')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('ipConfigurations')[copyIndex('ipConfigurations')].virtualNetwork.name, parameters('ipConfigurations')[copyIndex('ipConfigurations')].virtualNetwork.subnetName)]"
+                                    "id": "[resourceId(union(variables('defaultResourceProperties'), parameters('ipConfigurations')[copyIndex('ipConfigurations')]).subnet.subscriptionId, union(variables('defaultResourceProperties'), parameters('ipConfigurations')[copyIndex('ipConfigurations')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('ipConfigurations')[copyIndex('ipConfigurations')].subnet.virtualNetworkName, parameters('ipConfigurations')[copyIndex('ipConfigurations')].subnet.name)]"
                                 }
                             }
                         },

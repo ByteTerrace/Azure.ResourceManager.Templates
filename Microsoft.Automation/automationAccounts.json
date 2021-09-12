@@ -1,6 +1,56 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys an automation account with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "name": "MyAutomationAccount"
+                }
+            },
+            {
+                "description": "Deploys an automation account with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "desiredStateConfiguration": {
+                        "privateEndpoints": [
+                            {
+                                "dnsZones": [
+                                    {
+                                        "name": "privatelink.azure-automation.net"
+                                    }
+                                ],
+                                "name": "MyDesiredStateConfigurationPrivateEndpoint",
+                                "subnet": {
+                                    "name":"MySubnet",
+                                    "virtualNetworkName": "MyVirtualNetwork"
+                                }
+                            }
+                        ]
+                    },
+                    "name": "MyAutomationAccount",
+                    "webWorker": {
+                        "privateEndpoints": [
+                            {
+                                "dnsZones": [
+                                    {
+                                        "name": "privatelink.azure-automation.net"
+                                    }
+                                ],
+                                "name": "MyWebWorkerPrivateEndpoint",
+                                "subnet": {
+                                    "name":"MySubnet",
+                                    "virtualNetworkName": "MyVirtualNetwork"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    },
     "parameters": {
         "desiredStateConfiguration": {
             "defaultValue": {},
@@ -56,9 +106,8 @@
             },
             "identity": {
                 "isEnabled": true,
-                "name": "",
-                "resourceGroupName": "[variables('resourceGroupName')]",
-                "subscriptionId": "[variables('subscriptionId')]"
+                "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
+                "userAssignedIdentities": []
             },
             "privateEndpoint": {
                 "dnsZone": {
@@ -84,6 +133,7 @@
             "automationAccount": "[resourceId('Microsoft.Automation/automationAccounts', parameters('name'))]"
         },
         "subscriptionId": "[subscription().subscriptionId]",
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]",
         "webWorkerPrivateEndpoints": "[union(variables('defaultResourceProperties').webWorker, parameters('webWorker')).privateEndpoints]",
         "webWorkerPrivateEndpointsCount": "[length(variables('webWorkerPrivateEndpoints'))]",
         "webWorkerPrivateEndpointsIsNotEmpty": "[greater(variables('webWorkerPrivateEndpointsCount'), 0)]"
@@ -91,7 +141,7 @@
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').automationAccounts]",
-            "identity": "[if(variables('identity').isEnabled, union(createObject('type', if(empty(variables('identity').name), 'SystemAssigned', 'UserAssigned')), if(empty(variables('identity').name), createObject(), createObject('userAssignedIdentities', createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name))))), null())]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
