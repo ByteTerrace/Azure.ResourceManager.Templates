@@ -336,7 +336,8 @@
                     "privateEndpoints": []
                 },
                 "systemTopic": {
-                    "audit": "[variables('audit')]"
+                    "audit": "[variables('audit')]",
+                    "identity": {}
                 }
             },
             "eventHub": {
@@ -4066,6 +4067,9 @@
                 "parameters": {
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').eventGrid.systemTopic, variables('resourceDefinitions').eventGrid.systemTopics[copyIndex()]).audit]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.systemTopic, variables('resourceDefinitions').eventGrid.systemTopics[copyIndex()]).identity]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').eventGrid.systemTopics[copyIndex()]).location]"

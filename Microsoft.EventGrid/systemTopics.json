@@ -9,6 +9,13 @@
             },
             "type": "object"
         },
+        "identity": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the identity that will be assigned to the Azure Event Grid System Topic."
+            },
+            "type": "object"
+        },
         "location": {
             "metadata": {
                 "description": "Specifies the location in which the Azure Event Grid System Topic resource(s) will be deployed."
@@ -57,11 +64,17 @@
                     "isEnabled": true
                 }
             },
+            "identity": {
+                "isEnabled": true,
+                "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
+                "userAssignedIdentities": []
+            },
             "source": {
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
             }
         },
+        "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "resourceGroupName": "[resourceGroup().name]",
@@ -70,11 +83,13 @@
             "eventGridSystemTopic": "[resourceId('Microsoft.EventGrid/systemTopics', parameters('name'))]"
         },
         "source": "[union(variables('defaultResourceProperties').source, parameters('source'))]",
-        "subscriptionId": "[subscription().subscriptionId]"
+        "subscriptionId": "[subscription().subscriptionId]",
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]"
     },
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').eventGridSystemTopics]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
