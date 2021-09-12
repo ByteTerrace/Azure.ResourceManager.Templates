@@ -739,6 +739,7 @@
             "dnsPublicZone": "[format('{0}-DnsPublicZone', deployment().name)]",
             "eventGridDomain": "[format('{0}-EventGridDomain', deployment().name)]",
             "eventGridEventSubscription": "[format('{0}-EventGridEventSub', deployment().name)]",
+            "eventGridSystemTopic": "[format('{0}-EventGridSystemTopic', deployment().name)]",
             "eventGridTopic": "[format('{0}-EventGridTopic', deployment().name)]",
             "eventHubCluster": "[format('{0}-EventHubCluster', deployment().name)]",
             "eventHub": "[format('{0}-EventHub', deployment().name)]",

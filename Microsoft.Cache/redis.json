@@ -209,7 +209,7 @@
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
-            "redis": "[resourceId('Microsoft.Cache/Redis', parameters('name'))]"
+            "redis": "[resourceId('Microsoft.Cache/redis', parameters('name'))]"
         },
         "subscriptionId": "[subscription().subscriptionId]"
     },
@@ -233,7 +233,7 @@
                 "subnetId": "[if(empty(parameters('subnet')), null(), resourceId(union(variables('defaultResourceProperties').subnet, parameters('subnet')).subscriptionId, union(variables('defaultResourceProperties').subnet, parameters('subnet')).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('subnet').virtualNetworkName, parameters('subnet').name))]"
             },
             "tags": "[parameters('tags')]",
-            "type": "Microsoft.Cache/Redis",
+            "type": "Microsoft.Cache/redis",
             "zones": "[if(empty(parameters('availabilityZones')), null(), parameters('availabilityZones'))]"
         },
         {
@@ -312,7 +312,7 @@
                 "endIp": "[parameters('firewallRules')[copyIndex()].endIpAddress]",
                 "startIp": "[parameters('firewallRules')[copyIndex()].startIpAddress]"
             },
-            "type": "Microsoft.Cache/Redis/firewallRules"
+            "type": "Microsoft.Cache/redis/firewallRules"
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
@@ -339,7 +339,7 @@
                 ],
                 "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
-            "type": "Microsoft.Cache/Redis/providers/diagnosticsettings"
+            "type": "Microsoft.Cache/redis/providers/diagnosticsettings"
         }
     ]
 }

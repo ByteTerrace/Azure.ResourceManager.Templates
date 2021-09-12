@@ -45,7 +45,7 @@
     "variables": {
         "apiVersions": {
             "diagnosticSettings": "2017-05-01-preview",
-            "eventGridSystemTopics": "2020-04-01-preview"
+            "eventGridSystemTopics": "2021-06-01-preview"
         },
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
         "defaultResourceProperties": {
@@ -74,6 +74,17 @@
                 "subscriptionId": "[variables('subscriptionId')]"
             }
         },
+        "knownSystemTopicNames": {
+            "Microsoft.AppConfiguration/configurationStores": "Microsoft.AppConfiguration",
+            "Microsoft.Cache/redis": "Microsoft.Cache",
+            "Microsoft.ContainerRegistry/registries": "Microsoft.ContainerRegistry",
+            "Microsoft.EventGrid/systemTopics": "Microsoft.EventHub",
+            "Microsoft.EventGrid/topics": "Microsoft.EventHub",
+            "Microsoft.KeyVault/vaults": "Microsoft.KeyVault",
+            "Microsoft.ServiceBus/namespaces/topics": "Microsoft.ServiceBus",
+            "Microsoft.Storage/storageAccounts": "Microsoft.Storage.StorageAccounts",
+            "Microsoft.Web/sites": "Microsoft.Web/sites"
+        },
         "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
@@ -94,7 +105,7 @@
             "name": "[parameters('name')]",
             "properties": {
                 "source": "[resourceId(variables('source').subscriptionId, variables('source').resourceGroupName, variables('source').type, variables('source').name)]",
-                "topicType": "[variables('source').type]"
+                "topicType": "[variables('knownSystemTopicNames')[variables('source').type]]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.EventGrid/systemTopics"
