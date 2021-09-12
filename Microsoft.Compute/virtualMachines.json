@@ -1,6 +1,78 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a virtual machine with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "audit": {
+                        "isEnabled": false
+                    },
+                    "dataDisks": [],
+                    "imageReference": {
+                        "id": "MyImageReference"
+                    },
+                    "licenseType": "Windows_Server",
+                    "name": "MyVirtualMachine",
+                    "osDisk": {},
+                    "skuName": "Standard_D2s_v4",
+                    "windowsConfiguration": {}
+                }
+            },
+            {
+                "description": "Deploys a virtual machine with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "availabilitySet": {
+                        "name": "MyAvailabilitySet"
+                    },
+                    "backup": {
+                        "policyName": "MyBackupPolicy",
+                        "recoveryServicesVault": {
+                            "name": "MyRecoveryServicesVault"
+                        }
+                    },
+                    "dataDisks": [],
+                    "diskEncryptionSet": {
+                        "name": "MyDiskEncryptionSet"
+                    },
+                    "imageReference": {
+                        "id": "MyImageReference"
+                    },
+                    "licenseType": "Windows_Server",
+                    "name": "MyVirtualMachine",
+                    "networkInterfaceCards": [
+                        {
+                            "ipConfigurations": [
+                                {
+                                    "addressVersion": "IPv4",
+                                    "allocationMethod": "Dynamic",
+                                    "applicationSecurityGroup": {
+                                        "name": "MyApplicationSecurityGroup"
+                                    },
+                                    "name": "default",
+                                    "subnet": {
+                                        "name": "MySubnet",
+                                        "virtualNetworkName": "MyVirtualNetwork"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "osDisk": {},
+                    "skuName": "Standard_D4s_v4",
+                    "windowsConfiguration": {}
+                }
+            }
+        ]
+    },
     "parameters": {
         "administratorUserName": {
             "defaultValue": "[uniqueString(parameters('name'))]",
@@ -349,9 +421,8 @@
             },
             "identity": {
                 "isEnabled": true,
-                "name": "",
-                "resourceGroupName": "[variables('resourceGroupName')]",
-                "subscriptionId": "[variables('subscriptionId')]"
+                "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
+                "userAssignedIdentities": []
             },
             "linuxConfiguration": {
                 "administratorUserPublicSshKey": "",
@@ -450,6 +521,7 @@
             "virtualMachineAzureNetworkWatcherAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineAzureNetworkWatcherAgentName'))]"
         },
         "subscriptionId": "[subscription().subscriptionId]",
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]",
         "virtualMachineAzureActiveDirectoryDomainJoinName": "AzureActiveDirectoryDomainJoin",
         "virtualMachineAzureAntimalwareAgentName": "AzureAntimalwareAgent",
         "virtualMachineAzureCustomScriptName": "AzureCustomScript",
@@ -548,7 +620,7 @@
                 "dataDisksCopy",
                 "networkInterfaceCardsCopy"
             ],
-            "identity": "[if(variables('identity').isEnabled, union(createObject('type', if(empty(variables('identity').name), 'SystemAssigned', 'UserAssigned')), if(empty(variables('identity').name), createObject(), createObject('userAssignedIdentities', createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name))))), null())]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {

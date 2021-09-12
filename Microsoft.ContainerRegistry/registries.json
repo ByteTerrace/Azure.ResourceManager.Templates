@@ -1,7 +1,57 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a standard container registry with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "audit": {
+                        "isEnabled": false
+                    },
+                    "name": "MyContainerRegistry",
+                    "skuName": "Basic"
+                }
+            },
+            {
+                "description": "Deploys a premium container registry with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "isAllowTrustedMicrosoftServicesEnabled": true,
+                    "name": "MyContainerRegistry",
+                    "privateEndpoints": [
+                        {
+                            "dnsZones": [
+                                {
+                                    "name": "privatelink.azurecr.io"
+                                }
+                            ],
+                            "name": "MyPrivateEndpoint",
+                            "subnet": {
+                                "name":"MySubnet",
+                                "virtualNetworkName": "MyVirtualNetwork"
+                            }
+                        }
+                    ],
+                    "skuName": "Premium"
+                }
+            }
+        ]
+    },
     "parameters": {
+        "audit": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure Container Registry."
+            },
+            "type": "object"
+        },
         "customerManagedEncryption": {
             "defaultValue": {},
             "metadata": {
@@ -92,7 +142,7 @@
                 "Premium",
                 "Standard"
             ],
-            "defaultValue": "Standard",
+            "defaultValue": "Premium",
             "metadata": {
                 "description": "Specifies the SKU name of the Azure Container Registry."
             },
@@ -115,12 +165,13 @@
     },
     "variables": {
         "apiVersions": {
+            "diagnosticSettings": "2017-05-01-preview",
             "containerRegistries": "2019-12-01-preview",
             "keyVaults": "2019-09-01",
             "privateEndpoints": "2020-07-01",
             "privateEndpointsPrivateDnsZoneGroups": "2020-07-01"
         },
-        "containerRegistryManagedIdentityName": "[format('{0}-containerregistery-managedidentity', parameters('name'))]",
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
         "copy": [
             {
                 "count": "[length(parameters('firewallRules'))]",
@@ -140,10 +191,25 @@
             }
         ],
         "customerManagedEncryption": "[union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption'))]",
-        "customerManagedEncryptionKeyVaultRbacDeploymentName": "[format('{0}-KvRbac', deployment().name)]",
         "defaultResourceProperties": {
-            "customerManagedEncryption": {
+            "audit": {
                 "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "logNames": [
+                    "ContainerRegistryRepositoryEvents",
+                    "ContainerRegistryLoginEvents"
+                ],
+                "retentionPolicy": {
+                    "days": 137,
+                    "isEnabled": true
+                }
+            },
+            "customerManagedEncryption": {
+                "isEnabled": false,
                 "keyName": "",
                 "keyVault": {
                     "name": "",
@@ -177,6 +243,8 @@
         },
         "firewallRulesIsNotEmpty": "[greater(length(parameters('firewallRules')), 0)]",
         "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isCustomerManagedEncryptionEnabled": "[variables('customerManagedEncryption').isEnabled]",
         "networkRuleSetProperties": {
             "defaultAction": "[if(or(variables('firewallRulesIsNotEmpty'), variables('virtualNetworkRulesIsNotEmpty')), 'Deny', 'Allow')]",
@@ -188,6 +256,7 @@
         "privateEndpointsIsNotEmpty": "[greater(variables('privateEndpointsCount'), 0)]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
             "containerRegistry": "[resourceId('Microsoft.ContainerRegistry/registries', parameters('name'))]",
             "containerRegistryCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', if(variables('isCustomerManagedEncryptionEnabled'), variables('customerManagedEncryption').keyVault.name, 'dummyKeyVault'))]"
         },
@@ -281,6 +350,33 @@
                 ]
             },
             "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
+            "dependsOn": [
+                "[variables('resourceIds').containerRegistry]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/Microsoft.Insights/audit', parameters('name'))]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(variables('audit').logNames)]",
+                        "input": {
+                            "category": "[variables('audit').logNames[copyIndex('logs')]]",
+                            "enabled": "[variables('isAuditEnabled')]",
+                            "retentionPolicy": {
+                                "days": "[variables('audit').retentionPolicy.days]",
+                                "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                            }
+                        },
+                        "name": "logs"
+                    }
+                ],
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
+            },
+            "type": "Microsoft.ContainerRegistry/registries/providers/diagnosticsettings"
         }
     ]
 }

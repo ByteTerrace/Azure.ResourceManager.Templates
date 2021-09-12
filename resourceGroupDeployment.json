@@ -1,6 +1,86 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Demonstrates how to use the 'deployments' keyword to deploy custom template specifications.",
+                "name": "Advanced - Bring Your Own Template (BYOT)",
+                "value": {
+                    "deployments": [
+                        {
+                            "contentVersion": "1.0.0.0",
+                            "parameters": {},
+                            "templateSpec": {
+                                "name": "MyTemplateSpec",
+                                "resourceGroupName": "MyResourceGroup",
+                                "subscriptionId": "MySubscription"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "description": "Demonstrates how to use the 'deployments' keyword to deploy resources in sequence.",
+                "name": "Advanced - Sequenced Deployments",
+                "value": {
+                    "deployments": [
+                        {
+                            "parameters": {
+                                "resourceDefinitions": {
+                                    "value": {
+                                        "managedIdentities": [
+                                            {
+                                                "name": "MyManagedIdentity"
+                                            }
+                                        ],
+                                        "roleAssignments": [
+                                            {
+                                                "assignee": {
+                                                    "name": "MyManagedIdentity",
+                                                    "type": "Microsoft.ManagedIdentity/userAssignedIdentities"
+                                                },
+                                                "assignor": {
+                                                    "name": "MyKeyVault",
+                                                    "type": "Microsoft.KeyVault/vaults"
+                                                },
+                                                "roleDefinition": {
+                                                    "name": "Key Vault Crypto Service Encryption User"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "parameters": {
+                                "resourceDefinitions": {
+                                    "value": {
+                                        "storageAccounts": [
+                                                {
+                                                "audit": {
+                                                    "isEnabled": false
+                                                },
+                                                "identity": {
+                                                    "userAssignedIdentities": [
+                                                        {
+                                                            "name": "MyManagedIdentity"
+                                                        }
+                                                    ]
+                                                },
+                                                "name": "MyStorageAccount"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
     "parameters": {
         "diagnosticServicesTrustedStorageAccessObjectId": {
             "type": "string"
@@ -55,7 +135,9 @@
             "eventGrid": {
                 "domains": [],
                 "eventSubscriptions": [],
-                "topics": []
+                "topics": [],
+                "systemTopicSubscriptions": [],
+                "systemTopics": []
             },
             "eventHub": {
                 "clusters": [],
@@ -108,6 +190,7 @@
         "defaultResourceProperties": {
             "applicationConfigurationStore": {
                 "customerManagedEncryption": {},
+                "identity": {},
                 "isPublicNetworkAccessEnabled": false,
                 "privateEndpoints": [],
                 "settings": {},
@@ -171,17 +254,18 @@
                 "volumes": []
             },
             "containerRegistry": {
+                "audit": "[variables('audit')]",
                 "customerManagedEncryption": {},
                 "firewallRules": [],
                 "identity": {},
                 "isAdministratorAccountEnabled": false,
                 "isAnonymousPullEnabled": false,
-                "isDedicatedDataEndpointEnabled": false,
+                "isDedicatedDataEndpointEnabled": true,
                 "isAllowTrustedMicrosoftServicesEnabled": false,
                 "isPublicNetworkAccessEnabled": false,
                 "isZoneRedundant": true,
                 "privateEndpoints": [],
-                "skuName": "Standard",
+                "skuName": "Premium",
                 "virtualNetworkRules": []
             },
             "cosmosDbAccount": {
@@ -217,9 +301,9 @@
                 }
             },
             "diskEncryptionSet": {
+                "identity": {},
                 "isDoubleEncryptionAtRestEnabled": true,
-                "keyVaultResourceGroupName": "[variables('resourceGroupName')]",
-                "keyVaultSubscriptionId": "[variables('subscriptionId')]",
+                "keyVault": {},
                 "keyVersion": ""
             },
             "dnsZone": {
@@ -240,13 +324,25 @@
             },
             "eventGrid": {
                 "domain": {
-                    "audit": "[variables('audit')]"
+                    "audit": "[variables('audit')]",
+                    "identity": {}
                 },
                 "eventSubscription": {
                     "eventDeliverySchema": "EventGridSchema"
                 },
                 "topic": {
-                    "audit": "[variables('audit')]"
+                    "audit": "[variables('audit')]",
+                    "identity": {},
+                    "isPublicNetworkAccessEnabled": false,
+                    "privateEndpoints": []
+                },
+                "systemTopic": {
+                    "audit": "[variables('audit')]",
+                    "identity": {}
+                },
+                "systemTopicSubscription": {
+                    "eventDeliverySchema": "EventGridSchema",
+                    "eventTypes": []
                 }
             },
             "eventHub": {
@@ -346,8 +442,9 @@
             "location": "[resourceGroup().location]",
             "logic": {
                 "application": {
-                    "auditLogAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
-                    "auditLogAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
+                    "audit": "[variables('audit')]",
+                    "connections": {},
+                    "identity": {},
                     "isEnabled": true
                 }
             },
@@ -418,7 +515,8 @@
             "recoveryServicesVault": {
                 "audit": "[variables('audit')]",
                 "backup": {},
-                "customerManagedEncryption": {}
+                "customerManagedEncryption": {},
+                "identity": {}
             },
             "redisCache": {
                 "audit": "[variables('audit')]",
@@ -428,7 +526,6 @@
                     3
                 ],
                 "firewallRules": [],
-                "identity": {},
                 "isPublicNetworkAccessEnabled": false,
                 "minimumSupportedTlsVersion": "1.2",
                 "numberOfCapacityUnits": 1,
@@ -467,12 +564,19 @@
             },
             "sqlDatabase": {
                 "audit": "[variables('audit')]",
-                "catalogCollation": "",
-                "defaultCollation": "",
+                "autoscale": {},
+                "backupStorageRedundancyType": "Geo",
+                "catalogCollation": "DATABASE_DEFAULT",
+                "createMode": "Default",
+                "defaultCollation": "SQL_Latin1_General_CP1_CI_AS",
                 "elasticPoolName": "",
                 "isAzureHybridBenefitEnabled": false,
+                "isReadScaleOutEnabled": false,
                 "isZoneRedundant": true,
+                "restorePointInTime": "",
+                "secondaryType": "Geo",
                 "skuName": "Basic",
+                "sourceDatabase": {},
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
             },
@@ -495,6 +599,7 @@
                 "vulnerabilityAssessment": {}
             },
             "staticWebApplication": {
+                "identity": {},
                 "privateEndpoints": [],
                 "skuName": "Standard"
             },
@@ -599,6 +704,7 @@
                 "frameworkVersion": "DOTNETCORE|3.1",
                 "functionExtension": {},
                 "healthCheck": {},
+                "identity": {},
                 "ipSecurityRestrictions": [],
                 "isAlwaysOnEnabled": true,
                 "isClientAffinityEnabled": false,
@@ -638,6 +744,8 @@
             "dnsPublicZone": "[format('{0}-DnsPublicZone', deployment().name)]",
             "eventGridDomain": "[format('{0}-EventGridDomain', deployment().name)]",
             "eventGridEventSubscription": "[format('{0}-EventGridEventSub', deployment().name)]",
+            "eventGridSystemTopic": "[format('{0}-EventGridSystemTopic', deployment().name)]",
+            "eventGridSystemTopicSubscription": "[format('{0}-EventGridSystemTopicSub', deployment().name)]",
             "eventGridTopic": "[format('{0}-EventGridTopic', deployment().name)]",
             "eventHubCluster": "[format('{0}-EventHubCluster', deployment().name)]",
             "eventHub": "[format('{0}-EventHub', deployment().name)]",
@@ -1382,6 +1490,7 @@
                 "name": "bastionHostsCopy"
             },
             "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
                 "publicIpAddressesCopy",
                 "publicIpPrefixesCopy",
                 "scriptsPreDeployCopy",
@@ -1575,6 +1684,9 @@
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').eventGrid.domain, variables('resourceDefinitions').eventGrid.domains[copyIndex()]).audit]"
                     },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.domain, variables('resourceDefinitions').eventGrid.domains[copyIndex()]).identity]"
+                    },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').eventGrid.domains[copyIndex()]).location]"
                     },
@@ -1612,11 +1724,20 @@
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').eventGrid.topic, variables('resourceDefinitions').eventGrid.topics[copyIndex()]).audit]"
                     },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.topic, variables('resourceDefinitions').eventGrid.topics[copyIndex()]).identity]"
+                    },
+                    "isPublicNetworkAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.topic, variables('resourceDefinitions').eventGrid.topics[copyIndex()]).isPublicNetworkAccessEnabled]"
+                    },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').eventGrid.topics[copyIndex()]).location]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').eventGrid.topics[copyIndex()].name]"
+                    },
+                    "privateEndpoints": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.topic, variables('resourceDefinitions').eventGrid.topics[copyIndex()]).privateEndpoints]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
@@ -1647,7 +1768,7 @@
                 "mode": "Incremental",
                 "parameters": {
                     "destination": {
-                        "value": "[union(variables('defaultResourceProperties').eventGrid.eventSubscription, variables('resourceDefinitions').eventGrid.eventSubscriptions[copyIndex()]).destination]"
+                        "value": "[variables('resourceDefinitions').eventGrid.eventSubscriptions[copyIndex()].destination]"
                     },
                     "eventDeliverySchema": {
                         "value": "[union(variables('defaultResourceProperties').eventGrid.eventSubscription, variables('resourceDefinitions').eventGrid.eventSubscriptions[copyIndex()]).eventDeliverySchema]"
@@ -2287,6 +2408,9 @@
                     "customerManagedEncryption": {
                         "value": "[union(variables('defaultResourceProperties').applicationConfigurationStore, variables('resourceDefinitions').applicationConfigurationStores[copyIndex()]).customerManagedEncryption]"
                     },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').applicationConfigurationStore, variables('resourceDefinitions').applicationConfigurationStores[copyIndex()]).identity]"
+                    },
                     "isPublicNetworkAccessEnabled": {
                         "value": "[union(variables('defaultResourceProperties').applicationConfigurationStore, variables('resourceDefinitions').applicationConfigurationStores[copyIndex()]).isPublicNetworkAccessEnabled]"
                     },
@@ -2344,6 +2468,9 @@
                     "customerManagedEncryption": {
                         "value": "[union(variables('defaultResourceProperties').recoveryServicesVault, variables('resourceDefinitions').recoveryServicesVaults[copyIndex()]).customerManagedEncryption]"
                     },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').recoveryServicesVault, variables('resourceDefinitions').recoveryServicesVaults[copyIndex()]).identity]"
+                    },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').recoveryServicesVaults[copyIndex()]).location]"
                     },
@@ -2370,6 +2497,7 @@
                 "name": "containerRegistriesCopy"
             },
             "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
                 "scriptsPreDeployCopy",
                 "subnetsCopy",
                 "virtualNetworksCopy"
@@ -2378,6 +2506,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).audit]"
+                    },
                     "customerManagedEncryption": {
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).customerManagedEncryption]"
                     },
@@ -2559,20 +2690,17 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').diskEncryptionSet, variables('resourceDefinitions').diskEncryptionSets[copyIndex()]).identity]"
+                    },
                     "isDoubleEncryptionAtRestEnabled": {
                         "value": "[union(variables('defaultResourceProperties').diskEncryptionSet, variables('resourceDefinitions').diskEncryptionSets[copyIndex()]).isDoubleEncryptionAtRestEnabled]"
                     },
                     "keyName": {
                         "value": "[variables('resourceDefinitions').diskEncryptionSets[copyIndex()].keyName]"
                     },
-                    "keyVaultName": {
-                        "value": "[variables('resourceDefinitions').diskEncryptionSets[copyIndex()].keyVaultName]"
-                    },
-                    "keyVaultResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').diskEncryptionSet, variables('resourceDefinitions').diskEncryptionSets[copyIndex()]).keyVaultResourceGroupName]"
-                    },
-                    "keyVaultSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').diskEncryptionSet, variables('resourceDefinitions').diskEncryptionSets[copyIndex()]).keyVaultSubscriptionId]"
+                    "keyVault": {
+                        "value": "[variables('resourceDefinitions').diskEncryptionSets[copyIndex()].keyVault]"
                     },
                     "keyVersion": {
                         "value": "[union(variables('defaultResourceProperties').diskEncryptionSet, variables('resourceDefinitions').diskEncryptionSets[copyIndex()]).keyVersion]"
@@ -2702,6 +2830,7 @@
                 "diskEncryptionSetsCopy",
                 "hostGroupsCopy",
                 "loadBalancersCopy",
+                "logAnalyticsWorkspacesCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "recoveryServicesVaultsCopy",
@@ -2811,6 +2940,7 @@
                 "diskEncryptionSetsCopy",
                 "hostGroupsCopy",
                 "loadBalancersCopy",
+                "logAnalyticsWorkspacesCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "recoveryServicesVaultsCopy",
@@ -2924,7 +3054,7 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "customerManagedEncryption": {
+                    "audit": {
                         "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).audit]"
                     },
                     "customerManagedEncryption": {
@@ -3178,10 +3308,19 @@
                 "mode": "Incremental",
                 "parameters": {
                     "audit": {
-                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).audit]"
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, createObject('audit', createObject('isEnabled', false())), variables('resourceDefinitions').sqlDatabases[copyIndex()]).audit]"
+                    },
+                    "autoscale": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, createObject('audit', createObject('isEnabled', false())), variables('resourceDefinitions').sqlDatabases[copyIndex()]).autoscale]"
+                    },
+                    "backupStorageRedundancyType": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).backupStorageRedundancyType]"
                     },
                     "catalogCollation": {
                         "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).catalogCollation]"
+                    },
+                    "createMode": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).createMode]"
                     },
                     "defaultCollation": {
                         "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).defaultCollation]"
@@ -3192,6 +3331,9 @@
                     "isAzureHybridBenefitEnabled": {
                         "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).isAzureHybridBenefitEnabled]"
                     },
+                    "isReadScaleOutEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).isReadScaleOutEnabled]"
+                    },
                     "isZoneRedundant": {
                         "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).isZoneRedundant]"
                     },
@@ -3201,11 +3343,20 @@
                     "name": {
                         "value": "[variables('resourceDefinitions').sqlDatabases[copyIndex()].name]"
                     },
+                    "restorePointInTime": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).restorePointInTime]"
+                    },
+                    "secondaryType": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).secondaryType]"
+                    },
                     "serverName": {
-                        "value": "[variables('resourceDefinitions').sqlDatabases[copyIndex()].name]"
+                        "value": "[variables('resourceDefinitions').sqlDatabases[copyIndex()].serverName]"
                     },
                     "skuName": {
                         "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).skuName]"
+                    },
+                    "sourceDatabase": {
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).sourceDatabase]"
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
@@ -3290,6 +3441,7 @@
             "dependsOn": [
                 "diskEncryptionSetsCopy",
                 "keyVaultsCopy",
+                "logAnalyticsWorkspacesCopy",
                 "managedIdentitiesCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
@@ -3422,6 +3574,7 @@
             },
             "dependsOn": [
                 "cdnProfilesCopy",
+                "logAnalyticsWorkspacesCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "scriptsPreDeployCopy",
@@ -3486,6 +3639,7 @@
             },
             "dependsOn": [
                 "applicationServiceEnvironmentsCopy",
+                "logAnalyticsWorkspacesCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "scriptsPreDeployCopy",
@@ -3559,6 +3713,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').staticWebApplication, variables('resourceDefinitions').staticWebApplications[copyIndex()]).identity]"
+                    },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').staticWebApplications[copyIndex()]).location]"
                     },
@@ -3597,6 +3754,7 @@
                 "cdnProfilesCopy",
                 "containerRegistriesCopy",
                 "keyVaultsCopy",
+                "logAnalyticsWorkspacesCopy",
                 "privateDnsZonesCopy",
                 "publicDnsZonesCopy",
                 "scriptsPreDeployCopy",
@@ -3638,6 +3796,9 @@
                     },
                     "healthCheck": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).healthCheck]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).identity]"
                     },
                     "ipSecurityRestrictions": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).ipSecurityRestrictions]"
@@ -3728,6 +3889,12 @@
                 "parameters": {
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').logic.application, variables('resourceDefinitions').logic.applications[copyIndex()]).audit]"
+                    },
+                    "connections": {
+                        "value": "[union(variables('defaultResourceProperties').logic.application, variables('resourceDefinitions').logic.applications[copyIndex()]).connections]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').logic.application, variables('resourceDefinitions').logic.applications[copyIndex()]).identity]"
                     },
                     "isEnabled": {
                         "value": "[union(variables('defaultResourceProperties').logic.application, variables('resourceDefinitions').logic.applications[copyIndex()]).isEnabled]"
@@ -3838,7 +4005,12 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
-            "condition": "[not(empty(variables('resourceDefinitions').deployments))]",
+            "condition": "[not(empty(variables('resourceDefinitions').eventGrid.systemTopics))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').eventGrid.systemTopics)]",
+                "mode": "Parallel",
+                "name": "eventGridSystemTopicsCopy"
+            },
             "dependsOn": [
                 "applicationConfigurationStoresCopy",
                 "applicationInsightsComponentsCopy",
@@ -3896,9 +4068,194 @@
                 "virtualNetworksCopy",
                 "webApplicationsCopy"
             ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').eventGridSystemTopic, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.systemTopic, variables('resourceDefinitions').eventGrid.systemTopics[copyIndex()]).audit]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.systemTopic, variables('resourceDefinitions').eventGrid.systemTopics[copyIndex()]).identity]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').eventGrid.systemTopics[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').eventGrid.systemTopics[copyIndex()].name]"
+                    },
+                    "source": {
+                        "value": "[variables('resourceDefinitions').eventGrid.systemTopics[copyIndex()].source]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.EventGrid/systemTopics.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').eventGrid.systemTopicSubscriptions))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').eventGrid.systemTopicSubscriptions)]",
+                "mode": "Parallel",
+                "name": "eventGridSystemTopicsEventSubscriptionsCopy"
+            },
+            "dependsOn": [
+                "applicationConfigurationStoresCopy",
+                "applicationInsightsComponentsCopy",
+                "applicationSecurityGroupsCopy",
+                "applicationServiceEnvironmentsCopy",
+                "applicationServicePlansCopy",
+                "automationAccountsCopy",
+                "availabilitySetsCopy",
+                "bastionHostsCopy",
+                "cdnProfilesCopy",
+                "communicationServicesCopy",
+                "containerInstancesCopy",
+                "containerRegistriesCopy",
+                "cosmosDbAccountsCopy",
+                "diskEncryptionSetsCopy",
+                "eventGridDomainsCopy",
+                "eventGridEventSubcriptionsCopy",
+                "eventGridSystemTopicsCopy",
+                "eventGridTopicsCopy",
+                "eventHubsClustersCopy",
+                "eventHubsCopy",
+                "eventHubsNamespacesCopy",
+                "firewallsCopy",
+                "hdInsightClustersCopy",
+                "hostGroupsCopy",
+                "keyVaultsCopy",
+                "kubernetesServiceClustersCopy",
+                "loadBalancersCopy",
+                "logAnalyticsWorkspacesCopy",
+                "logAnalyticsWorkspacesLinkedStorageJoinCopy",
+                "logAnalyticsWorkspacesLinkedStorageRbacCopy",
+                "logicApplicationWorkflowsCopy",
+                "managedHsmsCopy",
+                "managedIdentitiesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
+                "networkSecurityGroupsCopy",
+                "privateDnsZonesCopy",
+                "proximityPlacementGroupsCopy",
+                "publicDnsZonesCopy",
+                "publicIpAddressesCopy",
+                "publicIpPrefixesCopy",
+                "recoveryServicesVaultsCopy",
+                "roleAssignmentsCopy",
+                "routeTablesCopy",
+                "scriptsPreDeployCopy",
+                "serviceBusNamespacesCopy",
+                "sharedImageGalleriesCopy",
+                "sqlDatabasesCopy",
+                "sqlServersCopy",
+                "staticWebApplicationsCopy",
+                "storageAccountsCopy",
+                "subnetsCopy",
+                "virtualMachinesCopy",
+                "virtualMachineScaleSetsCopy",
+                "virtualNetworksCopy",
+                "webApplicationsCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').eventGridSystemTopicSubscription, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "destination": {
+                        "value": "[variables('resourceDefinitions').eventGrid.systemTopicSubscriptions[copyIndex()].destination]"
+                    },
+                    "eventDeliverySchema": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.systemTopicSubscription, variables('resourceDefinitions').eventGrid.systemTopicSubscriptions[copyIndex()]).eventDeliverySchema]"
+                    },
+                    "eventTypes": {
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.systemTopicSubscription, variables('resourceDefinitions').eventGrid.systemTopicSubscriptions[copyIndex()]).eventTypes]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').eventGrid.systemTopicSubscriptions[copyIndex()].name]"
+                    },
+                    "topicName": {
+                        "value": "[variables('resourceDefinitions').eventGrid.systemTopicSubscriptions[copyIndex()].topicName]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.EventGrid/systemTopicsEventSubscriptions.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').deployments))]",
+            "dependsOn": [
+                "applicationConfigurationStoresCopy",
+                "applicationInsightsComponentsCopy",
+                "applicationSecurityGroupsCopy",
+                "applicationServiceEnvironmentsCopy",
+                "applicationServicePlansCopy",
+                "automationAccountsCopy",
+                "availabilitySetsCopy",
+                "bastionHostsCopy",
+                "cdnProfilesCopy",
+                "communicationServicesCopy",
+                "containerInstancesCopy",
+                "containerRegistriesCopy",
+                "cosmosDbAccountsCopy",
+                "diskEncryptionSetsCopy",
+                "eventGridDomainsCopy",
+                "eventGridEventSubcriptionsCopy",
+                "eventGridSystemTopicsCopy",
+                "eventGridSystemTopicsEventSubscriptionsCopy",
+                "eventGridTopicsCopy",
+                "eventHubsClustersCopy",
+                "eventHubsCopy",
+                "eventHubsNamespacesCopy",
+                "firewallsCopy",
+                "hdInsightClustersCopy",
+                "hostGroupsCopy",
+                "keyVaultsCopy",
+                "kubernetesServiceClustersCopy",
+                "loadBalancersCopy",
+                "logAnalyticsWorkspacesCopy",
+                "logAnalyticsWorkspacesLinkedStorageJoinCopy",
+                "logAnalyticsWorkspacesLinkedStorageRbacCopy",
+                "logicApplicationWorkflowsCopy",
+                "managedHsmsCopy",
+                "managedIdentitiesCopy",
+                "monitorPrivateLinkScopesCopy",
+                "natGatewaysCopy",
+                "networkSecurityGroupsCopy",
+                "privateDnsZonesCopy",
+                "proximityPlacementGroupsCopy",
+                "publicDnsZonesCopy",
+                "publicIpAddressesCopy",
+                "publicIpPrefixesCopy",
+                "recoveryServicesVaultsCopy",
+                "roleAssignmentsCopy",
+                "routeTablesCopy",
+                "scriptsPreDeployCopy",
+                "serviceBusNamespacesCopy",
+                "sharedImageGalleriesCopy",
+                "sqlDatabasesCopy",
+                "sqlServersCopy",
+                "staticWebApplicationsCopy",
+                "storageAccountsCopy",
+                "subnetsCopy",
+                "virtualMachinesCopy",
+                "virtualMachineScaleSetsCopy",
+                "virtualNetworksCopy",
+                "webApplicationsCopy"
+            ],
             "copy": {
                 "count": "[length(variables('resourceDefinitions').deployments)]",
-                "mode": "Parallel",
+                "mode": "Serial",
                 "name": "deploymentsCopy"
             },
             "name": "[union(createObject('name', format('{0}_{1}', variables('deploymentNames').deployment, copyIndex())), variables('resourceDefinitions').deployments[copyIndex()]).name]",
@@ -3919,7 +4276,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').scripts.postDeploy))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').scripts.postDeploy)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "scriptsPostDeployCopy"
             },
             "dependsOn": [
@@ -3939,6 +4296,8 @@
                 "diskEncryptionSetsCopy",
                 "eventGridDomainsCopy",
                 "eventGridEventSubcriptionsCopy",
+                "eventGridSystemTopicsCopy",
+                "eventGridSystemTopicsEventSubscriptionsCopy",
                 "eventGridTopicsCopy",
                 "eventHubsClustersCopy",
                 "eventHubsCopy",

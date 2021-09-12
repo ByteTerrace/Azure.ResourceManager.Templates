@@ -158,7 +158,7 @@
                 }
             },
             "customerManagedEncryption": {
-                "isEnabled": true,
+                "isEnabled": false,
                 "diskEncryptionSet": {
                     "name": "[null()]",
                     "resourceGroupName": "[variables('resourceGroupName')]",
@@ -167,9 +167,8 @@
             },
             "identity": {
                 "isEnabled": true,
-                "name": "",
-                "resourceGroupName": "[variables('resourceGroupName')]",
-                "subscriptionId": "[variables('subscriptionId')]"
+                "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
+                "userAssignedIdentities": []
             },
             "linuxProfile": {
                 "administratorUserName": "",
@@ -225,6 +224,7 @@
             "managedCluster": "[resourceId('Microsoft.ContainerService/managedClusters', parameters('name'))]"
         },
         "subscriptionId": "[subscription().subscriptionId]",
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]",
         "windowsProfile": {
             "adminPassword": "[variables('windowsProfileFriendly').administratorUserPassword]",
             "adminUsername": "[variables('windowsProfileFriendly').administratorUserName]",
@@ -236,7 +236,7 @@
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').managedClusters]",
-            "identity": "[if(variables('identity').isEnabled, union(createObject('type', if(empty(variables('identity').name), 'SystemAssigned', 'UserAssigned')), if(empty(variables('identity').name), createObject(), createObject('userAssignedIdentities', createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name))))), null())]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {

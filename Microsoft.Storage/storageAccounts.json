@@ -1,6 +1,99 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a locally-redundant storage account with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "audit": {
+                        "isEnabled": false
+                    },
+                    "name": "MyStorageAccount",
+                    "skuName": "Standard_LRS"
+                }
+            },
+            {
+                "description": "Deploys a zone-redundant storage account with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "blobServices": {
+                        "privateEndpoints": [
+                            {
+                                "dnsZones": [
+                                    {
+                                        "name": "privatelink.blob.core.windows.net"
+                                    }
+                                ],
+                                "name": "MyBlobServicesPrivateEndpoint",
+                                "subnet": {
+                                    "name":"MySubnet",
+                                    "virtualNetworkName": "MyVirtualNetwork"
+                                }
+                            }
+                        ]
+                    },
+                    "fileServices": {
+                        "privateEndpoints": [
+                            {
+                                "dnsZones": [
+                                    {
+                                        "name": "privatelink.file.core.windows.net"
+                                    }
+                                ],
+                                "name": "MyFileServicesPrivateEndpoint",
+                                "subnet": {
+                                    "name":"MySubnet",
+                                    "virtualNetworkName": "MyVirtualNetwork"
+                                }
+                            }
+                        ]
+                    },
+                    "isAllowTrustedMicrosoftServicesEnabled": true,
+                    "name": "MyStorageAccount",
+                    "queueServices": {
+                        "privateEndpoints": [
+                            {
+                                "dnsZones": [
+                                    {
+                                        "name": "privatelink.queue.core.windows.net"
+                                    }
+                                ],
+                                "name": "MyQueueServicesPrivateEndpoint",
+                                "subnet": {
+                                    "name":"MySubnet",
+                                    "virtualNetworkName": "MyVirtualNetwork"
+                                }
+                            }
+                        ]
+                    },
+                    "skuName": "Standard_ZRS",
+                    "tableServices": {
+                        "privateEndpoints": [
+                            {
+                                "dnsZones": [
+                                    {
+                                        "name": "privatelink.table.core.windows.net"
+                                    }
+                                ],
+                                "name": "MyTableServicesPrivateEndpoint",
+                                "subnet": {
+                                    "name":"MySubnet",
+                                    "virtualNetworkName": "MyVirtualNetwork"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    },
     "parameters": {
         "accessTier": {
             "allowedValues": [
@@ -174,13 +267,11 @@
     "variables": {
         "apiVersions": {
             "advancedThreatProtectionSettings": "2019-01-01",
-            "authorizationRoleAssignments": "2020-04-01-preview",
             "deployments": "2021-04-01",
             "diagnosticSettings": "2017-05-01-preview",
             "keyVaults": "2019-09-01",
             "privateEndpoints": "2020-07-01",
             "privateEndpointsPrivateDnsZoneGroups": "2020-07-01",
-            "roleAssignments": "2020-04-01-preview",
             "storageAccounts": "2021-02-01",
             "storageAccountsBlobServices": "2021-02-01",
             "storageAccountsBlobServicesContainers": "2021-02-01",
@@ -199,17 +290,6 @@
         "blobServicesPrivateEndpoints": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).privateEndpoints]",
         "blobServicesPrivateEndpointsCount": "[length(variables('blobServicesPrivateEndpoints'))]",
         "blobServicesPrivateEndpointsIsNotEmpty": "[greater(variables('blobServicesPrivateEndpointsCount'), 0)]",
-        "copy": [
-            {
-                "count": "[variables('encryptionScopesCount')]",
-                "input": {
-                    "name": "[union(variables('defaultResourceProperties').encryptionScope, parameters('encryptionScopes')[copyIndex('encryptionScopesKeyVaults')]).keyVault.name]",
-                    "resourceGroupName": "[union(variables('defaultResourceProperties').encryptionScope, parameters('encryptionScopes')[copyIndex('encryptionScopesKeyVaults')]).keyVault.resourceGroupName]",
-                    "subscriptionId": "[union(variables('defaultResourceProperties').encryptionScope, parameters('encryptionScopes')[copyIndex('encryptionScopesKeyVaults')]).keyVault.subscriptionId]"
-                },
-                "name": "encryptionScopesKeyVaults"
-            }
-        ],
         "customerManagedEncryption": "[union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption'))]",
         "dataLakePrivateEndpoints": "[union(variables('defaultResourceProperties').dataLake, parameters('dataLake')).privateEndpoints]",
         "dataLakePrivateEndpointsCount": "[length(variables('dataLakePrivateEndpoints'))]",
@@ -249,7 +329,7 @@
             },
             "customerManagedEncryption": {
                 "isDoubleEncryptionAtRestEnabled": true,
-                "isEnabled": true,
+                "isEnabled": false,
                 "keyName": "",
                 "keyVault": {
                     "name": "",
@@ -291,9 +371,8 @@
             },
             "identity": {
                 "isEnabled": true,
-                "name": "",
-                "resourceGroupName": "[variables('resourceGroupName')]",
-                "subscriptionId": "[variables('subscriptionId')]"
+                "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
+                "userAssignedIdentities": []
             },
             "privateEndpoint": {
                 "dnsZone": {
@@ -341,9 +420,6 @@
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isCustomerManagedEncryptionEnabled": "[variables('customerManagedEncryption').isEnabled]",
-        "keyVaults": "[union(variables('encryptionScopesKeyVaults'), if(variables('isCustomerManagedEncryptionEnabled'), createArray(variables('customerManagedEncryption').keyVault), createArray()))]",
-        "keyVaultsCount": "[length(variables('keyVaults'))]",
-        "keyVaultsIsNotEmpty": "[greater(variables('keyVaultsCount'), 0)]",
         "queueCollection": "[union(variables('defaultResourceProperties').queueService, parameters('queueServices')).queues.collection]",
         "queueCollectionCount": "[length(variables('queueCollection'))]",
         "queueCollectionIsNotEmpty": "[greater(variables('queueCollectionCount'), 0)]",
@@ -353,7 +429,6 @@
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
-            "keyVaultCryptoServiceEncryptionUserRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]",
             "storageAccount": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
             "storageAccountBlobServices": "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]",
             "storageAccountFileServices": "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('storageAccountName'), 'default')]",
@@ -368,12 +443,13 @@
         "tableServicesPrivateEndpoints": "[union(variables('defaultResourceProperties').tableService, parameters('tableServices')).privateEndpoints]",
         "tableServicesPrivateEndpointsCount": "[length(variables('tableServicesPrivateEndpoints'))]",
         "tableServicesPrivateEndpointsIsNotEmpty": "[greater(variables('tableServicesPrivateEndpointsCount'), 0)]",
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]",
         "virtualNetworkRulesCount": "[length(parameters('virtualNetworkRules'))]"
     },
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').storageAccounts]",
-            "identity": "[if(variables('identity').isEnabled, union(createObject('type', if(empty(variables('identity').name), 'SystemAssigned', 'UserAssigned')), if(empty(variables('identity').name), createObject(), createObject('userAssignedIdentities', createObject(resourceId(variables('identity').subscriptionId, variables('identity').resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').name))))), null())]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
             "kind": "[parameters('kind')]",
             "location": "[parameters('location')]",
             "name": "[variables('storageAccountName')]",
@@ -441,84 +517,6 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Storage/storageAccounts"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').deployments]",
-            "condition": "[variables('keyVaultsIsNotEmpty')]",
-            "copy": {
-                "count": "[variables('keyVaultsCount')]",
-                "mode": "Parallel",
-                "name": "keyVaultsRbacCopy"
-            },
-            "dependsOn": [
-                "[variables('resourceIds').storageAccount]"
-            ],
-            "name": "[format('{0}-KvRbac_{1}', deployment().name, copyIndex())]",
-            "properties": {
-                "expressionEvaluationOptions": {
-                    "scope": "inner"
-                },
-                "mode": "Incremental",
-                "parameters": {
-                    "keyVaultCryptoServiceEncryptionUserRoleDefinitionId": {
-                        "value": "[variables('resourceIds').keyVaultCryptoServiceEncryptionUserRoleDefinition]"
-                    },
-                    "keyVaultId": {
-                        "value": "[resourceId(variables('keyVaults')[copyIndex()].subscriptionId, variables('keyVaults')[copyIndex()].resourceGroupName, 'Microsoft.KeyVault/vaults', variables('keyVaults')[copyIndex()].name)]"
-                    },
-                    "keyVaultName": {
-                        "value": "[variables('keyVaults')[copyIndex()].name]"
-                    },
-                    "roleAssignmentsApiVersion": {
-                        "value": "[variables('apiVersions').roleAssignments]"
-                    },
-                    "storageAccountId": {
-                        "value": "[variables('resourceIds').storageAccount]"
-                    },
-                    "storageAccountsApiVersion": {
-                        "value": "[variables('apiVersions').storageAccounts]"
-                    }
-                },
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {
-                        "keyVaultCryptoServiceEncryptionUserRoleDefinitionId": {
-                            "type": "string"
-                        },
-                        "keyVaultId": {
-                            "type": "string"
-                        },
-                        "keyVaultName": {
-                            "type": "string"
-                        },
-                        "roleAssignmentsApiVersion":{
-                            "type": "string"
-                        },
-                        "storageAccountId": {
-                            "type": "string"
-                        },
-                        "storageAccountsApiVersion": {
-                            "type": "string"
-                        }
-                    },
-                    "resources": [
-                        {
-                            "apiVersion": "[parameters('roleAssignmentsApiVersion')]",
-                            "name": "[guid(parameters('storageAccountId'), parameters('keyVaultCryptoServiceEncryptionUserRoleDefinitionId'), parameters('keyVaultId'))]",
-                            "properties": {
-                                "principalId": "[reference(parameters('storageAccountId'), parameters('storageAccountsApiVersion'), 'Full').identity.principalId]",
-                                "roleDefinitionId": "[parameters('keyVaultCryptoServiceEncryptionUserRoleDefinitionId')]"
-                            },
-                            "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
-                            "type": "Microsoft.Authorization/roleAssignments"
-                        }
-                    ]
-                }
-            },
-            "resourceGroup": "[if(variables('keyVaultsIsNotEmpty'), variables('keyVaults')[copyIndex()].resourceGroupName, variables('resourceGroupName'))]",
-            "subscriptionId": "[if(variables('keyVaultsIsNotEmpty'), variables('keyVaults')[copyIndex()].subscriptionId, variables('subscriptionId'))]",
-            "type": "Microsoft.Resources/deployments"
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
@@ -1130,7 +1128,6 @@
                 "blobServicesPrivateDnsZoneGroupsCopy",
                 "dataLakePrivateDnsZoneGroupsCopy",
                 "fileServicesPrivateDnsZoneGroupsCopy",
-                "keyVaultsRbacCopy",
                 "queueServicesPrivateDnsZoneGroupsCopy",
                 "tableServicesPrivateDnsZoneGroupsCopy"
             ],

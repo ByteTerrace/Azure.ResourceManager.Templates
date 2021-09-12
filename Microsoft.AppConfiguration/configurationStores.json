@@ -1,11 +1,55 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys an application configuration store with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "name": "MyAppConfig",
+                    "skuName": "Free"
+                }
+            },
+            {
+                "description": "Deploys an application configuration store with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "name": "MyAppConfig",
+                    "privateEndpoints": [
+                        {
+                            "dnsZones": [
+                                {
+                                    "name": "privatelink.azconfig.io"
+                                }
+                            ],
+                            "name": "MyPrivateEndpoint",
+                            "subnet": {
+                                "name":"MySubnet",
+                                "virtualNetworkName": "MyVirtualNetwork"
+                            }
+                        }
+                    ],
+                    "settings": {
+                        "collection": []
+                    },
+                    "skuName": "Standard"
+                }
+            }
+        ]
+    },
     "parameters": {
         "customerManagedEncryption": {
             "defaultValue": {},
             "metadata": {
                 "description": "An object that encapsulates the customer-managed encryption settings that will be applied to the Azure Application Configuration Store."
+            },
+            "type": "object"
+        },
+        "identity": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the identity that will be assigned to the Azure Application Configuration Store."
             },
             "type": "object"
         },
@@ -67,19 +111,14 @@
         "apiVersions": {
             "configurationStores": "2020-07-01-preview",
             "configurationStoresKeyValues": "2020-07-01-preview",
-            "deployments": "2021-04-01",
             "keyVaults": "2019-09-01",
             "privateEndpoints": "2020-07-01",
-            "privateEndpointsPrivateDnsZoneGroups": "2020-07-01",
-            "roleAssignments": "2020-04-01-preview",
-            "userAssignedIdentities": "2018-11-30"
+            "privateEndpointsPrivateDnsZoneGroups": "2020-07-01"
         },
-        "configurationStoreManagedIdentityName": "[format('{0}-appconfiguration-managedidentity', parameters('name'))]",
         "customerManagedEncryption": "[union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption'))]",
-        "customerManagedEncryptionKeyVaultRbacDeploymentName": "[format('{0}-KvRbac', deployment().name)]",
         "defaultResourceProperties": {
             "customerManagedEncryption": {
-                "isEnabled": true,
+                "isEnabled": false,
                 "keyName": "",
                 "keyVault": {
                     "name": "",
@@ -87,6 +126,11 @@
                     "subscriptionId": "[variables('subscriptionId')]"
                 },
                 "keyVersion": ""
+            },
+            "identity": {
+                "isEnabled": true,
+                "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
+                "userAssignedIdentities": []
             },
             "privateEndpoint": {
                 "dnsZone": {
@@ -104,6 +148,7 @@
                 "tags": {}
             }
         },
+        "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isCustomerManagedEncryptionEnabled": "[variables('customerManagedEncryption').isEnabled]",
         "privateEndpoints": "[if(variables('privateEndpointsIsNotEmpty'), parameters('privateEndpoints'), createArray(createObject('dnsZones', createArray(), 'name', '<NULL>')))]",
         "privateEndpointsCount": "[length(parameters('privateEndpoints'))]",
@@ -111,109 +156,15 @@
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
             "configurationStore": "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('name'))]",
-            "configurationStoreCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', if(variables('isCustomerManagedEncryptionEnabled'), variables('customerManagedEncryption').keyVault.name, 'dummyKeyVault'))]",
-            "configurationStoreCustomerManagedEncryptionKeyVaultRbacDeployment": "[resourceId('Microsoft.Resources/deployments', variables('customerManagedEncryptionKeyVaultRbacDeploymentName'))]",
-            "configurationStoreManagedIdentity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('configurationStoreManagedIdentityName'))]",
-            "keyVaultCryptoServiceEncryptionUserRoleDefinition": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')]"
+            "configurationStoreCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', if(variables('isCustomerManagedEncryptionEnabled'), variables('customerManagedEncryption').keyVault.name, 'dummyKeyVault'))]"
         },
-        "settings": "[if(variables('settingsIsNotEmpty'), parameters('settings').array, createArray(createObject('name', 'dummySetting')))]",
-        "settingsCount": "[length(union(createObject('array', createArray()), parameters('settings')).array)]",
-        "settingsIsNotEmpty": "[greater(variables('settingsCount'), 0)]",
-        "subscriptionId": "[subscription().subscriptionId]"
+        "subscriptionId": "[subscription().subscriptionId]",
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]"
     },
     "resources": [
         {
-            "apiVersion": "[variables('apiVersions').userAssignedIdentities]",
-            "location": "[parameters('location')]",
-            "name": "[variables('configurationStoreManagedIdentityName')]",
-            "properties": {},
-            "tags": "[parameters('tags')]",
-            "type": "Microsoft.ManagedIdentity/userAssignedIdentities"
-        },
-        {
-            "apiVersion": "[variables('apiVersions').deployments]",
-            "condition": "[variables('isCustomerManagedEncryptionEnabled')]",
-            "dependsOn": [
-                "[variables('resourceIds').configurationStoreManagedIdentity]"
-            ],
-            "name": "[variables('customerManagedEncryptionKeyVaultRbacDeploymentName')]",
-            "properties": {
-                "expressionEvaluationOptions": {
-                    "scope": "inner"
-                },
-                "mode": "Incremental",
-                "parameters": {
-                    "keyVaultCryptoServiceEncryptionUserRoleDefinitionId": {
-                        "value": "[variables('resourceIds').keyVaultCryptoServiceEncryptionUserRoleDefinition]"
-                    },
-                    "keyVaultId": {
-                        "value": "[variables('resourceIds').configurationStoreCustomerManagedEncryptionKeyVault]"
-                    },
-                    "keyVaultName": {
-                        "value": "[variables('customerManagedEncryption').keyVault.name]"
-                    },
-                    "roleAssignmentsApiVersion": {
-                        "value": "[variables('apiVersions').roleAssignments]"
-                    },
-                    "userAssignedIdentitiesApiVersion": {
-                        "value": "[variables('apiVersions').userAssignedIdentities]"
-                    },
-                    "userAssignedIdentityId": {
-                        "value": "[variables('resourceIds').configurationStoreManagedIdentity]"
-                    }
-                },
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {
-                        "keyVaultCryptoServiceEncryptionUserRoleDefinitionId": {
-                            "type": "string"
-                        },
-                        "keyVaultId": {
-                            "type": "string"
-                        },
-                        "keyVaultName": {
-                            "type": "string"
-                        },
-                        "roleAssignmentsApiVersion":{
-                            "type": "string"
-                        },
-                        "userAssignedIdentitiesApiVersion": {
-                            "type": "string"
-                        },
-                        "userAssignedIdentityId": {
-                            "type": "string"
-                        }
-                    },
-                    "resources": [
-                        {
-                            "apiVersion": "[parameters('roleAssignmentsApiVersion')]",
-                            "name": "[guid(parameters('userAssignedIdentityId'), parameters('keyVaultCryptoServiceEncryptionUserRoleDefinitionId'), parameters('keyVaultId'))]",
-                            "properties": {
-                                "principalId": "[reference(parameters('userAssignedIdentityId'), parameters('userAssignedIdentitiesApiVersion'), 'Full').properties.principalId]",
-                                "roleDefinitionId": "[parameters('keyVaultCryptoServiceEncryptionUserRoleDefinitionId')]"
-                            },
-                            "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
-                            "type": "Microsoft.Authorization/roleAssignments"
-                        }
-                    ]
-                }
-            },
-            "resourceGroup": "[variables('customerManagedEncryption').keyVault.resourceGroupName]",
-            "subscriptionId": "[variables('customerManagedEncryption').keyVault.subscriptionId]",
-            "type": "Microsoft.Resources/deployments"
-        },
-        {
             "apiVersion": "[variables('apiVersions').configurationStores]",
-            "dependsOn": [
-                "[variables('resourceIds').configurationStoreCustomerManagedEncryptionKeyVaultRbacDeployment]"
-            ],
-            "identity": {
-                "type": "UserAssigned",
-                "userAssignedIdentities": {
-                    "[variables('resourceIds').configurationStoreManagedIdentity]": {}
-                }
-            },
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
@@ -295,9 +246,8 @@
         },
         {
             "apiVersion": "[variables('apiVersions').configurationStoresKeyValues]",
-            "condition": "[variables('settingsIsNotEmpty')]",
             "copy": {
-                "count": "[variables('settingsCount')]",
+                "count": "[length(union(createObject('collection', createArray()), parameters('settings')).collection)]",
                 "mode": "Parallel",
                 "name": "settingsCopy"
             },

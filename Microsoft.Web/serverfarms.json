@@ -1,6 +1,38 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys an application service plan with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "isEnabled": false
+                        }
+                    },
+                    "name": "MyApplicationServicePlan",
+                    "operatingSystemName": "Windows",
+                    "skuName": "B1"
+                }
+            },
+            {
+                "description": "Deploys an application service plan with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "name": "MyApplicationServicePlan",
+                    "operatingSystemName": "Windows",
+                    "skuName": "P1v3"
+                }
+            }
+        ]
+    },
     "parameters": {
         "audit": {
             "defaultValue": {},
