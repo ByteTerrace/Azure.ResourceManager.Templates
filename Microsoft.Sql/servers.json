@@ -194,7 +194,6 @@
     },
     "variables": {
         "apiVersions": {
-            "deployments": "2021-04-01",
             "diagnosticSettings": "2017-05-01-preview",
             "keyVaults": "2019-09-01",
             "keyVaultsKeys": "2019-09-01",
@@ -285,6 +284,7 @@
                 }
             },
             "vulnerabilityAssessment": {
+                "emailAddresses": [],
                 "isEnabled": true,
                 "storageAccount": {
                     "name": "",
@@ -324,7 +324,6 @@
         "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), parameters('virtualNetworkRules'), createArray(createObject('name', 'dummyRule')))]",
         "virtualNetworkRulesIsNotEmpty": "[greater(length(parameters('virtualNetworkRules')), 0)]",
         "vulnerabilityAssessment": "[union(variables('defaultResourceProperties').vulnerabilityAssessment, parameters('vulnerabilityAssessment'))]",
-        "vulnerabilityAssessmentStorageAccountRbacDeploymentName": "[format('{0}-SaRbac', deployment().name)]",
         "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]"
     },
     "resources": [
@@ -614,7 +613,7 @@
             "properties": {
                 "disabledAlerts": [],
                 "emailAccountAdmins": true,
-                "emailAddresses": [],
+                "emailAddresses": "[variables('vulnerabilityAssessment').emailAddresses]",
                 "retentionDays": "[variables('audit').retentionPolicy.days]",
                 "state": "[if(variables('isVulnerabilityAssessmentEnabled'), 'Enabled', 'Disabled')]"
             },
@@ -629,7 +628,7 @@
             "name": "[format('{0}/default', parameters('name'))]",
             "properties": {
                 "recurringScans": {
-                    "emails": [],
+                    "emails": "[variables('vulnerabilityAssessment').emailAddresses]",
                     "emailSubscriptionAdmins": true,
                     "isEnabled": true
                 },
@@ -655,16 +654,15 @@
             "name": "[format('{0}/{1}', parameters('name'), parameters('elasticPools')[copyIndex()].name)]",
             "properties": {
                 "licenseType": "[if(union(variables('defaultResourceProperties').elasticPool, parameters('elasticPools')[copyIndex()]).isAzureHybridBenefitEnabled, 'BasePrice', 'LicenseIncluded')]",
-                "maintenanceConfigurationId": "/subscriptions/28932662-8488-49f8-9638-94a96eaceacb/providers/Microsoft.Maintenance/publicMaintenanceConfigurations/SQL_Default",
+                "maintenanceConfigurationId": "[format('/subscriptions/{0}/providers/Microsoft.Maintenance/publicMaintenanceConfigurations/SQL_Default', variables('subscriptionId'))]",
                 "maxSizeBytes": "[union(variables('defaultResourceProperties').elasticPool, parameters('elasticPools')[copyIndex()]).maximumSizeInBytes]",
                 "perDatabaseSettings": {
-                    "maxCapacity": "[union(variables('defaultResourceProperties').elasticPool, parameters('elasticPools')[copyIndex()]).numberOfCapacityUnits]",
-                    "minCapacity": 0
+                    "maxCapacity": "[union(createObject('maximumNumberOfCapacityUnits', skip(last(split(union(variables('defaultResourceProperties').elasticPool, parameters('elasticPools')[copyIndex()]).skuName, '_')), 1)), parameters('elasticPools')[copyIndex()]).maximumNumberOfCapacityUnits]",
+                    "minCapacity": "[union(createObject('minimumNumberOfCapacityUnits', 0), parameters('elasticPools')[copyIndex()]).minimumNumberOfCapacityUnits]"
                 },
                 "zoneRedundant": "[union(variables('defaultResourceProperties').elasticPool, parameters('elasticPools')[copyIndex()]).isZoneRedundant]"
             },
             "sku": {
-                "capacity": "[union(variables('defaultResourceProperties').elasticPool, parameters('elasticPools')[copyIndex()]).numberOfCapacityUnits]",
                 "name": "[union(variables('defaultResourceProperties').elasticPool, parameters('elasticPools')[copyIndex()]).skuName]"
             },
             "tags": "[parameters('tags')]",

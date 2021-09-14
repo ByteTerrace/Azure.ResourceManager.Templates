@@ -62,12 +62,26 @@
             },
             "type": "array"
         },
+        "configuration": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the configuration settings that will be applied to the Azure Redis Cache."
+            },
+            "type": "object"
+        },
         "firewallRules": {
             "defaultValue": [],
             "metadata": {
                 "description": "An array of firewall rules that will be assigned to the Azure Redis Cache."
             },
             "type": "array"
+        },
+        "isHttpsOnlyModeEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether HTTP network protocol support is restricted to HTTPS on the Azure Redis Cache."
+            },
+            "type": "bool"
         },
         "isPublicNetworkAccessEnabled": {
             "defaultValue": false,
@@ -219,9 +233,10 @@
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
-                "enableNonSslPort": false,
+                "enableNonSslPort": "[not(parameters('isHttpsOnlyModeEnabled'))]",
                 "minimumTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
                 "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]",
+                "redisConfiguration": "[if(empty(parameters('configuration')), null(), parameters('configuration')))]",
                 "redisVersion": "[parameters('version')]",
                 "shardCount": "[if(variables('isClusteringEnabled'), parameters('numberOfShards'), null())]",
                 "sku": {

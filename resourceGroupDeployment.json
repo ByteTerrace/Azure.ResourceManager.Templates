@@ -525,7 +525,9 @@
                     2,
                     3
                 ],
+                "configuration": {},
                 "firewallRules": [],
+                "isHttpsOnlyModeEnabled": true,
                 "isPublicNetworkAccessEnabled": false,
                 "minimumSupportedTlsVersion": "1.2",
                 "numberOfCapacityUnits": 1,
@@ -615,6 +617,7 @@
                 "identity": {},
                 "isAdvancedThreatProtectionEnabled": true,
                 "isAllowTrustedMicrosoftServicesEnabled": false,
+                "isHttpsOnlyModeEnabled": true,
                 "isPublicNetworkAccessEnabled": false,
                 "isSharedKeyAccessEnabled": false,
                 "kind": "StorageV2",
@@ -2007,11 +2010,14 @@
                     "availabilityZones": {
                         "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).availabilityZones]"
                     },
+                    "configuration": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).configuration]"
+                    },
                     "firewallRules": {
                         "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).firewallRules]"
                     },
-                    "identity": {
-                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).identity]"
+                    "isHttpsOnlyModeEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).isHttpsOnlyModeEnabled]"
                     },
                     "isPublicNetworkAccessEnabled": {
                         "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).isPublicNetworkAccessEnabled]"
@@ -2042,6 +2048,9 @@
                     },
                     "tags": {
                         "value": "[parameters('tags')]"
+                    },
+                    "version": {
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).version]"
                     }
                 },
                 "templateLink": {
@@ -3160,6 +3169,9 @@
                     },
                     "isAllowTrustedMicrosoftServicesEnabled": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
+                    },
+                    "isHttpsOnlyModeEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isHttpsOnlyModeEnabled]"
                     },
                     "isPublicNetworkAccessEnabled": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).isPublicNetworkAccessEnabled]"
