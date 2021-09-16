@@ -177,6 +177,7 @@
                 "namespaces": []
             },
             "sharedImageGalleries": [],
+            "signalrServices": [],
             "sqlDatabases": [],
             "sqlServers": [],
             "staticWebApplications": [],
@@ -564,6 +565,16 @@
             "sharedImageGallery": {
                 "description": ""
             },
+            "signalrService": {
+                "audit": "[variables('audit')]",
+                "cors": {},
+                "identity": {},
+                "isPublicNetworkAccessEnabled": false,
+                "isSharedKeyAccessEnabled": false,
+                "privateEndpoints": [],
+                "serverless": {},
+                "skuName": "Standard_S1"
+            },
             "sqlDatabase": {
                 "audit": "[variables('audit')]",
                 "autoscale": {},
@@ -778,6 +789,7 @@
             "scriptPreDeploy": "[format('{0}-ScriptPreDeploy', deployment().name)]",
             "serviceBusNamespace": "[format('{0}-ServiceBusNamespace', deployment().name)]",
             "sharedImageGallery": "[format('{0}-SharedImageGallery', deployment().name)]",
+            "signalrService": "[format('{0}-SignalRService', deployment().name)]",
             "sqlDatabases": "[format('{0}-SqlDatabase', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
             "staticWebApplication": "[format('{0}-StaticWebApplication', deployment().name)]",
@@ -3702,6 +3714,67 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').signalrServices))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').signalrServices)]",
+                "mode": "Parallel",
+                "name": "signalrServicesCopy"
+            },
+            "dependsOn": [
+                "keyVaultsCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "scriptsPreDeployCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').signalrService, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').signalrService, variables('resourceDefinitions').signalrServices[copyIndex()]).audit]"
+                    },
+                    "cors": {
+                        "value": "[union(variables('defaultResourceProperties').signalrService, variables('resourceDefinitions').signalrServices[copyIndex()]).cors]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').signalrService, variables('resourceDefinitions').signalrServices[copyIndex()]).identity]"
+                    },
+                    "isPublicNetworkAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').signalrService, variables('resourceDefinitions').signalrServices[copyIndex()]).isPublicNetworkAccessEnabled]"
+                    },
+                    "isSharedKeyAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').signalrService, variables('resourceDefinitions').signalrServices[copyIndex()]).isSharedKeyAccessEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').signalrServices[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').signalrServices[copyIndex()].name]"
+                    },
+                    "privateEndpoints": {
+                        "value": "[union(variables('defaultResourceProperties').signalrService, variables('resourceDefinitions').signalrServices[copyIndex()]).privateEndpoints]"
+                    },
+                    "serverless": {
+                        "value": "[union(variables('defaultResourceProperties').signalrService, variables('resourceDefinitions').signalrServices[copyIndex()]).serverless]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').signalrService, variables('resourceDefinitions').signalrServices[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.SignalRService/signalR.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').staticWebApplications))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').staticWebApplications)]",
@@ -3982,6 +4055,7 @@
                 "scriptsPreDeployCopy",
                 "serviceBusNamespacesCopy",
                 "sharedImageGalleriesCopy",
+                "signalrServicesCopy",
                 "sqlDatabasesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",
@@ -4070,6 +4144,7 @@
                 "scriptsPreDeployCopy",
                 "serviceBusNamespacesCopy",
                 "sharedImageGalleriesCopy",
+                "signalrServicesCopy",
                 "sqlDatabasesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",
@@ -4166,6 +4241,7 @@
                 "scriptsPreDeployCopy",
                 "serviceBusNamespacesCopy",
                 "sharedImageGalleriesCopy",
+                "signalrServicesCopy",
                 "sqlDatabasesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",
@@ -4255,6 +4331,7 @@
                 "scriptsPreDeployCopy",
                 "serviceBusNamespacesCopy",
                 "sharedImageGalleriesCopy",
+                "signalrServicesCopy",
                 "sqlDatabasesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",
@@ -4340,6 +4417,7 @@
                 "scriptsPreDeployCopy",
                 "serviceBusNamespacesCopy",
                 "sharedImageGalleriesCopy",
+                "signalrServicesCopy",
                 "sqlDatabasesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",
