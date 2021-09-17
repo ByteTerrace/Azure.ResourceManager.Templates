@@ -126,6 +126,13 @@
             },
             "type": "object"
         },
+        "topics": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of topics that will be created within the Azure Service Bus Namespace."
+            },
+            "type": "array"
+        },
         "virtualNetworkRules": {
             "defaultValue": [],
             "metadata": {
@@ -175,6 +182,17 @@
                     "resourceGroupName": "[variables('resourceGroupName')]",
                     "subscriptionId": "[variables('subscriptionId')]"
                 }
+            },
+            "topic": {
+                "automaticDeleteOnIdleInterval": "[null()]",
+                "defaultMessageTimeToLive": "[null()]",
+                "duplicateDetectionHistoryTimeWindow": "P7M",
+                "isBatchOperationsEnabled": true,
+                "isDuplicateDetectionEnabled": true,
+                "isExpressEntitiesEnabled": false,
+                "isPartitioningEnabled": false,
+                "isOrderingSupportEnabled": true,
+                "maximumSizeInMegabytes": 16
             },
             "virtualNetworkRule": {
                 "ignoreMissingVnetServiceEndpoint": true,
@@ -336,6 +354,30 @@
                 "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
             "type": "Microsoft.ServiceBus/namespaces/providers/diagnosticsettings"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').serviceBusNamespacesTopics]",
+            "copy": {
+                "count": "[length(parameters('topics'))]",
+                "mode": "Parallel",
+                "name": "topicsCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').serviceBusNamespace]"
+            ],
+            "name": "[format('{0}/{1}', parameters('name'), parameters('topics')[copyIndex()].name)]",
+            "properties": {
+                "autoDeleteOnIdle": "[union(variables('defaultResourceProperties').topic, parameters('topics')[copyIndex()]).automaticDeleteOnIdleInterval]",
+                "defaultMessageTimeToLive": "[union(variables('defaultResourceProperties').topic, parameters('topics')[copyIndex()]).defaultMessageTimeToLive]",
+                "duplicateDetectionHistoryTimeWindow": "[union(variables('defaultResourceProperties').topic, parameters('topics')[copyIndex()]).duplicateDetectionHistoryTimeWindow]",
+                "enableBatchedOperations": "[union(variables('defaultResourceProperties').topic, parameters('topics')[copyIndex()]).isBatchOperationsEnabled]",
+                "enableExpress": "[union(variables('defaultResourceProperties').topic, parameters('topics')[copyIndex()]).isExpressEntitiesEnabled]",
+                "enablePartitioning": "[union(variables('defaultResourceProperties').topic, parameters('topics')[copyIndex()]).isPartitioningEnabled]",
+                "maxSizeInMegabytes": "[union(variables('defaultResourceProperties').topic, parameters('topics')[copyIndex()].maximumSizeInMegabytes)]",
+                "requiresDuplicateDetection": "[union(variables('defaultResourceProperties').topic, parameters('topics')[copyIndex()]).isDuplicateDetectionEnabled]",
+                "supportOrdering": "[union(variables('defaultResourceProperties').topic, parameters('topics')[copyIndex()]).isOrderingSupportEnabled]"
+            },
+            "type": "Microsoft.ServiceBus/namespaces/topics"
         }
     ]
 }
