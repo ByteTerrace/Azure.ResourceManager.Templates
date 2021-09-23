@@ -236,7 +236,7 @@
                 "enableNonSslPort": "[not(parameters('isHttpsOnlyModeEnabled'))]",
                 "minimumTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
                 "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]",
-                "redisConfiguration": "[if(empty(parameters('configuration')), null(), parameters('configuration')))]",
+                "redisConfiguration": "[if(empty(parameters('configuration')), null(), parameters('configuration'))]",
                 "redisVersion": "[parameters('version')]",
                 "shardCount": "[if(variables('isClusteringEnabled'), parameters('numberOfShards'), null())]",
                 "sku": {
