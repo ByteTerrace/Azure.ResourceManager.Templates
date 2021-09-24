@@ -2371,7 +2371,7 @@
                 },
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
-                    "relativePath": "./Microsoft.KeyVault/managedHSMs.json"
+                    "relativePath": "./Microsoft.KeyVault/managedHsms.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"

@@ -230,8 +230,10 @@
                 }
             },
             "virtualNetworkRules": {
-                "resourceGroupName": "[variables('resourceGroupName')]",
-                "subscriptionId": "[variables('subscriptionId')]"
+                "subnet": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
             }
         },
         "isAuditEnabled": "[variables('audit').isEnabled]",
@@ -270,7 +272,7 @@
                         {
                             "count": "[length(parameters('virtualNetworkRules'))]",
                             "input": {
-                                "id": "[resourceId(union(variables('defaultResourceProperties').virtualNetworkRules, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subscriptionId, union(variables('defaultResourceProperties').virtualNetworkRules, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
+                                "id": "[resourceId(union(variables('defaultResourceProperties').virtualNetworkRules, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subnet.subscriptionId, union(variables('defaultResourceProperties').virtualNetworkRules, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnet.virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnet.name)]"
                             },
                             "name": "virtualNetworkRules"
                         }
