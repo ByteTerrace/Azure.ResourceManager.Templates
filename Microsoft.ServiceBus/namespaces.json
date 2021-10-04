@@ -296,6 +296,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').serviceBusNamespacesNetworkRulesets]",
+            "condition": "[or(not(empty(parameters('firewallRules'))), not(empty(parameters('virtualNetworkRules'))))]",
             "dependsOn": [
                 "privateDnsZoneGroupsCopy",
                 "[variables('resourceIds').serviceBusNamespace]"

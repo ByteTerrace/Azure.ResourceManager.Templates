@@ -1,0 +1,366 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "metadata": {
+        "examples": [
+            {
+                "description": "Deploys a basic machine learning services workspace with the recommended set of properties for a development environment.",
+                "name": "Development",
+                "value": {
+                    "audit": {
+                        "isEnabled": false
+                    },
+                    "name": "MyMachineLearningServicesWorkspace",
+                    "skuName": "Basic"
+                }
+            },
+            {
+                "description": "Deploys an enterprise machine learning services workspace with the recommended set of properties for a production environment.",
+                "name": "Production",
+                "value": {
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "containerRegistry": {
+                        "name": "MyContainerRegistry"
+                    },
+                    "isHighBusinessImpactFeatureEnabled": true,
+                    "isPublicNetworkAccessEnabled": false,
+                    "keyVault": {
+                        "name": "MyKeyVault"
+                    },
+                    "name": "MyMachineLearningServicesWorkspace",
+                    "privateEndpoints": [
+                        {
+                            "dnsZones": [
+                                {
+                                    "name": "privatelink.api.azureml.ms"
+                                }
+                            ],
+                            "name": "MyPrivateEndpoint",
+                            "subnet": {
+                                "name":"MySubnet",
+                                "virtualNetworkName": "MyVirtualNetwork"
+                            }
+                        }
+                    ],
+                    "skuName": "Enterprise",
+                    "storageAccount": {
+                        "name": "MyStorageAccount"
+                    }
+                }
+            }
+        ]
+    },
+    "parameters": {
+        "applicationInsights": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the application insights settings that will be applied to the Azure Machine Learning Services workspace."
+            },
+            "type": "object"
+        },
+        "audit": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure Machine Learning Services workspace."
+            },
+            "type": "object"
+        },
+        "containerRegistry": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the container registry settings that will be applied to the Azure Machine Learning Services workspace."
+            },
+            "type": "object"
+        },
+        "customerManagedEncryption": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the customer-managed encryption settings that will be applied to the Azure Machine Learning Services workspace."
+            },
+            "type": "object"
+        },
+        "description": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Specifies the description of the Azure Machine Learning Services workspace."
+            },
+            "type": "string"
+        },
+        "identity": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the identity that will be assigned to the Azure Machine Learning Services workspace."
+            },
+            "type": "object"
+        },
+        "isHighBusinessImpactFeatureEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether high business impact feature is enabled on the Azure Machine Learning Services workspace."
+            },
+            "type": "bool"
+        },
+        "isPublicNetworkAccessEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the Azure Machine Learning Services workspace is accessible from the internet."
+            },
+            "type": "bool"
+        },
+        "keyVault": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the key vault settings that will be applied to the Azure Machine Learning Services workspace."
+            },
+            "type": "object"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Machine Learning Services workspace resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Machine Learning Services workspace."
+            },
+            "type": "string"
+        },
+        "privateEndpoints": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of private endpoints that will be linked with the Azure Machine Learning Services workspace."
+            },
+            "type": "array"
+        },
+        "skuName": {
+            "allowedValues": [
+                "Basic",
+                "Enterprise"
+            ],
+            "defaultValue": "Basic",
+            "metadata": {
+                "description": "Specifies the SKU name of the Azure Machine Learning Services workspace."
+            },
+            "type": "string"
+        },
+        "storageAccount": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the storage account settings that will be applied to the Azure Machine Learning Services workspace."
+            },
+            "type": "object"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Machine Learning Services workspace."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "diagnosticSettings": "2017-05-01-preview",
+            "keyVaultsKeys": "2019-09-01",
+            "machineLearningServices": "2021-07-01",
+            "privateEndpoints": "2020-07-01",
+            "privateEndpointsPrivateDnsZoneGroups": "2020-07-01"
+        },
+        "applicationInsights": "[union(variables('defaultResourceProperties').applicationInsights, parameters('applicationInsights'))]",
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "containerRegistry": "[union(variables('defaultResourceProperties').containerRegistry, parameters('containerRegistry'))]",
+        "customerManagedEncryption": "[union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption'))]",
+        "defaultResourceProperties": {
+            "applicationInsights": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "audit": {
+                "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "logNames": [
+                    "DeploymentEventACI",
+                    "DeploymentEventAKS"
+                ],
+                "retentionPolicy": {
+                    "days": 137,
+                    "isEnabled": true
+                }
+            },
+            "containerRegistry": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "customerManagedEncryption": {
+                "isEnabled": false,
+                "keyName": "",
+                "keyVault": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "keyVersion": ""
+            },
+            "identity": {
+                "isEnabled": true,
+                "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
+                "userAssignedIdentities": []
+            },
+            "keyVault": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "privateEndpoint": {
+                "dnsZone": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "location": "[parameters('location')]",
+                "subnet": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
+            },
+            "storageAccount": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            }
+        },
+        "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "isCustomerManagedEncryptionEnabled": "[variables('customerManagedEncryption').isEnabled]",
+        "keyVault": "[union(variables('defaultResourceProperties').keyVault, parameters('keyVault'))]",
+        "privateEndpointsCount": "[length(parameters('privateEndpoints'))]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "resourceIds": {
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
+            "workspaces": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('name'))]"
+        },
+        "storageAccount": "[union(variables('defaultResourceProperties').storageAccount, parameters('storageAccount'))]",
+        "subscriptionId": "[subscription().subscriptionId]",
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').machineLearningServices]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "allowPublicAccessWhenBehindVnet": "[parameters('isPublicNetworkAccessEnabled')]",
+                "applicationInsights": "[resourceId(variables('applicationInsights').subscriptionId, variables('applicationInsights').resourceGroupName, 'Microsoft.Insights/components', variables('applicationInsights').name)]",
+                "containerRegistry": "[if(empty(parameters('containerRegistry')), null(), resourceId(variables('containerRegistry').subscriptionId, variables('containerRegistry').resourceGroupName, 'Microsoft.ContainerRegistry/registries', variables('containerRegistry').name))]",
+                "description": "[parameters('description')]",
+                "encryption": "[if(variables('isCustomerManagedEncryptionEnabled'), createObject('keyVaultProperties', createObject('keyIdentifier', reference(format('{0}/keys/{1}{2}', resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', variables('customerManagedEncryption').keyVault.name), variables('customerManagedEncryption').keyName, if(empty(variables('customerManagedEncryption').keyVersion), '', format('/versions/{0}', variables('customerManagedEncryption').keyVersion))), variables('apiVersions').keyVaultsKeys).keyUriWithVersion, 'keyVaultArmId', resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', variables('customerManagedEncryption').keyVault.name)), 'status', 'Enabled'), null())]",
+                "friendlyName": "[parameters('name')]",
+                "hbiWorkspace": "[parameters('isHighBusinessImpactFeatureEnabled')]",
+                "keyVault": "[resourceId(variables('keyVault').subscriptionId, variables('keyVault').resourceGroupName, 'Microsoft.KeyVault/vaults', variables('keyVault').name)]",
+                "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]",
+                "storageAccount": "[resourceId(variables('storageAccount').subscriptionId, variables('storageAccount').resourceGroupName, 'Microsoft.Storage/storageAccounts', variables('storageAccount').name)]"
+            },
+            "sku": {
+                "name": "[parameters('skuName')]",
+                "tier": "[parameters('skuName')]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.MachineLearningServices/workspaces"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').privateEndpoints]",
+            "copy": {
+                "count": "[variables('privateEndpointsCount')]",
+                "mode": "Parallel",
+                "name": "privateEndpointsCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').workspaces]"
+            ],
+            "location": "[union(variables('defaultResourceProperties').privateEndpoint, parameters('privateEndpoints')[copyIndex()]).location]",
+            "name": "[parameters('privateEndpoints')[copyIndex()].name]",
+            "properties": {
+                "customDnsConfigs": [],
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[parameters('privateEndpoints')[copyIndex()].name]",
+                        "properties": {
+                            "groupIds": [
+                                "amlworkspace"
+                            ],
+                            "privateLinkServiceId": "[variables('resourceIds').workspaces]"
+                        }
+                    }
+                ],
+                "subnet": {
+                    "id": "[resourceId(union(variables('defaultResourceProperties').privateEndpoint, parameters('privateEndpoints')[copyIndex()]).subnet.subscriptionId, union(variables('defaultResourceProperties').privateEndpoint, parameters('privateEndpoints')[copyIndex()]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('privateEndpoints')[copyIndex()].subnet.virtualNetworkName, parameters('privateEndpoints')[copyIndex()].subnet.name)]"
+                }
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Network/privateEndpoints"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').privateEndpointsPrivateDnsZoneGroups]",
+            "copy": {
+                "count": "[variables('privateEndpointsCount')]",
+                "mode": "Parallel",
+                "name": "privateDnsZoneGroupsCopy"
+            },
+            "dependsOn": [
+                "privateEndpointsCopy"
+            ],
+            "location": "[union(variables('defaultResourceProperties').privateEndpoint, parameters('privateEndpoints')[copyIndex()]).location]",
+            "name": "[format('{0}/default', parameters('privateEndpoints')[copyIndex()].name)]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(parameters('privateEndpoints')[copyIndex()].dnsZones)]",
+                        "input": {
+                            "name": "[replace(parameters('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')].name, '.', '-')]",
+                            "properties": {
+                                "privateDnsZoneId": "[resourceId(union(variables('defaultResourceProperties').privateEndpoint.dnsZone, parameters('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')]).subscriptionId, union(variables('defaultResourceProperties').privateEndpoint.dnsZone, parameters('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')]).resourceGroupName, 'Microsoft.Network/privateDnsZones', parameters('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')].name)]"
+                            }
+                        },
+                        "name": "privateDnsZoneConfigs"
+                    }
+                ]
+            },
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
+            "dependsOn": [
+                "[variables('resourceIds').workspaces]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/Microsoft.Insights/audit', parameters('name'))]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(variables('audit').logNames)]",
+                        "input": {
+                            "category": "[variables('audit').logNames[copyIndex('logs')]]",
+                            "enabled": "[variables('isAuditEnabled')]",
+                            "retentionPolicy": {
+                                "days": "[variables('audit').retentionPolicy.days]",
+                                "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                            }
+                        },
+                        "name": "logs"
+                    }
+                ],
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
+            },
+            "type": "Microsoft.MachineLearningServices/workspaces/providers/diagnosticsettings"
+        }
+    ]
+}
