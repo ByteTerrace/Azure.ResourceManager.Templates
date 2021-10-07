@@ -430,7 +430,6 @@
             "sitesConfig": "2020-12-01",
             "sitesHostNameBindings": "2020-12-01",
             "sitesPublicCertificates": "2020-12-01",
-            "sitesVirtualNetworkConnections": "2020-12-01",
             "storageAccounts": "2021-02-01"
         },
         "applicationSettingsCollection": "[union(union(variables('defaultResourceProperties').applicationSettings, parameters('applicationSettings')).collection, variables('functionApplicationSettingsCollection'), if(variables('privateEndpointsIsNotEmpty'), variables('privateEndpointsApplicationSettingsCollection'), createArray()), if(variables('autoHeal').isProactiveModeEnabled, createArray(), createArray(createObject('name', 'WEBSITE_PROACTIVE_AUTOHEAL_ENABLED', 'value', 'False'))), if(variables('healthCheck').isEnabled, createArray(createObject('name', 'WEBSITE_HEALTHCHECK_MAXPINGFAILURES', 'value', variables('healthCheck').unhealthyInstanceLifetimeInMinutes)), createArray()))]",
@@ -706,7 +705,7 @@
             "type": "Microsoft.Web/sites/config"
         },
         {
-            "apiVersion": "[variables('apiVersions').sitesVirtualNetworkConnections]",
+            "apiVersion": "[variables('apiVersions').sitesConfig]",
             "dependsOn": [
                 "[variables('resourceIds').site]"
             ],
@@ -714,12 +713,12 @@
             "name": "[format('{0}/slotConfigNames', parameters('name'))]",
             "properties": {
                 "appSettingNames": "[union(variables('defaultResourceProperties').applicationSettings, parameters('applicationSettings')).slotEnabledNames]",
-                "connectionStringNames": "[union(variables('defaultResourceProperties').connectionStrings, parameters('connectionStrings')).slotEnabledNames]",
+                "connectionStringNames": "[union(variables('defaultResourceProperties').connectionStrings, parameters('connectionStrings')).slotEnabledNames]"
             },
             "type": "Microsoft.Web/sites/config"
         },
         {
-            "apiVersion": "[variables('apiVersions').sitesVirtualNetworkConnections]",
+            "apiVersion": "[variables('apiVersions').sitesConfig]",
             "condition": "[variables('subnetIsNotEmpty')]",
             "dependsOn": [
                 "[variables('resourceIds').site]"
@@ -732,13 +731,13 @@
             "type": "Microsoft.Web/sites/config"
         },
         {
-            "apiVersion": "[variables('apiVersions').sitesVirtualNetworkConnections]",
+            "apiVersion": "[variables('apiVersions').sitesConfig]",
             "condition": "[variables('subnetIsNotEmpty')]",
             "dependsOn": [
                 "[variables('resourceIds').site]"
             ],
             "location": "[parameters('location')]",
-            "name": "[format('{0}/web', parameters('name'), guid(variables('resourceIds').subnet))]",
+            "name": "[format('{0}/web', parameters('name'))]",
             "properties": {
                 "acrUseManagedIdentityCreds": false,
                 "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
