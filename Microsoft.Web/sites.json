@@ -295,7 +295,7 @@
         "isRouteAllTrafficThroughVirtualNetworkEnabled": {
             "defaultValue": false,
             "metadata": {
-                "description": "Indicates that all Azure Web Site outbound traffic will be subject to the network security groups and user-defined routes of the integrated virtual network.0"
+                "description": "Indicates that all Azure Web Site outbound traffic will be subject to the network security groups and user-defined routes of the integrated virtual network."
             },
             "type": "bool"
         },
@@ -433,7 +433,7 @@
             "sitesVirtualNetworkConnections": "2020-12-01",
             "storageAccounts": "2021-02-01"
         },
-        "applicationSettingsCollection": "[union(union(createObject('collection', createArray()), parameters('applicationSettings')).collection, variables('functionApplicationSettingsCollection'), if(variables('privateEndpointsIsNotEmpty'), variables('privateEndpointsApplicationSettingsCollection'), createArray()), if(variables('autoHeal').isProactiveModeEnabled, createArray(), createArray(createObject('name', 'WEBSITE_PROACTIVE_AUTOHEAL_ENABLED', 'value', 'False'))), if(variables('healthCheck').isEnabled, createArray(createObject('name', 'WEBSITE_HEALTHCHECK_MAXPINGFAILURES', 'value', variables('healthCheck').unhealthyInstanceLifetimeInMinutes)), createArray()))]",
+        "applicationSettingsCollection": "[union(union(variables('defaultResourceProperties').applicationSettings, parameters('applicationSettings')).collection, variables('functionApplicationSettingsCollection'), if(variables('privateEndpointsIsNotEmpty'), variables('privateEndpointsApplicationSettingsCollection'), createArray()), if(variables('autoHeal').isProactiveModeEnabled, createArray(), createArray(createObject('name', 'WEBSITE_PROACTIVE_AUTOHEAL_ENABLED', 'value', 'False'))), if(variables('healthCheck').isEnabled, createArray(createObject('name', 'WEBSITE_HEALTHCHECK_MAXPINGFAILURES', 'value', variables('healthCheck').unhealthyInstanceLifetimeInMinutes)), createArray()))]",
         "audit": "[union(variables('defaultResourceProperties').audit, createObject('logNames', if(variables('functionExtension').isEnabled, variables('defaultFunctionExtenstionLogNames'), variables('defaultApplicationServiceLogNames'))), parameters('audit'))]",
         "autoHeal": "[union(variables('defaultResourceProperties').autoHeal, parameters('autoHeal'))]",
         "cors": "[union(variables('defaultResourceProperties').cors, parameters('cors'))]",
@@ -449,6 +449,10 @@
             "FunctionAppLogs"
         ],
         "defaultResourceProperties": {
+            "applicationSettings": {
+                "collection": [],
+                "slotEnabledNames": []
+            },
             "audit": {
                 "isEnabled": true,
                 "logAnalyticsWorkspace": {
@@ -466,7 +470,8 @@
                 "rules": {}
             },
             "connectionStrings": {
-                "collection": []
+                "collection": [],
+                "slotEnabledNames": []
             },
             "cors": {
                 "allowedOrigins": [],
@@ -702,12 +707,25 @@
         },
         {
             "apiVersion": "[variables('apiVersions').sitesVirtualNetworkConnections]",
+            "dependsOn": [
+                "[variables('resourceIds').site]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/slotConfigNames', parameters('name'))]",
+            "properties": {
+                "appSettingNames": "[union(variables('defaultResourceProperties').applicationSettings, parameters('applicationSettings')).slotEnabledNames]",
+                "connectionStringNames": "[union(variables('defaultResourceProperties').connectionStrings, parameters('connectionStrings')).slotEnabledNames]",
+            },
+            "type": "Microsoft.Web/sites/config"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').sitesVirtualNetworkConnections]",
             "condition": "[variables('subnetIsNotEmpty')]",
             "dependsOn": [
                 "[variables('resourceIds').site]"
             ],
             "location": "[parameters('location')]",
-            "name": "[format('{0}/virtualNetwork', parameters('name'), guid(variables('resourceIds').subnet))]",
+            "name": "[format('{0}/virtualNetwork', parameters('name'))]",
             "properties": {
                 "subnetResourceId": "[variables('resourceIds').subnet]"
             },
@@ -787,13 +805,10 @@
                 "minimumElasticInstanceCount": "[if(variables('functionExtension').isEnabled, 1, null())]",
                 "minTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
                 "netFrameworkVersion": "[if(and(not(equals(toLower(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).kind), 'linux')), equals(variables('currentStack'), 'dotnetcore'), endsWith(parameters('frameworkVersion'), '5.0')), 'v5.0', 'v4.0')]",
-                "numberOfWorkers": 1,
                 "scmMinTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
-                "phpVersion": "OFF",
                 "powerShellVersion": "[if(equals(variables('currentStack'), 'powershell'), if(endsWith(parameters('frameworkVersion'), '|7'), '~7', null()), null())]",
                 "remoteDebuggingEnabled": "[variables('remoteDebugging').isEnabled]",
                 "remoteDebuggingVersion": "[variables('remoteDebugging').version]",
-                "redundancyMode": "None",
                 "scmIpSecurityRestrictionsUseMain": "[equals(variables('scmIpSecurityRestrictionsCount'), 0)]",
                 "use32BitWorkerProcess": "[parameters('is32BitModeEnabled')]",
                 "vnetRouteAllEnabled": "[or(parameters('isRouteAllTrafficThroughVirtualNetworkEnabled'), variables('privateEndpointsIsNotEmpty'))]",
