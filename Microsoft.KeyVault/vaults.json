@@ -56,7 +56,7 @@
             "metadata": {
                 "description": "An array of access policies that will be assigned to the Azure Key Vault."
             },
-            "type": "object"
+            "type": "array"
         },
         "audit": {
             "defaultValue": {},
