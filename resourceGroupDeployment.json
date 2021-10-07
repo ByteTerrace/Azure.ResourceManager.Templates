@@ -400,6 +400,7 @@
                 "numberOfFaultDomains": 3
             },
             "keyVault": {
+                "accessPolicies": [],
                 "audit": "[variables('audit')]",
                 "firewallRules": [],
                 "isAllowTrustedMicrosoftServicesEnabled": false,
@@ -725,6 +726,7 @@
                 "isClientAffinityEnabled": false,
                 "isHttpsOnlyModeEnabled": true,
                 "isHttp20SupportEnabled": true,
+                "isRouteAllTrafficThroughVirtualNetworkEnabled": false,
                 "isWebSocketSupportEnabled": false,
                 "is32BitModeEnabled": false,
                 "logging": {},
@@ -2243,6 +2245,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "accessPolicies": {
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).accessPolicies]"
+                    },
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).audit]"
                     },
@@ -3903,6 +3908,9 @@
                     },
                     "isHttp20SupportEnabled": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).isHttp20SupportEnabled]"
+                    },
+                    "isRouteAllTrafficThroughVirtualNetworkEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).isRouteAllTrafficThroughVirtualNetworkEnabled]"
                     },
                     "isWebSocketSupportEnabled": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).isWebSocketSupportEnabled]"

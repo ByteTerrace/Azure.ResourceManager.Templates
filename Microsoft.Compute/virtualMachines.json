@@ -436,8 +436,6 @@
             "networkInterfaceCard": {
                 "dnsServers": [],
                 "ipConfiguration": {
-                    "addressVersion": "IPv4 ",
-                    "allocationMethod": "Dynamic",
                     "applicationSecurityGroup": {
                         "name": "",
                         "resourceGroupName": "[variables('resourceGroupName')]"
@@ -447,6 +445,10 @@
                         "inboundNatRuleName": "",
                         "name": "",
                         "resourceGroupName": "[variables('resourceGroupName')]"
+                    },
+                    "privateIpAddress": {
+                        "value": "",
+                        "version": "IPv4"
                     },
                     "publicIpAddress": {
                         "name": "",
@@ -458,6 +460,7 @@
                 },
                 "isAcceleratedNetworkingEnabled": false,
                 "isIpForwardingEnabled": false,
+                "name": "",
                 "networkSecurityGroup": {
                     "name": "",
                     "resourceGroupName": "[variables('resourceGroupName')]"
@@ -496,11 +499,11 @@
         "licenseTypeIsNotEmpty": "[not(empty(parameters('licenseType')))]",
         "linuxConfiguration": {
             "disablePasswordAuthentication": "[not(variables('linuxConfigurationFriendly').isPasswordAuthenticationEnabled)]",
-            "ssh": "[if(empty(variables('linuxConfigurationFriendly').administratorUserPublicSshKey), null(), createObject('publicKeys', createArray(createObject('keyData', variables('linuxConfigurationFriendly').administratorUserPublicSshKey, 'path', format('/home/{0}/.ssh/authorized_keys', parameters('administratorUserName'))))))]",
             "patchSettings": {
                 "patchMode": "[variables('linuxConfigurationFriendly').patchSettings.mode]"
             },
-            "provisionVMAgent": "[variables('linuxConfigurationFriendly').isVmAgentEnabled]"
+            "provisionVMAgent": "[variables('linuxConfigurationFriendly').isVmAgentEnabled]",
+            "ssh": "[if(empty(variables('linuxConfigurationFriendly').administratorUserPublicSshKey), null(), createObject('publicKeys', createArray(createObject('keyData', variables('linuxConfigurationFriendly').administratorUserPublicSshKey, 'path', format('/home/{0}/.ssh/authorized_keys', parameters('administratorUserName'))))))]"
         },
         "linuxConfigurationFriendly": "[union(variables('defaultResourceProperties').linuxConfiguration, parameters('linuxConfiguration'))]",
         "networkInterfaceCardsCount": "[length(parameters('networkInterfaceCards'))]",
@@ -564,7 +567,7 @@
                 "name": "networkInterfaceCardsCopy"
             },
             "location": "[parameters('location')]",
-            "name": "[format('{0}-vmnic-{1}', parameters('name'), copyIndex())]",
+            "name": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard, parameters('networkInterfaceCards')[copyIndex()]).name), format('{0}-vmnic-{1}', parameters('name'), copyIndex()), parameters('networkInterfaceCards')[copyIndex()].name)]",
             "properties": {
                 "copy": [
                     {
@@ -576,8 +579,9 @@
                                 "loadBalancerBackendAddressPools": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.backendAddressPoolName), null(), createArray(createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.resourceGroupName, 'Microsoft.Network/loadBalancers/backendAddressPools', union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.name, union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.backendAddressPoolName))))]",
                                 "loadBalancerInboundNatRules": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.inboundNatRuleName), null(), createArray(createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.resourceGroupName, 'Microsoft.Network/loadBalancers/backendAddressPools', union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.name, union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.inboundNatRuleName))))]",
                                 "primary": "[if(equals(length(parameters('networkInterfaceCards')[copyIndex()].ipConfigurations), 1), true(), parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].isPrimary)]",
-                                "privateIPAddressVersion": "[union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).addressVersion]",
-                                "privateIPAllocationMethod": "[union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).allocationMethod]",
+                                "privateIPAddress": "[union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).privateIpAddress.value]",
+                                "privateIPAddressVersion": "[union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).privateIpAddress.version]",
+                                "privateIPAllocationMethod": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).privateIpAddress.value), 'Dynamic', 'Static')]",
                                 "publicIPAddress": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).publicIpAddress.name), null(), createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).publicIpAddress.resourceGroupName, 'Microsoft.Network/publicIPAddresses', union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).publicIpAddress.name)))]",
                                 "subnet": {
                                     "id": "[resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].subnet.virtualNetworkName, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].subnet.name)]"

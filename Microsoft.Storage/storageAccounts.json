@@ -430,6 +430,7 @@
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isCustomerManagedEncryptionEnabled": "[variables('customerManagedEncryption').isEnabled]",
+        "isFileStorageKind": "[equals(toLower(parameters('kind')), 'filestorage')]",
         "queueCollection": "[union(variables('defaultResourceProperties').queueService, parameters('queueServices')).queues.collection]",
         "queueCollectionCount": "[length(variables('queueCollection'))]",
         "queueCollectionIsNotEmpty": "[greater(variables('queueCollectionCount'), 0)]",
@@ -464,7 +465,7 @@
             "location": "[parameters('location')]",
             "name": "[variables('storageAccountName')]",
             "properties": {
-                "accessTier": "[parameters('accessTier')]",
+                "accessTier": "[if(equals(toLower(parameters('kind')), 'storage'), null(), parameters('accessTier'))]",
                 "allowBlobPublicAccess": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).isAnonymousAccessEnabled]",
                 "allowSharedKeyAccess": "[parameters('isSharedKeyAccessEnabled')]",
                 "azureFilesIdentityBasedAuthentication": "[null()]",
@@ -474,11 +475,11 @@
                     "keyvaultproperties": "[if(variables('isCustomerManagedEncryptionEnabled'), createObject('keyname', parameters('customerManagedEncryption').keyName, 'keyvaulturi', reference(resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', parameters('customerManagedEncryption').keyVault.name, variables('apiVersions').keyVaults).vaultUri, 'keyversion', parameters('customerManagedEncryption').keyVersion)), null())]",
                     "requireInfrastructureEncryption": "[if(and(variables('customerManagedEncryption').isEnabled, variables('customerManagedEncryption').isDoubleEncryptionAtRestEnabled), true(), null())]",
                     "services": {
-                        "file": {
+                        "blob": {
                             "enabled": true,
                             "keyType": "Account"
                         },
-                        "blob": {
+                        "file": {
                             "enabled": true,
                             "keyType": "Account"
                         },
@@ -586,6 +587,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').storageAccountsBlobServices]",
+            "condition": "[not(variables('isFileStorageKind'))]",
             "dependsOn": [
                 "[variables('resourceIds').storageAccount]"
             ],
@@ -720,6 +722,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').storageAccountsQueueServices]",
+            "condition": "[not(variables('isFileStorageKind'))]",
             "dependsOn": [
                 "[variables('resourceIds').storageAccountFileServices]"
             ],
@@ -773,6 +776,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').storageAccountsTableServices]",
+            "condition": "[not(variables('isFileStorageKind'))]",
             "dependsOn": [
                 "[variables('resourceIds').storageAccountQueueServices]"
             ],

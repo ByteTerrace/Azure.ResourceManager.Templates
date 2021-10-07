@@ -292,6 +292,13 @@
             },
             "type": "bool"
         },
+        "isRouteAllTrafficThroughVirtualNetworkEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates that all Azure Web Site outbound traffic will be subject to the network security groups and user-defined routes of the integrated virtual network.0"
+            },
+            "type": "bool"
+        },
         "isWebSocketSupportEnabled": {
             "defaultValue": false,
             "metadata": {
@@ -635,7 +642,7 @@
         {
             "apiVersion": "[variables('apiVersions').sites]",
             "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
-            "kind": "[if(variables('functionExtension').isEnabled, 'functionapp', '')]",
+            "kind": "[if(variables('functionExtension').isEnabled, 'functionapp', 'app')]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
@@ -644,87 +651,7 @@
                 "clientCertMode": "Required",
                 "name": "[parameters('name')]",
                 "httpsOnly": "[parameters('isHttpsOnlyModeEnabled')]",
-                "serverFarmId": "[variables('resourceIds').serverFarm]",
-                "siteConfig": {
-                    "acrUseManagedIdentityCreds": false,
-                    "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
-                    "appSettings": "[if(variables('functionExtension').isEnabled, union(createArray(createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccount, variables('apiVersions').storageAccounts).keys[1].value)), createObject('name', 'FUNCTION_APP_EDIT_MODE', 'value', 'readonly')), if(or(startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'EP'), startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'Y')), createArray(createObject('name', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccount, variables('apiVersions').storageAccounts).keys[1].value)), createObject('name', 'WEBSITE_CONTENTSHARE', 'value', format('functionapp-{0}', toLower(parameters('name'))))), createArray()), variables('applicationSettingsCollection')), variables('applicationSettingsCollection'))]",
-                    "autoHealEnabled": "[not(empty(variables('autoHeal').rules))]",
-                    "autoHealRules": "[variables('autoHeal').rules]",
-                    "copy": [
-                        {
-                            "count": "[length(variables('connectionStringsCollection'))]",
-                            "input": {
-                                "connectionString": "[variables('connectionStringsCollection')[copyIndex('connectionStrings')].value]",
-                                "name": "[variables('connectionStringsCollection')[copyIndex('connectionStrings')].name]",
-                                "type": "[variables('connectionStringsCollection')[copyIndex('connectionStrings')].type]"
-                            },
-                            "name": "connectionStrings"
-                        },
-                        {
-                            "count": "[length(parameters('ipSecurityRestrictions'))]",
-                            "input": {
-                                "action": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).action]",
-                                "description": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).description]",
-                                "headers": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).headers]",
-                                "ipAddress": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).ipAddress]",
-                                "priority": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).priority]",
-                                "name": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).name]",
-                                "subnetMask": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).subnetMask]",
-                                "tag": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).tag]",
-                                "vnetSubnetResourceId": "[if(empty(union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).subnet.name), null(), resourceId(union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).subnet.subscriptionId, union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).subnet.virtualNetworkName, union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).subnet.name))]"
-                            },
-                            "name": "ipSecurityRestrictions"
-                        },
-                        {
-                            "count": "[variables('scmIpSecurityRestrictionsCount')]",
-                            "input": {
-                                "action": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).action]",
-                                "description": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).description]",
-                                "headers": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).headers]",
-                                "ipAddress": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).ipAddress]",
-                                "priority": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).priority]",
-                                "name": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).name]",
-                                "subnetMask": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).subnetMask]",
-                                "tag": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).tag]",
-                                "vnetSubnetResourceId": "[if(empty(union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).subnet.name), null(), resourceId(union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).subnet.subscriptionId, union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).subnet.virtualNetworkName, union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).subnet.name))]"
-                            },
-                            "name": "scmIpSecurityRestrictions"
-                        }
-                    ],
-                    "cors": {
-                        "allowedOrigins": "[variables('cors').allowedOrigins]",
-                        "supportCredentials": "[variables('cors').isCredentialSupportEnabled]"
-                    },
-                    "ftpsState": "FtpsOnly",
-                    "functionAppScaleLimit": "[if(variables('functionExtension').isEnabled, 7, null())]",
-                    "functionsRuntimeScaleMonitoringEnabled": "[and(variables('functionExtension').isEnabled, variables('privateEndpointsIsNotEmpty'))]",
-                    "healthCheckPath": "[if(variables('healthCheck').isEnabled, variables('healthCheck').path, '')]",
-                    "http20Enabled": "[parameters('isHttp20SupportEnabled')]",
-                    "javaVersion": "[if(equals(variables('currentStack'), 'java'), if(endsWith(parameters('frameworkVersion'), '|8'), '1.8', if(endsWith(parameters('frameworkVersion'), '|11'), '11', null())), null())]",
-                    "keyVaultReferenceIdentity": "SystemAssigned",
-                    "linuxFxVersion": "[if(equals(toLower(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).kind), 'linux'), variables('linuxFxVersion'), null())]",
-                    "loadBalancing": "LeastRequests",
-                    "logsDirectorySizeLimit": 27,
-                    "managedPipelineMode": "Integrated",
-                    "metadata": "[variables('metadata')]",
-                    "minimumElasticInstanceCount": "[if(variables('functionExtension').isEnabled, 1, null())]",
-                    "minTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
-                    "netFrameworkVersion": "[if(and(not(equals(toLower(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).kind), 'linux')), equals(variables('currentStack'), 'dotnetcore'), endsWith(parameters('frameworkVersion'), '5.0')), 'v5.0', 'v4.0')]",
-                    "numberOfWorkers": 1,
-                    "scmMinTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
-                    "phpVersion": "OFF",
-                    "powerShellVersion": "[if(equals(variables('currentStack'), 'powershell'), if(endsWith(parameters('frameworkVersion'), '|7'), '~7', null()), null())]",
-                    "remoteDebuggingEnabled": "[variables('remoteDebugging').isEnabled]",
-                    "remoteDebuggingVersion": "[variables('remoteDebugging').version]",
-                    "redundancyMode": "None",
-                    "scmIpSecurityRestrictionsUseMain": "[equals(variables('scmIpSecurityRestrictionsCount'), 0)]",
-                    "use32BitWorkerProcess": "[parameters('is32BitModeEnabled')]",
-                    "vnetRouteAllEnabled ": "[variables('privateEndpointsIsNotEmpty')]",
-                    "webSocketsEnabled": "[parameters('isWebSocketSupportEnabled')]",
-                    "websiteTimeZone": "[parameters('timeZone')]",
-                    "windowsFxVersion": "[null()]"
-                }
+                "serverFarmId": "[variables('resourceIds').serverFarm]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Web/sites"
@@ -782,8 +709,97 @@
             "location": "[parameters('location')]",
             "name": "[format('{0}/virtualNetwork', parameters('name'), guid(variables('resourceIds').subnet))]",
             "properties": {
-                "isSwift": true,
                 "subnetResourceId": "[variables('resourceIds').subnet]"
+            },
+            "type": "Microsoft.Web/sites/config"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').sitesVirtualNetworkConnections]",
+            "condition": "[variables('subnetIsNotEmpty')]",
+            "dependsOn": [
+                "[variables('resourceIds').site]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/web', parameters('name'), guid(variables('resourceIds').subnet))]",
+            "properties": {
+                "acrUseManagedIdentityCreds": false,
+                "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
+                "appSettings": "[if(variables('functionExtension').isEnabled, union(createArray(createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccount, variables('apiVersions').storageAccounts).keys[1].value)), createObject('name', 'FUNCTION_APP_EDIT_MODE', 'value', 'readonly')), if(or(startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'EP'), startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'Y')), createArray(createObject('name', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccount, variables('apiVersions').storageAccounts).keys[1].value)), createObject('name', 'WEBSITE_CONTENTSHARE', 'value', format('functionapp-{0}', toLower(parameters('name'))))), createArray()), variables('applicationSettingsCollection')), variables('applicationSettingsCollection'))]",
+                "autoHealEnabled": "[not(empty(variables('autoHeal').rules))]",
+                "autoHealRules": "[variables('autoHeal').rules]",
+                "copy": [
+                    {
+                        "count": "[length(variables('connectionStringsCollection'))]",
+                        "input": {
+                            "connectionString": "[variables('connectionStringsCollection')[copyIndex('connectionStrings')].value]",
+                            "name": "[variables('connectionStringsCollection')[copyIndex('connectionStrings')].name]",
+                            "type": "[variables('connectionStringsCollection')[copyIndex('connectionStrings')].type]"
+                        },
+                        "name": "connectionStrings"
+                    },
+                    {
+                        "count": "[length(parameters('ipSecurityRestrictions'))]",
+                        "input": {
+                            "action": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).action]",
+                            "description": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).description]",
+                            "headers": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).headers]",
+                            "ipAddress": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).ipAddress]",
+                            "priority": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).priority]",
+                            "name": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).name]",
+                            "subnetMask": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).subnetMask]",
+                            "tag": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).tag]",
+                            "vnetSubnetResourceId": "[if(empty(union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).subnet.name), null(), resourceId(union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).subnet.subscriptionId, union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).subnet.virtualNetworkName, union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('ipSecurityRestrictions')[copyIndex('ipSecurityRestrictions')]).subnet.name))]"
+                        },
+                        "name": "ipSecurityRestrictions"
+                    },
+                    {
+                        "count": "[variables('scmIpSecurityRestrictionsCount')]",
+                        "input": {
+                            "action": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).action]",
+                            "description": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).description]",
+                            "headers": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).headers]",
+                            "ipAddress": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).ipAddress]",
+                            "priority": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).priority]",
+                            "name": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).name]",
+                            "subnetMask": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).subnetMask]",
+                            "tag": "[union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).tag]",
+                            "vnetSubnetResourceId": "[if(empty(union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).subnet.name), null(), resourceId(union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).subnet.subscriptionId, union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).subnet.virtualNetworkName, union(variables('defaultResourceProperties').ipSecurityRestriction, parameters('scmIpSecurityRestrictions')[copyIndex('scmIpSecurityRestrictions')]).subnet.name))]"
+                        },
+                        "name": "scmIpSecurityRestrictions"
+                    }
+                ],
+                "cors": {
+                    "allowedOrigins": "[variables('cors').allowedOrigins]",
+                    "supportCredentials": "[variables('cors').isCredentialSupportEnabled]"
+                },
+                "ftpsState": "FtpsOnly",
+                "functionAppScaleLimit": "[if(variables('functionExtension').isEnabled, 7, null())]",
+                "functionsRuntimeScaleMonitoringEnabled": "[and(variables('functionExtension').isEnabled, variables('privateEndpointsIsNotEmpty'))]",
+                "healthCheckPath": "[if(variables('healthCheck').isEnabled, variables('healthCheck').path, '')]",
+                "http20Enabled": "[parameters('isHttp20SupportEnabled')]",
+                "javaVersion": "[if(equals(variables('currentStack'), 'java'), if(endsWith(parameters('frameworkVersion'), '|8'), '1.8', if(endsWith(parameters('frameworkVersion'), '|11'), '11', null())), null())]",
+                "keyVaultReferenceIdentity": "SystemAssigned",
+                "linuxFxVersion": "[if(equals(toLower(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).kind), 'linux'), variables('linuxFxVersion'), null())]",
+                "loadBalancing": "LeastRequests",
+                "logsDirectorySizeLimit": 27,
+                "managedPipelineMode": "Integrated",
+                "metadata": "[variables('metadata')]",
+                "minimumElasticInstanceCount": "[if(variables('functionExtension').isEnabled, 1, null())]",
+                "minTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
+                "netFrameworkVersion": "[if(and(not(equals(toLower(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).kind), 'linux')), equals(variables('currentStack'), 'dotnetcore'), endsWith(parameters('frameworkVersion'), '5.0')), 'v5.0', 'v4.0')]",
+                "numberOfWorkers": 1,
+                "scmMinTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
+                "phpVersion": "OFF",
+                "powerShellVersion": "[if(equals(variables('currentStack'), 'powershell'), if(endsWith(parameters('frameworkVersion'), '|7'), '~7', null()), null())]",
+                "remoteDebuggingEnabled": "[variables('remoteDebugging').isEnabled]",
+                "remoteDebuggingVersion": "[variables('remoteDebugging').version]",
+                "redundancyMode": "None",
+                "scmIpSecurityRestrictionsUseMain": "[equals(variables('scmIpSecurityRestrictionsCount'), 0)]",
+                "use32BitWorkerProcess": "[parameters('is32BitModeEnabled')]",
+                "vnetRouteAllEnabled": "[or(parameters('isRouteAllTrafficThroughVirtualNetworkEnabled'), variables('privateEndpointsIsNotEmpty'))]",
+                "webSocketsEnabled": "[parameters('isWebSocketSupportEnabled')]",
+                "websiteTimeZone": "[parameters('timeZone')]",
+                "windowsFxVersion": "[null()]"
             },
             "type": "Microsoft.Web/sites/config"
         },
