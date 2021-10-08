@@ -75,7 +75,7 @@
     },
     "parameters": {
         "administratorUserName": {
-            "defaultValue": "[uniqueString(parameters('name'))]",
+            "defaultValue": "[uniqueString(toLower(parameters('name')))]",
             "metadata": {
                 "description": "Specifies the user name of the Azure Virtual Machine administrator account."
             },
@@ -236,6 +236,7 @@
         "priority": {
             "allowedValues": [
                 "Low",
+                "None",
                 "Regular",
                 "Spot"
             ],
@@ -671,7 +672,7 @@
                     "secrets": [],
                     "windowsConfiguration": "[if(variables('isWindowsVirtualMachine'), variables('windowsConfiguration'), null())]"
                 },
-                "priority": "[parameters('priority')]",
+                "priority": "[if(equals(toLower(parameters('priority')), 'none'), null(), parameters('priority'))]",
                 "securityProfile": "[if(or(parameters('isEncryptionAtHostEnabled'), variables('isTrustedLaunchEnabled')), variables('securityProfile'), null())]",
                 "storageProfile": {
                     "dataDisks": "[variables('dataDisksByResourceId')]",
