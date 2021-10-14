@@ -8,9 +8,7 @@
                 "name": "Development",
                 "value": {
                     "audit": {
-                        "logAnalyticsWorkspace": {
-                            "isEnabled": false
-                        }
+                        "isEnabled": false
                     },
                     "name": "MyApplicationServicePlan",
                     "operatingSystemName": "Windows",
@@ -119,6 +117,9 @@
                 "S1",
                 "S2",
                 "S3",
+                "WS1",
+                "WS2",
+                "WS3",
                 "Y1"
             ],
             "defaultValue": "P1v3",

@@ -11,9 +11,7 @@
                         "collection": []
                     },
                     "audit": {
-                        "logAnalyticsWorkspace": {
-                            "isEnabled": false
-                        }
+                        "isEnabled": false
                     },
                     "connectionStrings": {
                         "collection": []
@@ -97,6 +95,101 @@
                 }
             },
             {
+                "description": "Deploys a logic workflow with the recommended set of properties for a development environment.",
+                "name": "Logic Workflow - Development",
+                "value": {
+                    "applicationSettings": {
+                        "collection": []
+                    },
+                    "audit": {
+                        "isEnabled": false
+                    },
+                    "connectionStrings": {
+                        "collection": []
+                    },
+                    "cors": {
+                        "allowedOrigins": []
+                    },
+                    "customDomains": [],
+                    "frameworkVersion": "DOTNETCORE|3.1",
+                    "functionExtension": {
+                        "isEnabled": true,
+                        "isLogicWorkflowExtensionEnabled": true,
+                        "storageAccount": {
+                            "name": "MyStorageAccount"
+                        }
+                    },
+                    "is32BitModeEnabled": true,
+                    "name": "MyFunctionApplication",
+                    "servicePlan": {
+                        "name": "MyServicePlan"
+                    }
+                }
+            },
+            {
+                "description": "Deploys a logic workflow with the recommended set of properties for a production environment.",
+                "name": "Logic Workflow - Production",
+                "value": {
+                    "applicationSettings": {
+                        "collection": []
+                    },
+                    "audit": {
+                        "logAnalyticsWorkspace": {
+                            "name": "MyLogAnalyticsWorkspace"
+                        }
+                    },
+                    "connectionStrings": {
+                        "collection": []
+                    },
+                    "cors": {
+                        "allowedOrigins": []
+                    },
+                    "customDomains": [],
+                    "frameworkVersion": "DOTNETCORE|3.1",
+                    "functionExtension": {
+                        "isEnabled": true,
+                        "isLogicWorkflowExtensionEnabled": true,
+                        "storageAccount": {
+                            "name": "MyStorageAccount"
+                        }
+                    },
+                    "ipSecurityRestrictions": [
+                        {
+                            "action": "Allow",
+                            "name": "default",
+                            "priority": 0,
+                            "subnet":{
+                                "name": "MySubnet",
+                                "virtualNetworkName": "MyVirtualNetwork"
+                            }
+                        }
+                    ],
+                    "is32BitModeEnabled": true,
+                    "name": "MyFunctionApplication",
+                    "privateEndpoints": [
+                        {
+                            "dnsZones": [
+                                {
+                                    "name": "privatelink.azurewebsites.net"
+                                }
+                            ],
+                            "name": "MyPrivateEndpoint",
+                            "subnet": {
+                                "name":"MySubnet",
+                                "virtualNetworkName": "MyVirtualNetwork"
+                            }
+                        }
+                    ],
+                    "servicePlan": {
+                        "name": "MyServicePlan"
+                    },
+                    "subnet": {
+                        "name":"MySubnet",
+                        "virtualNetworkName": "MyVirtualNetwork"
+                    }
+                }
+            },
+            {
                 "description": "Deploys a web application with the recommended set of properties for a development environment.",
                 "name": "Web Application - Development",
                 "value": {
@@ -104,9 +197,7 @@
                         "collection": []
                     },
                     "audit": {
-                        "logAnalyticsWorkspace": {
-                            "isEnabled": false
-                        }
+                        "isEnabled": false
                     },
                     "connectionStrings": {
                         "collection": []
@@ -230,6 +321,19 @@
             "type": "object"
         },
         "frameworkVersion": {
+            "allowedValues": [
+                "DOTNET|4.8",
+                "DOTNET|5.0",
+                "DOTNETCORE|3.1",
+                "JAVA|8",
+                "JAVA|11",
+                "NODEJS|12",
+                "NODEJS|14",
+                "POWERSHELL|7.0",
+                "PYTHON|3.6",
+                "PYTHON|3.7",
+                "PYTHON|3.8"
+            ],
             "defaultValue": "DOTNETCORE|3.1",
             "metadata": {
                 "description": "Specifies the application framework version that will be deployed within the Azure Web Site."
@@ -432,7 +536,7 @@
             "sitesPublicCertificates": "2020-12-01",
             "storageAccounts": "2021-02-01"
         },
-        "applicationSettingsCollection": "[union(union(variables('defaultResourceProperties').applicationSettings, parameters('applicationSettings')).collection, variables('functionApplicationSettingsCollection'), if(variables('privateEndpointsIsNotEmpty'), variables('privateEndpointsApplicationSettingsCollection'), createArray()), if(variables('autoHeal').isProactiveModeEnabled, createArray(), createArray(createObject('name', 'WEBSITE_PROACTIVE_AUTOHEAL_ENABLED', 'value', 'False'))), if(variables('healthCheck').isEnabled, createArray(createObject('name', 'WEBSITE_HEALTHCHECK_MAXPINGFAILURES', 'value', variables('healthCheck').unhealthyInstanceLifetimeInMinutes)), createArray()))]",
+        "applicationSettingsCollection": "[union(union(variables('defaultResourceProperties').applicationSettings, parameters('applicationSettings')).collection, variables('functionApplicationSettingsCollection'), variables('logicWorkflowSettingsCollection'), if(variables('privateEndpointsIsNotEmpty'), variables('privateEndpointsApplicationSettingsCollection'), createArray()), if(variables('autoHeal').isProactiveModeEnabled, createArray(), createArray(createObject('name', 'WEBSITE_PROACTIVE_AUTOHEAL_ENABLED', 'value', 'False'))), if(variables('healthCheck').isEnabled, createArray(createObject('name', 'WEBSITE_HEALTHCHECK_MAXPINGFAILURES', 'value', variables('healthCheck').unhealthyInstanceLifetimeInMinutes)), createArray()))]",
         "audit": "[union(variables('defaultResourceProperties').audit, createObject('logNames', if(variables('functionExtension').isEnabled, variables('defaultFunctionExtenstionLogNames'), variables('defaultApplicationServiceLogNames'))), parameters('audit'))]",
         "autoHeal": "[union(variables('defaultResourceProperties').autoHeal, parameters('autoHeal'))]",
         "cors": "[union(variables('defaultResourceProperties').cors, parameters('cors'))]",
@@ -489,6 +593,7 @@
             },
             "functionExtension": {
                 "isEnabled": false,
+                "isLogicWorkflowExtensionEnabled": false,
                 "storageAccount": {
                     "resourceGroupName": "[variables('resourceGroupName')]",
                     "subscriptionId": "[variables('subscriptionId')]"
@@ -594,18 +699,19 @@
             }
         },
         "connectionStringsCollection": "[union(variables('defaultResourceProperties').connectionStrings, parameters('connectionStrings')).collection]",
-        "currentStack": "[if(or(startsWith(toLower(parameters('frameworkVersion')), 'dotnetcore|'), and(startsWith(toLower(parameters('frameworkVersion')), 'dotnet|'), endsWith(parameters('frameworkVersion'), '5.0'))), 'dotnetcore', if(startsWith(toLower(parameters('frameworkVersion')), 'dotnet|'), 'dotnet', if(startsWith(toLower(parameters('frameworkVersion')), 'java|'), 'java', if(startsWith(toLower(parameters('frameworkVersion')), 'powershellcore|'), 'powershell', if(startsWith(toLower(parameters('frameworkVersion')), 'python|'), 'python', null())))))]",
+        "currentStack": "[if(or(startsWith(parameters('frameworkVersion'), 'dotnetcore|'), and(startsWith(parameters('frameworkVersion'), 'dotnet|'), endsWith(parameters('frameworkVersion'), '5.0'))), 'dotnetcore', if(startsWith(parameters('frameworkVersion'), 'dotnet|'), 'dotnet', if(startsWith(parameters('frameworkVersion'), 'java|'), 'java', if(startsWith(parameters('frameworkVersion'), 'nodejs|'), 'node', if(startsWith(parameters('frameworkVersion'), 'powershell|'), 'powershell', if(startsWith(parameters('frameworkVersion'), 'python|'), 'python', null()))))))]",
         "customDomainsCount": "[length(parameters('customDomains'))]",
         "dnsZones": "[union(createObject('private', createArray(), 'public', createArray()), parameters('dnsZones'))]",
         "functionApplicationSettingsCollection": "[if(variables('functionExtension').isEnabled, createArray(createObject('name', 'FUNCTIONS_EXTENSION_VERSION', 'value', variables('functionExtension').version), createObject('name', 'FUNCTIONS_WORKER_RUNTIME', 'value', variables('functionWorkerRuntime'))), createArray())]",
         "functionExtension": "[union(variables('defaultResourceProperties').functionExtension, parameters('functionExtension'))]",
-        "functionWorkerRuntime": "[if(and(equals(variables('currentStack'), 'dotnetcore'), or(endsWith(parameters('frameworkVersion'), '5.0'), endsWith(parameters('frameworkVersion'), '6.0'))), 'dotnet-isolated', if(equals(variables('currentStack'), 'dotnetcore'), 'dotnet', if(equals(variables('currentStack'), 'java'), 'java', if(equals(variables('currentStack'), 'powershellcore'), 'powershell', if(equals(variables('currentStack'), 'python'), 'python', null())))))]",
+        "functionWorkerRuntime": "[if(and(equals(variables('currentStack'), 'dotnetcore'), or(endsWith(parameters('frameworkVersion'), '5.0'), endsWith(parameters('frameworkVersion'), '6.0'))), 'dotnet-isolated', if(equals(variables('currentStack'), 'dotnetcore'), 'dotnet', if(equals(variables('currentStack'), 'java'), 'java', if(equals(variables('currentStack'), 'node'), 'node', if(equals(variables('currentStack'), 'powershell'), 'powershell', if(equals(variables('currentStack'), 'python'), 'python', null()))))))]",
         "healthCheck": "[union(variables('defaultResourceProperties').healthCheck, parameters('healthCheck'))]",
         "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "linuxFxVersion": "[parameters('frameworkVersion')]",
         "logging": "[union(variables('defaultResourceProperties').logging, parameters('logging'))]",
+        "logicWorkflowSettingsCollection": "[if(and(variables('functionExtension').isEnabled, variables('functionExtension').isLogicWorkflowExtensionEnabled), createArray(createObject('name', 'APP_KIND', 'value', 'workflowApp'), createObject('name', 'AzureFunctionsJobHost__extensionBundle__id', 'value', 'Microsoft.Azure.Functions.ExtensionBundle.Workflows'), createObject('name', 'AzureFunctionsJobHost__extensionBundle__version', 'value', '[1.*, 2.0.0)')), createArray())]",
         "metadata": "[union(createArray(createObject('name', 'CURRENT_STACK', 'value', variables('currentStack'))), parameters('metadata'))]",
         "privateCertificatesCount": "[length(parameters('privateCertificates'))]",
         "privateDnsZonesCount": "[length(variables('dnsZones').private)]",
@@ -646,7 +752,7 @@
         {
             "apiVersion": "[variables('apiVersions').sites]",
             "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
-            "kind": "[if(variables('functionExtension').isEnabled, 'functionapp', 'app')]",
+            "kind": "[if(variables('functionExtension').isEnabled, if(variables('functionExtension').isLogicWorkflowExtensionEnabled, 'functionapp,workflowapp', 'functionapp'), 'app')]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
@@ -655,7 +761,21 @@
                 "clientCertMode": "Required",
                 "name": "[parameters('name')]",
                 "httpsOnly": "[parameters('isHttpsOnlyModeEnabled')]",
-                "serverFarmId": "[variables('resourceIds').serverFarm]"
+                "serverFarmId": "[variables('resourceIds').serverFarm]",
+                "siteConfig": {
+                    "appSettings": "[if(variables('functionExtension').isEnabled, union(createArray(createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccount, variables('apiVersions').storageAccounts).keys[1].value)), createObject('name', 'FUNCTION_APP_EDIT_MODE', 'value', 'readonly')), if(or(startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'EP'), startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'WS'), startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'Y')), createArray(createObject('name', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccount, variables('apiVersions').storageAccounts).keys[1].value)), createObject('name', 'WEBSITE_CONTENTSHARE', 'value', format('functionapp-{0}', toLower(parameters('name'))))), createArray()), variables('applicationSettingsCollection')), variables('applicationSettingsCollection'))]",
+                    "copy": [
+                        {
+                            "count": "[length(variables('connectionStringsCollection'))]",
+                            "input": {
+                                "connectionString": "[variables('connectionStringsCollection')[copyIndex('connectionStrings')].value]",
+                                "name": "[variables('connectionStringsCollection')[copyIndex('connectionStrings')].name]",
+                                "type": "[variables('connectionStringsCollection')[copyIndex('connectionStrings')].type]"
+                            },
+                            "name": "connectionStrings"
+                        }
+                    ]
+                }
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Web/sites"
@@ -741,19 +861,9 @@
             "properties": {
                 "acrUseManagedIdentityCreds": false,
                 "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
-                "appSettings": "[if(variables('functionExtension').isEnabled, union(createArray(createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccount, variables('apiVersions').storageAccounts).keys[1].value)), createObject('name', 'FUNCTION_APP_EDIT_MODE', 'value', 'readonly')), if(or(startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'EP'), startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'Y')), createArray(createObject('name', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccount, variables('apiVersions').storageAccounts).keys[1].value)), createObject('name', 'WEBSITE_CONTENTSHARE', 'value', format('functionapp-{0}', toLower(parameters('name'))))), createArray()), variables('applicationSettingsCollection')), variables('applicationSettingsCollection'))]",
                 "autoHealEnabled": "[not(empty(variables('autoHeal').rules))]",
                 "autoHealRules": "[variables('autoHeal').rules]",
                 "copy": [
-                    {
-                        "count": "[length(variables('connectionStringsCollection'))]",
-                        "input": {
-                            "connectionString": "[variables('connectionStringsCollection')[copyIndex('connectionStrings')].value]",
-                            "name": "[variables('connectionStringsCollection')[copyIndex('connectionStrings')].name]",
-                            "type": "[variables('connectionStringsCollection')[copyIndex('connectionStrings')].type]"
-                        },
-                        "name": "connectionStrings"
-                    },
                     {
                         "count": "[length(parameters('ipSecurityRestrictions'))]",
                         "input": {
