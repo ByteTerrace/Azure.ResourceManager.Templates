@@ -8,9 +8,7 @@
                 "name": "Development",
                 "value": {
                     "audit": {
-                        "logAnalyticsWorkspace": {
-                            "isEnabled": false
-                        }
+                        "isEnabled": false
                     },
                     "ipConfigurations": [
                         {

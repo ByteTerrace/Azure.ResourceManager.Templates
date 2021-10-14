@@ -75,7 +75,7 @@
     },
     "parameters": {
         "administratorUserName": {
-            "defaultValue": "[uniqueString(parameters('name'))]",
+            "defaultValue": "[uniqueString(toLower(parameters('name')))]",
             "metadata": {
                 "description": "Specifies the user name of the Azure Virtual Machine administrator account."
             },
@@ -236,6 +236,7 @@
         "priority": {
             "allowedValues": [
                 "Low",
+                "None",
                 "Regular",
                 "Spot"
             ],
@@ -332,6 +333,7 @@
             "dataDisk": {
                 "cachingMode": "ReadOnly",
                 "createOption": "Empty",
+                "name": "",
                 "networkAccessPolicy": "AllowAll",
                 "skuName": "Premium_LRS"
             },
@@ -435,8 +437,6 @@
             "networkInterfaceCard": {
                 "dnsServers": [],
                 "ipConfiguration": {
-                    "addressVersion": "IPv4 ",
-                    "allocationMethod": "Dynamic",
                     "applicationSecurityGroup": {
                         "name": "",
                         "resourceGroupName": "[variables('resourceGroupName')]"
@@ -446,6 +446,10 @@
                         "inboundNatRuleName": "",
                         "name": "",
                         "resourceGroupName": "[variables('resourceGroupName')]"
+                    },
+                    "privateIpAddress": {
+                        "value": "",
+                        "version": "IPv4"
                     },
                     "publicIpAddress": {
                         "name": "",
@@ -457,6 +461,7 @@
                 },
                 "isAcceleratedNetworkingEnabled": false,
                 "isIpForwardingEnabled": false,
+                "name": "",
                 "networkSecurityGroup": {
                     "name": "",
                     "resourceGroupName": "[variables('resourceGroupName')]"
@@ -467,6 +472,7 @@
                 "createOption": "FromImage",
                 "isEphemeral": false,
                 "isWriteAcceleratorEnabled": false,
+                "name": "",
                 "storageAccountType": "Premium_LRS"
             },
             "windowsConfiguration": {
@@ -485,6 +491,7 @@
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
         "isBackupEnabled": "[not(empty(variables('backup').policyName))]",
+        "isDiskEncryptionSetEnabled": "[not(empty(parameters('diskEncryptionSet')))]",
         "isLinuxVirtualMachine": "[or(not(empty(parameters('linuxConfiguration'))), equals(parameters('licenseType'), 'RHEL_BYOS'), equals(parameters('licenseType'), 'SLES_BYOS'), contains(union(createObject('id', ''), parameters('imageReference')).id, 'Linux'), contains(union(createObject('offer', ''), parameters('imageReference')).offer, 'Linux'))]",
         "isSpotVirtualMachine": "[equals(toLower(parameters('priority')), 'spot')]",
         "isTrustedLaunchEnabled": "[or(parameters('isSecureBootEnabled'), parameters('isVirtualTrustedPlatformModuleEnabled'))]",
@@ -493,11 +500,11 @@
         "licenseTypeIsNotEmpty": "[not(empty(parameters('licenseType')))]",
         "linuxConfiguration": {
             "disablePasswordAuthentication": "[not(variables('linuxConfigurationFriendly').isPasswordAuthenticationEnabled)]",
-            "ssh": "[if(empty(variables('linuxConfigurationFriendly').administratorUserPublicSshKey), null(), createObject('publicKeys', createArray(createObject('keyData', variables('linuxConfigurationFriendly').administratorUserPublicSshKey, 'path', format('/home/{0}/.ssh/authorized_keys', parameters('administratorUserName'))))))]",
             "patchSettings": {
                 "patchMode": "[variables('linuxConfigurationFriendly').patchSettings.mode]"
             },
-            "provisionVMAgent": "[variables('linuxConfigurationFriendly').isVmAgentEnabled]"
+            "provisionVMAgent": "[variables('linuxConfigurationFriendly').isVmAgentEnabled]",
+            "ssh": "[if(empty(variables('linuxConfigurationFriendly').administratorUserPublicSshKey), null(), createObject('publicKeys', createArray(createObject('keyData', variables('linuxConfigurationFriendly').administratorUserPublicSshKey, 'path', format('/home/{0}/.ssh/authorized_keys', parameters('administratorUserName'))))))]"
         },
         "linuxConfigurationFriendly": "[union(variables('defaultResourceProperties').linuxConfiguration, parameters('linuxConfiguration'))]",
         "networkInterfaceCardsCount": "[length(parameters('networkInterfaceCards'))]",
@@ -518,7 +525,8 @@
             "virtualMachineAzureLogAnalyticsAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineAzureLogAnalyticsAgentName'))]",
             "virtualMachineAzureKeyVaultAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineAzureKeyVaultAgentName'))]",
             "virtualMachineAzureMonitorAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineAzureMonitorAgentName'))]",
-            "virtualMachineAzureNetworkWatcherAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineAzureNetworkWatcherAgentName'))]"
+            "virtualMachineAzureNetworkWatcherAgent": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('name'), variables('virtualMachineAzureNetworkWatcherAgentName'))]",
+            "virtualMachineDiskEncryptionSet": "[resourceId(variables('diskEncryptionSet').subscriptionId, variables('diskEncryptionSet').resourceGroupName, 'Microsoft.Compute/diskEncryptionSets', if(variables('isDiskEncryptionSetEnabled'), variables('diskEncryptionSet').name, '<NULL>'))]"
         },
         "subscriptionId": "[subscription().subscriptionId]",
         "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]",
@@ -533,6 +541,11 @@
         "virtualMachineAzureLogAnalyticsAgentName": "AzureLogAnalyticsAgent",
         "virtualMachineAzureMonitorAgentName": "AzureMonitorAgent",
         "virtualMachineAzureNetworkWatcherAgentName": "AzureNetworkWatcherAgent",
+        "securityProfile": {
+            "encryptionAtHost": "[parameters('isEncryptionAtHostEnabled')]",
+            "securityType": "[if(variables('isTrustedLaunchEnabled'), 'TrustedLaunch', null())]",
+            "uefiSettings": "[if(variables('isTrustedLaunchEnabled'), createObject('secureBootEnabled', parameters('isSecureBootEnabled'), 'vTpmEnabled', parameters('isVirtualTrustedPlatformModuleEnabled')), null())]"
+        },
         "windowsConfiguration": {
             "additionalUnattendContent": "[null()]",
             "enableAutomaticUpdates": "[not(equals(toLower(variables('windowsConfigurationFriendly').patchSettings.mode), 'manual'))]",
@@ -555,7 +568,7 @@
                 "name": "networkInterfaceCardsCopy"
             },
             "location": "[parameters('location')]",
-            "name": "[format('{0}-vmnic-{1}', parameters('name'), copyIndex())]",
+            "name": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard, parameters('networkInterfaceCards')[copyIndex()]).name), format('{0}-vmnic-{1}', parameters('name'), copyIndex()), parameters('networkInterfaceCards')[copyIndex()].name)]",
             "properties": {
                 "copy": [
                     {
@@ -567,8 +580,9 @@
                                 "loadBalancerBackendAddressPools": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.backendAddressPoolName), null(), createArray(createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.resourceGroupName, 'Microsoft.Network/loadBalancers/backendAddressPools', union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.name, union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.backendAddressPoolName))))]",
                                 "loadBalancerInboundNatRules": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.inboundNatRuleName), null(), createArray(createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.resourceGroupName, 'Microsoft.Network/loadBalancers/backendAddressPools', union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.name, union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).loadBalancer.inboundNatRuleName))))]",
                                 "primary": "[if(equals(length(parameters('networkInterfaceCards')[copyIndex()].ipConfigurations), 1), true(), parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].isPrimary)]",
-                                "privateIPAddressVersion": "[union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).addressVersion]",
-                                "privateIPAllocationMethod": "[union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).allocationMethod]",
+                                "privateIPAddress": "[union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).privateIpAddress.value]",
+                                "privateIPAddressVersion": "[union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).privateIpAddress.version]",
+                                "privateIPAllocationMethod": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).privateIpAddress.value), 'Dynamic', 'Static')]",
                                 "publicIPAddress": "[if(empty(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).publicIpAddress.name), null(), createObject('id', resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).publicIpAddress.resourceGroupName, 'Microsoft.Network/publicIPAddresses', union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).publicIpAddress.name)))]",
                                 "subnet": {
                                     "id": "[resourceId(union(variables('defaultResourceProperties').networkInterfaceCard.ipConfiguration, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].subnet.virtualNetworkName, parameters('networkInterfaceCards')[copyIndex()].ipConfigurations[copyIndex('ipConfigurations')].subnet.name)]"
@@ -597,13 +611,13 @@
                 "name": "dataDisksCopy"
             },
             "location": "[parameters('location')]",
-            "name": "[format('{0}-vmdatadisk-{1}', parameters('name'), copyIndex())]",
+            "name": "[if(empty(union(variables('defaultResourceProperties').dataDisk, variables('dataDisks')[copyIndex()]).name), format('{0}-vmdatadisk-{1}', parameters('name'), copyIndex()), variables('dataDisks')[copyIndex()].name)]",
             "properties": {
                 "creationData": {
                     "createOption": "[union(variables('defaultResourceProperties').dataDisk, variables('dataDisks')[copyIndex()]).createOption]"
                 },
                 "diskSizeGB": "[variables('dataDisks')[copyIndex()].sizeInGigabytes]",
-                "encryption": "[if(empty(parameters('diskEncryptionSetName')), null(), createObject('diskEncryptionSetId', resourceId(parameters('diskEncryptionSetResourceGroupName'), 'Microsoft.Compute/diskEncryptionSets', parameters('diskEncryptionSetName'))))]",
+                "encryption": "[if(variables('isDiskEncryptionSetEnabled'), createObject('diskEncryptionSetId', variables('resourceIds').virtualMachineDiskEncryptionSet), null())]",
                 "encryptionSettingsCollection": "[null()]",
                 "networkAccessPolicy": "[union(variables('defaultResourceProperties').dataDisk, variables('dataDisks')[copyIndex()]).networkAccessPolicy]",
                 "securityProfile": "[null()]"
@@ -658,12 +672,8 @@
                     "secrets": [],
                     "windowsConfiguration": "[if(variables('isWindowsVirtualMachine'), variables('windowsConfiguration'), null())]"
                 },
-                "priority": "[parameters('priority')]",
-                "securityProfile": {
-                    "encryptionAtHost": "[parameters('isEncryptionAtHostEnabled')]",
-                    "securityType": "[if(variables('isTrustedLaunchEnabled'), 'TrustedLaunch', null())]",
-                    "uefiSettings": "[if(variables('isTrustedLaunchEnabled'), createObject('secureBootEnabled', parameters('isSecureBootEnabled'), 'vTpmEnabled', parameters('isVirtualTrustedPlatformModuleEnabled')), null())]"
-                },
+                "priority": "[if(equals(toLower(parameters('priority')), 'none'), null(), parameters('priority'))]",
+                "securityProfile": "[if(or(parameters('isEncryptionAtHostEnabled'), variables('isTrustedLaunchEnabled')), variables('securityProfile'), null())]",
                 "storageProfile": {
                     "dataDisks": "[variables('dataDisksByResourceId')]",
                     "imageReference": "[if(empty(parameters('imageReference')), null(), parameters('imageReference'))]",
@@ -672,10 +682,10 @@
                         "createOption": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).createOption]",
                         "diffDiskSettings": "[if(union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).isEphemeral, createObject('option', 'Local'), null())]",
                         "managedDisk": {
-                            "diskEncryptionSet": "[if(empty(parameters('diskEncryptionSet')), null(), createObject('id', resourceId(variables('diskEncryptionSet').subscriptionId, variables('diskEncryptionSet').resourceGroupName, 'Microsoft.Compute/diskEncryptionSets', variables('diskEncryptionSet').name)))]",
+                            "diskEncryptionSet": "[if(variables('isDiskEncryptionSetEnabled'), createObject('id', variables('resourceIds').virtualMachineDiskEncryptionSet), null())]",
                             "storageAccountType": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).storageAccountType]"
                         },
-                        "name": "[format('{0}-vmosdisk', parameters('name'))]",
+                        "name": "[if(empty(union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).name), format('{0}-vmosdisk', parameters('name')), parameters('osDisk').name)]",
                         "writeAcceleratorEnabled": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).isWriteAcceleratorEnabled]"
                     }
                 }

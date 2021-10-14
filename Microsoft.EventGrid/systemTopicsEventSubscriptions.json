@@ -85,8 +85,8 @@
                 },
                 "eventDeliverySchema": "[parameters('eventDeliverySchema')]",
                 "filter": {
-                    "includedEventTypes": "[parameters('eventTypes')]",
-                    "enableAdvancedFilteringOnArrays": true
+                    "enableAdvancedFilteringOnArrays": true,
+                    "includedEventTypes": "[parameters('eventTypes')]"
                 },
                 "labels": [],
                 "retryPolicy": "[null()]"

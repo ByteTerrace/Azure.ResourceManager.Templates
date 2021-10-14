@@ -1,180 +1,81 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "metadata": {
-        "examples": [
-            {
-                "description": "Deploys a Redis cache with the recommended set of properties for a development environment.",
-                "name": "Development",
-                "value": {
-                    "audit": {
-                        "isEnabled": false
-                    },
-                    "name": "MyRedisCache",
-                    "skuName": "Basic"
-                }
-            },
-            {
-                "description": "Deploys a Redis cache with the recommended set of properties for a production environment.",
-                "name": "Production",
-                "value": {
-                    "audit": {
-                        "logAnalyticsWorkspace": {
-                            "name": "MyLogAnalyticsWorkspace"
-                        }
-                    },
-                    "name": "MyRedisCache",
-                    "privateEndpoints": [
-                        {
-                            "dnsZones": [
-                                {
-                                    "name": "privatelink.redis.cache.windows.net"
-                                }
-                            ],
-                            "name": "MyPrivateEndpoint",
-                            "subnet": {
-                                "name":"MySubnet",
-                                "virtualNetworkName": "MyVirtualNetwork"
-                            }
-                        }
-                    ],
-                    "skuName": "Premium"
-                }
-            }
-        ]
-    },
     "parameters": {
         "audit": {
             "defaultValue": {},
             "metadata": {
-                "description": "An object that encapsulates the audit settings that will be applied to the Azure Redis Cache."
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure SignalR Services."
             },
             "type": "object"
         },
-        "availabilityZones": {
-            "defaultValue": [
-                1,
-                2,
-                3
-            ],
-            "metadata": {
-                "description": "Specifies an array of availability zones that the Azure Redis Cache will be deployed within."
-            },
-            "type": "array"
-        },
-        "configuration": {
+        "cors": {
             "defaultValue": {},
             "metadata": {
-                "description": "An object that encapsulates the configuration settings that will be applied to the Azure Redis Cache."
+                "description": "An object that encapsulates the CORS settings that will be applied to the Azure SignalR Services."
             },
             "type": "object"
         },
-        "firewallRules": {
-            "defaultValue": [],
+        "identity": {
+            "defaultValue": {},
             "metadata": {
-                "description": "An array of firewall rules that will be assigned to the Azure Redis Cache."
+                "description": "An object that encapsulates the properties of the identity that will be assigned to the Azure SignalR Services."
             },
-            "type": "array"
-        },
-        "isHttpsOnlyModeEnabled": {
-            "defaultValue": true,
-            "metadata": {
-                "description": "Indicates whether HTTP network protocol support is restricted to HTTPS on the Azure Redis Cache."
-            },
-            "type": "bool"
+            "type": "object"
         },
         "isPublicNetworkAccessEnabled": {
             "defaultValue": false,
             "metadata": {
-                "description": "Indicates whether the Azure Redis Cache is accessible from the internet."
+                "description": "Indicates whether the Azure SignalR Services is accessible from the internet."
+            },
+            "type": "bool"
+        },
+        "isSharedKeyAccessEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether shared keys are able to be used to access the Azure SignalR Services."
             },
             "type": "bool"
         },
         "location": {
             "metadata": {
-                "description": "Specifies the location in which the Azure Redis Cache resource(s) should be deployed."
-            },
-            "type": "string"
-        },
-        "minimumSupportedTlsVersion": {
-            "allowedValues": [
-                "1.2"
-            ],
-            "defaultValue": "1.2",
-            "metadata": {
-                "description": "Specifies the minimum version of the TLS protocol that will be supported within the Azure Redis Cache."
+                "description": "Specifies the location in which the Azure SignalR Services resource(s) should be deployed."
             },
             "type": "string"
         },
         "name": {
-            "maxLength": 63,
             "metadata": {
-                "description": "Specifies the name of the Azure Redis Cache."
+                "description": "Specifies the name of the Azure SignalR Services."
             },
-            "minLength": 1,
             "type": "string"
-        },
-        "numberOfCapacityUnits": {
-            "defaultValue": 1,
-            "maxValue": 6,
-            "metadata": {
-                "description": "Specifies the number of capacity units that will be dedicated to the Azure Redis Cache."
-            },
-            "minValue": 0,
-            "type": "int"
-        },
-        "numberOfShards": {
-            "defaultValue": 0,
-            "maxValue": 10,
-            "metadata": {
-                "description": "Specifies the number of cluster shards that will be dedicated to the Azure Redis Cache."
-            },
-            "minValue": 0,
-            "type": "int"
         },
         "privateEndpoints": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of private endpoints that will be linked with the Azure Redis Cache."
+                "description": "An array of private endpoints that will be linked with the Azure SignalR Services."
             },
             "type": "array"
         },
-        "skuName": {
-            "allowedValues": [
-                "Basic",
-                "Standard",
-                "Premium"
-            ],
-            "defaultValue": "Premium",
-            "metadata": {
-                "description": "Specifies the SKU name of the Azure Redis Cache."
-            },
-            "type": "string"
-        },
-        "subnet": {
+        "serverless": {
             "defaultValue": {},
             "metadata": {
-                "description": ""
+                "description": "An object that encapsulates the server-less settings that will be applied to the Azure SignalR Services."
             },
             "type": "object"
+        },
+        "skuName": {
+            "defaultValue": "Standard_S1",
+            "metadata": {
+                "description": "Specifies the SKU name of the Azure SignalR Services."
+            },
+            "type": "string"
         },
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Redis Cache."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure SignalR Services."
             },
             "type": "object"
-        },
-        "version": {
-            "allowedValues": [
-                "4",
-                "6"
-            ],
-            "defaultValue": "6",
-            "metadata": {
-                "description": "Specifies the version of the Azure Redis Cache."
-            },
-            "type": "string"
         }
     },
     "variables": {
@@ -182,10 +83,10 @@
             "diagnosticSettings": "2017-05-01-preview",
             "privateEndpoints": "2020-07-01",
             "privateEndpointsPrivateDnsZoneGroups": "2020-07-01",
-            "redis": "2020-12-01",
-            "redisFirewallRules": "2020-12-01"
+            "signalrServices": "2021-06-01-preview"
         },
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "cors": "[union(variables('defaultResourceProperties').cors, parameters('cors'))]",
         "defaultResourceProperties": {
             "audit": {
                 "isEnabled": true,
@@ -194,11 +95,21 @@
                     "resourceGroupName": "[variables('resourceGroupName')]",
                     "subscriptionId": "[variables('subscriptionId')]"
                 },
-                "logNames": [],
+                "logNames": [
+                    "AllLogs"
+                ],
                 "retentionPolicy": {
                     "days": 137,
                     "isEnabled": true
                 }
+            },
+            "cors": {
+                "allowedOrigins": []
+            },
+            "identity": {
+                "isEnabled": true,
+                "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
+                "userAssignedIdentities": []
             },
             "privateEndpoint": {
                 "dnsZone": {
@@ -211,45 +122,84 @@
                     "subscriptionId": "[variables('subscriptionId')]"
                 }
             },
-            "subnet": {
-                "resourceGroupName": "[variables('resourceGroupName')]",
-                "subscriptionId": "[variables('subscriptionId')]"
+            "serverless": {
+                "isEnabled": false,
+                "upstreamTemplates": []
             }
         },
+        "features": [
+            {
+                "flag": "EnableConnectivityLogs",
+                "value": "True"
+            },
+            {
+                "flag": "EnableLiveTrace",
+                "value": "False"
+            },
+            {
+                "flag": "EnableMessagingLogs",
+                "value": "False"
+            },
+            {
+                "flag": "ServiceMode",
+                "value": "[if(variables('isServerlessModeEnabled'), 'Serverless', 'Default')]"
+            }
+        ],
+        "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
-        "isClusteringEnabled": "[greater(parameters('numberOfShards'), 0)]",
+        "isServerlessModeEnabled": "[variables('serverless').isEnabled]",
         "privateEndpointsCount": "[length(parameters('privateEndpoints'))]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
-            "redis": "[resourceId('Microsoft.Cache/redis', parameters('name'))]"
+            "signalrService": "[resourceId('Microsoft.SignalRService/signalR', parameters('name'))]"
         },
-        "subscriptionId": "[subscription().subscriptionId]"
+        "serverless": "[union(variables('defaultResourceProperties').serverless, parameters('serverless'))]",
+        "subscriptionId": "[subscription().subscriptionId]",
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]"
     },
     "resources": [
         {
-            "apiVersion": "[variables('apiVersions').redis]",
+            "apiVersion": "[variables('apiVersions').signalrServices]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
+            "kind": "SignalR",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
-                "enableNonSslPort": "[not(parameters('isHttpsOnlyModeEnabled'))]",
-                "minimumTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
-                "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]",
-                "redisConfiguration": "[if(empty(parameters('configuration')), null(), parameters('configuration'))]",
-                "redisVersion": "[parameters('version')]",
-                "shardCount": "[if(variables('isClusteringEnabled'), parameters('numberOfShards'), null())]",
-                "sku": {
-                    "capacity": "[parameters('numberOfCapacityUnits')]",
-                    "family": "[if(startsWith(parameters('skuName'), 'P'), 'P', 'C')]",
-                    "name": "[parameters('skuName')]"
+                "cors": {
+                    "allowedOrigins": "[if(empty(variables('cors').allowedOrigins), null(), variables('cors').allowedOrigins)]"
                 },
-                "staticIP": "[null()]",
-                "subnetId": "[if(empty(parameters('subnet')), null(), resourceId(union(variables('defaultResourceProperties').subnet, parameters('subnet')).subscriptionId, union(variables('defaultResourceProperties').subnet, parameters('subnet')).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('subnet').virtualNetworkName, parameters('subnet').name))]"
+                "disableAadAuth": false,
+                "disableLocalAuth": "[not(parameters('isSharedKeyAccessEnabled'))]",
+                "features": "[variables('features')]",
+                "networkACLs": {
+                    "defaultAction": "Deny"
+                },
+                "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]",
+                "tls": {
+                    "clientCertEnabled": false
+                },
+                "upstream": {
+                    "copy": [
+                        {
+                            "count": "[length(variables('serverless').upstreamTemplates)]",
+                            "input": {
+                                "categoryPattern": "[variables('serverless').upstreamTemplates[copyIndex('templates')].categoryPattern]",
+                                "eventPattern": "[variables('serverless').upstreamTemplates[copyIndex('templates')].eventPattern]",
+                                "hubPattern": "[variables('serverless').upstreamTemplates[copyIndex('templates')].hubPattern]",
+                                "urlTemplate": "[variables('serverless').upstreamTemplates[copyIndex('templates')].urlTemplate]"
+                            },
+                            "name": "templates"
+                        }
+                    ]
+                }
+            },
+            "sku": {
+                "name": "[parameters('skuName')]"
             },
             "tags": "[parameters('tags')]",
-            "type": "Microsoft.Cache/redis",
-            "zones": "[if(empty(parameters('availabilityZones')), null(), parameters('availabilityZones'))]"
+            "type": "Microsoft.SignalRService/signalR"
         },
         {
             "apiVersion": "[variables('apiVersions').privateEndpoints]",
@@ -259,7 +209,7 @@
                 "name": "privateEndpointsCopy"
             },
             "dependsOn": [
-                "[variables('resourceIds').redis]"
+                "[variables('resourceIds').signalrService]"
             ],
             "location": "[union(variables('defaultResourceProperties').privateEndpoint, parameters('privateEndpoints')[copyIndex()]).location]",
             "name": "[parameters('privateEndpoints')[copyIndex()].name]",
@@ -270,9 +220,9 @@
                         "name": "[parameters('privateEndpoints')[copyIndex()].name]",
                         "properties": {
                             "groupIds": [
-                                "redisCache"
+                                "signalr"
                             ],
-                            "privateLinkServiceId": "[variables('resourceIds').redis]"
+                            "privateLinkServiceId": "[variables('resourceIds').signalrService]"
                         }
                     }
                 ],
@@ -312,28 +262,10 @@
             "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups"
         },
         {
-            "apiVersion": "[variables('apiVersions').redisFirewallRules]",
-            "copy": {
-                "count": "[length(parameters('firewallRules'))]",
-                "mode": "Parallel",
-                "name": "firewallRulesCopy"
-            },
-            "dependsOn": [
-                "privateDnsZoneGroupsCopy",
-                "[variables('resourceIds').redis]"
-            ],
-            "name": "[format('{0}/{1}', parameters('name'), parameters('firewallRules')[copyIndex()].name)]",
-            "properties": {
-                "endIp": "[parameters('firewallRules')[copyIndex()].endIpAddress]",
-                "startIp": "[parameters('firewallRules')[copyIndex()].startIpAddress]"
-            },
-            "type": "Microsoft.Cache/redis/firewallRules"
-        },
-        {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
             "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
             "dependsOn": [
-                "[variables('resourceIds').redis]"
+                "[variables('resourceIds').signalrService]"
             ],
             "location": "[parameters('location')]",
             "name": "[format('{0}/Microsoft.Insights/audit', parameters('name'))]",
@@ -354,7 +286,7 @@
                 ],
                 "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
-            "type": "Microsoft.Cache/redis/providers/diagnosticsettings"
+            "type": "Microsoft.SignalRService/signalR/providers/diagnosticsettings"
         }
     ]
 }

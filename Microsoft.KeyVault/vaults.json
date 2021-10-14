@@ -51,6 +51,13 @@
         ]
     },
     "parameters": {
+        "accessPolicies": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of access policies that will be assigned to the Azure Key Vault."
+            },
+            "type": "array"
+        },
         "audit": {
             "defaultValue": {},
             "metadata": {
@@ -200,6 +207,15 @@
         },
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
         "defaultResourceProperties": {
+            "accessPolicy": {
+                "assignee": {},
+                "tenantId": "[parameters('tenantId')]"
+            },
+            "assignee": {
+                "apiVersion": "",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
             "audit": {
                 "isEnabled": true,
                 "logAnalyticsWorkspace": {
@@ -229,9 +245,11 @@
                     "subscriptionId": "[variables('subscriptionId')]"
                 }
             },
-            "virtualNetworkRules": {
-                "resourceGroupName": "[variables('resourceGroupName')]",
-                "subscriptionId": "[variables('subscriptionId')]"
+            "virtualNetworkRule": {
+                "subnet": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
             }
         },
         "isAuditEnabled": "[variables('audit').isEnabled]",
@@ -250,6 +268,17 @@
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
+                "copy": [
+                    {
+                        "count": "[length(parameters('accessPolicies'))]",
+                        "input": {
+                            "objectId": "[if(empty(union(variables('defaultResourceProperties').accessPolicy, parameters('accessPolicies')[copyIndex('accessPolicies')]).assignee), parameters('accessPolicies')[copyIndex('accessPolicies')].objectId, reference(format('/subscriptions/{0}/resourceGroups/{1}/providers/{2}/{3}', union(variables('defaultResourceProperties').assignee, parameters('accessPolicies')[copyIndex('accessPolicies')].assignee).subscriptionId, union(variables('defaultResourceProperties').assignee, parameters('accessPolicies')[copyIndex('accessPolicies')].assignee).resourceGroupName, union(variables('defaultResourceProperties').assignee, parameters('accessPolicies')[copyIndex('accessPolicies')].assignee).type, union(variables('defaultResourceProperties').assignee, parameters('accessPolicies')[copyIndex('accessPolicies')].assignee).name), if(empty(union(variables('defaultResourceProperties').assignee, parameters('accessPolicies')[copyIndex('accessPolicies')].assignee).apiVersion), first(providers(split(parameters('accessPolicies')[copyIndex('accessPolicies')].assignee.type, '/')[0], split(parameters('accessPolicies')[copyIndex('accessPolicies')].assignee.type, '/')[1]).apiVersions), parameters('accessPolicies')[copyIndex('accessPolicies')].assignee.apiVersion), 'Full')[if(contains(parameters('accessPolicies')[copyIndex('accessPolicies')].assignee.type, 'Microsoft.ManagedIdentity/userAssignedIdentities'), 'properties', 'identity')].principalId)]",
+                            "permissions": "[parameters('accessPolicies')[copyIndex('accessPolicies')].permissions]",
+                            "tenantId": "[union(variables('defaultResourceProperties').accessPolicy, parameters('accessPolicies')[copyIndex('accessPolicies')]).tenantId]"
+                        },
+                        "name": "accessPolicies"
+                    }
+                ],
                 "createMode": "default",
                 "enabledForDeployment": "[parameters('isVirtualMachineDeploymentEnabled')]",
                 "enabledForDiskEncryption": "[parameters('isDiskEncryptionEnabled')]",
@@ -270,7 +299,7 @@
                         {
                             "count": "[length(parameters('virtualNetworkRules'))]",
                             "input": {
-                                "id": "[resourceId(union(variables('defaultResourceProperties').virtualNetworkRules, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subscriptionId, union(variables('defaultResourceProperties').virtualNetworkRules, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
+                                "id": "[resourceId(union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subnet.subscriptionId, union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnet.virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnet.name)]"
                             },
                             "name": "virtualNetworkRules"
                         }
