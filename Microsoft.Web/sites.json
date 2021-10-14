@@ -111,7 +111,7 @@
                         "allowedOrigins": []
                     },
                     "customDomains": [],
-                    "frameworkVersion": "DOTNETCORE|3.1",
+                    "frameworkVersion": "NODEJS|12",
                     "functionExtension": {
                         "isEnabled": true,
                         "isLogicWorkflowExtensionEnabled": true,
@@ -145,7 +145,7 @@
                         "allowedOrigins": []
                     },
                     "customDomains": [],
-                    "frameworkVersion": "DOTNETCORE|3.1",
+                    "frameworkVersion": "NODEJS|12",
                     "functionExtension": {
                         "isEnabled": true,
                         "isLogicWorkflowExtensionEnabled": true,
@@ -536,7 +536,7 @@
             "sitesPublicCertificates": "2020-12-01",
             "storageAccounts": "2021-02-01"
         },
-        "applicationSettingsCollection": "[union(union(variables('defaultResourceProperties').applicationSettings, parameters('applicationSettings')).collection, variables('functionApplicationSettingsCollection'), variables('logicWorkflowSettingsCollection'), if(variables('privateEndpointsIsNotEmpty'), variables('privateEndpointsApplicationSettingsCollection'), createArray()), if(variables('autoHeal').isProactiveModeEnabled, createArray(), createArray(createObject('name', 'WEBSITE_PROACTIVE_AUTOHEAL_ENABLED', 'value', 'False'))), if(variables('healthCheck').isEnabled, createArray(createObject('name', 'WEBSITE_HEALTHCHECK_MAXPINGFAILURES', 'value', variables('healthCheck').unhealthyInstanceLifetimeInMinutes)), createArray()))]",
+        "applicationSettingsCollection": "[union(union(variables('defaultResourceProperties').applicationSettings, parameters('applicationSettings')).collection, variables('functionApplicationSettingsCollection'), variables('logicWorkflowSettingsCollection'), if(variables('privateEndpointsIsNotEmpty'), variables('privateEndpointsApplicationSettingsCollection'), createArray()), if(equals(variables('currentStack'), 'node'), createArray(createObject('name', 'WEBSITE_NODE_DEFAULT_VERSION', 'value', format('~{0}', split(parameters('frameworkVersion'), '|')[1]))), createArray()), if(variables('autoHeal').isProactiveModeEnabled, createArray(), createArray(createObject('name', 'WEBSITE_PROACTIVE_AUTOHEAL_ENABLED', 'value', 'False'))), if(variables('healthCheck').isEnabled, createArray(createObject('name', 'WEBSITE_HEALTHCHECK_MAXPINGFAILURES', 'value', variables('healthCheck').unhealthyInstanceLifetimeInMinutes)), createArray()))]",
         "audit": "[union(variables('defaultResourceProperties').audit, createObject('logNames', if(variables('functionExtension').isEnabled, variables('defaultFunctionExtenstionLogNames'), variables('defaultApplicationServiceLogNames'))), parameters('audit'))]",
         "autoHeal": "[union(variables('defaultResourceProperties').autoHeal, parameters('autoHeal'))]",
         "cors": "[union(variables('defaultResourceProperties').cors, parameters('cors'))]",
