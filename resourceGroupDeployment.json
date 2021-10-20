@@ -465,8 +465,12 @@
             "managedIdentity": {},
             "monitor": {
                 "applicationInsightsComponent": {
-                    "logAnalyticsWorkspaceResourceGroupName": "[variables('resourceGroupName')]",
-                    "logAnalyticsWorkspaceSubscriptionId": "[variables('subscriptionId')]",
+                    "dataRetentionInDays": 30,
+                    "logAnalyticsWorkspace": {
+                        "name": "",
+                        "resourceGroupName": "[variables('resourceGroupName')]",
+                        "subscriptionId": "[variables('subscriptionId')]"
+                    },
                     "samplingPercentage": 100
                 },
                 "logAnalyticsWorkspace": {
@@ -2157,17 +2161,14 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "dataRetentionInDays": {
+                        "value": "[union(variables('defaultResourceProperties').monitor.applicationInsightsComponent, variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()]).dataRetentionInDays]"
+                    },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()]).location]"
                     },
-                    "logAnalyticsWorkspaceName": {
-                        "value": "[union(variables('defaultResourceProperties').monitor.applicationInsightsComponent, variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()]).logAnalyticsWorkspaceName]"
-                    },
-                    "logAnalyticsWorkspaceResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').monitor.applicationInsightsComponent, variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()]).logAnalyticsWorkspaceResourceGroupName]"
-                    },
-                    "logAnalyticsWorkspaceSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').monitor.applicationInsightsComponent, variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()]).logAnalyticsWorkspaceSubscriptionId]"
+                    "logAnalyticsWorkspace": {
+                        "value": "[union(variables('defaultResourceProperties').monitor.applicationInsightsComponent, variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()]).logAnalyticsWorkspace]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()].name]"

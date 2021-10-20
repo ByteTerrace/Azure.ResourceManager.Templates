@@ -323,7 +323,9 @@
         "frameworkVersion": {
             "allowedValues": [
                 "DOTNET|4.8",
-                "DOTNET|5.0",
+                "DOTNET|5.0-Isolated",
+                "DOTNET|6.0",
+                "DOTNET|6.0-Isolated",
                 "DOTNETCORE|3.1",
                 "JAVA|8",
                 "JAVA|11",
@@ -334,7 +336,7 @@
                 "PYTHON|3.7",
                 "PYTHON|3.8"
             ],
-            "defaultValue": "DOTNETCORE|3.1",
+            "defaultValue": "DOTNET|6.0-Isolated",
             "metadata": {
                 "description": "Specifies the application framework version that will be deployed within the Azure Web Site."
             },
@@ -598,7 +600,7 @@
                     "resourceGroupName": "[variables('resourceGroupName')]",
                     "subscriptionId": "[variables('subscriptionId')]"
                 },
-                "version": "~3"
+                "version": "~4"
             },
             "healthCheck": {
                 "isEnabled": true,
@@ -699,12 +701,12 @@
             }
         },
         "connectionStringsCollection": "[union(variables('defaultResourceProperties').connectionStrings, parameters('connectionStrings')).collection]",
-        "currentStack": "[if(or(startsWith(parameters('frameworkVersion'), 'dotnetcore|'), and(startsWith(parameters('frameworkVersion'), 'dotnet|'), endsWith(parameters('frameworkVersion'), '5.0'))), 'dotnetcore', if(startsWith(parameters('frameworkVersion'), 'dotnet|'), 'dotnet', if(startsWith(parameters('frameworkVersion'), 'java|'), 'java', if(startsWith(parameters('frameworkVersion'), 'nodejs|'), 'node', if(startsWith(parameters('frameworkVersion'), 'powershell|'), 'powershell', if(startsWith(parameters('frameworkVersion'), 'python|'), 'python', null()))))))]",
+        "currentStack": "[if(startsWith(parameters('frameworkVersion'), 'dotnetcore|'), 'dotnetcore', if(startsWith(parameters('frameworkVersion'), 'dotnet|'), 'dotnet', if(startsWith(parameters('frameworkVersion'), 'java|'), 'java', if(startsWith(parameters('frameworkVersion'), 'nodejs|'), 'node', if(startsWith(parameters('frameworkVersion'), 'powershell|'), 'powershell', if(startsWith(parameters('frameworkVersion'), 'python|'), 'python', null()))))))]",
         "customDomainsCount": "[length(parameters('customDomains'))]",
         "dnsZones": "[union(createObject('private', createArray(), 'public', createArray()), parameters('dnsZones'))]",
         "functionApplicationSettingsCollection": "[if(variables('functionExtension').isEnabled, createArray(createObject('name', 'FUNCTIONS_EXTENSION_VERSION', 'value', variables('functionExtension').version), createObject('name', 'FUNCTIONS_WORKER_RUNTIME', 'value', variables('functionWorkerRuntime'))), createArray())]",
         "functionExtension": "[union(variables('defaultResourceProperties').functionExtension, parameters('functionExtension'))]",
-        "functionWorkerRuntime": "[if(and(equals(variables('currentStack'), 'dotnetcore'), or(endsWith(parameters('frameworkVersion'), '5.0'), endsWith(parameters('frameworkVersion'), '6.0'))), 'dotnet-isolated', if(equals(variables('currentStack'), 'dotnetcore'), 'dotnet', if(equals(variables('currentStack'), 'java'), 'java', if(equals(variables('currentStack'), 'node'), 'node', if(equals(variables('currentStack'), 'powershell'), 'powershell', if(equals(variables('currentStack'), 'python'), 'python', null()))))))]",
+        "functionWorkerRuntime": "[if(and(equals(variables('currentStack'), 'dotnet'), endsWith(parameters('frameworkVersion'), 'isolated')), 'dotnet-isolated', if(startsWith(variables('currentStack'), 'dotnet'), 'dotnet', if(equals(variables('currentStack'), 'java'), 'java', if(equals(variables('currentStack'), 'node'), 'node', if(equals(variables('currentStack'), 'powershell'), 'powershell', if(equals(variables('currentStack'), 'python'), 'python', null()))))))]",
         "healthCheck": "[union(variables('defaultResourceProperties').healthCheck, parameters('healthCheck'))]",
         "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
@@ -908,12 +910,13 @@
                 "keyVaultReferenceIdentity": "SystemAssigned",
                 "linuxFxVersion": "[if(equals(toLower(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).kind), 'linux'), variables('linuxFxVersion'), null())]",
                 "loadBalancing": "LeastRequests",
+                "localMySqlEnabled": false,
                 "logsDirectorySizeLimit": 27,
                 "managedPipelineMode": "Integrated",
                 "metadata": "[variables('metadata')]",
                 "minimumElasticInstanceCount": "[if(variables('functionExtension').isEnabled, 1, null())]",
                 "minTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
-                "netFrameworkVersion": "[if(and(not(equals(toLower(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).kind), 'linux')), equals(variables('currentStack'), 'dotnetcore'), endsWith(parameters('frameworkVersion'), '5.0')), 'v5.0', 'v4.0')]",
+                "netFrameworkVersion": "[if(startsWith(parameters('frameworkVersion'), 'DOTNET|6.0'), 'v6.0', if(startsWith(parameters('frameworkVersion'), 'DOTNET|5.0'), 'v5.0', if(startsWith(parameters('frameworkVersion'), 'DOTNET'), 'v4.6', null())))]",
                 "scmMinTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
                 "powerShellVersion": "[if(equals(variables('currentStack'), 'powershell'), if(endsWith(parameters('frameworkVersion'), '|7'), '~7', null()), null())]",
                 "remoteDebuggingEnabled": "[variables('remoteDebugging').isEnabled]",
