@@ -2,36 +2,31 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "dataRetentionInDays": {
+            "defaultValue": 30,
+            "maxValue": 730,
+            "metadata": {
+                "description": "Specifies the duration, in days, that data will be retained within the Azure Application Insights Component."
+            },
+            "minValue": 30,
+            "type": "int"
+        },
         "location": {
             "metadata": {
-                "description": "Specifies the location in which the Azure Application Insights component resource(s) should be deployed."
+                "description": "Specifies the location in which the Azure Application Insights Component resource(s) should be deployed."
             },
             "type": "string"
         },
-        "logAnalyticsWorkspaceName": {
+        "logAnalyticsWorkspace": {
             "metadata": {
-                "description": "Specifies the name of the Azure Log Analytics workspace which the data will be ingested to."
+                "description": "An object that encapsulates the properties of the Azure Log Analytics Workspace which data will be sent to."
             },
-            "type": "string"
-        },
-        "logAnalyticsWorkspaceResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Specifies the resource group name of the Azure Log Analytics workspace which the data will be ingested to."
-            },
-            "type": "string"
-        },
-        "logAnalyticsWorkspaceSubscriptionId": {
-            "defaultValue": "[subscription().subscriptionId]",
-            "metadata": {
-                "description": "Specifies the subscription id of the Azure Log Analytics workspace which the data will be ingested to."
-            },
-            "type": "string"
+            "type": "object"
         },
         "name": {
             "maxLength": 260,
             "metadata": {
-                "description": "Specifies the name of the Azure Application Insights component."
+                "description": "Specifies the name of the Azure Application Insights Component."
             },
             "minLength": 1,
             "type": "string"
@@ -39,7 +34,7 @@
         "samplingPercentage": {
             "defaultValue": 100,
             "metadata": {
-                "description": "Specifies the percentage of data that will be ingested into the Azure Application Insights component."
+                "description": "Specifies the percentage of data that will be ingested into the Azure Application Insights Component."
             },
             "type": "int"
         },
@@ -51,18 +46,30 @@
             "type": "object"
         }
     },
+    "variables": {
+        "defaultResourceProperties": {
+            "logAnalyticsWorkspace": {
+                "name": "",
+                "resourceGroupName": "[resourceGroup().name]",
+                "subscriptionId": "[subscription().subscriptionId]"
+            }
+        },
+        "logAnalyticsWorkspace": "[union(variables('defaultResourceProperties').logAnalyticsWorkspace, parameters('logAnalyticsWorkspace'))]"
+    },
     "resources": [
         {
-            "apiVersion": "2020-02-02-preview",
+            "apiVersion": "2020-02-02",
             "kind": "web",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
                 "Application_Type": "web",
                 "Flow_Type": "Bluefield",
+                "IngestionMode": "LogAnalytics",
                 "Request_Source": "rest",
+                "RetentionInDays": "[parameters('dataRetentionInDays')]",
                 "SamplingPercentage": "[parameters('samplingPercentage')]",
-                "WorkspaceResourceId": "[if(not(empty(parameters('logAnalyticsWorkspaceName'))), resourceId(parameters('logAnalyticsWorkspaceSubscriptionId'), parameters('logAnalyticsWorkspaceResourceGroupName'), 'Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName')), null())]"
+                "WorkspaceResourceId": "[resourceId(variables('logAnalyticsWorkspace').subscriptionId, variables('logAnalyticsWorkspace').resourceGroupName, 'Microsoft.OperationalInsights/workspaces', variables('logAnalyticsWorkspace').name)]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Insights/components"

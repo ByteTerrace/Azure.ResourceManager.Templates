@@ -177,6 +177,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
             "dependsOn": [
                 "[variables('resourceIds').publicIpAddress]"
             ],

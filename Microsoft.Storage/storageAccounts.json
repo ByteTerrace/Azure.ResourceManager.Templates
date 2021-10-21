@@ -472,8 +472,8 @@
                 "customDomain": "[null()]",
                 "encryption": {
                     "keySource": "[if(variables('isCustomerManagedEncryptionEnabled'), 'Microsoft.KeyVault', 'Microsoft.Storage')]",
-                    "keyvaultproperties": "[if(variables('isCustomerManagedEncryptionEnabled'), createObject('keyname', parameters('customerManagedEncryption').keyName, 'keyvaulturi', reference(resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', parameters('customerManagedEncryption').keyVault.name, variables('apiVersions').keyVaults).vaultUri, 'keyversion', parameters('customerManagedEncryption').keyVersion)), null())]",
-                    "requireInfrastructureEncryption": "[if(and(variables('customerManagedEncryption').isEnabled, variables('customerManagedEncryption').isDoubleEncryptionAtRestEnabled), true(), null())]",
+                    "keyvaultproperties": "[if(variables('isCustomerManagedEncryptionEnabled'), createObject('keyname', parameters('customerManagedEncryption').keyName, 'keyvaulturi', reference(resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', parameters('customerManagedEncryption').keyVault.name), variables('apiVersions').keyVaults).vaultUri, 'keyversion', union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption')).keyVersion), null())]",
+                    "requireInfrastructureEncryption": "[if(variables('customerManagedEncryption').isDoubleEncryptionAtRestEnabled, true(), null())]",
                     "services": {
                         "blob": {
                             "enabled": true,
