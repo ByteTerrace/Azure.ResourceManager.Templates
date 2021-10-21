@@ -206,6 +206,67 @@
                         "allowedOrigins": []
                     },
                     "customDomains": [],
+                    "frameworkVersion": "NODEJS|12",
+                    "functionExtension": {
+                        "isEnabled": true,
+                        "isLogicWorkflowExtensionEnabled": true,
+                        "storageAccount": {
+                            "name": "MyStorageAccount"
+                        }
+                    },
+                    "ipSecurityRestrictions": [
+                        {
+                            "action": "Allow",
+                            "name": "default",
+                            "priority": 0,
+                            "subnet":{
+                                "name": "MySubnet",
+                                "virtualNetworkName": "MyVirtualNetwork"
+                            }
+                        }
+                    ],
+                    "is32BitModeEnabled": true,
+                    "name": "MyFunctionApplication",
+                    "privateEndpoints": [
+                        {
+                            "dnsZones": [
+                                {
+                                    "name": "privatelink.azurewebsites.net"
+                                }
+                            ],
+                            "name": "MyPrivateEndpoint",
+                            "subnet": {
+                                "name":"MySubnet",
+                                "virtualNetworkName": "MyVirtualNetwork"
+                            }
+                        }
+                    ],
+                    "servicePlan": {
+                        "name": "MyServicePlan"
+                    },
+                    "subnet": {
+                        "name":"MySubnet",
+                        "virtualNetworkName": "MyVirtualNetwork"
+                    }
+                }
+            },
+            {
+                "description": "Deploys a web application with the recommended set of properties for a development environment.",
+                "name": "Web Application - Development",
+                "value": {
+                    "applicationSettings": {
+                        "collection": []
+                    },
+                    "audit": {
+                        "isEnabled": false
+                    },
+                    "connectionStrings": {
+                        "collection": []
+                    },
+                    "cors": {
+                        "allowedOrigins": []
+                    },
+                    "customDomains": [],
                     "frameworkVersion": "DOTNETCORE|3.1",
                     "name": "MyWebApplication",
                     "servicePlan": {
