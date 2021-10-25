@@ -12,7 +12,7 @@
         "frontendIpConfigurations": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of frontend ip configurations that will be created within the Azure Load Balancer."
+                "description": "An array of frontend IP configurations that will be created within the Azure Load Balancer."
             },
             "type": "array"
         },

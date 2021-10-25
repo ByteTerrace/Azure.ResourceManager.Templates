@@ -11,6 +11,20 @@
             "minValue": 30,
             "type": "int"
         },
+        "isPublicNetworkAccessForIngestionEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether public network access is permitted to the Azure Application Insights Component  when ingesting data."
+            },
+            "type": "bool"
+        },
+        "isPublicNetworkAccessForQueryEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether public network access is permitted to the Azure Application Insights Component  when querying data."
+            },
+            "type": "bool"
+        },
         "location": {
             "metadata": {
                 "description": "Specifies the location in which the Azure Application Insights Component resource(s) should be deployed."
@@ -66,6 +80,8 @@
                 "Application_Type": "web",
                 "Flow_Type": "Bluefield",
                 "IngestionMode": "LogAnalytics",
+                "publicNetworkAccessForIngestion": "[if(parameters('isPublicNetworkAccessForIngestionEnabled'), 'Enabled', 'Disabled')]",
+                "publicNetworkAccessForQuery": "[if(parameters('isPublicNetworkAccessForQueryEnabled'), 'Enabled', 'Disabled')]",
                 "Request_Source": "rest",
                 "RetentionInDays": "[parameters('dataRetentionInDays')]",
                 "SamplingPercentage": "[parameters('samplingPercentage')]",
