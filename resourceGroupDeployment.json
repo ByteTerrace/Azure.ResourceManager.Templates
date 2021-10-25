@@ -185,6 +185,7 @@
             "subnets": [],
             "virtualMachines": [],
             "virtualMachineScaleSets": [],
+            "virtualNetworkGateways": [],
             "virtualNetworks": [],
             "webApplications": []
         },
@@ -870,6 +871,7 @@
             "virtualMachine": "[format('{0}-VirtualMachine', deployment().name)]",
             "virtualMachineScaleSet": "[format('{0}-VirtualMachineScaleSets', deployment().name)]",
             "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]",
+            "virtualNetworkGateway": "[format('{0}-virtualNetworkGateway', deployment().name)]",
             "webApplication": "[format('{0}-WebApplication', deployment().name)]"
         },
         "logAnalyticsWorkspaces": "[if(variables('logAnalyticsWorkspacesIsNotEmpty'), variables('resourceDefinitions').monitor.logAnalyticsWorkspaces, createArray(createObject('name', 'dummyLogAnalyticsWorkspace')))]",
