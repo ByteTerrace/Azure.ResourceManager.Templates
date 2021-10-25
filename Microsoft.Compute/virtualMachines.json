@@ -481,7 +481,7 @@
                     "isHotPatchingEnabled": false,
                     "mode": "AutomaticByOS"
                 },
-                "timeZone": "UTC"
+                "timeZone": "[null()]"
             }
         },
         "diskEncryptionSet": "[union(variables('defaultResourceProperties').diskEncryptionSet, parameters('diskEncryptionSet'))]",
