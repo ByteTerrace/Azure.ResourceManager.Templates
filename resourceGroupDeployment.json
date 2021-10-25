@@ -195,7 +195,11 @@
                 "isPublicNetworkAccessEnabled": false,
                 "privateEndpoints": [],
                 "settings": {},
-                "skuName": "Standard"
+                "skuName": "Standard",
+                "tags": "[parameters('tags')]"
+            },
+            "applicationSecurityGroup": {
+                "tags": "[parameters('tags')]"
             },
             "applicationServiceEnvironment": {
                 "audit": "[variables('audit')]",
@@ -205,7 +209,8 @@
                 "isZoneRedundant": true,
                 "kind": "ASEV3",
                 "privateDnsZone": {},
-                "virtualIpType": "Internal"
+                "virtualIpType": "Internal",
+                "tags": "[parameters('tags')]"
             },
             "applicationServicePlan": {
                 "audit": "[variables('audit')]",
@@ -214,28 +219,34 @@
                 "maximumElasticWorkerCount": 20,
                 "operatingSystemName": "Linux",
                 "serviceEnvironment": {},
-                "skuName": "P1v2"
+                "skuName": "P1v2",
+                "tags": "[parameters('tags')]"
             },
             "automationAccount": {
                 "desiredStateConfiguration": {},
                 "identity": {},
                 "isPublicNetworkAccessEnabled": false,
+                "tags": "[parameters('tags')]",
                 "webWorker": {}
             },
             "availabilitySet": {
                 "proximityPlacementGroup": {},
-                "skuName": "Aligned"
+                "skuName": "Aligned",
+                "tags": "[parameters('tags')]"
             },
             "bastionHost": {
-                "audit": "[variables('audit')]"
+                "audit": "[variables('audit')]",
+                "tags": "[parameters('tags')]"
             },
             "cdnProfile": {
                 "audit": "[variables('audit')]",
-                "skuName": "Standard_Microsoft"
+                "skuName": "Standard_Microsoft",
+                "tags": "[parameters('tags')]"
             },
             "communicationService": {
                 "audit": "[variables('audit')]",
-                "dataLocation": "United States"
+                "dataLocation": "United States",
+                "tags": "[parameters('tags')]"
             },
             "containerInstance": {
                 "audit": "[variables('audit')]",
@@ -252,6 +263,7 @@
                 "restartPolicy": "Always",
                 "skuName": "Standard",
                 "subnet": {},
+                "tags": "[parameters('tags')]",
                 "volumes": []
             },
             "containerRegistry": {
@@ -267,6 +279,7 @@
                 "isZoneRedundant": true,
                 "privateEndpoints": [],
                 "skuName": "Premium",
+                "tags": "[parameters('tags')]",
                 "virtualNetworkRules": []
             },
             "cosmosDbAccount": {
@@ -277,6 +290,7 @@
                 "isAzurePublicDatacenterAccessEnabled": false,
                 "isFreeTierEnabled": false,
                 "kind": "GlobalDocumentDB",
+                "tags": "[parameters('tags')]",
                 "virtualNetworkRules": []
             },
             "deployment": {
@@ -305,13 +319,15 @@
                 "identity": {},
                 "isDoubleEncryptionAtRestEnabled": true,
                 "keyVault": {},
-                "keyVersion": ""
+                "keyVersion": "",
+                "tags": "[parameters('tags')]"
             },
             "dnsZone": {
                 "private": {
                     "aRecords": [],
                     "cnameRecords": [],
                     "mxRecords": [],
+                    "tags": "[parameters('tags')]",
                     "txtRecords": [],
                     "virtualNetworkLinks": []
                 },
@@ -320,13 +336,15 @@
                     "cnameRecords": [],
                     "mxRecords": [],
                     "nsRecords": [],
+                    "tags": "[parameters('tags')]",
                     "txtRecords": []
                 }
             },
             "eventGrid": {
                 "domain": {
                     "audit": "[variables('audit')]",
-                    "identity": {}
+                    "identity": {},
+                    "tags": "[parameters('tags')]"
                 },
                 "eventSubscription": {
                     "eventDeliverySchema": "EventGridSchema"
@@ -335,7 +353,8 @@
                     "audit": "[variables('audit')]",
                     "identity": {},
                     "isPublicNetworkAccessEnabled": false,
-                    "privateEndpoints": []
+                    "privateEndpoints": [],
+                    "tags": "[parameters('tags')]"
                 },
                 "systemTopic": {
                     "audit": "[variables('audit')]",
@@ -366,6 +385,7 @@
                     "isZoneRedundant": true,
                     "privateEndpoints": [],
                     "skuName": "Standard",
+                    "tags": "[parameters('tags')]",
                     "virtualNetworkRules": []
                 }
             },
@@ -378,7 +398,8 @@
                 "ipConfigurations": [],
                 "managementIpConfiguration": {},
                 "skuName": "AZFW_VNet",
-                "skuTier": "Standard"
+                "skuTier": "Standard",
+                "tags": "[parameters('tags')]"
             },
             "frontDoor": {
                 "audit": "[variables('audit')]",
@@ -391,13 +412,15 @@
             "hdInsightCluster": {
                 "operatingSystem": "Linux",
                 "storageProfile": {},
+                "tags": "[parameters('tags')]",
                 "version": "4.0"
             },
             "hostGroup": {
                 "availabilityZones": [],
                 "hosts": [],
                 "isAutomaticPlacementEnabled": false,
-                "numberOfFaultDomains": 3
+                "numberOfFaultDomains": 3,
+                "tags": "[parameters('tags')]"
             },
             "keyVault": {
                 "accessPolicies": [],
@@ -415,6 +438,7 @@
                 "secrets": {},
                 "skuName": "Premium",
                 "softDeleteRetentionInDays": 13,
+                "tags": "[parameters('tags')]",
                 "tenantId": "[subscription().tenantId]",
                 "virtualNetworkRules": []
             },
@@ -428,6 +452,7 @@
                 "linuxProfile": {},
                 "networking": {},
                 "nodeResourceGroupName": "",
+                "tags": "[parameters('tags')]",
                 "windowsProfile": {}
             },
             "loadBalancer": {
@@ -447,7 +472,8 @@
                     "audit": "[variables('audit')]",
                     "connections": {},
                     "identity": {},
-                    "isEnabled": true
+                    "isEnabled": true,
+                    "tags": "[parameters('tags')]"
                 }
             },
             "managedHsm": {
@@ -459,10 +485,13 @@
                 "privateEndpoints": [],
                 "skuName": "Standard_B1",
                 "softDeleteRetentionInDays": 13,
+                "tags": "[parameters('tags')]",
                 "tenantId": "[subscription().tenantId]",
                 "virtualNetworkRules": []
             },
-            "managedIdentity": {},
+            "managedIdentity": {
+                "tags": "[parameters('tags')]"
+            },
             "monitor": {
                 "applicationInsightsComponent": {
                     "dataRetentionInDays": 30,
@@ -473,18 +502,21 @@
                         "resourceGroupName": "[variables('resourceGroupName')]",
                         "subscriptionId": "[variables('subscriptionId')]"
                     },
-                    "samplingPercentage": 100
+                    "samplingPercentage": 100,
+                    "tags": "[parameters('tags')]"
                 },
                 "logAnalyticsWorkspace": {
                     "dataRetentionInDays": 30,
                     "isPublicNetworkAccessForIngestionEnabled": false,
                     "isPublicNetworkAccessForQueryEnabled": false,
                     "linkedStorageAccountResourceGroupName": "[variables('resourceGroupName')]",
-                    "skuName": "pergb2018"
+                    "skuName": "pergb2018",
+                    "tags": "[parameters('tags')]"
                 },
                 "privateLinkScope": {
                     "privateEndpoints": [],
-                    "scopedResources": []
+                    "scopedResources": [],
+                    "tags": "[parameters('tags')]"
                 }
             },
             "natGateway": {
@@ -492,11 +524,16 @@
                 "idleTimeoutInMinutes": 4,
                 "publicIpAddresses": [],
                 "publicIpPrefixes": [],
-                "skuName": "Standard"
+                "skuName": "Standard",
+                "tags": "[parameters('tags')]"
             },
             "networkSecurityGroup": {
                 "audit": "[variables('audit')]",
-                "securityRules": []
+                "securityRules": [],
+                "tags": "[parameters('tags')]"
+            },
+            "proximityPlacementGroup": {
+                "tags": "[parameters('tags')]"
             },
             "publicIpAddress": {
                 "allocationMethod": "Static",
@@ -511,18 +548,21 @@
                 "ipPrefix": {},
                 "skuName": "Standard",
                 "skuTier": "Regional",
+                "tags": "[parameters('tags')]",
                 "version": "IPv4"
             },
             "publicIpPrefix": {
                 "ipVersion": "IPv4",
                 "size": 28,
-                "skuTier": "Regional"
+                "skuTier": "Regional",
+                "tags": "[parameters('tags')]"
             },
             "recoveryServicesVault": {
                 "audit": "[variables('audit')]",
                 "backup": {},
                 "customerManagedEncryption": {},
-                "identity": {}
+                "identity": {},
+                "tags": "[parameters('tags')]"
             },
             "redisCache": {
                 "audit": "[variables('audit')]",
@@ -541,6 +581,7 @@
                 "privateEndpoints": [],
                 "skuName": "Premium",
                 "subnet": {},
+                "tags": "[parameters('tags')]",
                 "version": "6"
             },
             "roleAssignment": {
@@ -549,10 +590,12 @@
             },
             "routeTable": {
                 "isBgpRoutePropagationEnabled": false,
-                "routes": []
+                "routes": [],
+                "tags": "[parameters('tags')]"
             },
             "script": {
-                "kind": "AzurePowerShell"
+                "kind": "AzurePowerShell",
+                "tags": "[parameters('tags')]"
             },
             "serviceBus": {
                 "namespace": {
@@ -564,12 +607,14 @@
                     "isZoneRedundant": true,
                     "privateEndpoints": [],
                     "skuName": "Premium",
+                    "tags": "[parameters('tags')]",
                     "topics": [],
                     "virtualNetworkRules": []
                 }
             },
             "sharedImageGallery": {
-                "description": ""
+                "description": "",
+                "tags": "[parameters('tags')]"
             },
             "signalrService": {
                 "audit": "[variables('audit')]",
@@ -579,7 +624,8 @@
                 "isSharedKeyAccessEnabled": false,
                 "privateEndpoints": [],
                 "serverless": {},
-                "skuName": "Standard_S1"
+                "skuName": "Standard_S1",
+                "tags": "[parameters('tags')]"
             },
             "sqlDatabase": {
                 "audit": "[variables('audit')]",
@@ -592,12 +638,13 @@
                 "isAzureHybridBenefitEnabled": false,
                 "isReadScaleOutEnabled": false,
                 "isZoneRedundant": true,
+                "resourceGroupName": "[variables('resourceGroupName')]",
                 "restorePointInTime": "",
                 "secondaryType": "Geo",
                 "skuName": "Basic",
                 "sourceDatabase": {},
-                "resourceGroupName": "[variables('resourceGroupName')]",
-                "subscriptionId": "[variables('subscriptionId')]"
+                "subscriptionId": "[variables('subscriptionId')]",
+                "tags": "[parameters('tags')]"
             },
             "sqlServer": {
                 "activeDirectoryAdministratorObjectId": "",
@@ -614,13 +661,15 @@
                 "isPublicNetworkAccessEnabled": false,
                 "privateEndpoints": [],
                 "serverVersion": "12.0",
+                "tags": "[parameters('tags')]",
                 "virtualNetworkRules": [],
                 "vulnerabilityAssessment": {}
             },
             "staticWebApplication": {
                 "identity": {},
                 "privateEndpoints": [],
-                "skuName": "Standard"
+                "skuName": "Standard",
+                "tags": "[parameters('tags')]"
             },
             "storageAccount": {
                 "accessTier": "Hot",
@@ -641,6 +690,7 @@
                 "queueServices": {},
                 "skuName": "Standard_LRS",
                 "tableServices": {},
+                "tags": "[parameters('tags')]",
                 "virtualNetworkRules": []
             },
             "subnet": {
@@ -677,6 +727,7 @@
                 "osDisk": {},
                 "priority": "Regular",
                 "skuName": "Standard_D2s_v4",
+                "tags": "[parameters('tags')]",
                 "windowsConfiguration": {}
             },
             "virtualMachineScaleSet": {
@@ -703,6 +754,7 @@
                 "priority": "Regular",
                 "proximityPlacementGroup": {},
                 "skuName": "Standard_D2s_v4",
+                "tags": "[parameters('tags')]",
                 "windowsConfiguration": {}
             },
             "virtualNetwork": {
@@ -711,7 +763,8 @@
                 "ddosProtectionPlanResourceGroupName": "[variables('resourceGroupName')]",
                 "ddosProtectionPlanSubscriptionId": "[variables('subscriptionId')]",
                 "dnsServers": [],
-                "subnets": []
+                "subnets": [],
+                "tags": "[parameters('tags')]"
             },
             "virtualNetworkGateway": {
                 "audit": "[variables('audit')]",
@@ -721,6 +774,7 @@
                 "mode": "PolicyBased",
                 "pointToSiteConfiguration": {},
                 "skuName": "VpnGw1AZ",
+                "tags": "[parameters('tags')]",
                 "type": "Standard"
             },
             "webApplication": {
@@ -752,6 +806,7 @@
                 "remoteDebugging": {},
                 "scmIpSecurityRestrictions": [],
                 "subnet": {},
+                "tags": "[parameters('tags')]",
                 "timeZone": "UTC"
             }
         },
@@ -850,7 +905,7 @@
                         "value": "[variables('resourceDefinitions').scripts.preDeploy[copyIndex()].scriptContent]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').script, variables('resourceDefinitions').scripts.preDeploy[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -882,7 +937,7 @@
                         "value": "[variables('resourceDefinitions').managedIdentities[copyIndex()].name]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').managedIdentity, variables('resourceDefinitions').managedIdentities[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -926,7 +981,7 @@
                         "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('logAnalyticsWorkspaces')[copyIndex()]).skuName]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').monitor.logAnalyticsWorkspace, variables('logAnalyticsWorkspaces')[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -1130,7 +1185,7 @@
                         "value": "[union(variables('defaultResourceProperties').publicIpPrefix, variables('resourceDefinitions').publicIpPrefixes[copyIndex()]).skuTier]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').publicIpPrefix, variables('resourceDefinitions').publicIpPrefixes[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -1188,7 +1243,7 @@
                         "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).skuTier]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).tags]"
                     },
                     "version": {
                         "value": "[union(variables('defaultResourceProperties').publicIpAddress, variables('resourceDefinitions').publicIpAddresses[copyIndex()]).version]"
@@ -1240,7 +1295,7 @@
                         "value": "[union(variables('defaultResourceProperties').natGateway, variables('resourceDefinitions').natGateways[copyIndex()]).skuName]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').natGateway, variables('resourceDefinitions').natGateways[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -1279,7 +1334,7 @@
                         "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).securityRules]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').networkSecurityGroup, variables('resourceDefinitions').networkSecurityGroups[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -1311,7 +1366,7 @@
                         "value": "[variables('resourceDefinitions').applicationSecurityGroups[copyIndex()].name]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').applicationSecurityGroup, variables('resourceDefinitions').applicationSecurityGroups[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -1349,7 +1404,7 @@
                         "value": "[union(variables('defaultResourceProperties').routeTable, variables('resourceDefinitions').routeTables[copyIndex()]).routes]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').routeTable, variables('resourceDefinitions').routeTables[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -1385,7 +1440,7 @@
                         "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).skuName]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -1438,7 +1493,7 @@
                         "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).subnets]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -1558,7 +1613,7 @@
                         "value": "[union(variables('defaultResourceProperties').virtualNetworkGateway, variables('resourceDefinitions').virtualNetworkGateways[copyIndex()]).skuName]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').virtualNetworkGateway, variables('resourceDefinitions').virtualNetworkGateways[copyIndex()]).tags]"
                     },
                     "type": {
                         "value": "[union(variables('defaultResourceProperties').virtualNetworkGateway, variables('resourceDefinitions').virtualNetworkGateways[copyIndex()]).type]"
@@ -1604,7 +1659,7 @@
                         "value": "[variables('resourceDefinitions').bastionHosts[copyIndex()].name]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').bastionHost, variables('resourceDefinitions').bastionHosts[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -1655,7 +1710,7 @@
                         "value": "[union(variables('defaultResourceProperties').firewall, variables('resourceDefinitions').firewalls[copyIndex()]).skuTier]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').firewall, variables('resourceDefinitions').firewalls[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -1695,7 +1750,7 @@
                         "value": "[variables('resourceDefinitions').dnsZones.private[copyIndex()].name]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').dnsZone.private, variables('resourceDefinitions').dnsZones.private[copyIndex()]).tags]"
                     },
                     "txtRecords": {
                         "value": "[union(variables('defaultResourceProperties').dnsZone.private, variables('resourceDefinitions').dnsZones.private[copyIndex()]).txtRecords]"
@@ -1742,7 +1797,7 @@
                         "value": "[union(variables('defaultResourceProperties').dnsZone.public, variables('resourceDefinitions').dnsZones.public[copyIndex()]).nsRecords]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').dnsZone.public, variables('resourceDefinitions').dnsZones.public[copyIndex()]).tags]"
                     },
                     "txtRecords": {
                         "value": "[union(variables('defaultResourceProperties').dnsZone.public, variables('resourceDefinitions').dnsZones.public[copyIndex()]).txtRecords]"
@@ -1784,7 +1839,7 @@
                         "value": "[variables('resourceDefinitions').eventGrid.domains[copyIndex()].name]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.domain, variables('resourceDefinitions').eventGrid.domains[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -1830,7 +1885,7 @@
                         "value": "[union(variables('defaultResourceProperties').eventGrid.topic, variables('resourceDefinitions').eventGrid.topics[copyIndex()]).privateEndpoints]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.topic, variables('resourceDefinitions').eventGrid.topics[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -1962,7 +2017,7 @@
                         "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).skuName]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).tags]"
                     },
                     "virtualNetworkRules": {
                         "value": "[union(variables('defaultResourceProperties').eventHub.namespace, variables('resourceDefinitions').eventHub.namespaces[copyIndex()]).virtualNetworkRules]"
@@ -2060,7 +2115,7 @@
                         "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).skuName]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).tags]"
                     },
                     "topics": {
                         "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).topics]"
@@ -2137,7 +2192,7 @@
                         "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).subnet]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).tags]"
                     },
                     "version": {
                         "value": "[union(variables('defaultResourceProperties').redisCache, variables('resourceDefinitions').redisCaches[copyIndex()]).version]"
@@ -2203,7 +2258,7 @@
                         "value": "[union(variables('defaultResourceProperties').loadBalancer, variables('resourceDefinitions').loadBalancers[copyIndex()]).skuTier]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').loadBalancer, variables('resourceDefinitions').loadBalancers[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -2251,7 +2306,7 @@
                         "value": "[union(variables('defaultResourceProperties').monitor.applicationInsightsComponent, variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()]).samplingPercentage]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').monitor.applicationInsightsComponent, variables('resourceDefinitions').monitor.applicationInsightsComponents[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -2291,7 +2346,7 @@
                         "value": "[union(variables('defaultResourceProperties').monitor.privateLinkScope, variables('resourceDefinitions').monitor.privateLinkScopes[copyIndex()]).scopedResources]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').monitor.privateLinkScope, variables('resourceDefinitions').monitor.privateLinkScopes[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -2372,7 +2427,7 @@
                         "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).softDeleteRetentionInDays]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).tags]"
                     },
                     "tenantId": {
                         "value": "[union(variables('defaultResourceProperties').keyVault, variables('resourceDefinitions').keyVaults[copyIndex()]).tenantId]"
@@ -2440,7 +2495,7 @@
                         "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).softDeleteRetentionInDays]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).tags]"
                     },
                     "tenantId": {
                         "value": "[union(variables('defaultResourceProperties').managedHsm, variables('resourceDefinitions').managedHsms[copyIndex()]).tenantId]"
@@ -2482,7 +2537,7 @@
                         "value": "[variables('resourceDefinitions').communicationServices[copyIndex()].name]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').communicationService, variables('resourceDefinitions').communicationServices[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -2535,7 +2590,7 @@
                         "value": "[union(variables('defaultResourceProperties').applicationConfigurationStore, variables('resourceDefinitions').applicationConfigurationStores[copyIndex()]).skuName]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').applicationConfigurationStore, variables('resourceDefinitions').applicationConfigurationStores[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -2583,7 +2638,7 @@
                         "value": "[variables('resourceDefinitions').recoveryServicesVaults[copyIndex()].name]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').recoveryServicesVault, variables('resourceDefinitions').recoveryServicesVaults[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -2654,7 +2709,7 @@
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).skuName]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).tags]"
                     },
                     "virtualNetworkRules": {
                         "value": "[union(variables('defaultResourceProperties').containerRegistry, variables('resourceDefinitions').containerRegistries[copyIndex()]).virtualNetworkRules]"
@@ -2683,7 +2738,7 @@
                 "mode": "Incremental",
                 "parameters": {
                     "description": {
-                        "value": "[union(variables('defaultResourceProperties').sharedImageGallery, variables('resourceDefinitions').availabilitySets[copyIndex()]).description]"
+                        "value": "[union(variables('defaultResourceProperties').sharedImageGallery, variables('resourceDefinitions').sharedImageGalleries[copyIndex()]).description]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').sharedImageGalleries[copyIndex()]).location]"
@@ -2692,7 +2747,7 @@
                         "value": "[variables('resourceDefinitions').sharedImageGalleries[copyIndex()].name]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').sharedImageGallery, variables('resourceDefinitions').sharedImageGalleries[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -2724,7 +2779,7 @@
                         "value": "[variables('resourceDefinitions').proximityPlacementGroups[copyIndex()].name]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').proximityPlacementGroup, variables('resourceDefinitions').proximityPlacementGroups[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -2769,7 +2824,7 @@
                         "value": "[union(variables('defaultResourceProperties').availabilitySet, variables('resourceDefinitions').availabilitySets[copyIndex()]).skuName]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').availabilitySet, variables('resourceDefinitions').availabilitySets[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -2817,7 +2872,7 @@
                         "value": "[variables('resourceDefinitions').diskEncryptionSets[copyIndex()].name]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').diskEncryptionSet, variables('resourceDefinitions').diskEncryptionSets[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -2862,7 +2917,7 @@
                         "value": "[union(variables('defaultResourceProperties').hostGroup, variables('resourceDefinitions').hostGroups[copyIndex()]).numberOfFaultDomains]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').hostGroup, variables('resourceDefinitions').hostGroups[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -2894,13 +2949,13 @@
                 "mode": "Incremental",
                 "parameters": {
                     "desiredStateConfiguration": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).desiredStateConfiguration]"
+                        "value": "[union(variables('defaultResourceProperties').automationAccount, variables('resourceDefinitions').automationAccounts[copyIndex()]).desiredStateConfiguration]"
                     },
                     "identity": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).identity]"
+                        "value": "[union(variables('defaultResourceProperties').automationAccount, variables('resourceDefinitions').automationAccounts[copyIndex()]).identity]"
                     },
                     "isPublicNetworkAccessEnabled": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).isPublicNetworkAccessEnabled]"
+                        "value": "[union(variables('defaultResourceProperties').automationAccount, variables('resourceDefinitions').automationAccounts[copyIndex()]).isPublicNetworkAccessEnabled]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').automationAccounts[copyIndex()]).location]"
@@ -2909,10 +2964,10 @@
                         "value": "[variables('resourceDefinitions').automationAccounts[copyIndex()].name]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').automationAccount, variables('resourceDefinitions').automationAccounts[copyIndex()]).tags]"
                     },
                     "webWorker": {
-                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).webWorker]"
+                        "value": "[union(variables('defaultResourceProperties').automationAccount, variables('resourceDefinitions').automationAccounts[copyIndex()]).webWorker]"
                     }
                 },
                 "templateLink": {
@@ -3018,7 +3073,7 @@
                         "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).skuName]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).tags]"
                     },
                     "windowsConfiguration": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachineScaleSet, variables('resourceDefinitions').virtualMachineScaleSets[copyIndex()]).windowsConfiguration]"
@@ -3128,7 +3183,7 @@
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).skuName]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).tags]"
                     },
                     "windowsConfiguration": {
                         "value": "[union(variables('defaultResourceProperties').virtualMachine, variables('resourceDefinitions').virtualMachines[copyIndex()]).windowsConfiguration]"
@@ -3202,7 +3257,7 @@
                         "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).subnet]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).tags]"
                     },
                     "volumes": {
                         "value": "[union(variables('defaultResourceProperties').containerInstance, variables('resourceDefinitions').containerInstances[copyIndex()]).volumes]"
@@ -3294,7 +3349,7 @@
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).tableServices]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).tags]"
                     },
                     "virtualNetworkRules": {
                         "value": "[union(variables('defaultResourceProperties').storageAccount, variables('resourceDefinitions').storageAccounts[copyIndex()]).virtualNetworkRules]"
@@ -3377,7 +3432,7 @@
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).serverVersion]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).tags]"
                     },
                     "virtualNetworkRules": {
                         "value": "[union(variables('defaultResourceProperties').sqlServer, variables('resourceDefinitions').sqlServers[copyIndex()]).virtualNetworkRules]"
@@ -3467,7 +3522,7 @@
                         "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).sourceDatabase]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').sqlDatabase, variables('resourceDefinitions').sqlDatabases[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -3525,7 +3580,7 @@
                         "value": "[variables('resourceDefinitions').cosmosDbAccounts[copyIndex()].name]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).tags]"
                     },
                     "virtualNetworkRules": {
                         "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).virtualNetworkRules]"
@@ -3599,7 +3654,7 @@
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).nodeResourceGroupName]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).tags]"
                     },
                     "windowsProfile": {
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).windowsProfile]"
@@ -3659,7 +3714,7 @@
                         "value": "[union(variables('defaultResourceProperties').hdInsightCluster, variables('resourceDefinitions').hdInsightClusters[copyIndex()]).storageProfile]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').hdInsightCluster, variables('resourceDefinitions').hdInsightClusters[copyIndex()]).tags]"
                     },
                     "version": {
                         "value": "[union(variables('defaultResourceProperties').hdInsightCluster, variables('resourceDefinitions').hdInsightClusters[copyIndex()]).version]"
@@ -3724,7 +3779,7 @@
                         "value": "[variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()].subnet]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').applicationServiceEnvironment, variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).tags]"
                     },
                     "virtualIpType": {
                         "value": "[union(variables('defaultResourceProperties').applicationServiceEnvironment, variables('resourceDefinitions').applicationServiceEnvironments[copyIndex()]).virtualIpType]"
@@ -3786,7 +3841,7 @@
                         "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).skuName]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').applicationServicePlan, variables('resourceDefinitions').applicationServicePlans[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -3847,7 +3902,7 @@
                         "value": "[union(variables('defaultResourceProperties').signalrService, variables('resourceDefinitions').signalrServices[copyIndex()]).skuName]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').signalrService, variables('resourceDefinitions').signalrServices[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -3898,7 +3953,7 @@
                         "value": "[union(variables('defaultResourceProperties').staticWebApplication, variables('resourceDefinitions').staticWebApplications[copyIndex()]).skuName]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').staticWebApplication, variables('resourceDefinitions').staticWebApplications[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -4030,7 +4085,7 @@
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).subnet]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).tags]"
                     },
                     "timeZone": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).timeZone]"
@@ -4078,7 +4133,7 @@
                         "value": "[variables('resourceDefinitions').logic.applications[copyIndex()].name]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').logic.application, variables('resourceDefinitions').logic.applications[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -4264,7 +4319,7 @@
                         "value": "[variables('resourceDefinitions').eventGrid.systemTopics[copyIndex()].source]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').eventGrid.systemTopic, variables('resourceDefinitions').eventGrid.systemTopics[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
@@ -4537,7 +4592,7 @@
                         "value": "[variables('resourceDefinitions').scripts.postDeploy[copyIndex()].scriptContent]"
                     },
                     "tags": {
-                        "value": "[parameters('tags')]"
+                        "value": "[union(variables('defaultResourceProperties').script, variables('resourceDefinitions').scripts.postDeploy[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
