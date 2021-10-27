@@ -303,6 +303,11 @@
                     "id": "[resourceId('Microsoft.Network/networkInterfaces', union(createObject('name', format('{0}-vmnic-{1}', parameters('name'), copyIndex('networkInterfacesByResourceId'))), parameters('networkInterfaceCards')[copyIndex('networkInterfacesByResourceId')]).name)]"
                 },
                 "name": "networkInterfacesByResourceId"
+            },
+            {
+                "count": "[variables('userAssignedIdentitiesCount')]",
+                "input": "[resourceId(union(variables('defaultResourceProperties').userAssignedIdentity, variables('identity').userAssignedIdentities[copyIndex('userAssignedIdentitiesWithResourceId')]).subscriptionId, union(variables('defaultResourceProperties').userAssignedIdentity, variables('identity').userAssignedIdentities[copyIndex('userAssignedIdentitiesWithResourceId')]).resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').userAssignedIdentities[copyIndex('userAssignedIdentitiesWithResourceId')].name)]",
+                "name": "userAssignedIdentitiesWithResourceId"
             }
         ],
         "dataDisks": "[if(variables('dataDisksIsNotEmpty'), parameters('dataDisks'), createArray(createObject('name', '<NULL>')))]",
@@ -475,6 +480,10 @@
                 "name": "",
                 "storageAccountType": "Premium_LRS"
             },
+            "userAssignedIdentity": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
             "windowsConfiguration": {
                 "isVmAgentEnabled": true,
                 "patchSettings": {
@@ -634,7 +643,7 @@
                 "dataDisksCopy",
                 "networkInterfaceCardsCopy"
             ],
-            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', json(replace(replace(replace(string(variables('userAssignedIdentitiesWithResourceId')), ',', ':{},'), '[', '{'), ']', ':{}}'))), createObject())), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {

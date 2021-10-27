@@ -115,6 +115,13 @@
             "privateEndpoints": "2020-07-01",
             "privateEndpointsPrivateDnsZoneGroups": "2020-07-01"
         },
+        "copy": [
+            {
+                "count": "[variables('userAssignedIdentitiesCount')]",
+                "input": "[resourceId(union(variables('defaultResourceProperties').userAssignedIdentity, variables('identity').userAssignedIdentities[copyIndex('userAssignedIdentitiesWithResourceId')]).subscriptionId, union(variables('defaultResourceProperties').userAssignedIdentity, variables('identity').userAssignedIdentities[copyIndex('userAssignedIdentitiesWithResourceId')]).resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').userAssignedIdentities[copyIndex('userAssignedIdentitiesWithResourceId')].name)]",
+                "name": "userAssignedIdentitiesWithResourceId"
+            }
+        ],
         "customerManagedEncryption": "[union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption'))]",
         "defaultResourceProperties": {
             "customerManagedEncryption": {
@@ -146,6 +153,10 @@
             "setting": {
                 "contentType": "",
                 "tags": {}
+            },
+            "userAssignedIdentity": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
             }
         },
         "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
@@ -164,7 +175,7 @@
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').configurationStores]",
-            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', json(replace(replace(replace(string(variables('userAssignedIdentitiesWithResourceId')), ',', ':{},'), '[', '{'), ']', ':{}}'))), createObject())), null())]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {

@@ -602,6 +602,13 @@
         "applicationSettingsCollection": "[union(union(variables('defaultResourceProperties').applicationSettings, parameters('applicationSettings')).collection, variables('functionApplicationSettingsCollection'), variables('logicWorkflowSettingsCollection'), if(variables('privateEndpointsIsNotEmpty'), variables('privateEndpointsApplicationSettingsCollection'), createArray()), if(equals(variables('currentStack'), 'node'), createArray(createObject('name', 'WEBSITE_NODE_DEFAULT_VERSION', 'value', format('~{0}', split(parameters('frameworkVersion'), '|')[1]))), createArray()), if(variables('autoHeal').isProactiveModeEnabled, createArray(), createArray(createObject('name', 'WEBSITE_PROACTIVE_AUTOHEAL_ENABLED', 'value', 'False'))), if(variables('healthCheck').isEnabled, createArray(createObject('name', 'WEBSITE_HEALTHCHECK_MAXPINGFAILURES', 'value', variables('healthCheck').unhealthyInstanceLifetimeInMinutes)), createArray()))]",
         "audit": "[union(variables('defaultResourceProperties').audit, createObject('logNames', if(variables('functionExtension').isEnabled, variables('defaultFunctionExtenstionLogNames'), variables('defaultApplicationServiceLogNames'))), parameters('audit'))]",
         "autoHeal": "[union(variables('defaultResourceProperties').autoHeal, parameters('autoHeal'))]",
+        "copy": [
+            {
+                "count": "[variables('userAssignedIdentitiesCount')]",
+                "input": "[resourceId(union(variables('defaultResourceProperties').userAssignedIdentity, variables('identity').userAssignedIdentities[copyIndex('userAssignedIdentitiesWithResourceId')]).subscriptionId, union(variables('defaultResourceProperties').userAssignedIdentity, variables('identity').userAssignedIdentities[copyIndex('userAssignedIdentitiesWithResourceId')]).resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').userAssignedIdentities[copyIndex('userAssignedIdentitiesWithResourceId')].name)]",
+                "name": "userAssignedIdentitiesWithResourceId"
+            }
+        ],
         "cors": "[union(variables('defaultResourceProperties').cors, parameters('cors'))]",
         "defaultApplicationServiceLogNames": [
             "AppServiceAntivirusScanAuditLogs",
@@ -759,6 +766,10 @@
             "subnet": {
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "userAssignedIdentity": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
             }
         },
         "connectionStringsCollection": "[union(variables('defaultResourceProperties').connectionStrings, parameters('connectionStrings')).collection]",
@@ -813,7 +824,7 @@
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').sites]",
-            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', json(replace(replace(replace(string(variables('userAssignedIdentitiesWithResourceId')), ',', ':{},'), '[', '{'), ']', ':{}}'))), createObject())), null())]",
             "kind": "[if(variables('functionExtension').isEnabled, if(variables('functionExtension').isLogicWorkflowExtensionEnabled, 'functionapp,workflowapp', 'functionapp'), 'app')]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
