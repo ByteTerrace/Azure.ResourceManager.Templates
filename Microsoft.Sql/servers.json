@@ -216,6 +216,13 @@
             "storageAccounts": "2021-02-01"
         },
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "copy": [
+            {
+                "count": "[variables('userAssignedIdentitiesCount')]",
+                "input": "[resourceId(union(variables('defaultResourceProperties').userAssignedIdentity, variables('identity').userAssignedIdentities[copyIndex('userAssignedIdentitiesWithResourceId')]).subscriptionId, union(variables('defaultResourceProperties').userAssignedIdentity, variables('identity').userAssignedIdentities[copyIndex('userAssignedIdentitiesWithResourceId')]).resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').userAssignedIdentities[copyIndex('userAssignedIdentitiesWithResourceId')].name)]",
+                "name": "userAssignedIdentitiesWithResourceId"
+            }
+        ],
         "customerManagedEncryption": "[union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption'))]",
         "defaultResourceProperties": {
             "audit": {
@@ -276,6 +283,10 @@
                     "subscriptionId": "[variables('subscriptionId')]"
                 }
             },
+            "userAssignedIdentity": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
             "virtualNetworkRule": {
                 "ignoreMissingVnetServiceEndpoint": true,
                 "subnet": {
@@ -329,7 +340,7 @@
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').sqlServers]",
-            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', json(replace(replace(replace(string(variables('userAssignedIdentitiesWithResourceId')), ',', ':{},'), '[', '{'), ']', ':{}}'))), createObject())), null())]",
             "location": "[parameters('location')]",
             "name": "[variables('serverName')]",
             "properties": {

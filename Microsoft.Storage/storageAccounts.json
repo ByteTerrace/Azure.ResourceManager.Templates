@@ -296,6 +296,13 @@
         "blobServicesPrivateEndpoints": "[union(variables('defaultResourceProperties').blobService, parameters('blobServices')).privateEndpoints]",
         "blobServicesPrivateEndpointsCount": "[length(variables('blobServicesPrivateEndpoints'))]",
         "blobServicesPrivateEndpointsIsNotEmpty": "[greater(variables('blobServicesPrivateEndpointsCount'), 0)]",
+        "copy": [
+            {
+                "count": "[variables('userAssignedIdentitiesCount')]",
+                "input": "[resourceId(union(variables('defaultResourceProperties').userAssignedIdentity, variables('identity').userAssignedIdentities[copyIndex('userAssignedIdentitiesWithResourceId')]).subscriptionId, union(variables('defaultResourceProperties').userAssignedIdentity, variables('identity').userAssignedIdentities[copyIndex('userAssignedIdentitiesWithResourceId')]).resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', variables('identity').userAssignedIdentities[copyIndex('userAssignedIdentitiesWithResourceId')].name)]",
+                "name": "userAssignedIdentitiesWithResourceId"
+            }
+        ],
         "customerManagedEncryption": "[union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption'))]",
         "dataLakePrivateEndpoints": "[union(variables('defaultResourceProperties').dataLake, parameters('dataLake')).privateEndpoints]",
         "dataLakePrivateEndpointsCount": "[length(variables('dataLakePrivateEndpoints'))]",
@@ -410,6 +417,10 @@
                     "collection": []
                 }
             },
+            "userAssignedIdentity": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
             "virtualNetworkRule": {
                 "subnet": {
                     "resourceGroupName": "[variables('resourceGroupName')]",
@@ -460,7 +471,7 @@
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').storageAccounts]",
-            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', createObject(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', first(variables('identity').userAssignedIdentities).name), createObject())), createObject())), null())]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', json(replace(replace(replace(string(variables('userAssignedIdentitiesWithResourceId')), ',', ':{},'), '[', '{'), ']', ':{}}'))), createObject())), null())]",
             "kind": "[parameters('kind')]",
             "location": "[parameters('location')]",
             "name": "[variables('storageAccountName')]",
