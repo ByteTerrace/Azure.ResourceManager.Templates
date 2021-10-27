@@ -288,21 +288,21 @@
             {
                 "count": "[variables('dataDisksCount')]",
                 "input": {
-                    "caching": "[union(variables('defaultResourceProperties').dataDisk, parameters('dataDisks')[copyIndex('dataDisksByResourceId')]).cachingMode]",
+                    "caching": "[union(variables('defaultResourceProperties').dataDisk, parameters('dataDisks')[copyIndex('dataDisksWithResourceId')]).cachingMode]",
                     "createOption": "Attach",
-                    "lun": "[union(createObject('lun', copyIndex('dataDisksByResourceId')), parameters('dataDisks')[copyIndex('dataDisksByResourceId')]).lun]",
+                    "lun": "[union(createObject('lun', copyIndex('dataDisksWithResourceId')), parameters('dataDisks')[copyIndex('dataDisksWithResourceId')]).lun]",
                     "managedDisk": {
-                        "id": "[resourceId('Microsoft.Compute/disks', union(createObject('name', format('{0}-vmdatadisk-{1}', parameters('name'), copyIndex('dataDisksByResourceId'))), parameters('dataDisks')[copyIndex('dataDisksByResourceId')]).name)]"
+                        "id": "[resourceId('Microsoft.Compute/disks', union(createObject('name', format('{0}-vmdatadisk-{1}', parameters('name'), copyIndex('dataDisksWithResourceId'))), parameters('dataDisks')[copyIndex('dataDisksWithResourceId')]).name)]"
                     }
                 },
-                "name": "dataDisksByResourceId"
+                "name": "dataDisksWithResourceId"
             },
             {
                 "count": "[variables('networkInterfaceCardsCount')]",
                 "input": {
-                    "id": "[resourceId('Microsoft.Network/networkInterfaces', union(createObject('name', format('{0}-vmnic-{1}', parameters('name'), copyIndex('networkInterfacesByResourceId'))), parameters('networkInterfaceCards')[copyIndex('networkInterfacesByResourceId')]).name)]"
+                    "id": "[resourceId('Microsoft.Network/networkInterfaces', union(createObject('name', format('{0}-vmnic-{1}', parameters('name'), copyIndex('networkInterfacesWithResourceId'))), parameters('networkInterfaceCards')[copyIndex('networkInterfacesWithResourceId')]).name)]"
                 },
-                "name": "networkInterfacesByResourceId"
+                "name": "networkInterfacesWithResourceId"
             },
             {
                 "count": "[variables('userAssignedIdentitiesCount')]",
@@ -478,7 +478,11 @@
                 "isEphemeral": false,
                 "isWriteAcceleratorEnabled": false,
                 "name": "",
-                "storageAccountType": "Premium_LRS"
+                "skuName": "Premium_LRS"
+            },
+            "userAssignedIdentity": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
             },
             "userAssignedIdentity": {
                 "resourceGroupName": "[variables('resourceGroupName')]",
@@ -669,7 +673,7 @@
                 "hostGroup": "[if(empty(parameters('host')), null(), createObject('id', resourceId(variables('host').subscriptionId, variables('host').resourceGroupName, 'Microsoft.Compute/hostGroups', variables('host').hostGroupName)))]",
                 "licenseType": "[if(variables('licenseTypeIsNotEmpty'), parameters('licenseType'), null())]",
                 "networkProfile": {
-                    "networkInterfaces": "[variables('networkInterfacesByResourceId')]"
+                    "networkInterfaces": "[variables('networkInterfacesWithResourceId')]"
                 },
                 "osProfile": {
                     "adminUsername": "[parameters('administratorUserName')]",
@@ -684,7 +688,7 @@
                 "priority": "[if(equals(toLower(parameters('priority')), 'none'), null(), parameters('priority'))]",
                 "securityProfile": "[if(or(parameters('isEncryptionAtHostEnabled'), variables('isTrustedLaunchEnabled')), variables('securityProfile'), null())]",
                 "storageProfile": {
-                    "dataDisks": "[variables('dataDisksByResourceId')]",
+                    "dataDisks": "[variables('dataDisksWithResourceId')]",
                     "imageReference": "[if(empty(parameters('imageReference')), null(), parameters('imageReference'))]",
                     "osDisk": {
                         "caching": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).cachingMode]",
@@ -692,7 +696,7 @@
                         "diffDiskSettings": "[if(union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).isEphemeral, createObject('option', 'Local'), null())]",
                         "managedDisk": {
                             "diskEncryptionSet": "[if(variables('isDiskEncryptionSetEnabled'), createObject('id', variables('resourceIds').virtualMachineDiskEncryptionSet), null())]",
-                            "storageAccountType": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).storageAccountType]"
+                            "storageAccountType": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).skuName]"
                         },
                         "name": "[if(empty(union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).name), format('{0}-vmosdisk', parameters('name')), parameters('osDisk').name)]",
                         "writeAcceleratorEnabled": "[union(variables('defaultResourceProperties').osDisk, parameters('osDisk')).isWriteAcceleratorEnabled]"
