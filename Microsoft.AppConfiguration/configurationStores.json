@@ -139,6 +139,10 @@
                 "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
                 "userAssignedIdentities": []
             },
+            "keyVault": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
             "privateEndpoint": {
                 "dnsZone": {
                     "resourceGroupName": "[variables('resourceGroupName')]",
@@ -151,7 +155,8 @@
                 }
             },
             "setting": {
-                "contentType": "",
+                "contentType": "[null()]",
+                "keyVault": {},
                 "tags": {}
             },
             "userAssignedIdentity": {
@@ -265,11 +270,11 @@
             "dependsOn": [
                 "[variables('resourceIds').configurationStore]"
             ],
-            "name": "[format('{0}/{1}', parameters('name'), variables('settings')[copyIndex()].name)]",
+            "name": "[format('{0}/{1}', parameters('name'), parameters('settings').collection[copyIndex()].name)]",
             "properties": {
-                "contentType": "[union(variables('defaultResourceProperties').setting, variables('settings')[copyIndex()]).contentType]",
-                "tags": "[union(variables('defaultResourceProperties').setting, variables('settings')[copyIndex()]).tags]",
-                "value": "[variables('settings')[copyIndex()].value]"
+                "contentType": "[if(empty(union(variables('defaultResourceProperties').setting, parameters('settings').collection[copyIndex()]).keyVault), union(variables('defaultResourceProperties').setting, parameters('settings').collection[copyIndex()]).contentType, union(createObject('contentType', 'application/vnd.microsoft.appconfig.keyvaultref+json;charset=utf-8'), parameters('settings').collection[copyIndex()]).contentType)]",
+                "tags": "[union(variables('defaultResourceProperties').setting, parameters('settings').collection[copyIndex()]).tags]",
+                "value": "[if(empty(union(variables('defaultResourceProperties').setting, parameters('settings').collection[copyIndex()]).keyVault), parameters('settings').collection[copyIndex()].value, string(createObject('uri', format('{0}secrets/{1}', reference(resourceId(union(variables('defaultResourceProperties').keyVault, parameters('settings').collection[copyIndex()].keyVault).subscriptionId, union(variables('defaultResourceProperties').keyVault, parameters('settings').collection[copyIndex()].keyVault).resourceGroupName, 'Microsoft.KeyVault/vaults', parameters('settings').collection[copyIndex()].keyVault.name), variables('apiVersions').keyVaults).vaultUri, parameters('settings').collection[copyIndex()].keyVault.secretName))))]"
             },
             "type": "Microsoft.AppConfiguration/configurationStores/keyValues"
         }
