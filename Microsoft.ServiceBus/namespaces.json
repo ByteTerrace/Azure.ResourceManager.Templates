@@ -72,6 +72,13 @@
             },
             "type": "bool"
         },
+        "isLocalAuthenticationEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the Azure Service Bus Namespace permits local authentication."
+            },
+            "type": "bool"
+        },
         "isPublicNetworkAccessEnabled": {
             "defaultValue": false,
             "metadata": {
@@ -234,7 +241,7 @@
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
-                "disableLocalAuth": true,
+                "disableLocalAuth": "[not(parameters('isLocalAuthenticationEnabled'))]",
                 "zoneRedundant": "[parameters('isZoneRedundant')]"
             },
             "sku": {
