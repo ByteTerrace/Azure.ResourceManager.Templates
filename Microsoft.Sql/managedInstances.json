@@ -50,6 +50,7 @@
             "type": "object"
         },
         "skuName": {
+            "defaultValue": "GP_Gen5_2",
             "metadata": {
                 "description": "Specifies the SKU name of the Azure Sql Server Managed Instance."
             },
