@@ -3574,6 +3574,71 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').sqlManagedInstances))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').sqlManagedInstances)]",
+                "mode": "Parallel",
+                "name": "sqlManagedInstancesCopy"
+            },
+            "dependsOn": [
+                "keyVaultsCopy",
+                "logAnalyticsWorkspacesCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "scriptsPreDeployCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').sqlDatabase, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).audit]"
+                    },
+                    "defaultCollation": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).defaultCollation]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).identity]"
+                    },
+                    "isAzureHybridBenefitEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).isAzureHybridBenefitEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').sqlManagedInstances[copyIndex()].name]"
+                    },
+                    "pool": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).pool]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).skuName]"
+                    },
+                    "storageSizeInGigabytes": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).storageSizeInGigabytes]"
+                    },
+                    "subnet": {
+                        "value": "[variables('resourceDefinitions').sqlManagedInstances[copyIndex()].subnet]"
+                    },
+                    "tags": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).tags]"
+                    },
+                    "timeZone": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).timeZone]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Sql/managedInstances.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').cosmosDbAccounts))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').cosmosDbAccounts)]",
@@ -3604,6 +3669,9 @@
                     },
                     "geoReplicationLocations": {
                         "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).geoReplicationLocations]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).identity]"
                     },
                     "isAdvancedThreatProtectionEnabled": {
                         "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isAdvancedThreatProtectionEnabled]"
@@ -4279,6 +4347,7 @@
                 "sharedImageGalleriesCopy",
                 "signalrServicesCopy",
                 "sqlDatabasesCopy",
+                "sqlManagedInstancesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",
                 "storageAccountsCopy",
@@ -4369,6 +4438,7 @@
                 "sharedImageGalleriesCopy",
                 "signalrServicesCopy",
                 "sqlDatabasesCopy",
+                "sqlManagedInstancesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",
                 "storageAccountsCopy",
@@ -4467,6 +4537,7 @@
                 "sharedImageGalleriesCopy",
                 "signalrServicesCopy",
                 "sqlDatabasesCopy",
+                "sqlManagedInstancesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",
                 "storageAccountsCopy",
@@ -4558,6 +4629,7 @@
                 "sharedImageGalleriesCopy",
                 "signalrServicesCopy",
                 "sqlDatabasesCopy",
+                "sqlManagedInstancesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",
                 "storageAccountsCopy",
@@ -4645,6 +4717,7 @@
                 "sharedImageGalleriesCopy",
                 "signalrServicesCopy",
                 "sqlDatabasesCopy",
+                "sqlManagedInstancesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",
                 "storageAccountsCopy",
