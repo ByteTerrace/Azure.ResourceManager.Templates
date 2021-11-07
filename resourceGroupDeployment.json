@@ -668,7 +668,6 @@
                 "defaultCollation": "SQL_Latin1_General_CP1_CI_AS",
                 "identity": {},
                 "isAzureHybridBenefitEnabled": false,
-                "minimumSupportedTlsVersion": "1.2",
                 "pool": {},
                 "skuName": "GP_Gen5_2",
                 "storageSizeInGigabytes": 512,
