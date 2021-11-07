@@ -9,6 +9,13 @@
             },
             "type": "object"
         },
+        "endpoints": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of endpoints that will be linked with the Azure CDN Profile."
+            },
+            "type": "object"
+        },
         "name": {
             "maxLength": 260,
             "metadata": {
@@ -39,6 +46,7 @@
     },
     "variables": {
         "apiVersions": {
+            "cdnEndpoints": "2020-09-01",
             "cdnProfiles": "2020-09-01",
             "diagnosticSettings": "2017-05-01-preview"
         },
@@ -55,6 +63,20 @@
                     "days": 137,
                     "isEnabled": true
                 }
+            },
+            "endpoint": {
+                "contentTypesToCompress": [
+                    "application/x-javascript",
+                    "text/css",
+                    "text/html",
+                    "text/javascript",
+                    "text/plain"
+                ],
+                "isCompressionEnabled": true,
+                "isHttpEnabled": false,
+                "isHttpsEnabled": true,
+                "originHostHeader": "",
+                "queryStringCachingBehavior": "IgnoreQueryString"
             }
         },
         "frontDoorDiagnosticsLogs": [
@@ -113,6 +135,41 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Cdn/profiles"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').cdnProfiles]",
+            "copy": {
+                "count": "[length(parameters('endpoints'))]",
+                "mode": "Parallel",
+                "name": "endpointsCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').cdnProfile]"
+            ],
+            "location": "global",
+            "name": "[format('{0}/{1}', parameters('name'), parameters('endpoints')[copyIndex()].name)]",
+            "properties": {
+                "contentTypesToCompress": "",
+                "copy": [
+                    {
+                        "count": "[length(parameters('endpoints')[copyIndex()].origins)]",
+                        "input": {
+                            "name": "[if(empty(union(createObject('name', ''), parameters('endpoints')[copyIndex()].origins[copyIndex('origins')]).name), replace(parameters('endpoints')[copyIndex()].origins[copyIndex('origins')].hostName, '.', '-'), parameters('endpoints')[copyIndex()].origins[copyIndex('origins')].name)]",
+                            "properties": {
+                                "hostName": "[parameters('endpoints')[copyIndex()].origins[copyIndex('origins')].hostName]"
+                            }
+                        },
+                        "name": "origins"
+                    }
+                ],
+                "isCompressionEnabled": "[union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).isCompressionEnabled]",
+                "isHttpAllowed": "[union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).isHttpEnabled]",
+                "isHttpsAllowed": "[union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).isHttpsEnabled]",
+                "originHostHeader": "[union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).originHostHeader]",
+                "queryStringCachingBehavior": "[union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).queryStringCachingBehavior]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Cdn/profiles/endpoints"
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",

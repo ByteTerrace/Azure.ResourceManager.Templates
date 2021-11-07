@@ -9,7 +9,6 @@
                 "value": {
                     "deployments": [
                         {
-                            "contentVersion": "1.0.0.0",
                             "parameters": {},
                             "templateSpec": {
                                 "name": "MyTemplateSpec",
@@ -179,6 +178,7 @@
             "sharedImageGalleries": [],
             "signalrServices": [],
             "sqlDatabases": [],
+            "sqlManagedInstances": [],
             "sqlServers": [],
             "staticWebApplications": [],
             "storageAccounts": [],
@@ -241,6 +241,7 @@
             },
             "cdnProfile": {
                 "audit": "[variables('audit')]",
+                "endpoints": [],
                 "skuName": "Standard_Microsoft",
                 "tags": "[parameters('tags')]"
             },
@@ -444,12 +445,17 @@
                 "virtualNetworkRules": []
             },
             "kubernetesServiceCluster": {
+                "administratorObjectIds": [],
                 "agentPoolProfiles": [],
                 "audit": "[variables('audit')]",
                 "customerManagedEncryption": {},
                 "dnsPrefix": "",
+                "dnsZone": {},
                 "identity": {},
-                "kubernetesVersion": "1.20.7",
+                "isAzurePolicyEnabled": true,
+                "isHttpApplicationRoutingEnabled": false,
+                "isPrivateEndpointEnabled": false,
+                "isRbacAuthorizationEnabled": true,
                 "linuxProfile": {},
                 "networking": {},
                 "nodeResourceGroupName": "",
@@ -553,10 +559,10 @@
                 "version": "IPv4"
             },
             "publicIpPrefix": {
-                "ipVersion": "IPv4",
                 "size": 28,
                 "skuTier": "Regional",
-                "tags": "[parameters('tags')]"
+                "tags": "[parameters('tags')]",
+                "version": "IPv4"
             },
             "recoveryServicesVault": {
                 "audit": "[variables('audit')]",
@@ -1171,9 +1177,6 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "ipVersion": {
-                        "value": "[union(variables('defaultResourceProperties').publicIpPrefix, variables('resourceDefinitions').publicIpPrefixes[copyIndex()]).ipVersion]"
-                    },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').publicIpPrefixes[copyIndex()]).location]"
                     },
@@ -1188,6 +1191,9 @@
                     },
                     "tags": {
                         "value": "[union(variables('defaultResourceProperties').publicIpPrefix, variables('resourceDefinitions').publicIpPrefixes[copyIndex()]).tags]"
+                    },
+                    "version": {
+                        "value": "[union(variables('defaultResourceProperties').publicIpPrefix, variables('resourceDefinitions').publicIpPrefixes[copyIndex()]).version]"
                     }
                 },
                 "templateLink": {
@@ -1434,6 +1440,9 @@
                 "parameters": {
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).audit]"
+                    },
+                    "endpoints": {
+                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).endpoints]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').cdnProfiles[copyIndex()].name]"
@@ -3620,7 +3629,7 @@
                 "mode": "Incremental",
                 "parameters": {
                     "administratorObjectIds": {
-                        "value": "[variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()].administratorObjectIds]"
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).administratorObjectIds]"
                     },
                     "agentPoolProfiles": {
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).agentPoolProfiles]"
@@ -3634,11 +3643,26 @@
                     "dnsPrefix": {
                         "value": "[union(createObject('dnsPrefix', variables('resourceDefinitions').publicIpAddresses[copyIndex()].name), variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).dnsPrefix]"
                     },
+                    "dnsZone": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).dnsZone]"
+                    },
                     "identity": {
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).identity]"
                     },
+                    "isAzurePolicyEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).isAzurePolicyEnabled]"
+                    },
+                    "isHttpApplicationRoutingEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).isHttpApplicationRoutingEnabled]"
+                    },
+                    "isPrivateEndpointEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).isPrivateEndpointEnabled]"
+                    },
+                    "isRbacAuthorizationEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).isRbacAuthorizationEnabled]"
+                    },
                     "kubernetesVersion": {
-                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).kubernetesVersion]"
+                        "value": "[variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()].kubernetesVersion]"
                     },
                     "linuxProfile": {
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).linuxProfile]"
@@ -4150,7 +4174,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').roleAssignments))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').roleAssignments)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "roleAssignmentsCopy"
             },
             "dependsOn": [

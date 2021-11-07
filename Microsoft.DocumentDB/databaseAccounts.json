@@ -23,17 +23,17 @@
             },
             "type": "string"
         },
-        "geoReplicationLocations": {
-            "defaultValue": [],
-            "metadata": {
-                "description": "An array of locations that the Azure Cosmos DB Account will be replicated to."
-            },
-            "type": "array"
-        },
         "firewallRules": {
             "defaultValue": [],
             "metadata": {
                 "description": "An array of firewall rules that will be assigned to the Azure Cosmos DB Account."
+            },
+            "type": "array"
+        },
+        "geoReplicationLocations": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of locations that the Azure Cosmos DB Account will be replicated to."
             },
             "type": "array"
         },
@@ -80,7 +80,7 @@
             "type": "bool"
         },
         "isAzurePublicDatacenterAccessEnabled": {
-            "defaultValue": false,
+            "defaultValue": true,
             "metadata": {
                 "description": "Indicates whether access via public Azure datacenters is enabled on the Azure Cosmos DB Account."
             },
@@ -212,8 +212,10 @@
                 "userAssignedIdentities": []
             },
             "virtualNetworkRule": {
-                "resourceGroupName": "[resourceGroup().name]",
-                "subscriptionId": "[subscription().subscriptionId]"
+                "subnet": {
+                    "resourceGroupName": "[resourceGroup().name]",
+                    "subscriptionId": "[subscription().subscriptionId]"
+                }
             }
         },
         "firewallRulesForAzureDatacenters": "[if(parameters('isAzurePublicDatacenterAccessEnabled'), union(createArray(variables('azureDatacentersIpAddress')), variables('azurePortalIpAddresses')), variables('firewallRulesForAzurePortal'))]",
@@ -264,7 +266,7 @@
                     {
                         "count": "[length(parameters('virtualNetworkRules'))]",
                         "input": {
-                            "id": "[resourceId(union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subscriptionId, union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnetName)]"
+                            "id": "[resourceId(union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subnet.subscriptionId, union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnet.virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnet.name)]"
                         },
                         "name": "virtualNetworkRules"
                     }
@@ -322,7 +324,7 @@
                 ],
                 "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
-            "type": "Microsoft.ServiceBus/namespaces/providers/diagnosticsettings"
+            "type": "Microsoft.DocumentDB/databaseAccounts/providers/diagnosticsettings"
         }
     ]
 }

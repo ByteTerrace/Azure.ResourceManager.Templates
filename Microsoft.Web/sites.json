@@ -836,6 +836,7 @@
                 "httpsOnly": "[parameters('isHttpsOnlyModeEnabled')]",
                 "serverFarmId": "[variables('resourceIds').serverFarm]",
                 "siteConfig": {
+                    "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
                     "appSettings": "[if(variables('functionExtension').isEnabled, union(createArray(createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccount, variables('apiVersions').storageAccounts).keys[1].value)), createObject('name', 'FUNCTION_APP_EDIT_MODE', 'value', 'readonly')), if(or(startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'EP'), startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'WS'), startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'Y')), createArray(createObject('name', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccount, variables('apiVersions').storageAccounts).keys[1].value)), createObject('name', 'WEBSITE_CONTENTSHARE', 'value', format('functionapp-{0}', toLower(parameters('name'))))), createArray()), variables('applicationSettingsCollection')), variables('applicationSettingsCollection'))]",
                     "copy": [
                         {
@@ -934,8 +935,7 @@
             "location": "[parameters('location')]",
             "name": "[format('{0}/web', parameters('name'))]",
             "properties": {
-                "acrUseManagedIdentityCreds": false,
-                "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
+                "acrUseManagedIdentityCreds": true,
                 "autoHealEnabled": "[not(empty(variables('autoHeal').rules))]",
                 "autoHealRules": "[variables('autoHeal').rules]",
                 "copy": [

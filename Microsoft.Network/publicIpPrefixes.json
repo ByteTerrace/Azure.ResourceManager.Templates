@@ -2,17 +2,6 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "ipVersion": {
-            "allowedValues": [
-                "IPv4",
-                "IPv6"
-            ],
-            "defaultValue": "IPv4",
-            "metadata": {
-                "description": "Specifies the IP address version of the Azure Public IP prefix."
-            },
-            "type": "string"
-        },
         "location": {
             "metadata": {
                 "description": "Specifies the location in which the Azure Public IP prefix resource(s) will be deployed."
@@ -53,6 +42,17 @@
                 "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Public IP prefix."
             },
             "type": "object"
+        },
+        "version": {
+            "allowedValues": [
+                "IPv4",
+                "IPv6"
+            ],
+            "defaultValue": "IPv4",
+            "metadata": {
+                "description": "Specifies the version of the Azure Public IP Address."
+            },
+            "type": "string"
         }
     },
     "resources": [
@@ -62,7 +62,7 @@
             "name": "[parameters('name')]",
             "properties": {
                 "prefixLength": "[parameters('size')]",
-                "publicIPAddressVersion": "[parameters('ipVersion')]"
+                "publicIPAddressVersion": "[parameters('version')]"
             },
             "sku": {
                 "name": "Standard",

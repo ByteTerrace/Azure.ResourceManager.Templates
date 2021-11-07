@@ -1,6 +1,7 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0","metadata": {
+    "contentVersion": "1.0.0.0",
+    "metadata": {
         "examples": [
             {
                 "description": "Deploys an event grid system topic with the recommended set of properties for a development environment.",
