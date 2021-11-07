@@ -261,7 +261,7 @@
                     {
                         "count": "[length(variables('privateEndpoints')[copyIndex()].dnsZones)]",
                         "input": {
-                            "name": "[replace(variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')].name, '.', '-')]",
+                            "ignoreMissingVnetServiceEndpoint": "[replace(variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')].name, '.', '-')]",
                             "properties": {
                                 "privateDnsZoneId": "[resourceId(union(variables('defaultResourceProperties').privateEndpoint.dnsZone, variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')]).subscriptionId, union(variables('defaultResourceProperties').privateEndpoint.dnsZone, variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')]).resourceGroupName, 'Microsoft.Network/privateDnsZones', variables('privateEndpoints')[copyIndex()].dnsZones[copyIndex('privateDnsZoneConfigs')].name)]"
                             }

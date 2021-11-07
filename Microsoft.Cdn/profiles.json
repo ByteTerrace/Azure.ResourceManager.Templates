@@ -14,7 +14,7 @@
             "metadata": {
                 "description": "An array of endpoints that will be linked with the Azure CDN Profile."
             },
-            "type": "object"
+            "type": "array"
         },
         "name": {
             "maxLength": 260,
@@ -137,7 +137,7 @@
             "type": "Microsoft.Cdn/profiles"
         },
         {
-            "apiVersion": "[variables('apiVersions').cdnProfiles]",
+            "apiVersion": "[variables('apiVersions').cdnEndpoints]",
             "copy": {
                 "count": "[length(parameters('endpoints'))]",
                 "mode": "Parallel",
@@ -149,7 +149,7 @@
             "location": "global",
             "name": "[format('{0}/{1}', parameters('name'), parameters('endpoints')[copyIndex()].name)]",
             "properties": {
-                "contentTypesToCompress": "",
+                "contentTypesToCompress": "[union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).contentTypesToCompress]",
                 "copy": [
                     {
                         "count": "[length(parameters('endpoints')[copyIndex()].origins)]",
