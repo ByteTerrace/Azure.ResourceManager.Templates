@@ -285,12 +285,22 @@
                 "virtualNetworkRules": []
             },
             "cosmosDbAccount": {
+                "audit": "[variables('audit')]",
                 "consistencyPolicy": {},
+                "createMode": "Default",
                 "firewallRules": [],
                 "geoReplicationLocations": [],
+                "identity": {},
+                "isAdvancedThreatProtectionEnabled": true,
+                "isAllowTrustedMicrosoftServicesEnabled": true,
+                "isAnalyticalStorageEnabled": false,
+                "isAutomaticFailoverEnabled": false,
                 "isAzurePortalAccessEnabled": true,
-                "isAzurePublicDatacenterAccessEnabled": false,
+                "isAzurePublicDatacenterAccessEnabled": true,
                 "isFreeTierEnabled": false,
+                "isLocalAuthenticationEnabled": false,
+                "isMultipleWriteLocationsEnabled": false,
+                "isPublicNetworkAccessEnabled": false,
                 "kind": "GlobalDocumentDB",
                 "tags": "[parameters('tags')]",
                 "virtualNetworkRules": []
@@ -869,7 +879,7 @@
             "serviceBusNamespace": "[format('{0}-ServiceBusNamespace', deployment().name)]",
             "sharedImageGallery": "[format('{0}-SharedImageGallery', deployment().name)]",
             "signalrService": "[format('{0}-SignalRService', deployment().name)]",
-            "sqlDatabases": "[format('{0}-SqlDatabase', deployment().name)]",
+            "sqlDatabase": "[format('{0}-SqlDatabase', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
             "staticWebApplication": "[format('{0}-StaticWebApplication', deployment().name)]",
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
@@ -3477,7 +3487,7 @@
                 "subnetsCopy",
                 "virtualNetworksCopy"
             ],
-            "name": "[format('{0}_{1}', variables('deploymentNames').sqlDatabases, copyIndex())]",
+            "name": "[format('{0}_{1}', variables('deploymentNames').sqlDatabase, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
@@ -3563,14 +3573,32 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).audit]"
+                    },
                     "consistencyPolicy": {
                         "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).consistencyPolicy]"
+                    },
+                    "createMode": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).createMode]"
                     },
                     "firewallRules": {
                         "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).firewallRules]"
                     },
                     "geoReplicationLocations": {
                         "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).geoReplicationLocations]"
+                    },
+                    "isAdvancedThreatProtectionEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isAdvancedThreatProtectionEnabled]"
+                    },
+                    "isAllowTrustedMicrosoftServicesEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
+                    },
+                    "isAnalyticalStorageEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isAnalyticalStorageEnabled]"
+                    },
+                    "isAutomaticFailoverEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isAutomaticFailoverEnabled]"
                     },
                     "isAzurePortalAccessEnabled": {
                         "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isAzurePortalAccessEnabled]"
@@ -3580,6 +3608,15 @@
                     },
                     "isFreeTierEnabled": {
                         "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isFreeTierEnabled]"
+                    },
+                    "isLocalAuthenticationEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isLocalAuthenticationEnabled]"
+                    },
+                    "isMultipleWriteLocationsEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isMultipleWriteLocationsEnabled]"
+                    },
+                    "isPublicNetworkAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isPublicNetworkAccessEnabled]"
                     },
                     "kind": {
                         "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).kind]"
