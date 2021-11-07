@@ -72,6 +72,13 @@
             },
             "type": "bool"
         },
+        "isLocalAuthenticationEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the Azure Service Bus Namespace permits local authentication."
+            },
+            "type": "bool"
+        },
         "isPublicNetworkAccessEnabled": {
             "defaultValue": false,
             "metadata": {
@@ -234,7 +241,7 @@
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {
-                "disableLocalAuth": true,
+                "disableLocalAuth": "[not(parameters('isLocalAuthenticationEnabled'))]",
                 "zoneRedundant": "[parameters('isZoneRedundant')]"
             },
             "sku": {
@@ -327,7 +334,7 @@
                     {
                         "count": "[length(parameters('virtualNetworkRules'))]",
                         "input": {
-                            "name": "[union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).ignoreMissingVnetServiceEndpoint]",
+                            "ignoreMissingVnetServiceEndpoint": "[union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).ignoreMissingVnetServiceEndpoint]",
                             "subnet": {
                                 "id": "[resourceId(union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subnet.subscriptionId, union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnet.virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnet.name)]"
                             }

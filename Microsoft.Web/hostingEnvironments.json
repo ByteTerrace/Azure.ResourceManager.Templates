@@ -176,7 +176,7 @@
             "properties": {
                 "clusterSettings": "[union(variables('defaultResourceProperties').clusterSettings, if(parameters('isInternalEncryptionEnabled'), createArray(createObject('name', 'InternalEncryption', 'value', 'true')), createArray()), if(parameters('isMinimalSslCipherSuiteConfigurationEnabled'), createArray(createObject('name', 'FrontEndSSLCipherSuiteOrder', 'value', 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256')), createArray()))]",
                 "dedicatedHostCount": "[if(parameters('isDedicatedHostGroup'), 2, 0)]",
-                "dnsSuffix": "[format(concat('{0}.', if(variables('isVirtualIpInternal'), 'appserviceenvironment.net', 'p.azurewebsites.net')), parameters('name'))]",
+                "dnsSuffix": "[toLower(format(concat('{0}.', if(variables('isVirtualIpInternal'), 'appserviceenvironment.net', 'p.azurewebsites.net')), parameters('name')))]",
                 "internalLoadBalancingMode": "[if(variables('isVirtualIpInternal'), 3, 0)]",
                 "upgradePreference": "None",
                 "virtualNetwork": {

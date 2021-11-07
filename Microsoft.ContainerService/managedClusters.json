@@ -3,6 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "administratorObjectIds":{
+            "defaultValue": [],
             "metadata": {
                 "description": "A list of object ids that will be assigned as administrators of the the Azure Kubernetes Service Cluster."
             },
@@ -36,6 +37,13 @@
             },
             "type": "string"
         },
+        "dnsZone": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the DNS zone that the Azure Kubernetes Service Cluster will be integrated with."
+            },
+            "type": "object"
+        },
         "identity": {
             "defaultValue": {},
             "metadata": {
@@ -43,8 +51,35 @@
             },
             "type": "object"
         },
+        "isAzurePolicyEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether support for Azure Policy is enabled on the Azure Kubernetes Service Cluster."
+            },
+            "type": "bool"
+        },
+        "isHttpApplicationRoutingEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether a default ingress controller will be created within the Azure Kubernetes Service Cluster; not recommended for production use."
+            },
+            "type": "bool"
+        },
+        "isPrivateEndpointEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the private endpoint feature is enabled on the Azure Kubernetes Service Cluster."
+            },
+            "type": "bool"
+        },
+        "isRbacAuthorizationEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the RBAC authorization feature is enabled on the Azure Kubernetes Service Cluster."
+            },
+            "type": "bool"
+        },
         "kubernetesVersion": {
-            "defaultValue": "1.20.7",
             "metadata": {
                 "description": "Specifies the version of Kubernetes that will be deployed to the Azure Kubernetes Service Cluster."
             },
@@ -172,6 +207,10 @@
                     "subscriptionId": "[variables('subscriptionId')]"
                 }
             },
+            "dnsZone": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
             "identity": {
                 "isEnabled": true,
                 "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
@@ -190,17 +229,6 @@
                 "podCidr": "172.27.0.0/16",
                 "policy": "",
                 "serviceCidr": "172.29.255.0/24"
-            },
-            "privateEndpoint": {
-                "dnsZone": {
-                    "resourceGroupName": "[variables('resourceGroupName')]",
-                    "subscriptionId": "[variables('subscriptionId')]"
-                },
-                "location": "[parameters('location')]",
-                "subnet": {
-                    "resourceGroupName": "[variables('resourceGroupName')]",
-                    "subscriptionId": "[variables('subscriptionId')]"
-                }
             },
             "userAssignedIdentity": {
                 "resourceGroupName": "[variables('resourceGroupName')]",
@@ -252,18 +280,18 @@
             "name": "[parameters('name')]",
             "properties": {
                 "aadProfile": {
-                    "adminGroupObjectIDs": "[parameters('administratorObjectIds')]",
-                    "enableAzureRBAC": true,
+                    "adminGroupObjectIDs": "[if(empty(parameters('administratorObjectIds')), null(), parameters('administratorObjectIds'))]",
+                    "enableAzureRBAC": "[parameters('isRbacAuthorizationEnabled')]",
                     "managed": true,
                     "tenantID": "[subscription().tenantId]"
                 },
                 "addonProfiles": {
                     "aciConnectorLinux": "[null()]",
                     "azurepolicy": {
-                        "enabled": true
+                        "enabled": "[parameters('isAzurePolicyEnabled')]"
                     },
                     "httpApplicationRouting": {
-                        "enabled": false
+                        "enabled": "[parameters('isHttpApplicationRoutingEnabled')]"
                     },
                     "omsagent": {
                         "config": "[if(variables('isAuditEnabled'), createObject('logAnalyticsWorkspaceResourceID', variables('resourceIds').auditLogAnalyticsWorkspace), null())]",
@@ -273,44 +301,44 @@
                 "agentProfiles": [],
                 "apiServerAccessProfile": {
                     "authorizedIPRanges": [],
-                    "enablePrivateCluster": true,
+                    "enablePrivateCluster": "[parameters('isPrivateEndpointEnabled')]",
                     "enablePrivateClusterPublicFQDN": false,
-                    "privateDNSZone": "System"
+                    "privateDNSZone": "[if(empty(parameters('dnsZone')), 'System', resourceId(union(variables('defaultResourceProperties').dnsZone, parameters('dnsZone')).subscriptionId, union(variables('defaultResourceProperties').dnsZone, parameters('dnsZone')).resourceGroupName, 'Microsoft.Network/privateDnsZones', parameters('dnsZone').name))]"
                 },
                 "autoScalerProfile": "[null()]",
                 "copy": [
                     {
                         "count": "[length(variables('agentPoolProfiles'))]",
                         "input": {
-                            "availabilityZones": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].availabilityZones]",
-                            "count": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].defaultCount]",
-                            "enableAutoScaling": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].isAutoScalingEnabled]",
-                            "enableEncryptionAtHost": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].isEncryptionAtHostEnabled]",
-                            "enableFIPS": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].isFipsSupportEnabled]",
-                            "enableNodePublicIP": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].isNodePublicIpEnabled]",
-                            "enableUltraSSD": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].isUltraSsdSupportEnabled]",
-                            "minCount": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].minimumCount]",
-                            "maxCount": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].maximumCount]",
-                            "maxPods": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].maximumPodCount]",
-                            "mode": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].mode]",
+                            "availabilityZones": "[union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).availabilityZones]",
+                            "count": "[union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).defaultCount]",
+                            "enableAutoScaling": "[union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).isAutoScalingEnabled]",
+                            "enableEncryptionAtHost": "[union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).isEncryptionAtHostEnabled]",
+                            "enableFIPS": "[union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).isFipsSupportEnabled]",
+                            "enableNodePublicIP": "[union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).isNodePublicIpEnabled]",
+                            "enableUltraSSD": "[union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).isUltraSsdSupportEnabled]",
+                            "minCount": "[union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).minimumCount]",
+                            "maxCount": "[union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).maximumCount]",
+                            "maxPods": "[union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).maximumPodCount]",
+                            "mode": "[union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).mode]",
                             "name": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].name]",
-                            "nodeLabels": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].nodeLabels]",
-                            "nodeTaints": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].nodeTaints]",
+                            "nodeLabels": "[union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).nodeLabels]",
+                            "nodeTaints": "[union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).nodeTaints]",
                             "osDiskSizeGB": 0,
-                            "osType": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].osType]",
+                            "osType": "[union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).osType]",
                             "scaleSetEvictionPolicy": "Delete",
                             "scaleSetPriority": "Regular",
                             "storageProfile": "ManagedDisks",
-                            "type": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].type]",
-                            "vmSize": "[variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].virtualMachineSize]",
-                            "vnetSubnetID": "[if(empty(variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].subnet.name), null(), resourceId(variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].subnet.subscriptionId, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].subnet.virtualNetworkName, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].subnet.name))]"
+                            "type": "[union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).type]",
+                            "vmSize": "[union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).virtualMachineSize]",
+                            "vnetSubnetID": "[if(empty(union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).subnet.name), null(), resourceId(union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).subnet.subscriptionId, union(variables('defaultResourceProperties').agentPoolProfile, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].subnet.virtualNetworkName, variables('agentPoolProfiles')[copyIndex('agentPoolProfiles')].subnet.name))]"
                         },
                         "name": "agentPoolProfiles"
                     }
                 ],
-                "diskEncryptionSetID": "[variables('resourceIds').diskEncryptionSet]",
+                "diskEncryptionSetID": "[if(variables('customerManagedEncryption').isEnabled, variables('resourceIds').diskEncryptionSet, null())]",
                 "dnsPrefix": "[toLower(parameters('dnsPrefix'))]",
-                "enableRBAC": true,
+                "enableRBAC": "[parameters('isRbacAuthorizationEnabled')]",
                 "fqdnSubdomain": "[null()]",
                 "kubernetesVersion": "[parameters('kubernetesVersion')]",
                 "linuxProfile": "[if(empty(parameters('linuxProfile')), null(), variables('linuxProfile'))]",

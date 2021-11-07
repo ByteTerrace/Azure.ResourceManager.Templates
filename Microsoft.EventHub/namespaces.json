@@ -293,7 +293,7 @@
                     {
                         "count": "[length(parameters('virtualNetworkRules'))]",
                         "input": {
-                            "name": "[union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).ignoreMissingVnetServiceEndpoint]",
+                            "ignoreMissingVnetServiceEndpoint": "[union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).ignoreMissingVnetServiceEndpoint]",
                             "subnet": {
                                 "id": "[resourceId(union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subnet.subscriptionId, union(variables('defaultResourceProperties').virtualNetworkRule, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]).subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnet.virtualNetworkName, parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')].subnet.name)]"
                             }

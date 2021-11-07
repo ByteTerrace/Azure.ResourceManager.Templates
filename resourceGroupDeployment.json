@@ -9,7 +9,6 @@
                 "value": {
                     "deployments": [
                         {
-                            "contentVersion": "1.0.0.0",
                             "parameters": {},
                             "templateSpec": {
                                 "name": "MyTemplateSpec",
@@ -179,6 +178,7 @@
             "sharedImageGalleries": [],
             "signalrServices": [],
             "sqlDatabases": [],
+            "sqlManagedInstances": [],
             "sqlServers": [],
             "staticWebApplications": [],
             "storageAccounts": [],
@@ -241,6 +241,7 @@
             },
             "cdnProfile": {
                 "audit": "[variables('audit')]",
+                "endpoints": [],
                 "skuName": "Standard_Microsoft",
                 "tags": "[parameters('tags')]"
             },
@@ -284,12 +285,22 @@
                 "virtualNetworkRules": []
             },
             "cosmosDbAccount": {
+                "audit": "[variables('audit')]",
                 "consistencyPolicy": {},
+                "createMode": "Default",
                 "firewallRules": [],
                 "geoReplicationLocations": [],
+                "identity": {},
+                "isAdvancedThreatProtectionEnabled": true,
+                "isAllowTrustedMicrosoftServicesEnabled": false,
+                "isAnalyticalStorageEnabled": false,
+                "isAutomaticFailoverEnabled": false,
                 "isAzurePortalAccessEnabled": true,
-                "isAzurePublicDatacenterAccessEnabled": false,
+                "isAzurePublicDatacenterAccessEnabled": true,
                 "isFreeTierEnabled": false,
+                "isLocalAuthenticationEnabled": false,
+                "isMultipleWriteLocationsEnabled": false,
+                "isPublicNetworkAccessEnabled": false,
                 "kind": "GlobalDocumentDB",
                 "tags": "[parameters('tags')]",
                 "virtualNetworkRules": []
@@ -444,12 +455,17 @@
                 "virtualNetworkRules": []
             },
             "kubernetesServiceCluster": {
+                "administratorObjectIds": [],
                 "agentPoolProfiles": [],
                 "audit": "[variables('audit')]",
                 "customerManagedEncryption": {},
                 "dnsPrefix": "",
+                "dnsZone": {},
                 "identity": {},
-                "kubernetesVersion": "1.20.7",
+                "isAzurePolicyEnabled": true,
+                "isHttpApplicationRoutingEnabled": false,
+                "isPrivateEndpointEnabled": false,
+                "isRbacAuthorizationEnabled": true,
                 "linuxProfile": {},
                 "networking": {},
                 "nodeResourceGroupName": "",
@@ -553,10 +569,10 @@
                 "version": "IPv4"
             },
             "publicIpPrefix": {
-                "ipVersion": "IPv4",
                 "size": 28,
                 "skuTier": "Regional",
-                "tags": "[parameters('tags')]"
+                "tags": "[parameters('tags')]",
+                "version": "IPv4"
             },
             "recoveryServicesVault": {
                 "audit": "[variables('audit')]",
@@ -646,6 +662,17 @@
                 "sourceDatabase": {},
                 "subscriptionId": "[variables('subscriptionId')]",
                 "tags": "[parameters('tags')]"
+            },
+            "sqlManagedInstance": {
+                "audit": "[variables('audit')]",
+                "defaultCollation": "SQL_Latin1_General_CP1_CI_AS",
+                "identity": {},
+                "isAzureHybridBenefitEnabled": false,
+                "pool": {},
+                "skuName": "GP_Gen5_2",
+                "storageSizeInGigabytes": 512,
+                "tags": "[parameters('tags')]",
+                "timeZone": "UTC"
             },
             "sqlServer": {
                 "activeDirectoryAdministratorObjectId": "",
@@ -863,7 +890,8 @@
             "serviceBusNamespace": "[format('{0}-ServiceBusNamespace', deployment().name)]",
             "sharedImageGallery": "[format('{0}-SharedImageGallery', deployment().name)]",
             "signalrService": "[format('{0}-SignalRService', deployment().name)]",
-            "sqlDatabases": "[format('{0}-SqlDatabase', deployment().name)]",
+            "sqlDatabase": "[format('{0}-SqlDatabase', deployment().name)]",
+            "sqlManagedInstance": "[format('{0}-SqlManagedInstance', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
             "staticWebApplication": "[format('{0}-StaticWebApplication', deployment().name)]",
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
@@ -1171,9 +1199,6 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "ipVersion": {
-                        "value": "[union(variables('defaultResourceProperties').publicIpPrefix, variables('resourceDefinitions').publicIpPrefixes[copyIndex()]).ipVersion]"
-                    },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').publicIpPrefixes[copyIndex()]).location]"
                     },
@@ -1188,6 +1213,9 @@
                     },
                     "tags": {
                         "value": "[union(variables('defaultResourceProperties').publicIpPrefix, variables('resourceDefinitions').publicIpPrefixes[copyIndex()]).tags]"
+                    },
+                    "version": {
+                        "value": "[union(variables('defaultResourceProperties').publicIpPrefix, variables('resourceDefinitions').publicIpPrefixes[copyIndex()]).version]"
                     }
                 },
                 "templateLink": {
@@ -1434,6 +1462,9 @@
                 "parameters": {
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).audit]"
+                    },
+                    "endpoints": {
+                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).endpoints]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').cdnProfiles[copyIndex()].name]"
@@ -2101,6 +2132,9 @@
                     "isAllowTrustedMicrosoftServicesEnabled": {
                         "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
                     },
+                    "isLocalAuthenticationEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).isLocalAuthenticationEnabled]"
+                    },
                     "isPublicNetworkAccessEnabled": {
                         "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).isPublicNetworkAccessEnabled]"
                     },
@@ -2660,6 +2694,7 @@
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
+                "privateDnsZonesCopy",
                 "scriptsPreDeployCopy",
                 "subnetsCopy",
                 "virtualNetworksCopy"
@@ -3468,7 +3503,7 @@
                 "subnetsCopy",
                 "virtualNetworksCopy"
             ],
-            "name": "[format('{0}_{1}', variables('deploymentNames').sqlDatabases, copyIndex())]",
+            "name": "[format('{0}_{1}', variables('deploymentNames').sqlDatabase, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
@@ -3538,6 +3573,71 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').sqlManagedInstances))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').sqlManagedInstances)]",
+                "mode": "Parallel",
+                "name": "sqlManagedInstancesCopy"
+            },
+            "dependsOn": [
+                "keyVaultsCopy",
+                "logAnalyticsWorkspacesCopy",
+                "privateDnsZonesCopy",
+                "publicDnsZonesCopy",
+                "scriptsPreDeployCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').sqlManagedInstance, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).audit]"
+                    },
+                    "defaultCollation": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).defaultCollation]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).identity]"
+                    },
+                    "isAzureHybridBenefitEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).isAzureHybridBenefitEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').sqlManagedInstances[copyIndex()].name]"
+                    },
+                    "pool": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).pool]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).skuName]"
+                    },
+                    "storageSizeInGigabytes": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).storageSizeInGigabytes]"
+                    },
+                    "subnet": {
+                        "value": "[variables('resourceDefinitions').sqlManagedInstances[copyIndex()].subnet]"
+                    },
+                    "tags": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).tags]"
+                    },
+                    "timeZone": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).timeZone]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Sql/managedInstances.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').cosmosDbAccounts))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').cosmosDbAccounts)]",
@@ -3554,14 +3654,35 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).audit]"
+                    },
                     "consistencyPolicy": {
                         "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).consistencyPolicy]"
+                    },
+                    "createMode": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).createMode]"
                     },
                     "firewallRules": {
                         "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).firewallRules]"
                     },
                     "geoReplicationLocations": {
                         "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).geoReplicationLocations]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).identity]"
+                    },
+                    "isAdvancedThreatProtectionEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isAdvancedThreatProtectionEnabled]"
+                    },
+                    "isAllowTrustedMicrosoftServicesEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
+                    },
+                    "isAnalyticalStorageEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isAnalyticalStorageEnabled]"
+                    },
+                    "isAutomaticFailoverEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isAutomaticFailoverEnabled]"
                     },
                     "isAzurePortalAccessEnabled": {
                         "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isAzurePortalAccessEnabled]"
@@ -3571,6 +3692,15 @@
                     },
                     "isFreeTierEnabled": {
                         "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isFreeTierEnabled]"
+                    },
+                    "isLocalAuthenticationEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isLocalAuthenticationEnabled]"
+                    },
+                    "isMultipleWriteLocationsEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isMultipleWriteLocationsEnabled]"
+                    },
+                    "isPublicNetworkAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).isPublicNetworkAccessEnabled]"
                     },
                     "kind": {
                         "value": "[union(variables('defaultResourceProperties').cosmosDbAccount, variables('resourceDefinitions').cosmosDbAccounts[copyIndex()]).kind]"
@@ -3620,7 +3750,7 @@
                 "mode": "Incremental",
                 "parameters": {
                     "administratorObjectIds": {
-                        "value": "[variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()].administratorObjectIds]"
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).administratorObjectIds]"
                     },
                     "agentPoolProfiles": {
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).agentPoolProfiles]"
@@ -3634,11 +3764,26 @@
                     "dnsPrefix": {
                         "value": "[union(createObject('dnsPrefix', variables('resourceDefinitions').publicIpAddresses[copyIndex()].name), variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).dnsPrefix]"
                     },
+                    "dnsZone": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).dnsZone]"
+                    },
                     "identity": {
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).identity]"
                     },
+                    "isAzurePolicyEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).isAzurePolicyEnabled]"
+                    },
+                    "isHttpApplicationRoutingEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).isHttpApplicationRoutingEnabled]"
+                    },
+                    "isPrivateEndpointEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).isPrivateEndpointEnabled]"
+                    },
+                    "isRbacAuthorizationEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).isRbacAuthorizationEnabled]"
+                    },
                     "kubernetesVersion": {
-                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).kubernetesVersion]"
+                        "value": "[variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()].kubernetesVersion]"
                     },
                     "linuxProfile": {
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).linuxProfile]"
@@ -4150,7 +4295,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').roleAssignments))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').roleAssignments)]",
-                "mode": "parallel",
+                "mode": "Parallel",
                 "name": "roleAssignmentsCopy"
             },
             "dependsOn": [
@@ -4201,6 +4346,7 @@
                 "sharedImageGalleriesCopy",
                 "signalrServicesCopy",
                 "sqlDatabasesCopy",
+                "sqlManagedInstancesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",
                 "storageAccountsCopy",
@@ -4291,6 +4437,7 @@
                 "sharedImageGalleriesCopy",
                 "signalrServicesCopy",
                 "sqlDatabasesCopy",
+                "sqlManagedInstancesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",
                 "storageAccountsCopy",
@@ -4389,6 +4536,7 @@
                 "sharedImageGalleriesCopy",
                 "signalrServicesCopy",
                 "sqlDatabasesCopy",
+                "sqlManagedInstancesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",
                 "storageAccountsCopy",
@@ -4480,6 +4628,7 @@
                 "sharedImageGalleriesCopy",
                 "signalrServicesCopy",
                 "sqlDatabasesCopy",
+                "sqlManagedInstancesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",
                 "storageAccountsCopy",
@@ -4567,6 +4716,7 @@
                 "sharedImageGalleriesCopy",
                 "signalrServicesCopy",
                 "sqlDatabasesCopy",
+                "sqlManagedInstancesCopy",
                 "sqlServersCopy",
                 "staticWebApplicationsCopy",
                 "storageAccountsCopy",
