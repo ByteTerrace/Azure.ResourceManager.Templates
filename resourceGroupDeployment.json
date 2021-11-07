@@ -292,7 +292,7 @@
                 "geoReplicationLocations": [],
                 "identity": {},
                 "isAdvancedThreatProtectionEnabled": true,
-                "isAllowTrustedMicrosoftServicesEnabled": true,
+                "isAllowTrustedMicrosoftServicesEnabled": false,
                 "isAnalyticalStorageEnabled": false,
                 "isAutomaticFailoverEnabled": false,
                 "isAzurePortalAccessEnabled": true,
@@ -663,6 +663,18 @@
                 "subscriptionId": "[variables('subscriptionId')]",
                 "tags": "[parameters('tags')]"
             },
+            "sqlManagedInstance": {
+                "audit": "[variables('audit')]",
+                "defaultCollation": "SQL_Latin1_General_CP1_CI_AS",
+                "identity": {},
+                "isAzureHybridBenefitEnabled": false,
+                "minimumSupportedTlsVersion": "1.2",
+                "pool": {},
+                "skuName": "GP_Gen5_2",
+                "storageSizeInGigabytes": 512,
+                "tags": "[parameters('tags')]",
+                "timeZone": "UTC"
+            },
             "sqlServer": {
                 "activeDirectoryAdministratorObjectId": "",
                 "activeDirectoryAdministratorTenantId": "[subscription().tenantId]",
@@ -880,6 +892,7 @@
             "sharedImageGallery": "[format('{0}-SharedImageGallery', deployment().name)]",
             "signalrService": "[format('{0}-SignalRService', deployment().name)]",
             "sqlDatabase": "[format('{0}-SqlDatabase', deployment().name)]",
+            "sqlManagedInstance": "[format('{0}-SqlManagedInstance', deployment().name)]",
             "sqlServer": "[format('{0}-SqlServer', deployment().name)]",
             "staticWebApplication": "[format('{0}-StaticWebApplication', deployment().name)]",
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
@@ -2120,6 +2133,9 @@
                     "isAllowTrustedMicrosoftServicesEnabled": {
                         "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).isAllowTrustedMicrosoftServicesEnabled]"
                     },
+                    "isLocalAuthenticationEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).isLocalAuthenticationEnabled]"
+                    },
                     "isPublicNetworkAccessEnabled": {
                         "value": "[union(variables('defaultResourceProperties').serviceBus.namespace, variables('resourceDefinitions').serviceBus.namespaces[copyIndex()]).isPublicNetworkAccessEnabled]"
                     },
@@ -2679,6 +2695,7 @@
             },
             "dependsOn": [
                 "logAnalyticsWorkspacesCopy",
+                "privateDnsZonesCopy",
                 "scriptsPreDeployCopy",
                 "subnetsCopy",
                 "virtualNetworksCopy"
