@@ -203,7 +203,6 @@
         "resourceIds": {
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
             "managedInstance": "[resourceId('Microsoft.Sql/managedInstances', variables('serverName'))]",
-            "managedInstanceAuditingSettings": "[resourceId('Microsoft.Sql/managedInstances/auditingSettings', variables('serverName'), 'default')]",
             "managedInstanceCustomerManagedEncryptionKey": "[resourceId('Microsoft.Sql/managedInstances/keys', variables('serverName'), variables('serverKeyName'))]",
             "managedInstanceCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', if(variables('isCustomerManagedEncryptionEnabled'), variables('customerManagedEncryption').keyVault.name, '<NULL>'))]",
             "managedInstanceSecurityAlertPolicies": "[resourceId('Microsoft.Sql/managedInstances/securityAlertPolicies', variables('serverName'), 'default')]",
@@ -304,7 +303,7 @@
         {
             "apiVersion": "[variables('apiVersions').managedInstancesSecurityAlertPolicies]",
             "dependsOn": [
-                "[variables('resourceIds').managedInstanceAuditingSettings]"
+                "[variables('resourceIds').managedInstance]"
             ],
             "name": "[format('{0}/default', variables('serverName'))]",
             "properties": {
