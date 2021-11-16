@@ -227,8 +227,19 @@
         "defaultResourceProperties": {
             "audit": {
                 "actionAndGroupNames": [
+                    "BACKUP_RESTORE_GROUP",
                     "BATCH_COMPLETED_GROUP",
+                    "DATABASE_OBJECT_CHANGE_GROUP",
+                    "DATABASE_OBJECT_OWNERSHIP_CHANGE_GROUP",
+                    "DATABASE_OBJECT_PERMISSION_CHANGE_GROUP",
+                    "DATABASE_OPERATION_GROUP",
+                    "DATABASE_PERMISSION_CHANGE_GROUP",
+                    "DATABASE_PRINCIPAL_CHANGE_GROUP",
+                    "DATABASE_ROLE_MEMBER_CHANGE_GROUP",
                     "FAILED_DATABASE_AUTHENTICATION_GROUP",
+                    "SCHEMA_OBJECT_CHANGE_GROUP",
+                    "SCHEMA_OBJECT_OWNERSHIP_CHANGE_GROUP",
+                    "SCHEMA_OBJECT_PERMISSION_CHANGE_GROUP",
                     "SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP"
                 ],
                 "isEnabled": true,
@@ -332,10 +343,10 @@
         "serverKeyType": "[if(variables('isCustomerManagedEncryptionEnabled'), 'AzureKeyVault', 'ServiceManaged')]",
         "serverName": "[toLower(parameters('name'))]",
         "subscriptionId": "[subscription().subscriptionId]",
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]",
         "virtualNetworkRules": "[if(variables('virtualNetworkRulesIsNotEmpty'), parameters('virtualNetworkRules'), createArray(createObject('name', 'dummyRule')))]",
         "virtualNetworkRulesIsNotEmpty": "[greater(length(parameters('virtualNetworkRules')), 0)]",
-        "vulnerabilityAssessment": "[union(variables('defaultResourceProperties').vulnerabilityAssessment, parameters('vulnerabilityAssessment'))]",
-        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]"
+        "vulnerabilityAssessment": "[union(variables('defaultResourceProperties').vulnerabilityAssessment, parameters('vulnerabilityAssessment'))]"
     },
     "resources": [
         {
@@ -608,7 +619,7 @@
             "dependsOn": [
                 "[variables('resourceIds').sqlServerAuditingSettings]"
             ],
-            "name": "[format('{0}/default', parameters('name'))]",
+            "name": "[format('{0}/default', variables('serverName'))]",
             "properties": {
                 "isAzureMonitorTargetEnabled": true,
                 "state": "[if(variables('isAuditEnabled'), 'Enabled', 'Disabled')]"
@@ -620,7 +631,7 @@
             "dependsOn": [
                 "[variables('resourceIds').sqlServerAuditingSettings]"
             ],
-            "name": "[format('{0}/default', parameters('name'))]",
+            "name": "[format('{0}/default', variables('serverName'))]",
             "properties": {
                 "disabledAlerts": [],
                 "emailAccountAdmins": true,
@@ -636,7 +647,7 @@
             "dependsOn": [
                 "[variables('resourceIds').sqlServerSecurityAlertPolicies]"
             ],
-            "name": "[format('{0}/default', parameters('name'))]",
+            "name": "[format('{0}/default', variables('serverName'))]",
             "properties": {
                 "recurringScans": {
                     "emails": "[variables('vulnerabilityAssessment').emailAddresses]",
@@ -662,7 +673,7 @@
                 "[variables('resourceIds').sqlServerAdministrator]"
             ],
             "location": "[parameters('location')]",
-            "name": "[format('{0}/{1}', parameters('name'), parameters('elasticPools')[copyIndex()].name)]",
+            "name": "[format('{0}/{1}', variables('serverName'), parameters('elasticPools')[copyIndex()].name)]",
             "properties": {
                 "licenseType": "[if(union(variables('defaultResourceProperties').elasticPool, parameters('elasticPools')[copyIndex()]).isAzureHybridBenefitEnabled, 'BasePrice', 'LicenseIncluded')]",
                 "maintenanceConfigurationId": "[format('/subscriptions/{0}/providers/Microsoft.Maintenance/publicMaintenanceConfigurations/SQL_Default', variables('subscriptionId'))]",

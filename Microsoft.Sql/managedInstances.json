@@ -9,6 +9,13 @@
             },
             "type": "object"
         },
+        "customerManagedEncryption": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the customer-managed encryption settings that will be applied to the Azure Sql Server Managed Instance."
+            },
+            "type": "object"
+        },
         "defaultCollation": {
             "defaultValue": "SQL_Latin1_General_CP1_CI_AS",
             "metadata": {
@@ -27,6 +34,13 @@
             "defaultValue": false,
             "metadata": {
                 "description": "Indicates whether the Azure Hybrid Benefit feature enabled on the Azure Sql Server Managed Instance."
+            },
+            "type": "bool"
+        },
+        "isZoneRedundant": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the Azure Sql Server Managed Instance, and the apps that are deployed within it, will be zone redundant."
             },
             "type": "bool"
         },
@@ -50,7 +64,7 @@
             "type": "object"
         },
         "skuName": {
-            "defaultValue": "GP_Gen5_2",
+            "defaultValue": "GP_Gen5_4",
             "metadata": {
                 "description": "Specifies the SKU name of the Azure Sql Server Managed Instance."
             },
@@ -96,12 +110,26 @@
                 "description": "Specifies the time zone of the Azure Sql Server Managed Instance."
             },
             "type": "string"
+        },
+        "vulnerabilityAssessment": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the vulnerability assessment settings that will be applied to the Azure Sql Server Managed Instance."
+            },
+            "type": "object"
         }
     },
     "variables": {
         "apiVersions": {
             "diagnosticSettings": "2017-05-01-preview",
-            "managedInstances": "2021-05-01-preview"
+            "keyVaults": "2019-09-01",
+            "keyVaultsKeys": "2019-09-01",
+            "managedInstances": "2021-05-01-preview",
+            "managedInstancesEncryptionProtectors": "2021-05-01-preview",
+            "managedInstancesKeys": "2021-05-01-preview",
+            "managedInstancesSecurityAlertPolicies": "2021-05-01-preview",
+            "managedInstancesVulnerabilityAssessments": "2021-05-01-preview",
+            "storageAccounts": "2021-02-01"
         },
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
         "copy": [
@@ -111,6 +139,7 @@
                 "name": "userAssignedIdentitiesWithResourceId"
             }
         ],
+        "customerManagedEncryption": "[union(variables('defaultResourceProperties').customerManagedEncryption, parameters('customerManagedEncryption'))]",
         "defaultResourceProperties": {
             "audit": {
                 "isEnabled": false,
@@ -119,11 +148,24 @@
                     "resourceGroupName": "[variables('resourceGroupName')]",
                     "subscriptionId": "[variables('subscriptionId')]"
                 },
-                "logNames": [],
+                "logNames": [
+                    "DevOpsOperationsAudit",
+                    "SQLSecurityAuditEvents"
+                ],
                 "retentionPolicy": {
                     "days": 137,
                     "isEnabled": true
                 }
+            },
+            "customerManagedEncryption": {
+                "isEnabled": false,
+                "keyName": "",
+                "keyVault": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "keyVersion": ""
             },
             "identity": {
                 "isEnabled": true,
@@ -141,25 +183,48 @@
             "userAssignedIdentity": {
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "vulnerabilityAssessment": {
+                "emailAddresses": [],
+                "isEnabled": true,
+                "storageAccount": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
             }
         },
         "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "isCustomerManagedEncryptionEnabled": "[variables('customerManagedEncryption').isEnabled]",
+        "isVulnerabilityAssessmentEnabled": "[variables('vulnerabilityAssessment').isEnabled]",
         "resourceGroupName": "[resourceGroup().name]",
         "resourceIds": {
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
-            "managedInstance": "[resourceId('Microsoft.Sql/managedInstances', parameters('name'))]"
+            "managedInstance": "[resourceId('Microsoft.Sql/managedInstances', variables('serverName'))]",
+            "managedInstanceAdministrator": "[resourceId('Microsoft.Sql/managedInstances/administrators', variables('serverName'), 'activeDirectory')]",
+            "managedInstanceAuditingSettings": "[resourceId('Microsoft.Sql/managedInstances/auditingSettings', variables('serverName'), 'default')]",
+            "managedInstanceCustomerManagedEncryptionKey": "[resourceId('Microsoft.Sql/managedInstances/keys', variables('serverName'), variables('serverKeyName'))]",
+            "managedInstanceCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', if(variables('isCustomerManagedEncryptionEnabled'), variables('customerManagedEncryption').keyVault.name, '<NULL>'))]",
+            "managedInstanceSecurityAlertPolicies": "[resourceId('Microsoft.Sql/managedInstances/securityAlertPolicies', variables('serverName'), 'default')]",
+            "managedInstanceVulnerabilityAssessmentStorageAccount": "[resourceId(variables('vulnerabilityAssessment').storageAccount.subscriptionId, variables('vulnerabilityAssessment').storageAccount.resourceGroupName, 'Microsoft.Storage/storageAccounts', if(variables('isVulnerabilityAssessmentEnabled'), variables('vulnerabilityAssessment').storageAccount.name, '<NULL>'))]"
         },
+        "serverKeyName": "[if(variables('isCustomerManagedEncryptionEnabled'), format('{0}_{1}_{2}', variables('customerManagedEncryption').keyVault.name, variables('customerManagedEncryption').keyName, variables('customerManagedEncryption').keyVersion), 'ServiceManaged')]",
+        "serverKeyType": "[if(variables('isCustomerManagedEncryptionEnabled'), 'AzureKeyVault', 'ServiceManaged')]",
+        "serverName": "[toLower(parameters('name'))]",
+        "skuCapacity": "[skip(last(split(parameters('skuName'), '_')), 1)]",
+        "skuName": "[substring(parameters('skuName'), 0, lastIndexOf(parameters('sqlAdministratorUserName'), '_'))]",
         "subscriptionId": "[subscription().subscriptionId]",
-        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]"
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]",
+        "vulnerabilityAssessment": "[union(variables('defaultResourceProperties').vulnerabilityAssessment, parameters('vulnerabilityAssessment'))]"
     },
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').managedInstances]",
             "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', json(replace(replace(replace(string(variables('userAssignedIdentitiesWithResourceId')), ',', ':{},'), '[', '{'), ']', ':{}}'))), createObject())), null())]",
             "location": "[parameters('location')]",
-            "name": "[parameters('name')]",
+            "name": "[variables('serverName')]",
             "properties": {
                 "administratorLogin": "[parameters('sqlAdministratorUserName')]",
                 "administratorLoginPassword": "[parameters('sqlAdministratorUserPassword')]",
@@ -168,16 +233,48 @@
                 "licenseType": "[if(parameters('isAzureHybridBenefitEnabled'), 'BasePrice', 'LicenseIncluded')]",
                 "managedInstanceCreateMode": "Default",
                 "minimalTlsVersion": "1.2",
-                "publicDataEndpointEnabled": true,
+                "proxyOverride": "Redirect",
+                "publicDataEndpointEnabled": false,
                 "storageSizeInGB": "[parameters('storageSizeInGigabytes')]",
                 "subnetId": "[resourceId(union(variables('defaultResourceProperties').subnet, parameters('subnet')).subscriptionId, union(variables('defaultResourceProperties').subnet, parameters('subnet')).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('subnet').virtualNetworkName, parameters('subnet').name)]",
-                "timezoneId": "[parameters('timeZone')]"
+                "timezoneId": "[parameters('timeZone')]",
+                "vCores": "[variables('skuCapacity')]",
+                "zoneRedundant": "[parameters('isZoneRedundant')]"
             },
             "sku": {
-                "name": "[parameters('skuName')]"
+                "capacity": "[variables('skuCapacity')]",
+                "name": "[variables('skuName')]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Sql/managedInstances"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').managedInstancesKeys]",
+            "condition": "[variables('isCustomerManagedEncryptionEnabled')]",
+            "dependsOn": [
+                "[variables('resourceIds').managedInstance]"
+            ],
+            "kind": "[variables('serverKeyType')]",
+            "name": "[format('{0}/{1}', variables('serverName'), variables('serverKeyName'))]",
+            "properties": {
+                "serverKeyType": "[variables('serverKeyType')]",
+                "uri": "[if(variables('isCustomerManagedEncryptionEnabled'), reference(format('{0}/keys/{1}{2}', variables('resourceIds').managedInstanceCustomerManagedEncryptionKeyVault, variables('customerManagedEncryption').keyName, if(empty(variables('customerManagedEncryption').keyVersion), '', format('/versions/{0}', variables('customerManagedEncryption').keyVersion))), variables('apiVersions').keyVaultsKeys).keyUriWithVersion, null())]"
+            },
+            "type": "Microsoft.Sql/managedInstances/keys"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').managedInstancesEncryptionProtectors]",
+            "dependsOn": [
+                "[variables('resourceIds').managedInstanceCustomerManagedEncryptionKey]"
+            ],
+            "kind": "[variables('serverKeyType')]",
+            "name": "[format('{0}/current', variables('serverName'))]",
+            "properties": {
+                "autoRotationEnabled": "[variables('isCustomerManagedEncryptionEnabled')]",
+                "serverKeyName": "[variables('serverKeyName')]",
+                "serverKeyType": "[variables('serverKeyType')]"
+            },
+            "type": "Microsoft.Sql/managedInstances/encryptionProtector"
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",
@@ -185,7 +282,7 @@
             "dependsOn": [
                 "[variables('resourceIds').managedInstance]"
             ],
-            "name": "[format('{0}/Microsoft.Insights/audit', parameters('name'))]",
+            "name": "[format('{0}/Microsoft.Insights/audit', variables('serverName'))]",
             "properties": {
                 "copy": [
                     {
@@ -204,6 +301,38 @@
                 "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
             "type": "Microsoft.Sql/managedInstances/providers/diagnosticSettings"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').managedInstancesSecurityAlertPolicies]",
+            "dependsOn": [
+                "[variables('resourceIds').managedInstanceAuditingSettings]"
+            ],
+            "name": "[format('{0}/default', variables('serverName'))]",
+            "properties": {
+                "disabledAlerts": [],
+                "emailAccountAdmins": true,
+                "emailAddresses": "[variables('vulnerabilityAssessment').emailAddresses]",
+                "retentionDays": "[variables('audit').retentionPolicy.days]",
+                "state": "[if(variables('isVulnerabilityAssessmentEnabled'), 'Enabled', 'Disabled')]"
+            },
+            "type": "Microsoft.Sql/managedInstances/securityAlertPolicies"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').managedInstancesVulnerabilityAssessments]",
+            "condition": "[variables('isVulnerabilityAssessmentEnabled')]",
+            "dependsOn": [
+                "[variables('resourceIds').managedInstanceSecurityAlertPolicies]"
+            ],
+            "name": "[format('{0}/default', variables('serverName'))]",
+            "properties": {
+                "recurringScans": {
+                    "emails": "[variables('vulnerabilityAssessment').emailAddresses]",
+                    "emailSubscriptionAdmins": true,
+                    "isEnabled": true
+                },
+                "storageContainerPath": "[if(variables('isVulnerabilityAssessmentEnabled'), format('{0}vulnerability-assessment', reference(variables('resourceIds').managedInstanceVulnerabilityAssessmentStorageAccount, variables('apiVersions').storageAccounts).primaryEndpoints.blob), null())]"
+            },
+            "type": "Microsoft.Sql/managedInstances/vulnerabilityAssessments"
         }
     ]
 }

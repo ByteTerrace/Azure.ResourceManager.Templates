@@ -665,14 +665,16 @@
             },
             "sqlManagedInstance": {
                 "audit": "[variables('audit')]",
+                "customerManagedEncryption": {},
                 "defaultCollation": "SQL_Latin1_General_CP1_CI_AS",
                 "identity": {},
                 "isAzureHybridBenefitEnabled": false,
                 "pool": {},
-                "skuName": "GP_Gen5_2",
+                "skuName": "GP_Gen5_4",
                 "storageSizeInGigabytes": 512,
                 "tags": "[parameters('tags')]",
-                "timeZone": "UTC"
+                "timeZone": "UTC",
+                "vulnerabilityAssessment": {}
             },
             "sqlServer": {
                 "activeDirectoryAdministratorObjectId": "",
@@ -806,6 +808,7 @@
                 "type": "Standard"
             },
             "webApplication": {
+                "applicationInsights": {},
                 "audit": "[variables('audit')]",
                 "autoHeal": {},
                 "applicationSettings": {},
@@ -3595,6 +3598,9 @@
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).audit]"
                     },
+                    "customerManagedEncryption": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).customerManagedEncryption]"
+                    },
                     "defaultCollation": {
                         "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).defaultCollation]"
                     },
@@ -3627,6 +3633,9 @@
                     },
                     "timeZone": {
                         "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).timeZone]"
+                    },
+                    "vulnerabilityAssessment": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).vulnerabilityAssessment]"
                     }
                 },
                 "templateLink": {
@@ -3762,7 +3771,7 @@
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).customerManagedEncryption]"
                     },
                     "dnsPrefix": {
-                        "value": "[union(createObject('dnsPrefix', variables('resourceDefinitions').publicIpAddresses[copyIndex()].name), variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).dnsPrefix]"
+                        "value": "[union(createObject('dnsPrefix', variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()].name), variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).dnsPrefix]"
                     },
                     "dnsZone": {
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).dnsZone]"
@@ -4138,6 +4147,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "applicationInsights": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).applicationInsights]"
+                    },
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).audit]"
                     },
