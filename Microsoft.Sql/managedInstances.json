@@ -203,7 +203,6 @@
         "resourceIds": {
             "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
             "managedInstance": "[resourceId('Microsoft.Sql/managedInstances', variables('serverName'))]",
-            "managedInstanceAdministrator": "[resourceId('Microsoft.Sql/managedInstances/administrators', variables('serverName'), 'activeDirectory')]",
             "managedInstanceAuditingSettings": "[resourceId('Microsoft.Sql/managedInstances/auditingSettings', variables('serverName'), 'default')]",
             "managedInstanceCustomerManagedEncryptionKey": "[resourceId('Microsoft.Sql/managedInstances/keys', variables('serverName'), variables('serverKeyName'))]",
             "managedInstanceCustomerManagedEncryptionKeyVault": "[resourceId(variables('customerManagedEncryption').keyVault.subscriptionId, variables('customerManagedEncryption').keyVault.resourceGroupName, 'Microsoft.KeyVault/vaults', if(variables('isCustomerManagedEncryptionEnabled'), variables('customerManagedEncryption').keyVault.name, '<NULL>'))]",
@@ -214,7 +213,7 @@
         "serverKeyType": "[if(variables('isCustomerManagedEncryptionEnabled'), 'AzureKeyVault', 'ServiceManaged')]",
         "serverName": "[toLower(parameters('name'))]",
         "skuCapacity": "[skip(last(split(parameters('skuName'), '_')), 1)]",
-        "skuName": "[substring(parameters('skuName'), 0, lastIndexOf(parameters('sqlAdministratorUserName'), '_'))]",
+        "skuName": "[substring(parameters('skuName'), 0, lastIndexOf(parameters('skuName'), '_'))]",
         "subscriptionId": "[subscription().subscriptionId]",
         "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]",
         "vulnerabilityAssessment": "[union(variables('defaultResourceProperties').vulnerabilityAssessment, parameters('vulnerabilityAssessment'))]"

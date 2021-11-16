@@ -669,6 +669,7 @@
                 "defaultCollation": "SQL_Latin1_General_CP1_CI_AS",
                 "identity": {},
                 "isAzureHybridBenefitEnabled": false,
+                "isZoneRedundant": true,
                 "pool": {},
                 "skuName": "GP_Gen5_4",
                 "storageSizeInGigabytes": 512,
@@ -3609,6 +3610,9 @@
                     },
                     "isAzureHybridBenefitEnabled": {
                         "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).isAzureHybridBenefitEnabled]"
+                    },
+                    "isZoneRedundant": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).isZoneRedundant]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).location]"
