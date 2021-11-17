@@ -274,9 +274,7 @@
             "elasticPool": {
                 "isAzureHybridBenefitEnabled": false,
                 "isZoneRedundant": true,
-                "maximumSizeInBytes": 268435456000,
-                "numberOfCapacityUnits": 50,
-                "skuName": "StandardPool"
+                "maximumSizeInBytes": 268435456000
             },
             "identity": {
                 "isEnabled": true,
@@ -679,13 +677,14 @@
                 "maintenanceConfigurationId": "[format('/subscriptions/{0}/providers/Microsoft.Maintenance/publicMaintenanceConfigurations/SQL_Default', variables('subscriptionId'))]",
                 "maxSizeBytes": "[union(variables('defaultResourceProperties').elasticPool, parameters('elasticPools')[copyIndex()]).maximumSizeInBytes]",
                 "perDatabaseSettings": {
-                    "maxCapacity": "[union(createObject('maximumNumberOfCapacityUnits', skip(last(split(union(variables('defaultResourceProperties').elasticPool, parameters('elasticPools')[copyIndex()]).skuName, '_')), 1)), parameters('elasticPools')[copyIndex()]).maximumNumberOfCapacityUnits]",
+                    "maxCapacity": "[union(createObject('maximumNumberOfCapacityUnits', last(split(parameters('elasticPools')[copyIndex()].skuName, '_'))), parameters('elasticPools')[copyIndex()]).maximumNumberOfCapacityUnits]",
                     "minCapacity": "[union(createObject('minimumNumberOfCapacityUnits', 0), parameters('elasticPools')[copyIndex()]).minimumNumberOfCapacityUnits]"
                 },
                 "zoneRedundant": "[union(variables('defaultResourceProperties').elasticPool, parameters('elasticPools')[copyIndex()]).isZoneRedundant]"
             },
             "sku": {
-                "name": "[union(variables('defaultResourceProperties').elasticPool, parameters('elasticPools')[copyIndex()]).skuName]"
+                "capacity": "[last(split(parameters('elasticPools')[copyIndex()].skuName, '_'))]",
+                "name": "[substring(parameters('elasticPools')[copyIndex()].skuName, 0, lastIndexOf(parameters('elasticPools')[copyIndex()].skuName, '_'))]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Sql/servers/elasticpools"
