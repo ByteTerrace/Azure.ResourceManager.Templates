@@ -26,9 +26,11 @@
         },
         "skuName": {
             "allowedValues": [
+                "Premium_AzureFrontDoor",
+                "Premium_Verizon",
                 "Standard_AzureFrontDoor",
                 "Standard_Microsoft",
-                "Premium_AzureFrontDoor"
+                "Standard_Verizon"
             ],
             "defaultValue": "Standard_Microsoft",
             "metadata": {
@@ -107,6 +109,7 @@
         ],
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "isVerizonCdn": "[endsWith(parameters('skuName'), 'Verizon')]",
         "microsoftDiagnosticsLogs": [
             {
                 "category": "AzureCdnAccessLog",
@@ -149,7 +152,7 @@
             "location": "global",
             "name": "[format('{0}/{1}', parameters('name'), parameters('endpoints')[copyIndex()].name)]",
             "properties": {
-                "contentTypesToCompress": "[union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).contentTypesToCompress]",
+                "contentTypesToCompress": "[if(variables('isVerizonCdn'), null(), union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).contentTypesToCompress)]",
                 "copy": [
                     {
                         "count": "[length(parameters('endpoints')[copyIndex()].origins)]",
@@ -162,11 +165,11 @@
                         "name": "origins"
                     }
                 ],
-                "isCompressionEnabled": "[union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).isCompressionEnabled]",
-                "isHttpAllowed": "[union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).isHttpEnabled]",
-                "isHttpsAllowed": "[union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).isHttpsEnabled]",
+                "isCompressionEnabled": "[if(variables('isVerizonCdn'), null(), union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).isCompressionEnabled)]",
+                "isHttpAllowed": "[if(variables('isVerizonCdn'), null(), union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).isHttpEnabled)]",
+                "isHttpsAllowed": "[if(variables('isVerizonCdn'), null(), union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).isHttpsEnabled)]",
                 "originHostHeader": "[union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).originHostHeader]",
-                "queryStringCachingBehavior": "[union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).queryStringCachingBehavior]"
+                "queryStringCachingBehavior": "[if(variables('isVerizonCdn'), null(), union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).queryStringCachingBehavior)]"
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Cdn/profiles/endpoints"

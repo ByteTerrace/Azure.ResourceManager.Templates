@@ -72,7 +72,6 @@
             "type": "array"
         },
         "virtualNetwork": {
-            "defaultValue": {},
             "metadata": {
                 "description": "An object that encapsulates the virtual network settings that will be applied to the Azure Virtual Network Subnet."
             },

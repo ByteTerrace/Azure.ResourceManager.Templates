@@ -303,7 +303,7 @@
                     "authorizedIPRanges": [],
                     "enablePrivateCluster": "[parameters('isPrivateEndpointEnabled')]",
                     "enablePrivateClusterPublicFQDN": false,
-                    "privateDNSZone": "[if(empty(parameters('dnsZone')), 'System', resourceId(union(variables('defaultResourceProperties').dnsZone, parameters('dnsZone')).subscriptionId, union(variables('defaultResourceProperties').dnsZone, parameters('dnsZone')).resourceGroupName, 'Microsoft.Network/privateDnsZones', parameters('dnsZone').name))]"
+                    "privateDNSZone": "[if(empty(parameters('dnsZone')), if(parameters('isPrivateEndpointEnabled'), 'System', ''), resourceId(union(variables('defaultResourceProperties').dnsZone, parameters('dnsZone')).subscriptionId, union(variables('defaultResourceProperties').dnsZone, parameters('dnsZone')).resourceGroupName, 'Microsoft.Network/privateDnsZones', parameters('dnsZone').name))]"
                 },
                 "autoScalerProfile": "[null()]",
                 "copy": [

@@ -213,7 +213,7 @@
                 "subscriptionId": "[variables('subscriptionId')]"
             },
             "virtualNetworkRule": {
-                "ignoreMissingVnetServiceEndpoint": true,
+                "ignoreMissingVnetServiceEndpoint": false,
                 "subnet": {
                     "resourceGroupName": "[variables('resourceGroupName')]",
                     "subscriptionId": "[variables('subscriptionId')]"

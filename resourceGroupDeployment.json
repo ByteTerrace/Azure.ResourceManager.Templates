@@ -161,6 +161,7 @@
             },
             "natGateways": [],
             "networkSecurityGroups": [],
+            "pointToSiteVirtualNetworkGateways": [],
             "proximityPlacementGroups": [],
             "publicIpAddresses": [],
             "publicIpPrefixes": [],
@@ -183,10 +184,13 @@
             "staticWebApplications": [],
             "storageAccounts": [],
             "subnets": [],
+            "virtualHubs": [],
             "virtualMachines": [],
             "virtualMachineScaleSets": [],
+            "virtualNetworkGatewayConfigurations": [],
             "virtualNetworkGateways": [],
             "virtualNetworks": [],
+            "virtualWans": [],
             "webApplications": []
         },
         "defaultResourceProperties": {
@@ -549,6 +553,17 @@
                 "securityRules": [],
                 "tags": "[parameters('tags')]"
             },
+            "pointToSiteVirtualNetworkGateway": {
+                "audit": "[variables('audit')]",
+                "numberOfScaleUnits": 1,
+                "routeTable": {},
+                "propagatedRoutes": {},
+                "tags": "[parameters('tags')]",
+                "virtualHub": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
+            },
             "proximityPlacementGroup": {
                 "tags": "[parameters('tags')]"
             },
@@ -665,14 +680,17 @@
             },
             "sqlManagedInstance": {
                 "audit": "[variables('audit')]",
+                "customerManagedEncryption": {},
                 "defaultCollation": "SQL_Latin1_General_CP1_CI_AS",
                 "identity": {},
                 "isAzureHybridBenefitEnabled": false,
+                "isZoneRedundant": true,
                 "pool": {},
-                "skuName": "GP_Gen5_2",
+                "skuName": "GP_Gen5_4",
                 "storageSizeInGigabytes": 512,
                 "tags": "[parameters('tags')]",
-                "timeZone": "UTC"
+                "timeZone": "UTC",
+                "vulnerabilityAssessment": {}
             },
             "sqlServer": {
                 "activeDirectoryAdministratorObjectId": "",
@@ -730,6 +748,15 @@
                 "routeTable": {},
                 "serviceEndpoints": [],
                 "virtualNetwork": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
+            },
+            "virtualHub": {
+                "audit": "[variables('audit')]",
+                "tags": "[parameters('tags')]",
+                "virtualNetworks": [],
+                "virtualWan": {
                     "resourceGroupName": "[variables('resourceGroupName')]",
                     "subscriptionId": "[variables('subscriptionId')]"
                 }
@@ -805,7 +832,25 @@
                 "tags": "[parameters('tags')]",
                 "type": "Standard"
             },
+            "virtualNetworkGatewayConfiguration": {
+                "authenticationTypes": [
+                    "AAD"
+                ],
+                "protocols": [
+                    "OpenVPN"
+                ],
+                "radius": {},
+                "tags": "[parameters('tags')]"
+            },
+            "virtualWan": {
+                "audit": "[variables('audit')]",
+                "isBranchToBranchTrafficEnabled": false,
+                "isVpnEncryptionEnabled": true,
+                "skuName": "Standard",
+                "tags": "[parameters('tags')]"
+            },
             "webApplication": {
+                "applicationInsights": {},
                 "audit": "[variables('audit')]",
                 "autoHeal": {},
                 "applicationSettings": {},
@@ -878,6 +923,7 @@
             "proximityPlacementGroup": "[format('{0}-ProximityPlacementGroup', deployment().name)]",
             "natGateway": "[format('{0}-NatGateway', deployment().name)]",
             "networkSecurityGroup": "[format('{0}-NetworkSecurityGroup', deployment().name)]",
+            "pointToSiteVirtualNetworkGateway": "[format('{0}-P2SVpnGateway', deployment().name)]",
             "privateEndpoint": "[format('{0}-PrivateEndpoint', deployment().name)]",
             "publicIpAddress": "[format('{0}-PublicIpAddress', deployment().name)]",
             "publicIpPrefix": "[format('{0}-PublicIpPrefix', deployment().name)]",
@@ -896,10 +942,13 @@
             "staticWebApplication": "[format('{0}-StaticWebApplication', deployment().name)]",
             "storageAccount": "[format('{0}-StorageAccount', deployment().name)]",
             "subnet": "[format('{0}-Subnet', deployment().name)]",
+            "virtualHub": "[format('{0}-VirtualHub', deployment().name)]",
             "virtualMachine": "[format('{0}-VirtualMachine', deployment().name)]",
             "virtualMachineScaleSet": "[format('{0}-VirtualMachineScaleSets', deployment().name)]",
             "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]",
-            "virtualNetworkGateway": "[format('{0}-virtualNetworkGateway', deployment().name)]",
+            "virtualNetworkGateway": "[format('{0}-VNetworkGateway', deployment().name)]",
+            "virtualNetworkGatewayConfiguration": "[format('{0}-VNetGatewayConfig', deployment().name)]",
+            "virtualWan": "[format('{0}-VirtualWan', deployment().name)]",
             "webApplication": "[format('{0}-WebApplication', deployment().name)]"
         },
         "logAnalyticsWorkspaces": "[if(variables('logAnalyticsWorkspacesIsNotEmpty'), variables('resourceDefinitions').monitor.logAnalyticsWorkspaces, createArray(createObject('name', 'dummyLogAnalyticsWorkspace')))]",
@@ -1017,6 +1066,50 @@
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.OperationalInsights/workspaces.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').virtualNetworkGatewayConfigurations))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').virtualNetworkGatewayConfigurations)]",
+                "mode": "Parallel",
+                "name": "virtualNetworkGatewayConfigurationsCopy"
+            },
+            "dependsOn": [
+                "scriptsPreDeployCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').virtualNetworkGatewayConfiguration, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "authenticationTypes": {
+                        "value": "[union(variables('defaultResourceProperties').virtualNetworkGatewayConfiguration, variables('resourceDefinitions').virtualNetworkGatewayConfigurations[copyIndex()]).authenticationTypes]"
+                    },
+                    "azureActiveDirectory": {
+                        "value": "[union(variables('defaultResourceProperties').virtualNetworkGatewayConfiguration, variables('resourceDefinitions').virtualNetworkGatewayConfigurations[copyIndex()]).azureActiveDirectory]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').virtualNetworkGatewayConfigurations[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').virtualNetworkGatewayConfigurations[copyIndex()].name]"
+                    },
+                    "protocols": {
+                        "value": "[union(variables('defaultResourceProperties').virtualNetworkGatewayConfiguration, variables('resourceDefinitions').virtualNetworkGatewayConfigurations[copyIndex()]).protocols]"
+                    },
+                    "radius": {
+                        "value": "[union(variables('defaultResourceProperties').virtualNetworkGatewayConfiguration, variables('resourceDefinitions').virtualNetworkGatewayConfigurations[copyIndex()]).radius]"
+                    },
+                    "tags": {
+                        "value": "[union(variables('defaultResourceProperties').virtualNetworkGatewayConfiguration, variables('resourceDefinitions').virtualNetworkGatewayConfigurations[copyIndex()]).tags]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Network/vpnServerConfigurations.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -1288,6 +1381,52 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').virtualWans))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').virtualWans)]",
+                "mode": "Parallel",
+                "name": "virtualWansCopy"
+            },
+            "dependsOn": [
+                "publicIpAddressesCopy",
+                "publicIpPrefixesCopy",
+                "scriptsPreDeployCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').virtualWan, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').virtualWan, variables('resourceDefinitions').virtualWans[copyIndex()]).audit]"
+                    },
+                    "isBranchToBranchTrafficEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').virtualWan, variables('resourceDefinitions').virtualWans[copyIndex()]).isBranchToBranchTrafficEnabled]"
+                    },
+                    "isVpnEncryptionEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').virtualWan, variables('resourceDefinitions').virtualWans[copyIndex()]).isVpnEncryptionEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').virtualWans[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').virtualWans[copyIndex()].name]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').virtualWan, variables('resourceDefinitions').virtualWans[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[union(variables('defaultResourceProperties').virtualWan, variables('resourceDefinitions').virtualWans[copyIndex()]).tags]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Network/virtualWans.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').natGateways))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').natGateways)]",
@@ -1532,6 +1671,107 @@
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/virtualNetworks.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').virtualHubs))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').virtualHubs)]",
+                "mode": "Parallel",
+                "name": "virtualHubsCopy"
+            },
+            "dependsOn": [
+                "scriptsPreDeployCopy",
+                "virtualNetworkGatewayConfigurationsCopy",
+                "virtualNetworksCopy",
+                "virtualWansCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').virtualHub, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "addressPrefix": {
+                        "value": "[variables('resourceDefinitions').virtualHubs[copyIndex()].addressPrefix]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').virtualHubs[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').virtualHubs[copyIndex()].name]"
+                    },
+                    "virtualNetworks": {
+                        "value": "[union(variables('defaultResourceProperties').virtualHub, variables('resourceDefinitions').virtualHubs[copyIndex()]).virtualNetworks]"
+                    },
+                    "virtualWan": {
+                        "value": "[union(variables('defaultResourceProperties').virtualHub, variables('resourceDefinitions').virtualHubs[copyIndex()]).virtualWan]"
+                    },
+                    "tags": {
+                        "value": "[union(variables('defaultResourceProperties').virtualHub, variables('resourceDefinitions').virtualHubs[copyIndex()]).tags]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Network/virtualHubs.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').pointToSiteVirtualNetworkGateways))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').pointToSiteVirtualNetworkGateways)]",
+                "mode": "Parallel",
+                "name": "pointToSiteVirtualNetworkGatewaysCopy"
+            },
+            "dependsOn": [
+                "scriptsPreDeployCopy",
+                "virtualHubsCopy",
+                "virtualNetworkGatewayConfigurationsCopy",
+                "virtualNetworksCopy",
+                "virtualWansCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').pointToSiteVirtualNetworkGateway, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "addressPrefixes": {
+                        "value": "[variables('resourceDefinitions').pointToSiteVirtualNetworkGateways[copyIndex()].addressPrefixes]"
+                    },
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').pointToSiteVirtualNetworkGateway, variables('resourceDefinitions').pointToSiteVirtualNetworkGateways[copyIndex()]).audit]"
+                    },
+                    "configuration": {
+                        "value": "[variables('resourceDefinitions').pointToSiteVirtualNetworkGateways[copyIndex()].configuration]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').pointToSiteVirtualNetworkGateways[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').pointToSiteVirtualNetworkGateways[copyIndex()].name]"
+                    },
+                    "numberOfScaleUnits": {
+                        "value": "[union(variables('defaultResourceProperties').pointToSiteVirtualNetworkGateway, variables('resourceDefinitions').pointToSiteVirtualNetworkGateways[copyIndex()]).numberOfScaleUnits]"
+                    },
+                    "propagatedRoutes": {
+                        "value": "[union(variables('defaultResourceProperties').pointToSiteVirtualNetworkGateway, variables('resourceDefinitions').pointToSiteVirtualNetworkGateways[copyIndex()]).propagatedRoutes]"
+                    },
+                    "routeTable": {
+                        "value": "[union(variables('defaultResourceProperties').pointToSiteVirtualNetworkGateway, variables('resourceDefinitions').pointToSiteVirtualNetworkGateways[copyIndex()]).routeTable]"
+                    },
+                    "virtualHub": {
+                        "value": "[union(variables('defaultResourceProperties').pointToSiteVirtualNetworkGateway, variables('resourceDefinitions').pointToSiteVirtualNetworkGateways[copyIndex()]).virtualHub]"
+                    },
+                    "tags": {
+                        "value": "[union(variables('defaultResourceProperties').pointToSiteVirtualNetworkGateway, variables('resourceDefinitions').pointToSiteVirtualNetworkGateways[copyIndex()]).tags]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Network/p2sVpnGateways.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -3595,6 +3835,9 @@
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).audit]"
                     },
+                    "customerManagedEncryption": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).customerManagedEncryption]"
+                    },
                     "defaultCollation": {
                         "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).defaultCollation]"
                     },
@@ -3603,6 +3846,9 @@
                     },
                     "isAzureHybridBenefitEnabled": {
                         "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).isAzureHybridBenefitEnabled]"
+                    },
+                    "isZoneRedundant": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).isZoneRedundant]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).location]"
@@ -3627,6 +3873,9 @@
                     },
                     "timeZone": {
                         "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).timeZone]"
+                    },
+                    "vulnerabilityAssessment": {
+                        "value": "[union(variables('defaultResourceProperties').sqlManagedInstance, variables('resourceDefinitions').sqlManagedInstances[copyIndex()]).vulnerabilityAssessment]"
                     }
                 },
                 "templateLink": {
@@ -3762,7 +4011,7 @@
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).customerManagedEncryption]"
                     },
                     "dnsPrefix": {
-                        "value": "[union(createObject('dnsPrefix', variables('resourceDefinitions').publicIpAddresses[copyIndex()].name), variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).dnsPrefix]"
+                        "value": "[union(createObject('dnsPrefix', variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()].name), variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).dnsPrefix]"
                     },
                     "dnsZone": {
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).dnsZone]"
@@ -4138,6 +4387,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "applicationInsights": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).applicationInsights]"
+                    },
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).audit]"
                     },
@@ -4334,6 +4586,7 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "pointToSiteVirtualNetworkGatewaysCopy",
                 "privateDnsZonesCopy",
                 "proximityPlacementGroupsCopy",
                 "publicDnsZonesCopy",
@@ -4351,10 +4604,13 @@
                 "staticWebApplicationsCopy",
                 "storageAccountsCopy",
                 "subnetsCopy",
+                "virtualHubsCopy",
                 "virtualMachinesCopy",
                 "virtualMachineScaleSetsCopy",
+                "virtualNetworkGatewayConfigurationsCopy",
                 "virtualNetworkGatewaysCopy",
                 "virtualNetworksCopy",
+                "virtualWansCopy",
                 "webApplicationsCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').roleAssignment, copyIndex())]",
@@ -4424,6 +4680,7 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "pointToSiteVirtualNetworkGatewaysCopy",
                 "privateDnsZonesCopy",
                 "proximityPlacementGroupsCopy",
                 "publicDnsZonesCopy",
@@ -4442,10 +4699,13 @@
                 "staticWebApplicationsCopy",
                 "storageAccountsCopy",
                 "subnetsCopy",
+                "virtualHubsCopy",
                 "virtualMachinesCopy",
                 "virtualMachineScaleSetsCopy",
+                "virtualNetworkGatewayConfigurationsCopy",
                 "virtualNetworkGatewaysCopy",
                 "virtualNetworksCopy",
+                "virtualWansCopy",
                 "webApplicationsCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').eventGridSystemTopic, copyIndex())]",
@@ -4523,6 +4783,7 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "pointToSiteVirtualNetworkGatewaysCopy",
                 "privateDnsZonesCopy",
                 "proximityPlacementGroupsCopy",
                 "publicDnsZonesCopy",
@@ -4541,10 +4802,13 @@
                 "staticWebApplicationsCopy",
                 "storageAccountsCopy",
                 "subnetsCopy",
+                "virtualHubsCopy",
                 "virtualMachinesCopy",
                 "virtualMachineScaleSetsCopy",
+                "virtualNetworkGatewayConfigurationsCopy",
                 "virtualNetworkGatewaysCopy",
                 "virtualNetworksCopy",
+                "virtualWansCopy",
                 "webApplicationsCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').eventGridSystemTopicSubscription, copyIndex())]",
@@ -4615,6 +4879,7 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "pointToSiteVirtualNetworkGatewaysCopy",
                 "privateDnsZonesCopy",
                 "proximityPlacementGroupsCopy",
                 "publicDnsZonesCopy",
@@ -4633,10 +4898,13 @@
                 "staticWebApplicationsCopy",
                 "storageAccountsCopy",
                 "subnetsCopy",
+                "virtualHubsCopy",
                 "virtualMachinesCopy",
                 "virtualMachineScaleSetsCopy",
+                "virtualNetworkGatewayConfigurationsCopy",
                 "virtualNetworkGatewaysCopy",
                 "virtualNetworksCopy",
+                "virtualWansCopy",
                 "webApplicationsCopy"
             ],
             "copy": {
@@ -4703,6 +4971,7 @@
                 "monitorPrivateLinkScopesCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
+                "pointToSiteVirtualNetworkGatewaysCopy",
                 "privateDnsZonesCopy",
                 "proximityPlacementGroupsCopy",
                 "publicDnsZonesCopy",
@@ -4721,10 +4990,13 @@
                 "staticWebApplicationsCopy",
                 "storageAccountsCopy",
                 "subnetsCopy",
+                "virtualHubsCopy",
                 "virtualMachinesCopy",
                 "virtualMachineScaleSetsCopy",
+                "virtualNetworkGatewayConfigurationsCopy",
                 "virtualNetworkGatewaysCopy",
                 "virtualNetworksCopy",
+                "virtualWansCopy",
                 "webApplicationsCopy"
             ],
             "name": "[format('{0}_{1}', variables('deploymentNames').scriptPostDeploy, copyIndex())]",
