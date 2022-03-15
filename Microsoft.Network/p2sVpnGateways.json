@@ -1,0 +1,201 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "addressPrefixes": {
+            "metadata": {
+                "description": "An array of address prefixes, in CIDR notation, that should be reserved for the Azure P2S Virtual Private Network Gateway."
+            },
+            "type": "array"
+        },
+        "audit": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure P2S Virtual Private Network Gateway."
+            },
+            "type": "object"
+        },
+        "configuration": {
+            "metadata": {
+                "description": "An object that encapsulates the properties of the Azure Virtual Network Gateway Configuration that this Azure P2S Virtual Private Network Gateway will be associated with."
+            },
+            "type": "object"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure P2S Virtual Private Network Gateway resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "metadata": {
+                "description": "Specifies the name of the Azure P2S Virtual Private Network Gateway."
+            },
+            "type": "string"
+        },
+        "numberOfScaleUnits": {
+            "defaultValue": 1,
+            "metadata": {
+                "description": "Specifies the number of scale units that will be dedicated to the Azure P2S Virtual Private Network Gateway."
+            },
+            "type": "int"
+        },
+        "propagatedRoutes": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the routes that this Azure P2S Virtual Private Network Gateway will propagate."
+            },
+            "type": "object"
+        },
+        "routeTable": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the Azure Route Table that this Azure P2S Virtual Private Network Gateway will be associated with."
+            },
+            "type": "object"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure P2S Virtual Private Network Gateway."
+            },
+            "type": "object"
+        },
+        "virtualHub": {
+            "metadata": {
+                "description": "An object that encapsulates the properties of the Azure Virtual Hub that this Azure P2S Virtual Private Network Gateway will be associated with."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "diagnosticSettings": "2017-05-01-preview",
+            "p2sVirtualNetworkGateways": "2021-05-01"
+        },
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "configuration": "[union(variables('defaultResourceProperties').configuration, parameters('configuration'))]",
+        "defaultResourceProperties": {
+            "audit": {
+                "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "logNames": [
+                    "GatewayDiagnosticLog",
+                    "IKEDiagnosticLog",
+                    "P2SDiagnosticLog"
+                ],
+                "retentionPolicy": {
+                    "days": 137,
+                    "isEnabled": true
+                }
+            },
+            "configuration": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "routeTable": {
+                "hubName": "[parameters('virtualHub').name]",
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
+            "virtualHub": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            }
+        },
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "isPropagatedRoutesEmpty": "[empty(parameters('propagatedRoutes'))]",
+        "propagatedRoutes": "[if(variables('isPropagatedRoutesEmpty'), createObject('labels', createArray('default'), 'routeTables', createArray(union(variables('defaultResourceProperties').routeTable, createObject('name', 'defaultRouteTable')))), parameters('propagatedRoutes'))]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "resourceIds": {
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]",
+            "p2sVirtualNetworkGateway": "[resourceId('Microsoft.Network/p2sVpnGateways', parameters('name'))]"
+        },
+        "routeTable": "[union(variables('defaultResourceProperties').routeTable, parameters('routeTable'))]",
+        "subscriptionId": "[subscription().subscriptionId]",
+        "virtualHub": "[union(variables('defaultResourceProperties').virtualHub, parameters('virtualHub'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').p2sVirtualNetworkGateways]",
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "customDnsServers": [],
+                "isRoutingPreferenceInternet": false,
+                "p2SConnectionConfigurations": [
+                    {
+                        "name": "Default",
+                        "properties": {
+                            "enableInternetSecurity": true,
+                            "routingConfiguration": {
+                                "associatedRouteTable": {
+                                    "id": "[resourceId(variables('virtualHub').subscriptionId, variables('virtualHub').resourceGroupName, 'Microsoft.Network/virtualHubs/hubRouteTables', variables('routeTable').hubName, if(empty(parameters('routeTable')), 'defaultRouteTable', parameters('routeTable').name))]"
+                                },
+                                "propagatedRouteTables": {
+                                    "copy": [
+                                        {
+                                            "count": "[length(variables('propagatedRoutes').routeTables)]",
+                                            "input": {
+                                                "id": "[resourceId(union(variables('defaultResourceProperties').routeTable, variables('propagatedRoutes').routeTables[copyIndex('ids')]).subscriptionId, union(variables('defaultResourceProperties').routeTable, variables('propagatedRoutes').routeTables[copyIndex('ids')]).resourceGroupName, 'Microsoft.Network/virtualHubs/hubRouteTables', union(variables('defaultResourceProperties').routeTable, variables('propagatedRoutes').routeTables[copyIndex('ids')]).hubName, variables('propagatedRoutes').routeTables[copyIndex('ids')].name)]"
+                                            },
+                                            "name": "ids"
+                                        }
+                                    ],
+                                    "labels": "[variables('propagatedRoutes').labels]"
+                                },
+                                "vnetRoutes": {
+                                    "staticRoutes": []
+                                }
+                            },
+                            "vpnClientAddressPool": {
+                                "addressPrefixes": "[parameters('addressPrefixes')]"
+                            }
+                        }
+                    }
+                ],
+                "virtualHub": {
+                    "id": "[resourceId(variables('virtualHub').subscriptionId, variables('virtualHub').resourceGroupName, 'Microsoft.Network/virtualHubs', parameters('virtualHub').name)]"
+                },
+                "vpnGatewayScaleUnit": "[parameters('numberOfScaleUnits')]",
+                "vpnServerConfiguration": {
+                    "id": "[resourceId(variables('configuration').subscriptionId, variables('configuration').resourceGroupName, 'Microsoft.Network/vpnServerConfigurations', variables('configuration').name)]"
+                }
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Network/p2sVpnGateways"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
+            "dependsOn": [
+                "[variables('resourceIds').p2sVirtualNetworkGateway]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/Microsoft.Insights/audit', parameters('name'))]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(variables('audit').logNames)]",
+                        "input": {
+                            "category": "[variables('audit').logNames[copyIndex('logs')]]",
+                            "enabled": "[variables('isAuditEnabled')]",
+                            "retentionPolicy": {
+                                "days": "[variables('audit').retentionPolicy.days]",
+                                "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                            }
+                        },
+                        "name": "logs"
+                    }
+                ],
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
+            },
+            "type": "Microsoft.Network/p2sVpnGateways/providers/diagnosticsettings"
+        }
+    ]
+}
