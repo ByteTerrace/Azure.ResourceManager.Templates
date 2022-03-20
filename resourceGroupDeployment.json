@@ -847,9 +847,7 @@
             },
             "virtualNetwork": {
                 "addressPrefixes": [],
-                "ddosProtectionPlanName": "",
-                "ddosProtectionPlanResourceGroupName": "[variables('resourceGroupName')]",
-                "ddosProtectionPlanSubscriptionId": "[variables('subscriptionId')]",
+                "ddosProtectionPlan": {},
                 "dnsServers": [],
                 "subnets": [],
                 "tags": "[parameters('tags')]"
@@ -1752,14 +1750,8 @@
                     "addressPrefixes": {
                         "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).addressPrefixes]"
                     },
-                    "ddosProtectionPlanName": {
-                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).ddosProtectionPlanName]"
-                    },
-                    "ddosProtectionPlanResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).ddosProtectionPlanResourceGroupName]"
-                    },
-                    "ddosProtectionPlanSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).ddosProtectionPlanSubscriptionId]"
+                    "ddosProtectionPlan": {
+                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).ddosProtectionPlan]"
                     },
                     "dnsServers": {
                         "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).dnsServers]"

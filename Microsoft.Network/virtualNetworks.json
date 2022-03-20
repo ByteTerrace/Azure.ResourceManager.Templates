@@ -22,26 +22,12 @@
             },
             "type": "array"
         },
-        "ddosProtectionPlanName": {
-            "defaultValue": "",
+        "ddosProtectionPlan": {
+            "defaultValue": {},
             "metadata": {
-                "description": "Specifies the name of the Azure DDoS Protection Plan that will be assigned to the Azure Virtual Network."
+                "description": "An object that encapsulates the DDOS protection plan settings that will be applied to the Azure Virtual Network."
             },
-            "type": "string"
-        },
-        "ddosProtectionPlanResourceGroupName": {
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Specifies the resource group name of the Azure DDoS Protection Plan that will be assigned to the Azure Virtual Network."
-            },
-            "type": "string"
-        },
-        "ddosProtectionPlanSubscriptionId": {
-            "defaultValue": "[subscription().subscriptionId]",
-            "metadata": {
-                "description": "Specifies the subscription id of the Azure DDoS Protection Plan that will be assigned to the Azure Virtual Network."
-            },
-            "type": "string"
+            "type": "object"
         },
         "dnsServers": {
             "defaultValue": [],
@@ -80,7 +66,14 @@
         }
     },
     "variables": {
+        "apiVersions": {
+            "virtualNetworks": "2021-05-01"
+        },
         "defaultResourceProperties": {
+            "ddosProtectionPlan": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
             "subnet": {
                 "delegations": [],
                 "isPrivateEndpointSupportEnabled": false,
@@ -103,13 +96,13 @@
                 "serviceEndpoints": []
             }
         },
-        "isDdosProtectionEnabled": "[not(empty(parameters('ddosProtectionPlanName')))]",
+        "isDdosProtectionEnabled": "[not(empty(parameters('ddosProtectionPlan')))]",
         "resourceGroupName": "[resourceGroup().name]",
         "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
         {
-            "apiVersion": "2020-07-01",
+            "apiVersion": "[variables('apiVersions').virtualNetworks]",
             "name": "[parameters('name')]",
             "location": "[parameters('location')]",
             "properties": {
@@ -135,7 +128,7 @@
                         "name": "subnets"
                     }
                 ],
-                "ddosProtectionPlan": "[if(variables('isDdosProtectionEnabled'), createObject('id', resourceId(parameters('ddosProtectionPlanSubscriptionId'), parameters('ddosProtectionPlanResourceGroupName'), 'Microsoft.Network/ddosProtectionPlans', parameters('ddosProtectionPlanName'))), null())]",
+                "ddosProtectionPlan": "[if(variables('isDdosProtectionEnabled'), createObject('id', resourceId(union(variables('defaultResourceProperties').ddosProtectionPlan, parameters('ddosProtectionPlan')).subscriptionId, union(variables('defaultResourceProperties').ddosProtectionPlan, parameters('ddosProtectionPlan')).resourceGroupName, 'Microsoft.Network/ddosProtectionPlans', parameters('ddosProtectionPlan').name)), null())]",
                 "dhcpOptions": "[if(empty(parameters('dnsServers')), null(), createObject('dnsServers', parameters('dnsServers')))]",
                 "enableDdosProtection": "[variables('isDdosProtectionEnabled')]",
                 "enableVmProtection": true
