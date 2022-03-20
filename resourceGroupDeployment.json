@@ -1834,7 +1834,7 @@
             "copy": {
                 "count": "[length(variables('resourceDefinitions').expressRoute.gateways)]",
                 "mode": "Parallel",
-                "name": "expressRouteGateways"
+                "name": "expressRouteGatewaysCopy"
             },
             "dependsOn": [
                 "scriptsPreDeployCopy",
@@ -4796,7 +4796,7 @@
                 "eventHubsCopy",
                 "eventHubsNamespacesCopy",
                 "expressRouteCircuitsCopy",
-                "expressRouteGateways",
+                "expressRouteGatewaysCopy",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
                 "hostGroupsCopy",
@@ -4894,7 +4894,7 @@
                 "eventHubsCopy",
                 "eventHubsNamespacesCopy",
                 "expressRouteCircuitsCopy",
-                "expressRouteGateways",
+                "expressRouteGatewaysCopy",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
                 "hostGroupsCopy",
@@ -5001,7 +5001,7 @@
                 "eventHubsCopy",
                 "eventHubsNamespacesCopy",
                 "expressRouteCircuitsCopy",
-                "expressRouteGateways",
+                "expressRouteGatewaysCopy",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
                 "hostGroupsCopy",
@@ -5101,7 +5101,7 @@
                 "eventHubsCopy",
                 "eventHubsNamespacesCopy",
                 "expressRouteCircuitsCopy",
-                "expressRouteGateways",
+                "expressRouteGatewaysCopy",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
                 "hostGroupsCopy",
@@ -5197,7 +5197,7 @@
                 "eventHubsCopy",
                 "eventHubsNamespacesCopy",
                 "expressRouteCircuitsCopy",
-                "expressRouteGateways",
+                "expressRouteGatewaysCopy",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
                 "hostGroupsCopy",
