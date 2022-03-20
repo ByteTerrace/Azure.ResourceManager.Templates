@@ -10,7 +10,11 @@
             "type": "object"
         },
         "availabilityZones": {
-            "defaultValue": [],
+            "defaultValue": [
+                1,
+                2,
+                3
+            ],
             "metadata": {
                 "description": "Specifies an array of availability zones that the Azure NAT Gateway will be deployed within."
             },
