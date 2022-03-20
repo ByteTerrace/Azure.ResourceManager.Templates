@@ -45,9 +45,6 @@
         "apiVersions": {
             "expressRouteCircuits": "2021-05-01",
             "expressRouteCircuitsPeerings": "2021-05-01"
-        },
-        "resourceIds": {
-            "expressRouteCircuit": "[resourceId('Microsoft.Network/expressRouteCircuits', parameters('name'))]"
         }
     },
     "resources": [
