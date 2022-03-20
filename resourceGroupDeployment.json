@@ -207,7 +207,11 @@
             },
             "applicationGateway": {
                 "audit": "[variables('audit')]",
-                "availabilityZones": [],
+                "availabilityZones": [
+                    1,
+                    2,
+                    3
+                ],
                 "identity": {},
                 "isHttp20SupportEnabled": true,
                 "isMinimalSslCipherSuiteConfigurationEnabled": true,
@@ -585,9 +589,9 @@
                 "allocationMethod": "Static",
                 "audit": "[variables('audit')]",
                 "availabilityZones": [
-                    "1",
-                    "2",
-                    "3"
+                    1,
+                    2,
+                    3
                 ],
                 "dnsPrefix": "",
                 "idleTimeoutInMinutes": 4,
