@@ -145,6 +145,10 @@
                 "hubs": [],
                 "namespaces": []
             },
+            "expressRoute": {
+                "circuits": [],
+                "gateways": []
+            },
             "firewalls": [],
             "hdInsightClusters": [],
             "hostGroups": [],
@@ -421,6 +425,15 @@
                     "skuName": "Standard",
                     "tags": "[parameters('tags')]",
                     "virtualNetworkRules": []
+                }
+            },
+            "expressRoute": {
+                "circuit": {
+                    "skuName": "Standard_MeteredData",
+                    "tags": "[parameters('tags')]"
+                },
+                "gateway": {
+                    "tags": "[parameters('tags')]"
                 }
             },
             "firewall": {
@@ -932,6 +945,8 @@
             "eventHubCluster": "[format('{0}-EventHubCluster', deployment().name)]",
             "eventHub": "[format('{0}-EventHub', deployment().name)]",
             "eventHubNamespace": "[format('{0}-EventHubNamespace', deployment().name)]",
+            "expressRouteCircuit": "[format('{0}-ExpressRouteCircuit', deployment().name)]",
+            "expressRouteGateway": "[format('{0}-ExpressRouteGateway', deployment().name)]",
             "firewall": "[format('{0}-Firewall', deployment().name)]",
             "hdInsightCluster": "[format('{0}-HdInsightCluster', deployment().name)]",
             "hostGroup": "[format('{0}-HostGroup', deployment().name)]",
@@ -1602,6 +1617,44 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').expressRoute.circuits))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').expressRoute.circuits)]",
+                "mode": "Parallel",
+                "name": "expressRouteCircuitsCopy"
+            },
+            "dependsOn": [
+                "scriptsPreDeployCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').expressRouteCircuit, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').expressRoute.circuits[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').expressRoute.circuits[copyIndex()].name]"
+                    },
+                    "serviceProvider": {
+                        "value": "[variables('resourceDefinitions').expressRoute.circuits[copyIndex()].serviceProvider]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').expressRoute.circuit, variables('resourceDefinitions').expressRoute.circuits[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[union(variables('defaultResourceProperties').expressRoute.circuit, variables('resourceDefinitions').expressRoute.circuits[copyIndex()]).tags]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Network/expressRouteCircuits.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').routeTables))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').routeTables)]",
@@ -1758,19 +1811,58 @@
                     "name": {
                         "value": "[variables('resourceDefinitions').virtualHubs[copyIndex()].name]"
                     },
+                    "tags": {
+                        "value": "[union(variables('defaultResourceProperties').virtualHub, variables('resourceDefinitions').virtualHubs[copyIndex()]).tags]"
+                    },
                     "virtualNetworks": {
                         "value": "[union(variables('defaultResourceProperties').virtualHub, variables('resourceDefinitions').virtualHubs[copyIndex()]).virtualNetworks]"
                     },
                     "virtualWan": {
                         "value": "[union(variables('defaultResourceProperties').virtualHub, variables('resourceDefinitions').virtualHubs[copyIndex()]).virtualWan]"
-                    },
-                    "tags": {
-                        "value": "[union(variables('defaultResourceProperties').virtualHub, variables('resourceDefinitions').virtualHubs[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/virtualHubs.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').expressRoute.gateways))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').expressRoute.gateways)]",
+                "mode": "Parallel",
+                "name": "expressRouteGateways"
+            },
+            "dependsOn": [
+                "scriptsPreDeployCopy",
+                "virtualHubsCopy",
+                "virtualNetworkGatewayConfigurationsCopy",
+                "virtualNetworksCopy",
+                "virtualWansCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').expressRouteGateway, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').expressRoute.gateways[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').expressRoute.gateways[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[union(variables('defaultResourceProperties').expressRoute.gateway, variables('resourceDefinitions').expressRoute.gateways[copyIndex()]).tags]"
+                    },
+                    "virtualHub": {
+                        "value": "[variables('resourceDefinitions').expressRoute.gateways[copyIndex()].virtualHub]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Network/expressRouteGateways.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -4703,6 +4795,8 @@
                 "eventHubsClustersCopy",
                 "eventHubsCopy",
                 "eventHubsNamespacesCopy",
+                "expressRouteCircuitsCopy",
+                "expressRouteGateways",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
                 "hostGroupsCopy",
@@ -4799,6 +4893,8 @@
                 "eventHubsClustersCopy",
                 "eventHubsCopy",
                 "eventHubsNamespacesCopy",
+                "expressRouteCircuitsCopy",
+                "expressRouteGateways",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
                 "hostGroupsCopy",
@@ -4904,6 +5000,8 @@
                 "eventHubsClustersCopy",
                 "eventHubsCopy",
                 "eventHubsNamespacesCopy",
+                "expressRouteCircuitsCopy",
+                "expressRouteGateways",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
                 "hostGroupsCopy",
@@ -5002,6 +5100,8 @@
                 "eventHubsClustersCopy",
                 "eventHubsCopy",
                 "eventHubsNamespacesCopy",
+                "expressRouteCircuitsCopy",
+                "expressRouteGateways",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
                 "hostGroupsCopy",
@@ -5096,6 +5196,8 @@
                 "eventHubsClustersCopy",
                 "eventHubsCopy",
                 "eventHubsNamespacesCopy",
+                "expressRouteCircuitsCopy",
+                "expressRouteGateways",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
                 "hostGroupsCopy",
