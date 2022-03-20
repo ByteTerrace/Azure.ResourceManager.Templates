@@ -51,6 +51,13 @@
             },
             "type": "object"
         },
+        "isAzureKeyVaultEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether support for Azure Key Vault integration is enabled on the Azure Kubernetes Service Cluster."
+            },
+            "type": "bool"
+        },
         "isAzurePolicyEnabled": {
             "defaultValue": true,
             "metadata": {
@@ -287,6 +294,9 @@
                 },
                 "addonProfiles": {
                     "aciConnectorLinux": "[null()]",
+                    "azureKeyvaultSecretsProvider": {
+                        "enabled": "[parameters('isAzureKeyVaultEnabled')]"
+                    },
                     "azurepolicy": {
                         "enabled": "[parameters('isAzurePolicyEnabled')]"
                     },
@@ -343,14 +353,14 @@
                 "kubernetesVersion": "[parameters('kubernetesVersion')]",
                 "linuxProfile": "[if(empty(parameters('linuxProfile')), null(), variables('linuxProfile'))]",
                 "networkProfile": {
-                    "dnsServiceIP": "[if(equals(toLower(variables('networking').plugin), 'azure'), variables('networking').dnsServiceIpAddress, null())]",
+                    "dnsServiceIP": "[variables('networking').dnsServiceIpAddress]",
                     "dockerBridgeCidr": "[variables('networking').dockerBridgeCidr]",
                     "loadBalancerSku": "[if(equals(toLower(variables('networking').outboundType), 'loadbalancer'), toLower(variables('networking').loadBalancerSku), null())]",
                     "networkPlugin": "[toLower(variables('networking').plugin)]",
                     "networkPolicy": "[toLower(variables('networking').policy)]",
                     "outboundType": "[toLower(variables('networking').outboundType)]",
                     "podCidr": "[if(equals(toLower(variables('networking').plugin), 'kubenet'), variables('networking').podCidr, null())]",
-                    "serviceCidr": "[if(equals(toLower(variables('networking').plugin), 'azure'), variables('networking').serviceCidr, null())]"
+                    "serviceCidr": "[variables('networking').serviceCidr]"
                 },
                 "nodeResourceGroup": "[parameters('nodeResourceGroupName')]",
                 "podIdentityProfile": {

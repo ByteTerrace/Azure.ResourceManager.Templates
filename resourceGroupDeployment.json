@@ -114,6 +114,7 @@
         "contentVersion": "[deployment().properties.template.contentVersion]",
         "defaultResourceDefinitions": {
             "applicationConfigurationStores": [],
+            "applicationGateways": [],
             "applicationSecurityGroups": [],
             "applicationServiceEnvironments": [],
             "applicationServicePlans": [],
@@ -125,6 +126,7 @@
             "containerInstances": [],
             "containerRegistries": [],
             "cosmosDbAccounts": [],
+            "ddosProtectionPlan": [],
             "deployments": [],
             "diskEncryptionSets": [],
             "dnsZones": {
@@ -201,6 +203,14 @@
                 "privateEndpoints": [],
                 "settings": {},
                 "skuName": "Standard",
+                "tags": "[parameters('tags')]"
+            },
+            "applicationGateway": {
+                "audit": "[variables('audit')]",
+                "identity": {},
+                "isHttp20SupportEnabled": true,
+                "isMinimalSslCipherSuiteConfigurationEnabled": true,
+                "skuName": "Standard_v2",
                 "tags": "[parameters('tags')]"
             },
             "applicationSecurityGroup": {
@@ -308,6 +318,9 @@
                 "kind": "GlobalDocumentDB",
                 "tags": "[parameters('tags')]",
                 "virtualNetworkRules": []
+            },
+            "ddosProtectionPlan": {
+                "tags": "[parameters('tags')]"
             },
             "deployment": {
                 "contentVersion": "[variables('contentVersion')]",
@@ -885,6 +898,7 @@
         },
         "deploymentNames": {
             "applicationConfigurationStore": "[format('{0}-AppConfigurationStore', deployment().name)]",
+            "applicationGateway": "[format('{0}-AppGateway', deployment().name)]",
             "applicationInsightsComponent": "[format('{0}-AppInsightsComponent', deployment().name)]",
             "applicationSecurityGroup": "[format('{0}-AppSecurityGroup', deployment().name)]",
             "applicationServiceEnvironment": "[format('{0}-AppServiceEnvironment', deployment().name)]",
@@ -897,6 +911,7 @@
             "containerInstance": "[format('{0}-ContainerInstance', deployment().name)]",
             "containerRegistry": "[format('{0}-ContainerRegistry', deployment().name)]",
             "cosmosDbAccount": "[format('{0}-CosmosDbAccount', deployment().name)]",
+            "ddosProtectionPlan": "[format('{0}-DdosProtectionPlan', deployment().name)]",
             "deployment": "[format('{0}-Deployment', deployment().name)]",
             "diskEncryptionSet": "[format('{0}-DiskEncryptionSet', deployment().name)]",
             "dnsPrivateZone": "[format('{0}-DnsPrivateZone', deployment().name)]",
@@ -1547,6 +1562,38 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').ddosProtectionPlans))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').ddosProtectionPlans)]",
+                "mode": "Parallel",
+                "name": "ddosProtectionPlansCopy"
+            },
+            "dependsOn": [
+                "scriptsPreDeployCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').ddosProtectionPlan, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').ddosProtectionPlans[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').ddosProtectionPlans[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[union(variables('defaultResourceProperties').ddosProtectionPlan, variables('resourceDefinitions').ddosProtectionPlans[copyIndex()]).tags]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Network/ddosProtectionPlans.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').routeTables))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').routeTables)]",
@@ -1631,6 +1678,7 @@
                 "name": "virtualNetworksCopy"
             },
             "dependsOn": [
+                "ddosProtectionPlansCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "routeTablesCopy",
@@ -1785,6 +1833,10 @@
                 "name": "subnetsCopy"
             },
             "dependsOn": [
+                "ddosProtectionPlansCopy",
+                "natGatewaysCopy",
+                "networkSecurityGroupsCopy",
+                "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
@@ -1833,6 +1885,67 @@
             },
             "resourceGroup": "[union(variables('defaultResourceProperties').subnet, variables('resourceDefinitions').subnets[copyIndex()]).virtualNetwork.resourceGroupName]",
             "subscriptionId": "[union(variables('defaultResourceProperties').subnet, variables('resourceDefinitions').subnets[copyIndex()]).virtualNetwork.subscriptionId]",
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').applicationGateways))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').applicationGateways)]",
+                "mode": "Parallel",
+                "name": "applicationGatewaysCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "publicIpAddressesCopy",
+                "publicIpPrefixesCopy",
+                "scriptsPreDeployCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').virtualNetworkGateway, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').virtualNetworkGateways[copyIndex()]).audit]"
+                    },
+                    "backend": {
+                        "value": "[variables('resourceDefinitions').virtualNetworkGateways[copyIndex()].backend]"
+                    },
+                    "frontend": {
+                        "value": "[variables('resourceDefinitions').virtualNetworkGateways[copyIndex()].frontend]"
+                    },
+                    "httpListeners": {
+                        "value": "[variables('resourceDefinitions').virtualNetworkGateways[copyIndex()].httpListeners]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').applicationGateways[copyIndex()]).identity]"
+                    },
+                    "isHttp20SupportEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').applicationGateways[copyIndex()]).isHttp20SupportEnabled]"
+                    },
+                    "isMinimalSslCipherSuiteConfigurationEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').applicationGateways[copyIndex()]).isMinimalSslCipherSuiteConfigurationEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').applicationGateways[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').applicationGateways[copyIndex()].name]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').applicationGateways[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').applicationGateways[copyIndex()]).tags]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Network/applicationGateways.json"
+                }
+            },
             "type": "Microsoft.Resources/deployments"
         },
         {
@@ -4552,6 +4665,7 @@
             },
             "dependsOn": [
                 "applicationConfigurationStoresCopy",
+                "applicationGatewaysCopy",
                 "applicationInsightsComponentsCopy",
                 "applicationSecurityGroupsCopy",
                 "applicationServiceEnvironmentsCopy",
@@ -4564,6 +4678,7 @@
                 "containerInstancesCopy",
                 "containerRegistriesCopy",
                 "cosmosDbAccountsCopy",
+                "ddosProtectionPlansCopy",
                 "diskEncryptionSetsCopy",
                 "eventGridDomainsCopy",
                 "eventGridEventSubcriptionsCopy",
@@ -4646,6 +4761,7 @@
             },
             "dependsOn": [
                 "applicationConfigurationStoresCopy",
+                "applicationGatewaysCopy",
                 "applicationInsightsComponentsCopy",
                 "applicationSecurityGroupsCopy",
                 "applicationServiceEnvironmentsCopy",
@@ -4658,6 +4774,7 @@
                 "containerInstancesCopy",
                 "containerRegistriesCopy",
                 "cosmosDbAccountsCopy",
+                "ddosProtectionPlansCopy",
                 "diskEncryptionSetsCopy",
                 "eventGridDomainsCopy",
                 "eventGridEventSubcriptionsCopy",
@@ -4748,6 +4865,7 @@
             },
             "dependsOn": [
                 "applicationConfigurationStoresCopy",
+                "applicationGatewaysCopy",
                 "applicationInsightsComponentsCopy",
                 "applicationSecurityGroupsCopy",
                 "applicationServiceEnvironmentsCopy",
@@ -4760,6 +4878,7 @@
                 "containerInstancesCopy",
                 "containerRegistriesCopy",
                 "cosmosDbAccountsCopy",
+                "ddosProtectionPlansCopy",
                 "diskEncryptionSetsCopy",
                 "eventGridDomainsCopy",
                 "eventGridEventSubcriptionsCopy",
@@ -4843,6 +4962,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').deployments))]",
             "dependsOn": [
                 "applicationConfigurationStoresCopy",
+                "applicationGatewaysCopy",
                 "applicationInsightsComponentsCopy",
                 "applicationSecurityGroupsCopy",
                 "applicationServiceEnvironmentsCopy",
@@ -4855,6 +4975,7 @@
                 "containerInstancesCopy",
                 "containerRegistriesCopy",
                 "cosmosDbAccountsCopy",
+                "ddosProtectionPlansCopy",
                 "diskEncryptionSetsCopy",
                 "eventGridDomainsCopy",
                 "eventGridEventSubcriptionsCopy",
@@ -4935,6 +5056,7 @@
             },
             "dependsOn": [
                 "applicationConfigurationStoresCopy",
+                "applicationGatewaysCopy",
                 "applicationInsightsComponentsCopy",
                 "applicationSecurityGroupsCopy",
                 "applicationServiceEnvironmentsCopy",
@@ -4947,6 +5069,7 @@
                 "containerInstancesCopy",
                 "containerRegistriesCopy",
                 "cosmosDbAccountsCopy",
+                "ddosProtectionPlansCopy",
                 "diskEncryptionSetsCopy",
                 "eventGridDomainsCopy",
                 "eventGridEventSubcriptionsCopy",

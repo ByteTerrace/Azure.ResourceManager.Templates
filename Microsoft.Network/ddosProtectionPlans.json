@@ -4,37 +4,37 @@
     "parameters": {
         "location": {
             "metadata": {
-                "description": "Specifies the location in which the Azure Security Group resource(s) should be deployed."
+                "description": "Specifies the location in which the Azure DDOS Protection Plan resource(s) should be deployed."
             },
             "type": "string"
         },
         "name": {
             "metadata": {
-                "description": "Specifies the name of the Azure Security Group."
+                "description": "Specifies the name of the Azure DDOS Protection Plan."
             },
             "type": "string"
         },
         "tags": {
             "defaultValue": {},
             "metadata": {
-                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Security Group."
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure DDOS Protection Plan."
             },
             "type": "object"
         }
     },
     "variables": {
         "apiVersions": {
-            "applicationSecurityGroups": "2021-05-01"
+            "ddosProtectionPlans": "2021-05-01"
         }
     },
     "resources": [
         {
-            "apiVersion": "[variables('apiVersions').applicationSecurityGroups]",
+            "apiVersion": "[variables('apiVersions').ddosProtectionPlans]",
             "location": "[parameters('location')]",
             "name": "[parameters('name')]",
             "properties": {},
             "tags": "[parameters('tags')]",
-            "type": "Microsoft.Network/applicationSecurityGroups"
+            "type": "Microsoft.Network/ddosProtectionPlans"
         }
     ]
 }

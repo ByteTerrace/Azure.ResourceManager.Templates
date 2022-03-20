@@ -29,12 +29,6 @@
             },
             "type": "bool"
         },
-        "location": {
-            "metadata": {
-                "description": "Specifies the location in which the Azure Virtual Network Subnet resource(s) should be deployed."
-            },
-            "type": "string"
-        },
         "name": {
             "maxLength": 80,
             "metadata": {
@@ -80,6 +74,9 @@
     },
     "variables": {
         "addressPrefixCount": "[length(parameters('addressPrefixes'))]",
+        "apiVersions": {
+            "subnets": "2021-05-01"
+        },
         "defaultResourceProperties": {
             "natGateway": {
                 "name": "",
@@ -103,14 +100,16 @@
         "natGateway": "[union(variables('defaultResourceProperties').natGateway, parameters('natGateway'))]",
         "networkSecurityGroup": "[union(variables('defaultResourceProperties').networkSecurityGroup, parameters('networkSecurityGroup'))]",
         "resourceGroupName": "[resourceGroup().name]",
+        "resourceIds": {
+            "subnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetwork').name, parameters('name'))]"
+        },
         "routeTable": "[union(variables('defaultResourceProperties').routeTable, parameters('routeTable'))]",
         "subscriptionId": "[subscription().subscriptionId]"
     },
     "resources": [
         {
-            "apiVersion": "2020-07-01",
+            "apiVersion": "[variables('apiVersions').subnets]",
             "name": "[format('{0}/{1}', parameters('virtualNetwork').name, parameters('name'))]",
-            "location": "[parameters('location')]",
             "properties": {
                 "addressPrefix": "[if(equals(variables('addressPrefixCount'), 1), parameters('addressPrefixes')[0], null())]",
                 "addressPrefixes": "[if(greater(variables('addressPrefixCount'), 1), parameters('addressPrefixes'), null())]",
@@ -118,10 +117,12 @@
                     {
                         "count": "[length(parameters('delegatedServiceNames'))]",
                         "input": {
+                            "id": "[format('{0}/delegations/DelegatedService_{1}', variables('resourceIds').subnet, copyIndex('delegations'))]",
                             "name": "[format('DelegatedService_{0}', copyIndex('delegations'))]",
                             "properties": {
                                 "serviceName": "[parameters('delegatedServiceNames')[copyIndex('delegations')]]"
-                            }
+                            },
+                            "type": "Microsoft.Network/virtualNetworks/subnets/delegations"
                         },
                         "name": "delegations"
                     },
