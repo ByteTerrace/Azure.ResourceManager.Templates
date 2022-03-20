@@ -207,6 +207,7 @@
             },
             "applicationGateway": {
                 "audit": "[variables('audit')]",
+                "availabilityZones": [],
                 "identity": {},
                 "isHttp20SupportEnabled": true,
                 "isMinimalSslCipherSuiteConfigurationEnabled": true,
@@ -1910,6 +1911,9 @@
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').virtualNetworkGateways[copyIndex()]).audit]"
                     },
+                    "availabilityZones": {
+                        "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').virtualNetworkGateways[copyIndex()]).availabilityZones]"
+                    },
                     "backend": {
                         "value": "[variables('resourceDefinitions').virtualNetworkGateways[copyIndex()].backend]"
                     },
@@ -1933,6 +1937,9 @@
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').applicationGateways[copyIndex()].name]"
+                    },
+                    "routingRules": {
+                        "value": "[variables('resourceDefinitions').virtualNetworkGateways[copyIndex()].routingRules]"
                     },
                     "skuName": {
                         "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').applicationGateways[copyIndex()]).skuName]"

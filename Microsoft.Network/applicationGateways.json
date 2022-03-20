@@ -9,6 +9,13 @@
             },
             "type": "object"
         },
+        "availabilityZones": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "Specifies an array of availability zones that the Azure NAT Gateway will be deployed within."
+            },
+            "type": "array"
+        },
         "backend": {
             "metadata": {
                 "description": "An object that encapsulates the backend settings that will be applied to the Azure Application Gateway."
@@ -60,6 +67,12 @@
             },
             "type": "string"
         },
+        "routingRules": {
+            "metadata": {
+                "description": "An array of routing rules that will be created within the Azure Application Gateway."
+            },
+            "type": "array"
+        },
         "skuName": {
             "allowedValues": [
                 "Standard_v2"
@@ -93,7 +106,7 @@
                         "privateIPAddress": "[union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.value]",
                         "privateIPAllocationMethod": "[union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.allocationMethod]",
                         "subnet": {
-                            "id": "[resourceId(union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.subnet.subscriptionId, union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.subnet.virtualNetworkName, union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.subnet.name)]"
+                            "id": "[resourceId(union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.subnet.subscriptionId, union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')].privateIpAddress.subnet.virtualNetworkName, parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')].privateIpAddress.subnet.name)]"
                         }
                     }
                 },
@@ -105,7 +118,7 @@
                     "name": "[format('frontendPublicIp_{0}', if(empty(union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')]).name), copyIndex('publicIpConfigurations'), parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')].name))]",
                     "properties": {
                         "publicIPAddress": {
-                            "id": "[resourceId(union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')]).publicIpAddress.subscriptionId, union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')]).publicIpAddress.resourceGroupName, 'Microsoft.Network/publicIPAddresses', union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')]).publicIpAddress.name)]"
+                            "id": "[resourceId(union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')]).publicIpAddress.subscriptionId, union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')]).publicIpAddress.resourceGroupName, 'Microsoft.Network/publicIPAddresses', parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')].publicIpAddress.name)]"
                         }
                     }
                 },
@@ -262,8 +275,22 @@
                         "name": "httpListeners"
                     },
                     {
-                        "count": 0,
-                        "input": {},
+                        "count": "[length(parameters('routingRules'))]",
+                        "input": {
+                            "name": "[parameters('httpListeners')[copyIndex('requestRoutingRules')].name]",
+                            "properties": {
+                                "backendAddressPool": {
+                                    "id": "[format('{0}/backendAddressPools/{1}', variables('resourceIds').applicationGateway, parameters('httpListeners')[copyIndex('requestRoutingRules')].backend.addressPoolName)]"
+                                },
+                                "backendHttpSettings": {
+                                    "id": "[format('{0}/backendAddressPools/{1}', variables('resourceIds').applicationGateway, parameters('httpListeners')[copyIndex('requestRoutingRules')].backend.httpSettingName)]"
+                                },
+                                "httpListener": {
+                                    "id": "[format('{0}/backendAddressPools/{1}', variables('resourceIds').applicationGateway, parameters('httpListeners')[copyIndex('requestRoutingRules')].httpListenerName)]"
+                                },
+                                "ruleType": "[parameters('httpListeners')[copyIndex('requestRoutingRules')].type]"
+                            }
+                        },
                         "name": "requestRoutingRules"
                     }
                 ],
@@ -276,7 +303,8 @@
                 "sslPolicy": "[if(parameters('isMinimalSslCipherSuiteConfigurationEnabled'), variables('minimalSslCipherSuiteConfiguration'), null())]"
             },
             "tags": "[parameters('tags')]",
-            "type": "Microsoft.Network/applicationGateways"
+            "type": "Microsoft.Network/applicationGateways",
+            "zones": "[if(empty(parameters('availabilityZones')), null(), parameters('availabilityZones'))]"
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",

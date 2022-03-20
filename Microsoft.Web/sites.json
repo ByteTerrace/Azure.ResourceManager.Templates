@@ -409,7 +409,8 @@
                 "POWERSHELL|7.0",
                 "PYTHON|3.6",
                 "PYTHON|3.7",
-                "PYTHON|3.8"
+                "PYTHON|3.8",
+                "PYTHON|3.9"
             ],
             "defaultValue": "DOTNET-Isolated|6.0",
             "metadata": {
@@ -863,7 +864,7 @@
                 "serverFarmId": "[variables('resourceIds').serverFarm]",
                 "siteConfig": {
                     "alwaysOn": "[parameters('isAlwaysOnEnabled')]",
-                    "appSettings": "[union(if(empty(parameters('applicationConfigurationStore')), createArray(), createArray(createObject('name', 'APPLICATIONCONFIGURATIONSTORE_ENDPOINT', 'value', reference(resourceId(variables('applicationConfigurationStore').subscriptionId, variables('applicationConfigurationStore').resourceGroupName, 'Microsoft.AppConfiguration/configurationStores', parameters('applicationConfigurationStore').name), variables('apiVersions').configurationStores).endpoint))), if(empty(parameters('applicationInsights')), createArray(), createArray(createObject('name', 'APPLICATIONINSIGHTS_CONNECTION_STRING', 'value', reference(resourceId(variables('applicationInsights').subscriptionId, variables('applicationInsights').resourceGroupName, 'Microsoft.Insights/components', parameters('applicationInsights').name), variables('apiVersions').applicationInsightsComponents).connectionString))), if(variables('functionExtension').isEnabled, union(createArray(createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccount, variables('apiVersions').storageAccounts).keys[1].value)), createObject('name', 'FUNCTION_APP_EDIT_MODE', 'value', 'readonly')), if(or(startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'EP'), startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'WS'), startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'Y')), createArray(createObject('name', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccount, variables('apiVersions').storageAccounts).keys[1].value)), createObject('name', 'WEBSITE_CONTENTSHARE', 'value', format('functionapp-{0}', toLower(parameters('name'))))), createArray()), variables('applicationSettingsCollection')), variables('applicationSettingsCollection')))]",
+                    "appSettings": "[union(if(empty(parameters('applicationConfigurationStore')), createArray(), createArray(createObject('name', 'APPLICATIONCONFIGURATION_ENDPOINT', 'value', reference(resourceId(variables('applicationConfigurationStore').subscriptionId, variables('applicationConfigurationStore').resourceGroupName, 'Microsoft.AppConfiguration/configurationStores', parameters('applicationConfigurationStore').name), variables('apiVersions').configurationStores).endpoint))), if(empty(parameters('applicationInsights')), createArray(), createArray(createObject('name', 'APPLICATIONINSIGHTS_CONNECTION_STRING', 'value', reference(resourceId(variables('applicationInsights').subscriptionId, variables('applicationInsights').resourceGroupName, 'Microsoft.Insights/components', parameters('applicationInsights').name), variables('apiVersions').applicationInsightsComponents).connectionString))), if(variables('functionExtension').isEnabled, union(createArray(createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccount, variables('apiVersions').storageAccounts).keys[1].value)), createObject('name', 'FUNCTION_APP_EDIT_MODE', 'value', 'readonly')), if(or(startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'EP'), startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'WS'), startsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms, 'Full').sku.name, 'Y')), createArray(createObject('name', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('functionExtension').storageAccount.name, listKeys(variables('resourceIds').storageAccount, variables('apiVersions').storageAccounts).keys[1].value)), createObject('name', 'WEBSITE_CONTENTSHARE', 'value', format('functionapp-{0}', toLower(parameters('name'))))), createArray()), variables('applicationSettingsCollection')), variables('applicationSettingsCollection')))]",
                     "copy": [
                         {
                             "count": "[length(variables('connectionStringsCollection'))]",
@@ -875,7 +876,13 @@
                             "name": "connectionStrings"
                         }
                     ],
+                    "ftpsState": "FtpsOnly",
+                    "http20Enabled": "[parameters('isHttp20SupportEnabled')]",
                     "linuxFxVersion": "[if(endsWith(reference(variables('resourceIds').serverFarm, variables('apiVersions').serverFarms).webSpace, 'linux'), parameters('frameworkVersion'), null())]",
+                    "metadata": "[variables('metadata')]",
+                    "use32BitWorkerProcess": "[parameters('is32BitModeEnabled')]",
+                    "websiteTimeZone": "[parameters('timeZone')]",
+                    "webSocketsEnabled": "[parameters('isWebSocketSupportEnabled')]",
                     "windowsFxVersion": "[null()]"
                 }
             },
@@ -1000,15 +1007,12 @@
                     "allowedOrigins": "[variables('cors').allowedOrigins]",
                     "supportCredentials": "[variables('cors').isCredentialSupportEnabled]"
                 },
-                "ftpsState": "FtpsOnly",
                 "functionAppScaleLimit": "[if(variables('functionExtension').isEnabled, 1, null())]",
                 "functionsRuntimeScaleMonitoringEnabled": "[and(variables('functionExtension').isEnabled, variables('privateEndpointsIsNotEmpty'))]",
                 "healthCheckPath": "[if(variables('healthCheck').isEnabled, variables('healthCheck').path, '')]",
-                "http20Enabled": "[parameters('isHttp20SupportEnabled')]",
                 "javaVersion": "[if(equals(variables('currentStack'), 'java'), if(endsWith(parameters('frameworkVersion'), '|8'), '1.8', if(endsWith(parameters('frameworkVersion'), '|11'), '11', null())), null())]",
                 "logsDirectorySizeLimit": 27,
                 "managedPipelineMode": "Integrated",
-                "metadata": "[variables('metadata')]",
                 "minimumElasticInstanceCount": "[if(variables('functionExtension').isEnabled, 1, null())]",
                 "minTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
                 "scmMinTlsVersion": "[parameters('minimumSupportedTlsVersion')]",
@@ -1016,10 +1020,7 @@
                 "remoteDebuggingEnabled": "[variables('remoteDebugging').isEnabled]",
                 "remoteDebuggingVersion": "[variables('remoteDebugging').version]",
                 "scmIpSecurityRestrictionsUseMain": "[equals(variables('scmIpSecurityRestrictionsCount'), 0)]",
-                "use32BitWorkerProcess": "[parameters('is32BitModeEnabled')]",
-                "vnetRouteAllEnabled": "[or(parameters('isRouteAllTrafficThroughVirtualNetworkEnabled'), variables('privateEndpointsIsNotEmpty'))]",
-                "webSocketsEnabled": "[parameters('isWebSocketSupportEnabled')]",
-                "websiteTimeZone": "[parameters('timeZone')]"
+                "vnetRouteAllEnabled": "[or(parameters('isRouteAllTrafficThroughVirtualNetworkEnabled'), variables('privateEndpointsIsNotEmpty'))]"
             },
             "type": "Microsoft.Web/sites/config"
         },
