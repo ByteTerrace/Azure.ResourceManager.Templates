@@ -484,6 +484,7 @@
                 "dnsPrefix": "",
                 "dnsZone": {},
                 "identity": {},
+                "isAzureKeyVaultEnabled": true,
                 "isAzurePolicyEnabled": true,
                 "isHttpApplicationRoutingEnabled": false,
                 "isPrivateEndpointEnabled": false,
@@ -653,6 +654,7 @@
                     "firewallRules": [],
                     "identity": {},
                     "isAllowTrustedMicrosoftServicesEnabled": false,
+                    "isLocalAuthenticationEnabled": false,
                     "isPublicNetworkAccessEnabled": false,
                     "isZoneRedundant": true,
                     "privateEndpoints": [],
@@ -868,6 +870,7 @@
                 "tags": "[parameters('tags')]"
             },
             "webApplication": {
+                "applicationConfigurationStore": {},
                 "applicationInsights": {},
                 "audit": "[variables('audit')]",
                 "autoHeal": {},
@@ -1910,19 +1913,19 @@
                 "mode": "Incremental",
                 "parameters": {
                     "audit": {
-                        "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').virtualNetworkGateways[copyIndex()]).audit]"
+                        "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').applicationGateways[copyIndex()]).audit]"
                     },
                     "availabilityZones": {
-                        "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').virtualNetworkGateways[copyIndex()]).availabilityZones]"
+                        "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').applicationGateways[copyIndex()]).availabilityZones]"
                     },
                     "backend": {
-                        "value": "[variables('resourceDefinitions').virtualNetworkGateways[copyIndex()].backend]"
+                        "value": "[variables('resourceDefinitions').applicationGateways[copyIndex()].backend]"
                     },
                     "frontend": {
-                        "value": "[variables('resourceDefinitions').virtualNetworkGateways[copyIndex()].frontend]"
+                        "value": "[variables('resourceDefinitions').applicationGateways[copyIndex()].frontend]"
                     },
                     "httpListeners": {
-                        "value": "[variables('resourceDefinitions').virtualNetworkGateways[copyIndex()].httpListeners]"
+                        "value": "[variables('resourceDefinitions').applicationGateways[copyIndex()].httpListeners]"
                     },
                     "identity": {
                         "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').applicationGateways[copyIndex()]).identity]"
@@ -1940,7 +1943,7 @@
                         "value": "[variables('resourceDefinitions').applicationGateways[copyIndex()].name]"
                     },
                     "routingRules": {
-                        "value": "[variables('resourceDefinitions').virtualNetworkGateways[copyIndex()].routingRules]"
+                        "value": "[variables('resourceDefinitions').applicationGateways[copyIndex()].routingRules]"
                     },
                     "skuName": {
                         "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').applicationGateways[copyIndex()]).skuName]"
@@ -4140,6 +4143,9 @@
                     "identity": {
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).identity]"
                     },
+                    "isAzureKeyVaultEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).isAzureKeyVaultEnabled]"
+                    },
                     "isAzurePolicyEnabled": {
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).isAzurePolicyEnabled]"
                     },
@@ -4508,6 +4514,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "applicationConfigurationStore": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).applicationConfigurationStore]"
+                    },
                     "applicationInsights": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).applicationInsights]"
                     },
