@@ -561,7 +561,7 @@
             "name": "[format('{0}/current', variables('serverName'))]",
             "properties": {
                 "autoRotationEnabled": "[variables('isCustomerManagedEncryptionEnabled')]",
-                "serverKeyName": "[if(variables('isCustomerManagedEncryptionEnabled'), format('{0}_{1}_{2}', variables('customerManagedEncryption').keyVault.name, variables('customerManagedEncryption').keyName, last(split(reference(format('{0}/keys/{1}/{2}', variables('resourceIds').sqlServerCustomerManagedEncryptionKeyVault, variables('customerManagedEncryption').keyName, if(empty(variables('customerManagedEncryption').keyVersion), '', format('/versions/{0}', variables('customerManagedEncryption').keyVersion))), variables('apiVersions').keyVaultsKeys).keyUriWithVersion, '/'))), 'ServiceManaged')]",
+                "serverKeyName": "[if(variables('isCustomerManagedEncryptionEnabled'), format('{0}_{1}_{2}', variables('customerManagedEncryption').keyVault.name, variables('customerManagedEncryption').keyName, last(split(reference(format('{0}/keys/{1}{2}', variables('resourceIds').sqlServerCustomerManagedEncryptionKeyVault, variables('customerManagedEncryption').keyName, if(empty(variables('customerManagedEncryption').keyVersion), '', format('/versions/{0}', variables('customerManagedEncryption').keyVersion))), variables('apiVersions').keyVaultsKeys).keyUriWithVersion, '/'))), 'ServiceManaged')]",
                 "serverKeyType": "[variables('serverKeyType')]"
             },
             "type": "Microsoft.Sql/servers/encryptionProtector"

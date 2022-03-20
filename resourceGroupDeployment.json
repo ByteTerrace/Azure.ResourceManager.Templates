@@ -1857,9 +1857,6 @@
                     "isPrivateLinkServiceSupportEnabled": {
                         "value": "[union(variables('defaultResourceProperties').subnet, variables('resourceDefinitions').subnets[copyIndex()]).isPrivateLinkServiceSupportEnabled]"
                     },
-                    "location": {
-                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').subnets[copyIndex()]).location]"
-                    },
                     "name": {
                         "value": "[variables('resourceDefinitions').subnets[copyIndex()].name]"
                     },

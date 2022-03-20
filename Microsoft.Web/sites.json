@@ -1233,7 +1233,6 @@
                 "mode": "Parallel",
                 "name": "publicCertificatesCopy"
             },
-            "location": "[parameters('location')]",
             "name":"[format('{0}/{1}', parameters('name'), parameters('publicCertificates')[copyIndex()].name)]",
             "properties": {
                 "blob": "[parameters('publicCertificates')[copyIndex()].blob]",
