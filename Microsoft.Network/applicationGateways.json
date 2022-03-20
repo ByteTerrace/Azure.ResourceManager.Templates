@@ -16,7 +16,7 @@
                 3
             ],
             "metadata": {
-                "description": "Specifies an array of availability zones that the Azure NAT Gateway will be deployed within."
+                "description": "Specifies an array of availability zones that the Azure Application Gateway will be deployed within."
             },
             "type": "array"
         },
@@ -105,12 +105,12 @@
             {
                 "count": "[length(parameters('frontend').ipConfigurations)]",
                 "input": {
-                    "name": "[format('frontendPrivateIp_{0}', if(empty(union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).name), copyIndex('privateIpConfigurations'), parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')].name))]",
+                    "name": "[format('frontendPrivateIp_{0}', if(empty(union(variables('defaultResourceProperties').ipConfiguration, parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).name), copyIndex('privateIpConfigurations'), parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')].name))]",
                     "properties": {
-                        "privateIPAddress": "[union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.value]",
-                        "privateIPAllocationMethod": "[union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.allocationMethod]",
+                        "privateIPAddress": "[union(variables('defaultResourceProperties').ipConfiguration, parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.value]",
+                        "privateIPAllocationMethod": "[if(empty(union(variables('defaultResourceProperties').ipConfiguration, parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.value), 'Dynamic', 'Static')]",
                         "subnet": {
-                            "id": "[resourceId(union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.subnet.subscriptionId, union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')].privateIpAddress.subnet.virtualNetworkName, parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')].privateIpAddress.subnet.name)]"
+                            "id": "[resourceId(union(variables('defaultResourceProperties').ipConfiguration, parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.subnet.subscriptionId, union(variables('defaultResourceProperties').ipConfiguration, parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')].privateIpAddress.subnet.virtualNetworkName, parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')].privateIpAddress.subnet.name)]"
                         }
                     }
                 },
@@ -119,10 +119,10 @@
             {
                 "count": "[length(parameters('frontend').ipConfigurations)]",
                 "input": {
-                    "name": "[format('frontendPublicIp_{0}', if(empty(union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')]).name), copyIndex('publicIpConfigurations'), parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')].name))]",
+                    "name": "[format('frontendPublicIp_{0}', if(empty(union(variables('defaultResourceProperties').ipConfiguration, parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')]).name), copyIndex('publicIpConfigurations'), parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')].name))]",
                     "properties": {
                         "publicIPAddress": {
-                            "id": "[resourceId(union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')]).publicIpAddress.subscriptionId, union(variables('defaultResourceProperties'), parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')]).publicIpAddress.resourceGroupName, 'Microsoft.Network/publicIPAddresses', parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')].publicIpAddress.name)]"
+                            "id": "[resourceId(union(variables('defaultResourceProperties').ipConfiguration, parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')]).publicIpAddress.subscriptionId, union(variables('defaultResourceProperties').ipConfiguration, parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')]).publicIpAddress.resourceGroupName, 'Microsoft.Network/publicIPAddresses', parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')].publicIpAddress.name)]"
                         }
                     }
                 },
@@ -162,7 +162,7 @@
                 "protocol": "Http"
             },
             "identity": {
-                "isEnabled": true,
+                "isEnabled": false,
                 "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
                 "userAssignedIdentities": []
             },
@@ -254,7 +254,7 @@
                             "name": "[format('gatewayIpConfiguration_{0}', copyIndex('gatewayIPConfigurations'))]",
                             "properties": {
                                 "subnet": {
-                                    "id": "[first(variables('privateIpConfigurations').properties.subnet.id)]"
+                                    "id": "[first(variables('privateIpConfigurations')).properties.subnet.id]"
                                 }
                             }
                         },
@@ -273,7 +273,7 @@
                                 },
                                 "hostNames": "[union(variables('defaultResourceProperties').httpListener, parameters('httpListeners')[copyIndex('httpListeners')]).hostNames]",
                                 "protocol": "[union(variables('defaultResourceProperties').httpListener, parameters('httpListeners')[copyIndex('httpListeners')]).protocol]",
-                                "requiresServerNameIndication": "[union(variables('defaultResourceProperties').httpListener, parameters('httpListeners')[copyIndex('httpListeners')]).isServerNameIndicationRequired]"
+                                "requireServerNameIndication": "[union(variables('defaultResourceProperties').httpListener, parameters('httpListeners')[copyIndex('httpListeners')]).isServerNameIndicationRequired]"
                             }
                         },
                         "name": "httpListeners"
@@ -281,18 +281,18 @@
                     {
                         "count": "[length(parameters('routingRules'))]",
                         "input": {
-                            "name": "[parameters('httpListeners')[copyIndex('requestRoutingRules')].name]",
+                            "name": "[parameters('routingRules')[copyIndex('requestRoutingRules')].name]",
                             "properties": {
                                 "backendAddressPool": {
-                                    "id": "[format('{0}/backendAddressPools/{1}', variables('resourceIds').applicationGateway, parameters('httpListeners')[copyIndex('requestRoutingRules')].backend.addressPoolName)]"
+                                    "id": "[format('{0}/backendAddressPools/{1}', variables('resourceIds').applicationGateway, parameters('routingRules')[copyIndex('requestRoutingRules')].backend.addressPoolName)]"
                                 },
                                 "backendHttpSettings": {
-                                    "id": "[format('{0}/backendAddressPools/{1}', variables('resourceIds').applicationGateway, parameters('httpListeners')[copyIndex('requestRoutingRules')].backend.httpSettingName)]"
+                                    "id": "[format('{0}/backendHttpSettingsCollection/{1}', variables('resourceIds').applicationGateway, parameters('routingRules')[copyIndex('requestRoutingRules')].backend.httpSettingName)]"
                                 },
                                 "httpListener": {
-                                    "id": "[format('{0}/backendAddressPools/{1}', variables('resourceIds').applicationGateway, parameters('httpListeners')[copyIndex('requestRoutingRules')].httpListenerName)]"
+                                    "id": "[format('{0}/httpListeners/{1}', variables('resourceIds').applicationGateway, parameters('routingRules')[copyIndex('requestRoutingRules')].httpListenerName)]"
                                 },
-                                "ruleType": "[parameters('httpListeners')[copyIndex('requestRoutingRules')].type]"
+                                "ruleType": "[parameters('routingRules')[copyIndex('requestRoutingRules')].type]"
                             }
                         },
                         "name": "requestRoutingRules"

@@ -126,7 +126,7 @@
             "containerInstances": [],
             "containerRegistries": [],
             "cosmosDbAccounts": [],
-            "ddosProtectionPlan": [],
+            "ddosProtectionPlans": [],
             "deployments": [],
             "diskEncryptionSets": [],
             "dnsZones": {
@@ -969,7 +969,7 @@
             "virtualMachine": "[format('{0}-VirtualMachine', deployment().name)]",
             "virtualMachineScaleSet": "[format('{0}-VirtualMachineScaleSets', deployment().name)]",
             "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]",
-            "virtualNetworkGateway": "[format('{0}-VNetworkGateway', deployment().name)]",
+            "virtualNetworkGateway": "[format('{0}-VNetGateway', deployment().name)]",
             "virtualNetworkGatewayConfiguration": "[format('{0}-VNetGatewayConfig', deployment().name)]",
             "virtualWan": "[format('{0}-VirtualWan', deployment().name)]",
             "webApplication": "[format('{0}-WebApplication', deployment().name)]"
@@ -1908,7 +1908,7 @@
                 "subnetsCopy",
                 "virtualNetworksCopy"
             ],
-            "name": "[format('{0}_{1}', variables('deploymentNames').virtualNetworkGateway, copyIndex())]",
+            "name": "[format('{0}_{1}', variables('deploymentNames').applicationGateway, copyIndex())]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
