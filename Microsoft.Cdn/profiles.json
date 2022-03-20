@@ -78,7 +78,9 @@
                 "isHttpEnabled": false,
                 "isHttpsEnabled": true,
                 "originHostHeader": "",
-                "queryStringCachingBehavior": "IgnoreQueryString"
+                "originPath": "[null()]",
+                "queryStringCachingBehavior": "IgnoreQueryString",
+                "rules": []
             }
         },
         "frontDoorDiagnosticsLogs": [
@@ -165,10 +167,12 @@
                         "name": "origins"
                     }
                 ],
+                "deliveryPolicy": "[if(variables('isVerizonCdn'), null(), createObject('rules', union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).rules))]",
                 "isCompressionEnabled": "[if(variables('isVerizonCdn'), null(), union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).isCompressionEnabled)]",
                 "isHttpAllowed": "[if(variables('isVerizonCdn'), null(), union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).isHttpEnabled)]",
                 "isHttpsAllowed": "[if(variables('isVerizonCdn'), null(), union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).isHttpsEnabled)]",
                 "originHostHeader": "[union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).originHostHeader]",
+                "originPath": "[union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).originPath]",
                 "queryStringCachingBehavior": "[if(variables('isVerizonCdn'), null(), union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).queryStringCachingBehavior)]"
             },
             "tags": "[parameters('tags')]",
@@ -183,7 +187,7 @@
             "location": "global",
             "name": "[format('{0}/Microsoft.Insights/audit', parameters('name'))]",
             "properties": {
-                "logs": "[if(endsWith(parameters('skuName'), 'AzureFrontDoor'), variables('frontDoorDiagnosticsLogs'), variables('microsoftDiagnosticsLogs'))]",
+                "logs": "[if(variables('isVerizonCdn'), createArray(), if(endsWith(parameters('skuName'), 'AzureFrontDoor'), variables('frontDoorDiagnosticsLogs'), variables('microsoftDiagnosticsLogs')))]",
                 "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
             },
             "type": "Microsoft.Cdn/profiles/providers/diagnosticsettings"

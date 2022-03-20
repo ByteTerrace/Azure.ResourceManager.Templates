@@ -1,0 +1,341 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "audit": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the audit settings that will be applied to the Azure Application Gateway."
+            },
+            "type": "object"
+        },
+        "availabilityZones": {
+            "defaultValue": [
+                1,
+                2,
+                3
+            ],
+            "metadata": {
+                "description": "Specifies an array of availability zones that the Azure Application Gateway will be deployed within."
+            },
+            "type": "array"
+        },
+        "backend": {
+            "metadata": {
+                "description": "An object that encapsulates the backend settings that will be applied to the Azure Application Gateway."
+            },
+            "type": "object"
+        },
+        "frontend": {
+            "metadata": {
+                "description": "An object that encapsulates the frontend settings that will be applied to the Azure Application Gateway."
+            },
+            "type": "object"
+        },
+        "httpListeners": {
+            "metadata": {
+                "description": "An array of HTTP listeners that will be created within the Azure Application Gateway."
+            },
+            "type": "array"
+        },
+        "identity": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "An object that encapsulates the properties of the identity that will be assigned to the Azure Application Gateway."
+            },
+            "type": "object"
+        },
+        "isHttp20SupportEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether support for the HTTP 2.0 network protocol is enabled on the Azure Application Gateway."
+            },
+            "type": "bool"
+        },
+        "isMinimalSslCipherSuiteConfigurationEnabled": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether the the Azure Application Gateway will be configured to only support the set of SSL cipher suites that are required in order to function."
+            },
+            "type": "bool"
+        },
+        "location": {
+            "metadata": {
+                "description": "Specifies the location in which the Azure Application Gateway resource(s) should be deployed."
+            },
+            "type": "string"
+        },
+        "name": {
+            "metadata": {
+                "description": "Specifies the name of the Azure Application Gateway."
+            },
+            "type": "string"
+        },
+        "routingRules": {
+            "metadata": {
+                "description": "An array of routing rules that will be created within the Azure Application Gateway."
+            },
+            "type": "array"
+        },
+        "skuName": {
+            "allowedValues": [
+                "Standard_v2"
+            ],
+            "defaultValue": "Standard_v2",
+            "metadata": {
+                "description": "Specifies the SKU name of the Azure Application Gateway."
+            },
+            "type": "string"
+        },
+        "tags": {
+            "defaultValue": {},
+            "metadata": {
+                "description": "Specifies the set of tag key-value pairs that will be assigned to the Azure Application Gateway."
+            },
+            "type": "object"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "applicationGateways": "2021-05-01",
+            "diagnosticSettings": "2017-05-01-preview"
+        },
+        "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
+        "copy": [
+            {
+                "count": "[length(parameters('frontend').ipConfigurations)]",
+                "input": {
+                    "name": "[format('frontendPrivateIp_{0}', if(empty(union(variables('defaultResourceProperties').ipConfiguration, parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).name), copyIndex('privateIpConfigurations'), parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')].name))]",
+                    "properties": {
+                        "privateIPAddress": "[union(variables('defaultResourceProperties').ipConfiguration, parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.value]",
+                        "privateIPAllocationMethod": "[if(empty(union(variables('defaultResourceProperties').ipConfiguration, parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.value), 'Dynamic', 'Static')]",
+                        "subnet": {
+                            "id": "[resourceId(union(variables('defaultResourceProperties').ipConfiguration, parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.subnet.subscriptionId, union(variables('defaultResourceProperties').ipConfiguration, parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')]).privateIpAddress.subnet.resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')].privateIpAddress.subnet.virtualNetworkName, parameters('frontend').ipConfigurations[copyIndex('privateIpConfigurations')].privateIpAddress.subnet.name)]"
+                        }
+                    }
+                },
+                "name": "privateIpConfigurations"
+            },
+            {
+                "count": "[length(parameters('frontend').ipConfigurations)]",
+                "input": {
+                    "name": "[format('frontendPublicIp_{0}', if(empty(union(variables('defaultResourceProperties').ipConfiguration, parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')]).name), copyIndex('publicIpConfigurations'), parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')].name))]",
+                    "properties": {
+                        "publicIPAddress": {
+                            "id": "[resourceId(union(variables('defaultResourceProperties').ipConfiguration, parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')]).publicIpAddress.subscriptionId, union(variables('defaultResourceProperties').ipConfiguration, parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')]).publicIpAddress.resourceGroupName, 'Microsoft.Network/publicIPAddresses', parameters('frontend').ipConfigurations[copyIndex('publicIpConfigurations')].publicIpAddress.name)]"
+                        }
+                    }
+                },
+                "name": "publicIpConfigurations"
+            }
+        ],
+        "defaultResourceProperties": {
+            "audit": {
+                "isEnabled": true,
+                "logAnalyticsWorkspace": {
+                    "name": "",
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "logNames": [
+                    "ApplicationGatewayAccessLog",
+                    "ApplicationGatewayFirewallLog",
+                    "ApplicationGatewayPerformanceLog"
+                ],
+                "retentionPolicy": {
+                    "days": 137,
+                    "isEnabled": true
+                }
+            },
+            "backendHttpSetting": {
+                "isCookieBasedAffinityEnabled": false,
+                "isPickHostNameFromBackendAddressEnabled": false,
+                "requestTimeoutInSeconds": 17,
+                "port": 80,
+                "protocol": "Http"
+            },
+            "httpListener": {
+                "frontendIpConfigurationName": "",
+                "hostNames": [],
+                "isServerNameIndicationRequired": false,
+                "port": 80,
+                "protocol": "Http"
+            },
+            "identity": {
+                "isEnabled": false,
+                "type": "[if(greater(variables('userAssignedIdentitiesCount'), 0), 'UserAssigned', 'SystemAssigned')]",
+                "userAssignedIdentities": []
+            },
+            "ipConfiguration": {
+                "name": "",
+                "privateIpAddress": {
+                    "allocationMethod": "Dynamic",
+                    "subnet": {
+                        "resourceGroupName": "[variables('resourceGroupName')]",
+                        "subscriptionId": "[variables('subscriptionId')]"
+                    },
+                    "value": "[null()]"
+                },
+                "publicIpAddress": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                }
+            },
+            "userAssignedIdentity": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            }
+        },
+        "identity": "[union(variables('defaultResourceProperties').identity, parameters('identity'))]",
+        "isAuditEnabled": "[variables('audit').isEnabled]",
+        "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "minimalSslCipherSuiteConfiguration": {
+            "cipherSuites": [
+                "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+                "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+            ],
+            "minProtocolVersion": "TLSv1_2",
+            "policyType": "Custom"
+        },
+        "resourceGroupName": "[resourceGroup().name]",
+        "resourceIds": {
+            "applicationGateway": "[resourceId('Microsoft.Network/applicationGateways', parameters('name'))]",
+            "auditLogAnalyticsWorkspace": "[resourceId(variables('audit').logAnalyticsWorkspace.subscriptionId, variables('audit').logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', if(variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'), variables('audit').logAnalyticsWorkspace.name, '<NULL>'))]"
+        },
+        "subscriptionId": "[subscription().subscriptionId]",
+        "userAssignedIdentitiesCount": "[length(union(createObject('userAssignedIdentities', createArray()), parameters('identity')).userAssignedIdentities)]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersions').applicationGateways]",
+            "identity": "[if(variables('identity').isEnabled, union(createObject('type', union(variables('defaultResourceProperties').identity, parameters('identity')).type), if(contains(variables('identity').type, 'UserAssigned'), createObject('userAssignedIdentities', json(replace(replace(replace(string(variables('userAssignedIdentitiesWithResourceId')), ',', ':{},'), '[', '{'), ']', ':{}}'))), createObject())), null())]",
+            "location": "[parameters('location')]",
+            "name": "[parameters('name')]",
+            "properties": {
+                "autoscaleConfiguration": {
+                    "maxCapacity": 10,
+                    "minCapacity": 0
+                },
+                "copy": [
+                    {
+                        "count": "[length(parameters('backend').addressPools)]",
+                        "input": {
+                            "name": "[parameters('backend').addressPools[copyIndex('backendAddressPools')].name]"
+                        },
+                        "name": "backendAddressPools"
+                    },
+                    {
+                        "count": "[length(parameters('backend').httpSettings)]",
+                        "input": {
+                            "name": "[parameters('backend').httpSettings[copyIndex('backendHttpSettingsCollection')].name]",
+                            "properties": {
+                                "cookieBasedAffinity": "[if(union(variables('defaultResourceProperties').backendHttpSetting, parameters('backend').httpSettings[copyIndex('backendHttpSettingsCollection')]).isCookieBasedAffinityEnabled, 'Enabled', 'Disabled')]",
+                                "pickHostNameFromBackendAddress": "[union(variables('defaultResourceProperties').backendHttpSetting, parameters('backend').httpSettings[copyIndex('backendHttpSettingsCollection')]).isPickHostNameFromBackendAddressEnabled]",
+                                "port": "[union(variables('defaultResourceProperties').backendHttpSetting, parameters('backend').httpSettings[copyIndex('backendHttpSettingsCollection')]).port]",
+                                "protocol": "[union(variables('defaultResourceProperties').backendHttpSetting, parameters('backend').httpSettings[copyIndex('backendHttpSettingsCollection')]).protocol]",
+                                "requestTimeout": "[union(variables('defaultResourceProperties').backendHttpSetting, parameters('backend').httpSettings[copyIndex('backendHttpSettingsCollection')]).requestTimeoutInSeconds]"
+                            }
+                        },
+                        "name": "backendHttpSettingsCollection"
+                    },
+                    {
+                        "count": "[length(parameters('frontend').ports)]",
+                        "input": {
+                            "name": "[format('frontendPort_{0}', parameters('frontend').ports[copyIndex('frontendPorts')])]",
+                            "properties": {
+                                "port": "[parameters('frontend').ports[copyIndex('frontendPorts')]]"
+                            }
+                        },
+                        "name": "frontendPorts"
+                    },
+                    {
+                        "count": 1,
+                        "input": {
+                            "name": "[format('gatewayIpConfiguration_{0}', copyIndex('gatewayIPConfigurations'))]",
+                            "properties": {
+                                "subnet": {
+                                    "id": "[first(variables('privateIpConfigurations')).properties.subnet.id]"
+                                }
+                            }
+                        },
+                        "name": "gatewayIPConfigurations"
+                    },
+                    {
+                        "count": "[length(parameters('httpListeners'))]",
+                        "input": {
+                            "name": "[parameters('httpListeners')[copyIndex('httpListeners')].name]",
+                            "properties": {
+                                "frontendIPConfiguration": {
+                                    "id": "[format('{0}/frontendIPConfigurations/{1}', variables('resourceIds').applicationGateway, if(empty(union(variables('defaultResourceProperties').httpListener, parameters('httpListeners')[copyIndex('httpListeners')]).frontendIpConfigurationName), if(empty(variables('privateIpConfigurations')), first(variables('publicIpConfigurations')).name, first(variables('privateIpConfigurations')).name), parameters('httpListeners')[copyIndex('httpListeners')].frontendIpConfigurationName))]"
+                                },
+                                "frontendPort": {
+                                    "id": "[format('{0}/frontendPorts/frontendPort_{1}', variables('resourceIds').applicationGateway, union(variables('defaultResourceProperties').httpListener, parameters('httpListeners')[copyIndex('httpListeners')]).port)]"
+                                },
+                                "hostNames": "[union(variables('defaultResourceProperties').httpListener, parameters('httpListeners')[copyIndex('httpListeners')]).hostNames]",
+                                "protocol": "[union(variables('defaultResourceProperties').httpListener, parameters('httpListeners')[copyIndex('httpListeners')]).protocol]",
+                                "requireServerNameIndication": "[union(variables('defaultResourceProperties').httpListener, parameters('httpListeners')[copyIndex('httpListeners')]).isServerNameIndicationRequired]"
+                            }
+                        },
+                        "name": "httpListeners"
+                    },
+                    {
+                        "count": "[length(parameters('routingRules'))]",
+                        "input": {
+                            "name": "[parameters('routingRules')[copyIndex('requestRoutingRules')].name]",
+                            "properties": {
+                                "backendAddressPool": {
+                                    "id": "[format('{0}/backendAddressPools/{1}', variables('resourceIds').applicationGateway, parameters('routingRules')[copyIndex('requestRoutingRules')].backend.addressPoolName)]"
+                                },
+                                "backendHttpSettings": {
+                                    "id": "[format('{0}/backendHttpSettingsCollection/{1}', variables('resourceIds').applicationGateway, parameters('routingRules')[copyIndex('requestRoutingRules')].backend.httpSettingName)]"
+                                },
+                                "httpListener": {
+                                    "id": "[format('{0}/httpListeners/{1}', variables('resourceIds').applicationGateway, parameters('routingRules')[copyIndex('requestRoutingRules')].httpListenerName)]"
+                                },
+                                "ruleType": "[parameters('routingRules')[copyIndex('requestRoutingRules')].type]"
+                            }
+                        },
+                        "name": "requestRoutingRules"
+                    }
+                ],
+                "enableHttp2": "[parameters('isHttp20SupportEnabled')]",
+                "frontendIPConfigurations": "[union(variables('privateIpConfigurations'), variables('publicIpConfigurations'))]",
+                "sku": {
+                    "name": "[parameters('skuName')]",
+                    "tier": "[parameters('skuName')]"
+                },
+                "sslPolicy": "[if(parameters('isMinimalSslCipherSuiteConfigurationEnabled'), variables('minimalSslCipherSuiteConfiguration'), null())]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Network/applicationGateways",
+            "zones": "[if(empty(parameters('availabilityZones')), null(), parameters('availabilityZones'))]"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').diagnosticSettings]",
+            "condition": "[or(variables('isAuditEnabled'), variables('isAuditLogAnalyticsWorkspaceNameNotEmpty'))]",
+            "dependsOn": [
+                "[variables('resourceIds').applicationGateway]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[format('{0}/Microsoft.Insights/audit', parameters('name'))]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(variables('audit').logNames)]",
+                        "input": {
+                            "category": "[variables('audit').logNames[copyIndex('logs')]]",
+                            "enabled": "[variables('isAuditEnabled')]",
+                            "retentionPolicy": {
+                                "days": "[variables('audit').retentionPolicy.days]",
+                                "enabled": "[variables('audit').retentionPolicy.isEnabled]"
+                            }
+                        },
+                        "name": "logs"
+                    }
+                ],
+                "workspaceId": "[variables('resourceIds').auditLogAnalyticsWorkspace]"
+            },
+            "type": "Microsoft.Network/applicationGateways/providers/diagnosticsettings"
+        }
+    ]
+}

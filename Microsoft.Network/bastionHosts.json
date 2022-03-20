@@ -111,12 +111,12 @@
             },
             "privateIpAllocationMethod": "Dynamic",
             "publicIpAddress": {
-                "resourceGroupName": "[resourceGroup().name]",
-                "subscriptionId": "[subscription().subscriptionId]"
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
             },
             "subnet": {
-                "resourceGroupName": "[resourceGroup().name]",
-                "subscriptionId": "[subscription().subscriptionId]"
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
             }
         },
         "isAuditEnabled": "[variables('audit').isEnabled]",

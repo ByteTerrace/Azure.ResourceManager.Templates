@@ -114,6 +114,7 @@
         "contentVersion": "[deployment().properties.template.contentVersion]",
         "defaultResourceDefinitions": {
             "applicationConfigurationStores": [],
+            "applicationGateways": [],
             "applicationSecurityGroups": [],
             "applicationServiceEnvironments": [],
             "applicationServicePlans": [],
@@ -125,6 +126,7 @@
             "containerInstances": [],
             "containerRegistries": [],
             "cosmosDbAccounts": [],
+            "ddosProtectionPlans": [],
             "deployments": [],
             "diskEncryptionSets": [],
             "dnsZones": {
@@ -142,6 +144,10 @@
                 "clusters": [],
                 "hubs": [],
                 "namespaces": []
+            },
+            "expressRoute": {
+                "circuits": [],
+                "gateways": []
             },
             "firewalls": [],
             "hdInsightClusters": [],
@@ -201,6 +207,19 @@
                 "privateEndpoints": [],
                 "settings": {},
                 "skuName": "Standard",
+                "tags": "[parameters('tags')]"
+            },
+            "applicationGateway": {
+                "audit": "[variables('audit')]",
+                "availabilityZones": [
+                    1,
+                    2,
+                    3
+                ],
+                "identity": {},
+                "isHttp20SupportEnabled": true,
+                "isMinimalSslCipherSuiteConfigurationEnabled": true,
+                "skuName": "Standard_v2",
                 "tags": "[parameters('tags')]"
             },
             "applicationSecurityGroup": {
@@ -309,6 +328,9 @@
                 "tags": "[parameters('tags')]",
                 "virtualNetworkRules": []
             },
+            "ddosProtectionPlan": {
+                "tags": "[parameters('tags')]"
+            },
             "deployment": {
                 "contentVersion": "[variables('contentVersion')]",
                 "parameters": {
@@ -405,6 +427,15 @@
                     "virtualNetworkRules": []
                 }
             },
+            "expressRoute": {
+                "circuit": {
+                    "skuName": "Standard_MeteredData",
+                    "tags": "[parameters('tags')]"
+                },
+                "gateway": {
+                    "tags": "[parameters('tags')]"
+                }
+            },
             "firewall": {
                 "availabilityZones": [
                     1,
@@ -466,6 +497,7 @@
                 "dnsPrefix": "",
                 "dnsZone": {},
                 "identity": {},
+                "isAzureKeyVaultEnabled": true,
                 "isAzurePolicyEnabled": true,
                 "isHttpApplicationRoutingEnabled": false,
                 "isPrivateEndpointEnabled": false,
@@ -571,9 +603,9 @@
                 "allocationMethod": "Static",
                 "audit": "[variables('audit')]",
                 "availabilityZones": [
-                    "1",
-                    "2",
-                    "3"
+                    1,
+                    2,
+                    3
                 ],
                 "dnsPrefix": "",
                 "idleTimeoutInMinutes": 4,
@@ -635,6 +667,7 @@
                     "firewallRules": [],
                     "identity": {},
                     "isAllowTrustedMicrosoftServicesEnabled": false,
+                    "isLocalAuthenticationEnabled": false,
                     "isPublicNetworkAccessEnabled": false,
                     "isZoneRedundant": true,
                     "privateEndpoints": [],
@@ -814,9 +847,7 @@
             },
             "virtualNetwork": {
                 "addressPrefixes": [],
-                "ddosProtectionPlanName": "",
-                "ddosProtectionPlanResourceGroupName": "[variables('resourceGroupName')]",
-                "ddosProtectionPlanSubscriptionId": "[variables('subscriptionId')]",
+                "ddosProtectionPlan": {},
                 "dnsServers": [],
                 "subnets": [],
                 "tags": "[parameters('tags')]"
@@ -850,6 +881,7 @@
                 "tags": "[parameters('tags')]"
             },
             "webApplication": {
+                "applicationConfigurationStore": {},
                 "applicationInsights": {},
                 "audit": "[variables('audit')]",
                 "autoHeal": {},
@@ -885,6 +917,7 @@
         },
         "deploymentNames": {
             "applicationConfigurationStore": "[format('{0}-AppConfigurationStore', deployment().name)]",
+            "applicationGateway": "[format('{0}-AppGateway', deployment().name)]",
             "applicationInsightsComponent": "[format('{0}-AppInsightsComponent', deployment().name)]",
             "applicationSecurityGroup": "[format('{0}-AppSecurityGroup', deployment().name)]",
             "applicationServiceEnvironment": "[format('{0}-AppServiceEnvironment', deployment().name)]",
@@ -897,6 +930,7 @@
             "containerInstance": "[format('{0}-ContainerInstance', deployment().name)]",
             "containerRegistry": "[format('{0}-ContainerRegistry', deployment().name)]",
             "cosmosDbAccount": "[format('{0}-CosmosDbAccount', deployment().name)]",
+            "ddosProtectionPlan": "[format('{0}-DdosProtectionPlan', deployment().name)]",
             "deployment": "[format('{0}-Deployment', deployment().name)]",
             "diskEncryptionSet": "[format('{0}-DiskEncryptionSet', deployment().name)]",
             "dnsPrivateZone": "[format('{0}-DnsPrivateZone', deployment().name)]",
@@ -909,6 +943,8 @@
             "eventHubCluster": "[format('{0}-EventHubCluster', deployment().name)]",
             "eventHub": "[format('{0}-EventHub', deployment().name)]",
             "eventHubNamespace": "[format('{0}-EventHubNamespace', deployment().name)]",
+            "expressRouteCircuit": "[format('{0}-ExpressRouteCircuit', deployment().name)]",
+            "expressRouteGateway": "[format('{0}-ExpressRouteGateway', deployment().name)]",
             "firewall": "[format('{0}-Firewall', deployment().name)]",
             "hdInsightCluster": "[format('{0}-HdInsightCluster', deployment().name)]",
             "hostGroup": "[format('{0}-HostGroup', deployment().name)]",
@@ -946,7 +982,7 @@
             "virtualMachine": "[format('{0}-VirtualMachine', deployment().name)]",
             "virtualMachineScaleSet": "[format('{0}-VirtualMachineScaleSets', deployment().name)]",
             "virtualNetwork": "[format('{0}-VirtualNetwork', deployment().name)]",
-            "virtualNetworkGateway": "[format('{0}-VNetworkGateway', deployment().name)]",
+            "virtualNetworkGateway": "[format('{0}-VNetGateway', deployment().name)]",
             "virtualNetworkGatewayConfiguration": "[format('{0}-VNetGatewayConfig', deployment().name)]",
             "virtualWan": "[format('{0}-VirtualWan', deployment().name)]",
             "webApplication": "[format('{0}-WebApplication', deployment().name)]"
@@ -1547,6 +1583,76 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').ddosProtectionPlans))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').ddosProtectionPlans)]",
+                "mode": "Parallel",
+                "name": "ddosProtectionPlansCopy"
+            },
+            "dependsOn": [
+                "scriptsPreDeployCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').ddosProtectionPlan, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').ddosProtectionPlans[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').ddosProtectionPlans[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[union(variables('defaultResourceProperties').ddosProtectionPlan, variables('resourceDefinitions').ddosProtectionPlans[copyIndex()]).tags]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Network/ddosProtectionPlans.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').expressRoute.circuits))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').expressRoute.circuits)]",
+                "mode": "Parallel",
+                "name": "expressRouteCircuitsCopy"
+            },
+            "dependsOn": [
+                "scriptsPreDeployCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').expressRouteCircuit, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').expressRoute.circuits[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').expressRoute.circuits[copyIndex()].name]"
+                    },
+                    "serviceProvider": {
+                        "value": "[variables('resourceDefinitions').expressRoute.circuits[copyIndex()].serviceProvider]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').expressRoute.circuit, variables('resourceDefinitions').expressRoute.circuits[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[union(variables('defaultResourceProperties').expressRoute.circuit, variables('resourceDefinitions').expressRoute.circuits[copyIndex()]).tags]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Network/expressRouteCircuits.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
             "condition": "[not(empty(variables('resourceDefinitions').routeTables))]",
             "copy": {
                 "count": "[length(variables('resourceDefinitions').routeTables)]",
@@ -1631,6 +1737,7 @@
                 "name": "virtualNetworksCopy"
             },
             "dependsOn": [
+                "ddosProtectionPlansCopy",
                 "natGatewaysCopy",
                 "networkSecurityGroupsCopy",
                 "routeTablesCopy",
@@ -1643,14 +1750,8 @@
                     "addressPrefixes": {
                         "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).addressPrefixes]"
                     },
-                    "ddosProtectionPlanName": {
-                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).ddosProtectionPlanName]"
-                    },
-                    "ddosProtectionPlanResourceGroupName": {
-                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).ddosProtectionPlanResourceGroupName]"
-                    },
-                    "ddosProtectionPlanSubscriptionId": {
-                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).ddosProtectionPlanSubscriptionId]"
+                    "ddosProtectionPlan": {
+                        "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).ddosProtectionPlan]"
                     },
                     "dnsServers": {
                         "value": "[union(variables('defaultResourceProperties').virtualNetwork, variables('resourceDefinitions').virtualNetworks[copyIndex()]).dnsServers]"
@@ -1702,19 +1803,58 @@
                     "name": {
                         "value": "[variables('resourceDefinitions').virtualHubs[copyIndex()].name]"
                     },
+                    "tags": {
+                        "value": "[union(variables('defaultResourceProperties').virtualHub, variables('resourceDefinitions').virtualHubs[copyIndex()]).tags]"
+                    },
                     "virtualNetworks": {
                         "value": "[union(variables('defaultResourceProperties').virtualHub, variables('resourceDefinitions').virtualHubs[copyIndex()]).virtualNetworks]"
                     },
                     "virtualWan": {
                         "value": "[union(variables('defaultResourceProperties').virtualHub, variables('resourceDefinitions').virtualHubs[copyIndex()]).virtualWan]"
-                    },
-                    "tags": {
-                        "value": "[union(variables('defaultResourceProperties').virtualHub, variables('resourceDefinitions').virtualHubs[copyIndex()]).tags]"
                     }
                 },
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/virtualHubs.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').expressRoute.gateways))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').expressRoute.gateways)]",
+                "mode": "Parallel",
+                "name": "expressRouteGatewaysCopy"
+            },
+            "dependsOn": [
+                "scriptsPreDeployCopy",
+                "virtualHubsCopy",
+                "virtualNetworkGatewayConfigurationsCopy",
+                "virtualNetworksCopy",
+                "virtualWansCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').expressRouteGateway, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').expressRoute.gateways[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').expressRoute.gateways[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[union(variables('defaultResourceProperties').expressRoute.gateway, variables('resourceDefinitions').expressRoute.gateways[copyIndex()]).tags]"
+                    },
+                    "virtualHub": {
+                        "value": "[variables('resourceDefinitions').expressRoute.gateways[copyIndex()].virtualHub]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Network/expressRouteGateways.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -1785,6 +1925,10 @@
                 "name": "subnetsCopy"
             },
             "dependsOn": [
+                "ddosProtectionPlansCopy",
+                "natGatewaysCopy",
+                "networkSecurityGroupsCopy",
+                "routeTablesCopy",
                 "scriptsPreDeployCopy",
                 "virtualNetworksCopy"
             ],
@@ -1803,9 +1947,6 @@
                     },
                     "isPrivateLinkServiceSupportEnabled": {
                         "value": "[union(variables('defaultResourceProperties').subnet, variables('resourceDefinitions').subnets[copyIndex()]).isPrivateLinkServiceSupportEnabled]"
-                    },
-                    "location": {
-                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').subnets[copyIndex()]).location]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').subnets[copyIndex()].name]"
@@ -1833,6 +1974,73 @@
             },
             "resourceGroup": "[union(variables('defaultResourceProperties').subnet, variables('resourceDefinitions').subnets[copyIndex()]).virtualNetwork.resourceGroupName]",
             "subscriptionId": "[union(variables('defaultResourceProperties').subnet, variables('resourceDefinitions').subnets[copyIndex()]).virtualNetwork.subscriptionId]",
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').applicationGateways))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').applicationGateways)]",
+                "mode": "Parallel",
+                "name": "applicationGatewaysCopy"
+            },
+            "dependsOn": [
+                "logAnalyticsWorkspacesCopy",
+                "publicIpAddressesCopy",
+                "publicIpPrefixesCopy",
+                "scriptsPreDeployCopy",
+                "subnetsCopy",
+                "virtualNetworksCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').applicationGateway, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').applicationGateways[copyIndex()]).audit]"
+                    },
+                    "availabilityZones": {
+                        "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').applicationGateways[copyIndex()]).availabilityZones]"
+                    },
+                    "backend": {
+                        "value": "[variables('resourceDefinitions').applicationGateways[copyIndex()].backend]"
+                    },
+                    "frontend": {
+                        "value": "[variables('resourceDefinitions').applicationGateways[copyIndex()].frontend]"
+                    },
+                    "httpListeners": {
+                        "value": "[variables('resourceDefinitions').applicationGateways[copyIndex()].httpListeners]"
+                    },
+                    "identity": {
+                        "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').applicationGateways[copyIndex()]).identity]"
+                    },
+                    "isHttp20SupportEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').applicationGateways[copyIndex()]).isHttp20SupportEnabled]"
+                    },
+                    "isMinimalSslCipherSuiteConfigurationEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').applicationGateways[copyIndex()]).isMinimalSslCipherSuiteConfigurationEnabled]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').applicationGateways[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').applicationGateways[copyIndex()].name]"
+                    },
+                    "routingRules": {
+                        "value": "[variables('resourceDefinitions').applicationGateways[copyIndex()].routingRules]"
+                    },
+                    "skuName": {
+                        "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').applicationGateways[copyIndex()]).skuName]"
+                    },
+                    "tags": {
+                        "value": "[union(variables('defaultResourceProperties').applicationGateway, variables('resourceDefinitions').applicationGateways[copyIndex()]).tags]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.Network/applicationGateways.json"
+                }
+            },
             "type": "Microsoft.Resources/deployments"
         },
         {
@@ -4019,6 +4227,9 @@
                     "identity": {
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).identity]"
                     },
+                    "isAzureKeyVaultEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).isAzureKeyVaultEnabled]"
+                    },
                     "isAzurePolicyEnabled": {
                         "value": "[union(variables('defaultResourceProperties').kubernetesServiceCluster, variables('resourceDefinitions').kubernetesServiceClusters[copyIndex()]).isAzurePolicyEnabled]"
                     },
@@ -4387,6 +4598,9 @@
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
+                    "applicationConfigurationStore": {
+                        "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).applicationConfigurationStore]"
+                    },
                     "applicationInsights": {
                         "value": "[union(variables('defaultResourceProperties').webApplication, variables('resourceDefinitions').webApplications[copyIndex()]).applicationInsights]"
                     },
@@ -4552,6 +4766,7 @@
             },
             "dependsOn": [
                 "applicationConfigurationStoresCopy",
+                "applicationGatewaysCopy",
                 "applicationInsightsComponentsCopy",
                 "applicationSecurityGroupsCopy",
                 "applicationServiceEnvironmentsCopy",
@@ -4564,6 +4779,7 @@
                 "containerInstancesCopy",
                 "containerRegistriesCopy",
                 "cosmosDbAccountsCopy",
+                "ddosProtectionPlansCopy",
                 "diskEncryptionSetsCopy",
                 "eventGridDomainsCopy",
                 "eventGridEventSubcriptionsCopy",
@@ -4571,6 +4787,8 @@
                 "eventHubsClustersCopy",
                 "eventHubsCopy",
                 "eventHubsNamespacesCopy",
+                "expressRouteCircuitsCopy",
+                "expressRouteGatewaysCopy",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
                 "hostGroupsCopy",
@@ -4646,6 +4864,7 @@
             },
             "dependsOn": [
                 "applicationConfigurationStoresCopy",
+                "applicationGatewaysCopy",
                 "applicationInsightsComponentsCopy",
                 "applicationSecurityGroupsCopy",
                 "applicationServiceEnvironmentsCopy",
@@ -4658,6 +4877,7 @@
                 "containerInstancesCopy",
                 "containerRegistriesCopy",
                 "cosmosDbAccountsCopy",
+                "ddosProtectionPlansCopy",
                 "diskEncryptionSetsCopy",
                 "eventGridDomainsCopy",
                 "eventGridEventSubcriptionsCopy",
@@ -4665,6 +4885,8 @@
                 "eventHubsClustersCopy",
                 "eventHubsCopy",
                 "eventHubsNamespacesCopy",
+                "expressRouteCircuitsCopy",
+                "expressRouteGatewaysCopy",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
                 "hostGroupsCopy",
@@ -4748,6 +4970,7 @@
             },
             "dependsOn": [
                 "applicationConfigurationStoresCopy",
+                "applicationGatewaysCopy",
                 "applicationInsightsComponentsCopy",
                 "applicationSecurityGroupsCopy",
                 "applicationServiceEnvironmentsCopy",
@@ -4760,6 +4983,7 @@
                 "containerInstancesCopy",
                 "containerRegistriesCopy",
                 "cosmosDbAccountsCopy",
+                "ddosProtectionPlansCopy",
                 "diskEncryptionSetsCopy",
                 "eventGridDomainsCopy",
                 "eventGridEventSubcriptionsCopy",
@@ -4768,6 +4992,8 @@
                 "eventHubsClustersCopy",
                 "eventHubsCopy",
                 "eventHubsNamespacesCopy",
+                "expressRouteCircuitsCopy",
+                "expressRouteGatewaysCopy",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
                 "hostGroupsCopy",
@@ -4843,6 +5069,7 @@
             "condition": "[not(empty(variables('resourceDefinitions').deployments))]",
             "dependsOn": [
                 "applicationConfigurationStoresCopy",
+                "applicationGatewaysCopy",
                 "applicationInsightsComponentsCopy",
                 "applicationSecurityGroupsCopy",
                 "applicationServiceEnvironmentsCopy",
@@ -4855,6 +5082,7 @@
                 "containerInstancesCopy",
                 "containerRegistriesCopy",
                 "cosmosDbAccountsCopy",
+                "ddosProtectionPlansCopy",
                 "diskEncryptionSetsCopy",
                 "eventGridDomainsCopy",
                 "eventGridEventSubcriptionsCopy",
@@ -4864,6 +5092,8 @@
                 "eventHubsClustersCopy",
                 "eventHubsCopy",
                 "eventHubsNamespacesCopy",
+                "expressRouteCircuitsCopy",
+                "expressRouteGatewaysCopy",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
                 "hostGroupsCopy",
@@ -4935,6 +5165,7 @@
             },
             "dependsOn": [
                 "applicationConfigurationStoresCopy",
+                "applicationGatewaysCopy",
                 "applicationInsightsComponentsCopy",
                 "applicationSecurityGroupsCopy",
                 "applicationServiceEnvironmentsCopy",
@@ -4947,6 +5178,7 @@
                 "containerInstancesCopy",
                 "containerRegistriesCopy",
                 "cosmosDbAccountsCopy",
+                "ddosProtectionPlansCopy",
                 "diskEncryptionSetsCopy",
                 "eventGridDomainsCopy",
                 "eventGridEventSubcriptionsCopy",
@@ -4956,6 +5188,8 @@
                 "eventHubsClustersCopy",
                 "eventHubsCopy",
                 "eventHubsNamespacesCopy",
+                "expressRouteCircuitsCopy",
+                "expressRouteGatewaysCopy",
                 "firewallsCopy",
                 "hdInsightClustersCopy",
                 "hostGroupsCopy",

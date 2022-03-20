@@ -22,9 +22,9 @@
         },
         "availabilityZones": {
             "defaultValue": [
-                "1",
-                "2",
-                "3"
+                1,
+                2,
+                3
             ],
             "metadata": {
                 "description": "Specifies an array of availability zones that the Azure Public IP Address will be deployed within."

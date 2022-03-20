@@ -109,8 +109,8 @@
     },
     "variables": {
         "apiVersions": {
-            "configurationStores": "2020-07-01-preview",
-            "configurationStoresKeyValues": "2020-07-01-preview",
+            "configurationStores": "2021-10-01-preview",
+            "configurationStoresKeyValues": "2021-10-01-preview",
             "keyVaults": "2019-09-01",
             "privateEndpoints": "2020-07-01",
             "privateEndpointsPrivateDnsZoneGroups": "2020-07-01"
