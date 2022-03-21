@@ -76,7 +76,10 @@
             },
             "channels": {
                 "directLine": {
-                    "isEnabled": false
+                    "clientId": "[null()]",
+                    "isEnabled": false,
+                    "tenantId": "[null()]",
+                    "trustedOrigins": []
                 },
                 "microsoftTeams": {
                     "isCallingEnabled": false,
@@ -138,12 +141,14 @@
                 "properties": {
                     "sites": [
                         {
+                            "appId": "[union(variables('defaultResourceProperties').channels, parameters('channels')).directLine.clientId]",
                             "isBlockUserUploadEnabled": false,
-                            "isEnabled": true,
                             "isV1Enabled": true,
                             "isV3Enabled": true,
-                            "isSecureSiteEnabled": false,
-                            "siteName": "Default_Site"
+                            "isSecureSiteEnabled": "[not(empty(union(variables('defaultResourceProperties').channels, parameters('channels')).directLine.trustedOrigins))]",
+                            "siteName": "Default_Site",
+                            "tenantId": "[union(variables('defaultResourceProperties').channels, parameters('channels')).directLine.tenantId]",
+                            "trustedOrigins": "[union(variables('defaultResourceProperties').channels, parameters('channels')).directLine.trustedOrigins]"
                         }
                     ]
                 }
