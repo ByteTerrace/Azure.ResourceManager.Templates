@@ -2329,9 +2329,6 @@
                     "isPublicNetworkAccessEnabled": {
                         "value": "[union(variables('defaultResourceProperties').botService, variables('resourceDefinitions').botServices[copyIndex()]).isPublicNetworkAccessEnabled]"
                     },
-                    "location": {
-                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').botServices[copyIndex()]).location]"
-                    },
                     "name": {
                         "value": "[variables('resourceDefinitions').botServices[copyIndex()].name]"
                     },
