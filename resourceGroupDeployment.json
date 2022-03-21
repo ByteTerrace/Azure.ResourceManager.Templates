@@ -266,6 +266,8 @@
             "botService": {
                 "audit": "[variables('audit')]",
                 "channels": {},
+                "isLocalAuthenticationEnabled": false,
+                "isPublicNetworkAccessEnabled": false,
                 "tags": "[parameters('tags')]"
             },
             "cdnProfile": {
@@ -2320,6 +2322,12 @@
                     },
                     "channels": {
                         "value": "[union(variables('defaultResourceProperties').botService, variables('resourceDefinitions').botServices[copyIndex()]).channels]"
+                    },
+                    "isLocalAuthenticationEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').botService, variables('resourceDefinitions').botServices[copyIndex()]).isLocalAuthenticationEnabled]"
+                    },
+                    "isPublicNetworkAccessEnabled": {
+                        "value": "[union(variables('defaultResourceProperties').botService, variables('resourceDefinitions').botServices[copyIndex()]).isPublicNetworkAccessEnabled]"
                     },
                     "location": {
                         "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').botServices[copyIndex()]).location]"

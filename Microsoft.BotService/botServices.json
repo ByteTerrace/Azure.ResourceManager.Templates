@@ -16,6 +16,20 @@
             },
             "type": "object"
         },
+        "isLocalAuthenticationEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the Azure Bot Service permits local authentication."
+            },
+            "type": "bool"
+        },
+        "isPublicNetworkAccessEnabled": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates whether the Azure Bot Service is accessible from the internet."
+            },
+            "type": "bool"
+        },
         "name": {
             "metadata": {
                 "description": "Specifies the name of the Azure Bot Service."
@@ -94,13 +108,15 @@
             "location": "global",
             "name": "[parameters('name')]",
             "properties": {
-                "disableLocalAuth": false,
+                "disableLocalAuth": "[not(parameters('isLocalAuthenticationEnabled'))]",
                 "displayName": "[parameters('name')]",
+                "iconUrl": "https://docs.botframework.com/static/devportal/client/images/bot-framework-default.png",
                 "isStreamingSupported": false,
                 "msaAppId": "[reference(variables('resourceIds').managedIdentity, variables('apiVersions').userAssignedIdentities).clientId]",
                 "msaAppMSIResourceId": "[variables('resourceIds').managedIdentity]",
-                "msaAppTenantId": "[tenant().tenantId]",
+                "msaAppTenantId": "[reference(variables('resourceIds').managedIdentity, variables('apiVersions').userAssignedIdentities).tenantId]",
                 "msaAppType": "UserAssignedMSI",
+                "publicNetworkAccess": "[if(parameters('isPublicNetworkAccessEnabled'), 'Enabled', 'Disabled')]",
                 "schemaTransformationVersion": "1.3"
             },
             "sku": {
