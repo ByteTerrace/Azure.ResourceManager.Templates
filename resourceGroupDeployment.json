@@ -121,6 +121,7 @@
             "automationAccounts": [],
             "availabilitySets": [],
             "bastionHosts": [],
+            "botServices": [],
             "cdnProfiles": [],
             "communicationServices": [],
             "containerInstances": [],
@@ -260,6 +261,11 @@
             },
             "bastionHost": {
                 "audit": "[variables('audit')]",
+                "tags": "[parameters('tags')]"
+            },
+            "botService": {
+                "audit": "[variables('audit')]",
+                "channels": {},
                 "tags": "[parameters('tags')]"
             },
             "cdnProfile": {
@@ -925,6 +931,7 @@
             "automationAccount": "[format('{0}-AutomationAccount', deployment().name)]",
             "availabilitySet": "[format('{0}-AvailabilitySet', deployment().name)]",
             "bastionHost": "[format('{0}-BastionHost', deployment().name)]",
+            "botService": "[format('{0}-BotService', deployment().name)]",
             "cdnProfile": "[format('{0}-CdnProfile', deployment().name)]",
             "communicationService": "[format('{0}-CommunicationService', deployment().name)]",
             "containerInstance": "[format('{0}-ContainerInstance', deployment().name)]",
@@ -2287,6 +2294,49 @@
                 "templateLink": {
                     "contentVersion": "[variables('contentVersion')]",
                     "relativePath": "./Microsoft.Network/dnsPublicZones.json"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployment]",
+            "condition": "[not(empty(variables('resourceDefinitions').botServices))]",
+            "copy": {
+                "count": "[length(variables('resourceDefinitions').botServices)]",
+                "mode": "Parallel",
+                "name": "botServicesCopy"
+            },
+            "dependsOn": [
+                "keyVaultsCopy",
+                "managedIdentitiesCopy",
+                "scriptsPreDeployCopy"
+            ],
+            "name": "[format('{0}_{1}', variables('deploymentNames').botService, copyIndex())]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "audit": {
+                        "value": "[union(variables('defaultResourceProperties').botService, variables('resourceDefinitions').botServices[copyIndex()]).audit]"
+                    },
+                    "channels": {
+                        "value": "[union(variables('defaultResourceProperties').botService, variables('resourceDefinitions').botServices[copyIndex()]).channels]"
+                    },
+                    "location": {
+                        "value": "[union(variables('defaultResourceProperties'), variables('resourceDefinitions').botServices[copyIndex()]).location]"
+                    },
+                    "name": {
+                        "value": "[variables('resourceDefinitions').botServices[copyIndex()].name]"
+                    },
+                    "tags": {
+                        "value": "[union(variables('defaultResourceProperties').managedIdentity, variables('resourceDefinitions').botServices[copyIndex()]).tags]"
+                    },
+                    "userAssignedManagedIdentity": {
+                        "value": "[variables('resourceDefinitions').botServices[copyIndex()].userAssignedManagedIdentity]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "[variables('contentVersion')]",
+                    "relativePath": "./Microsoft.BotService/botServices.json"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -4774,6 +4824,7 @@
                 "automationAccountsCopy",
                 "availabilitySetsCopy",
                 "bastionHostsCopy",
+                "botServicesCopy",
                 "cdnProfilesCopy",
                 "communicationServicesCopy",
                 "containerInstancesCopy",
@@ -4872,6 +4923,7 @@
                 "automationAccountsCopy",
                 "availabilitySetsCopy",
                 "bastionHostsCopy",
+                "botServicesCopy",
                 "cdnProfilesCopy",
                 "communicationServicesCopy",
                 "containerInstancesCopy",
@@ -4978,6 +5030,7 @@
                 "automationAccountsCopy",
                 "availabilitySetsCopy",
                 "bastionHostsCopy",
+                "botServicesCopy",
                 "cdnProfilesCopy",
                 "communicationServicesCopy",
                 "containerInstancesCopy",
@@ -5077,6 +5130,7 @@
                 "automationAccountsCopy",
                 "availabilitySetsCopy",
                 "bastionHostsCopy",
+                "botServicesCopy",
                 "cdnProfilesCopy",
                 "communicationServicesCopy",
                 "containerInstancesCopy",
@@ -5173,6 +5227,7 @@
                 "automationAccountsCopy",
                 "availabilitySetsCopy",
                 "bastionHostsCopy",
+                "botServicesCopy",
                 "cdnProfilesCopy",
                 "communicationServicesCopy",
                 "containerInstancesCopy",

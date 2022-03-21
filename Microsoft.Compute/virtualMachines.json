@@ -484,10 +484,6 @@
                 "resourceGroupName": "[variables('resourceGroupName')]",
                 "subscriptionId": "[variables('subscriptionId')]"
             },
-            "userAssignedIdentity": {
-                "resourceGroupName": "[variables('resourceGroupName')]",
-                "subscriptionId": "[variables('subscriptionId')]"
-            },
             "windowsConfiguration": {
                 "isVmAgentEnabled": true,
                 "patchSettings": {
