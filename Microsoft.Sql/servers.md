@@ -11,6 +11,7 @@ $parameters = @{
     };
     audit = @{ # Optional
         value = @{
+            isEnabled = $false;
             <#logAnalyticsWorkspace = @{
                 name = '<Name>';
                 resourceGroupName = '<ResourceGroupName>';
@@ -68,11 +69,22 @@ $parameters = @{
                     name = 'WorkloadManagement';
                 }
             );
-            <#storageAccount = @{
+            storageAccount = @{<#
                 name = '<Name>';
                 resourceGroupName = '<ResourceGroupName>';
                 subscriptionId = '<SubscriptionId>;
-            };#>
+            #>};
+            vulnerabilityAssessment = @{
+                emailAddresses = @(<#
+                    '<EmailAddress>'
+                #>);
+                isEnabled = $false;
+                storageAccount = @{<#
+                    name = '<Name>';
+                    resourceGroupName = '<ResourceGroupName>';
+                    subscriptionId = '<SubscriptionId>;
+                #>};
+            };
         };
     };
     connectionPolicy = @{ # Optional
@@ -96,23 +108,25 @@ $parameters = @{
         );
     };
     firewallRules = @{ # Optional
-        value = @{<#
-            inbound = @(
+        value = @{
+            inbound = @(<#
                 @{
                     endIpAddress = '<EndIpAddress>';
                     name = '<Name>';
                     startIpAddress = '<StartIpAddress>';
                 }
-            );
-            outbound = @(
+            #>);
+            outbound = @(<#
                 @{
                     fullyQualifiedDomainName = '<FullyQualifiedDomainName>';
                 }
-            );
-        #>};
+            #>);
+        };
     };
     identity = @{ # Optional
-        value = @{};
+        value = @{
+            type = 'SystemAssigned';
+        };
     };
     isAllowTrustedMicrosoftServicesEnabled = @{ # Optional
         value = $false;

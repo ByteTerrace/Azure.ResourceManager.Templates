@@ -32,10 +32,17 @@ param virtualNetworkRules array = []
 
 var defaults = {
     audit: {
+        actionAndGroupNames: null
+        isEnabled: false
         logAnalyticsWorkspace: {}
         logs: []
         metrics: []
         storageAccount: {}
+        vulnerabilityAssessment: {
+            emailAddresses: []
+            isEnabled: false
+            storageAccount: {}
+        }
     }
     firewallRules: {
         inbound: []
@@ -43,13 +50,15 @@ var defaults = {
     }
 }
 var auditWithDefaults = union(defaults.audit, audit)
-var firewalLRulesWithDefaults = union(defaults.firewallRules, firewallRules)
+var firewallRulesWithDefaults = union(defaults.firewallRules, firewallRules)
+var isAuditStorageAccountEnabled = (auditWithDefaults.isEnabled && (!empty(auditWithDefaults.storageAccount)))
+var isAuditLogAnalyticsWorkspaceEnabled = (auditWithDefaults.isEnabled && (!empty(auditWithDefaults.logAnalyticsWorkspace)))
 var userAssignedIdentities = [for managedIdentity in union({
-  userAssignedIdentities: []
+    userAssignedIdentities: []
 }, identity).userAssignedIdentities: resourceId(union({
-  subscriptionId: subscription().subscriptionId
+    subscriptionId: subscription().subscriptionId
 }, managedIdentity).subscriptionId, union({
-  resourceGroupName: resourceGroup().name
+    resourceGroupName: resourceGroup().name
 }, managedIdentity).resourceGroupName, 'Microsoft.ManagedIdentity/userAssignedIdentities', managedIdentity.name)]
 
 resource server 'Microsoft.Sql/servers@2021-08-01-preview' = {
@@ -120,45 +129,6 @@ resource administrator 'Microsoft.Sql/servers/administrators@2021-08-01-preview'
     }
 }
 
-resource serverDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (!(empty(auditWithDefaults.storageAccount) && empty(auditWithDefaults.logAnalyticsWorkspace))) {
-    dependsOn: [
-        administrator
-    ]
-    name: 'audit'
-    properties: {
-        eventHubAuthorizationRuleId: null
-        eventHubName: null
-        logAnalyticsDestinationType: union({
-            destinationType: null
-        }, auditWithDefaults.logAnalyticsWorkspace).destinationType
-        logs: [for log in auditWithDefaults.logs: {
-            category: log.name
-            enabled: union({
-                isEnabled: true
-            }, log).isEnabled
-        }]
-        marketplacePartnerId: null
-        metrics: [for metric in auditWithDefaults.metrics: {
-            category: metric.name
-            enabled: union({
-                isEnabled: true
-            }, metric).isEnabled
-        }]
-        serviceBusRuleId: null
-        storageAccountId: (empty(auditWithDefaults.storageAccount) ? null : resourceId(union({
-            subscriptionId: subscription().subscriptionId
-        }, {}).subscriptionId, union({
-            resourceGroupName: resourceGroup().name
-        }, auditWithDefaults.storageAccount).resourceGroupName, 'Microsoft.Storage/storageAccounts', auditWithDefaults.storageAccount.name))
-        workspaceId: (empty(auditWithDefaults.logAnalyticsWorkspace) ? null : resourceId(union({
-            subscriptionId: subscription().subscriptionId
-        }, {}).subscriptionId, union({
-            resourceGroupName: resourceGroup().name
-        }, auditWithDefaults.logAnalyticsWorkspace).resourceGroupName, 'Microsoft.OperationalInsights/workspaces', auditWithDefaults.logAnalyticsWorkspace.name))
-    }
-    scope: masterDatabase
-}
-
 resource connectionPolicySettings 'Microsoft.Sql/servers/connectionPolicies@2021-08-01-preview' = {
     dependsOn: [
         administrator
@@ -179,6 +149,10 @@ resource dnsAliasesCopy 'Microsoft.Sql/servers/dnsAliases@2021-08-01-preview' = 
 }]
 
 resource trustedMicrosoftServicesFirewallRule 'Microsoft.Sql/servers/firewallRules@2021-08-01-preview' = if (isAllowTrustedMicrosoftServicesEnabled) {
+    dependsOn: [
+        connectionPolicySettings
+        dnsAliasesCopy
+    ]
     name: 'AllowAllWindowsAzureIps'
     parent: server
     properties: {
@@ -187,7 +161,7 @@ resource trustedMicrosoftServicesFirewallRule 'Microsoft.Sql/servers/firewallRul
     }
 }
 
-resource inboundFirewallRules 'Microsoft.Sql/servers/firewallRules@2021-08-01-preview' = [for rule in firewalLRulesWithDefaults.inbound: {
+resource inboundFirewallRules 'Microsoft.Sql/servers/firewallRules@2021-08-01-preview' = [for rule in firewallRulesWithDefaults.inbound: {
     dependsOn: [
         connectionPolicySettings
         dnsAliasesCopy
@@ -220,7 +194,7 @@ resource virtualNetworkRulesCopy 'Microsoft.Sql/servers/virtualNetworkRules@2021
     }
 }]
 
-resource outboundFirewallRules 'Microsoft.Sql/servers/outboundFirewallRules@2021-08-01-preview' = [for rule in firewalLRulesWithDefaults.outbound: {
+resource outboundFirewallRules 'Microsoft.Sql/servers/outboundFirewallRules@2021-08-01-preview' = [for rule in firewallRulesWithDefaults.outbound: {
     dependsOn: [
         connectionPolicySettings
         dnsAliasesCopy
@@ -232,14 +206,151 @@ resource outboundFirewallRules 'Microsoft.Sql/servers/outboundFirewallRules@2021
     parent: server
 }]
 
+resource serverDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (auditWithDefaults.isEnabled) {
+    dependsOn: [
+        administrator
+    ]
+    name: 'audit'
+    properties: {
+        eventHubAuthorizationRuleId: null
+        eventHubName: null
+        logAnalyticsDestinationType: union({
+            destinationType: null
+        }, auditWithDefaults.logAnalyticsWorkspace).destinationType
+        logs: [for log in auditWithDefaults.logs: {
+            category: log.name
+            enabled: union({
+                isEnabled: true
+            }, log).isEnabled
+        }]
+        marketplacePartnerId: null
+        metrics: [for metric in auditWithDefaults.metrics: {
+            category: metric.name
+            enabled: union({
+                isEnabled: true
+            }, metric).isEnabled
+        }]
+        serviceBusRuleId: null
+        storageAccountId: (empty(auditWithDefaults.storageAccount) ? null : resourceId(union({
+            subscriptionId: subscription().subscriptionId
+        }, auditWithDefaults.storageAccount).subscriptionId, union({
+            resourceGroupName: resourceGroup().name
+        }, auditWithDefaults.storageAccount).resourceGroupName, 'Microsoft.Storage/storageAccounts', auditWithDefaults.storageAccount.name))
+        workspaceId: (empty(auditWithDefaults.logAnalyticsWorkspace) ? null : resourceId(union({
+            subscriptionId: subscription().subscriptionId
+        }, auditWithDefaults.logAnalyticsWorkspace).subscriptionId, union({
+            resourceGroupName: resourceGroup().name
+        }, auditWithDefaults.logAnalyticsWorkspace).resourceGroupName, 'Microsoft.OperationalInsights/workspaces', auditWithDefaults.logAnalyticsWorkspace.name))
+    }
+    scope: masterDatabase
+}
+
+resource auditingSettingsStorageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' existing = if (isAuditStorageAccountEnabled) {
+    name: auditWithDefaults.storageAccount.name
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, auditWithDefaults.storageAccount).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, auditWithDefaults.storageAccount).resourceGroupName)
+}
+
+resource auditingSettings 'Microsoft.Sql/servers/auditingSettings@2021-08-01-preview' = {
+    dependsOn: [
+        administrator
+        outboundFirewallRules
+    ]
+    name: 'default'
+    parent: server
+    properties: {
+        auditActionsAndGroups: auditWithDefaults.actionAndGroupNames
+        isAzureMonitorTargetEnabled: isAuditLogAnalyticsWorkspaceEnabled
+        isDevopsAuditEnabled: auditWithDefaults.isEnabled
+        isStorageSecondaryKeyInUse: null
+        queueDelayMs: null
+        retentionDays: null
+        state: ((isAuditLogAnalyticsWorkspaceEnabled || isAuditStorageAccountEnabled) ? 'Enabled': 'Disabled')
+        storageAccountAccessKey: null
+        storageAccountSubscriptionId: (isAuditStorageAccountEnabled ? union({
+            subscriptionId: subscription().subscriptionId
+        }, auditWithDefaults.storageAccount).subscriptionId : '00000000-0000-0000-0000-000000000000')
+        storageEndpoint: (isAuditStorageAccountEnabled ? auditingSettingsStorageAccount.properties.primaryEndpoints.blob : null)
+    }
+}
+
+resource devOpsAuditingSettings 'Microsoft.Sql/servers/devOpsAuditingSettings@2021-08-01-preview' = {
+    dependsOn: [
+        auditingSettings
+    ]
+    name: 'default'
+    parent: server
+    properties: {
+        isAzureMonitorTargetEnabled: isAuditLogAnalyticsWorkspaceEnabled
+        state: ((isAuditLogAnalyticsWorkspaceEnabled || isAuditStorageAccountEnabled) ? 'Enabled': 'Disabled')
+        storageAccountAccessKey: null
+        storageAccountSubscriptionId: (isAuditStorageAccountEnabled ? union({
+            subscriptionId: subscription().subscriptionId
+        }, auditWithDefaults.storageAccount).subscriptionId : '00000000-0000-0000-0000-000000000000')
+        storageEndpoint: (isAuditStorageAccountEnabled ? auditingSettingsStorageAccount.properties.primaryEndpoints.blob : null)
+    }
+}
+
+resource securityAlertPolicy 'Microsoft.Sql/servers/securityAlertPolicies@2021-08-01-preview' = {
+    dependsOn: [
+        auditingSettings
+    ]
+    name: 'Default'
+    parent: server
+    properties: {
+        disabledAlerts: null
+        emailAccountAdmins: true
+        emailAddresses: null
+        retentionDays: null
+        state: (auditWithDefaults.vulnerabilityAssessment.isEnabled ? 'Enabled': 'Disabled')
+        storageAccountAccessKey: null
+        storageEndpoint: null
+    }
+}
+
+resource vulnerabilityAssessmentStorageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' existing = if (auditWithDefaults.vulnerabilityAssessment.isEnabled && (!empty(auditWithDefaults.vulnerabilityAssessment.storageAccount))) {
+    name: auditWithDefaults.vulnerabilityAssessment.storageAccount.name
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, auditWithDefaults.vulnerabilityAssessment.storageAccount).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, auditWithDefaults.vulnerabilityAssessment.storageAccount).resourceGroupName)
+}
+
+resource vulnerabilityAssessment 'Microsoft.Sql/servers/vulnerabilityAssessments@2021-08-01-preview' = {
+    dependsOn: [
+        securityAlertPolicy
+    ]
+    name: 'default'
+    parent: server
+    properties: union({
+        recurringScans: {
+            emails: auditWithDefaults.vulnerabilityAssessment.emailAddresses
+            emailSubscriptionAdmins: true
+            isEnabled: auditWithDefaults.vulnerabilityAssessment.isEnabled
+        }
+    }, (auditWithDefaults.vulnerabilityAssessment.isEnabled) ? {
+        storageAccountAccessKey: null
+        storageContainerPath: '${(empty(auditWithDefaults.vulnerabilityAssessment.storageAccount) ? auditingSettingsStorageAccount : vulnerabilityAssessmentStorageAccount).properties.primaryEndpoints.blob}vulnerability-assessment/'
+        storageContainerSasKey: null
+    } : {})
+}
+
 resource elasticPoolsCopy 'Microsoft.Sql/servers/elasticPools@2021-08-01-preview' = [for pool in elasticPools: {
     dependsOn: [
+        auditingSettings
         connectionPolicySettings
+        devOpsAuditingSettings
         dnsAliasesCopy
         inboundFirewallRules
         outboundFirewallRules
+        securityAlertPolicy
         trustedMicrosoftServicesFirewallRule
         virtualNetworkRulesCopy
+        vulnerabilityAssessment
     ]
     location: location
     name: '${pool.name}'
