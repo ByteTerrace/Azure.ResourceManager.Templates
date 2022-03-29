@@ -5,9 +5,9 @@
 param accessTier string = 'Hot'
 @description('An object that encapsulates the audit settings that will be applied to the Azure Storage Account.')
 param audit object = {}
-@description('An object that encapsulates the properties of the identity that will be assigned to the Azure Storage Account.')
-param firewallRules array = []
 @description('An array of firewall rules that will be assigned to the Azure Storage Account.')
+param firewallRules array = []
+@description('An object that encapsulates the properties of the identity that will be assigned to the Azure Storage Account.')
 param identity object = {}
 @description('Indicates whether trusted Microsoft services are allowed to access the Azure Storage Account.')
 param isAllowTrustedMicrosoftServicesEnabled bool = false
@@ -284,39 +284,39 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
 }
 
 resource storageAccountDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (!(empty(auditWithDefaults.storageAccount) && empty(auditWithDefaults.logAnalyticsWorkspace))) {
-  name: 'audit'
-  properties: {
-      eventHubAuthorizationRuleId: null
-      eventHubName: null
-      logAnalyticsDestinationType: union({
-          destinationType: null
-      }, auditWithDefaults.logAnalyticsWorkspace).destinationType
-      logs: [for log in auditWithDefaults.logs: {
-          category: log.name
-          enabled: union({
-              isEnabled: true
-          }, log).isEnabled
-      }]
-      marketplacePartnerId: null
-      metrics: [for metric in auditWithDefaults.metrics: {
-          category: metric.name
-          enabled: union({
-              isEnabled: true
-          }, metric).isEnabled
-      }]
-      serviceBusRuleId: null
-      storageAccountId: (empty(auditWithDefaults.storageAccount) ? null : resourceId(union({
-          subscriptionId: subscription().subscriptionId
-      }, {}).subscriptionId, union({
-          resourceGroupName: resourceGroup().name
-      }, auditWithDefaults.storageAccount).resourceGroupName, 'Microsoft.Storage/storageAccounts', auditWithDefaults.storageAccount.name))
-      workspaceId: (empty(auditWithDefaults.logAnalyticsWorkspace) ? null : resourceId(union({
-          subscriptionId: subscription().subscriptionId
-      }, {}).subscriptionId, union({
-          resourceGroupName: resourceGroup().name
-      }, auditWithDefaults.logAnalyticsWorkspace).resourceGroupName, 'Microsoft.OperationalInsights/workspaces', auditWithDefaults.logAnalyticsWorkspace.name))
-  }
-  scope: storageAccount
+    name: 'audit'
+    properties: {
+        eventHubAuthorizationRuleId: null
+        eventHubName: null
+        logAnalyticsDestinationType: union({
+            destinationType: null
+        }, auditWithDefaults.logAnalyticsWorkspace).destinationType
+        logs: [for log in auditWithDefaults.logs: {
+            category: log.name
+            enabled: union({
+                isEnabled: true
+            }, log).isEnabled
+        }]
+        marketplacePartnerId: null
+        metrics: [for metric in auditWithDefaults.metrics: {
+            category: metric.name
+            enabled: union({
+                isEnabled: true
+            }, metric).isEnabled
+        }]
+        serviceBusRuleId: null
+        storageAccountId: (empty(auditWithDefaults.storageAccount) ? null : resourceId(union({
+            subscriptionId: subscription().subscriptionId
+        }, {}).subscriptionId, union({
+            resourceGroupName: resourceGroup().name
+        }, auditWithDefaults.storageAccount).resourceGroupName, 'Microsoft.Storage/storageAccounts', auditWithDefaults.storageAccount.name))
+        workspaceId: (empty(auditWithDefaults.logAnalyticsWorkspace) ? null : resourceId(union({
+            subscriptionId: subscription().subscriptionId
+        }, {}).subscriptionId, union({
+            resourceGroupName: resourceGroup().name
+        }, auditWithDefaults.logAnalyticsWorkspace).resourceGroupName, 'Microsoft.OperationalInsights/workspaces', auditWithDefaults.logAnalyticsWorkspace.name))
+    }
+    scope: storageAccount
 }
 
 resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2021-08-01' = {
