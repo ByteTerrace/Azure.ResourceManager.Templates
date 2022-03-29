@@ -5,8 +5,8 @@ $deploymentName = 'SqlServer-Example';
 $parameters = @{
     activeDirectoryAdministrator = @{ # Required (if sqlAdministrator is empty)
         value = @{
-            name = 'kittoes@byteterrace.com';
-            objectId = '38eb40ba-c8c0-4ca9-8358-37f9395c64be';
+            name = '<Name>';
+            objectId = '<ObjectId>';
         };
     };
     audit = @{ # Optional
