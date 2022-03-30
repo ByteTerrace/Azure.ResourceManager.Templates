@@ -12,11 +12,11 @@ $parameters = @{
     audit = @{ # Optional
         value = @{
             isEnabled = $false;
-            <#logAnalyticsWorkspace = @{
+            logAnalyticsWorkspace = @{<#
                 name = '<Name>';
                 resourceGroupName = '<ResourceGroupName>';
                 subscriptionId = '<SubscriptionId>;
-            };#>
+            #>};
             logs = @(
                 @{
                     isEnabled = $false;
