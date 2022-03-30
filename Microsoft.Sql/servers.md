@@ -1,4 +1,21 @@
-# Deploy via Azure CLI & PowerShell
+# Deploy SQL Server Template via Azure CLI & PowerShell
+```
+$resourceGroupName = 'byteterrace';
+$subscriptionNameOrId = 'byteterrace-mpn';
+$templatePath = 'C:\ByteTerrace\Source Code\Azure\ResourceManager.Templates\Microsoft.Sql';
+
+az ts create `
+    --location 'South Central US' `
+    --name 'SqlServerSpec' `
+    --resource-group $resourceGroupName `
+    --subscription $subscriptionNameOrId `
+    --template-file ('{0}\servers.bicep' -f $templatePath) `
+    --ui-form-definition ('{0}\servers.ui.json' -f $templatePath) `
+    --version '1.0.0.0' `
+    --yes;
+```
+
+# Deploy SQL Server Instance via Azure CLI & PowerShell
 ```
 $deploymentMode = 'Incremental';
 $deploymentName = 'SqlServer-Example';

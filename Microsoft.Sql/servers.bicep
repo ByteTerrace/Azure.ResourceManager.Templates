@@ -51,8 +51,8 @@ var defaults = {
 }
 var auditWithDefaults = union(defaults.audit, audit)
 var firewallRulesWithDefaults = union(defaults.firewallRules, firewallRules)
-var isAuditStorageAccountEnabled = (auditWithDefaults.isEnabled && (!empty(auditWithDefaults.storageAccount)))
-var isAuditLogAnalyticsWorkspaceEnabled = (auditWithDefaults.isEnabled && (!empty(auditWithDefaults.logAnalyticsWorkspace)))
+var isAuditStorageAccountEnabled = (bool(auditWithDefaults.isEnabled) && (!empty(auditWithDefaults.storageAccount)))
+var isAuditLogAnalyticsWorkspaceEnabled = (bool(auditWithDefaults.isEnabled) && (!empty(auditWithDefaults.logAnalyticsWorkspace)))
 var userAssignedIdentities = [for managedIdentity in union({
     userAssignedIdentities: []
 }, identity).userAssignedIdentities: resourceId(union({
@@ -113,7 +113,7 @@ resource azureActiveDirectoryOnlyAuthentication 'Microsoft.Sql/servers/azureADOn
     }
 }
 
-resource administrator 'Microsoft.Sql/servers/administrators@2021-08-01-preview' = {
+resource administrator 'Microsoft.Sql/servers/administrators@2021-08-01-preview' = if (!empty(activeDirectoryAdministrator)) {
     dependsOn: [
         azureActiveDirectoryOnlyAuthentication
     ]
@@ -225,7 +225,7 @@ resource auditingSettings 'Microsoft.Sql/servers/auditingSettings@2021-08-01-pre
     properties: {
         auditActionsAndGroups: auditWithDefaults.actionAndGroupNames
         isAzureMonitorTargetEnabled: isAuditLogAnalyticsWorkspaceEnabled
-        isDevopsAuditEnabled: auditWithDefaults.isEnabled
+        isDevopsAuditEnabled: bool(auditWithDefaults.isEnabled)
         isStorageSecondaryKeyInUse: null
         queueDelayMs: null
         retentionDays: null
@@ -301,7 +301,7 @@ resource vulnerabilityAssessment 'Microsoft.Sql/servers/vulnerabilityAssessments
     } : {})
 }
 
-resource serverDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (auditWithDefaults.isEnabled) {
+resource serverDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (bool(auditWithDefaults.isEnabled)) {
     dependsOn: [
         vulnerabilityAssessment
     ]

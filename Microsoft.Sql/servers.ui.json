@@ -1,0 +1,102 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2021-09-09/uiFormDefinition.schema.json#",
+    "view": {
+        "kind": "Form",
+        "properties": {
+            "title": "Deploy SQL Server",
+            "steps": [
+                {
+                    "elements": [
+                        {
+                            "name": "resourceScope",
+                            "type": "Microsoft.Common.ResourceScope"
+                        }
+                    ],
+                    "label": "Basics",
+                    "name": "basics"
+                },
+                {
+                    "elements": [
+                        {
+                            "constraints": {
+                                "required": true,
+                                "validationMessage": ""
+                            },
+                            "defaultValue": "",
+                            "label": "Location",
+                            "name": "location",
+                            "toolTip": "Specifies the Azure location where the SQL server should be created.",
+                            "type": "Microsoft.Common.TextBox",
+                            "visible": true
+                        },
+                        {
+                            "constraints": {
+                                "required": true,
+                                "validationMessage": ""
+                            },
+                            "defaultValue": "",
+                            "label": "Name",
+                            "name": "name",
+                            "toolTip": "Specifies the name of the SQL server.",
+                            "type": "Microsoft.Common.TextBox",
+                            "visible": true
+                        }
+                    ],
+                    "label": "SQL Server",
+                    "name": "sqlServer"
+                },
+                {
+                    "elements": [
+                        {
+                            "constraints": {
+                                "required": true,
+                                "validationMessage": ""
+                            },
+                            "label": "Is Enabled",
+                            "name": "isEnabled",
+                            "type": "Microsoft.Common.CheckBox"
+                        },
+                        {
+                            "label": "Log Analytics Workspace",
+                            "name": "logAnalyticsWorkspace",
+                            "options": {
+                                "filter": {
+                                    "location": "all",
+                                    "subscription": "all"
+                                }
+                            },
+                            "resourceType": "Microsoft.OperationalInsights/workspaces",
+                            "type": "Microsoft.Solutions.ResourceSelector"
+                        }
+                    ],
+                    "label": "Audit",
+                    "name": "audit"
+                },
+                {
+                    "elements": [
+                        {
+                            "name": "tagsByResource",
+                            "type": "Microsoft.Common.TagsByResource",
+                            "resources": [
+                                "Microsoft.Sql/servers"
+                            ]
+                        }
+                    ],
+                    "label": "Tags",
+                    "name": "tags"
+                }
+            ]
+        },
+        "outputs": {
+            "kind": "ResourceGroup",
+            "location": "[steps('basics').resourceScope.location.name]",
+            "parameters": {
+                "audit": "[parse(concat('{\"isEnabled\":\"', string(steps('audit').isEnabled), '\",\"logAnalyticsWorkspace\":{\"name\":\"', steps('audit').logAnalyticsWorkspace.name, '\"}}'))]",
+                "location": "[coalesce(steps('sqlServer').location, steps('basics').resourceScope.location.name)]",
+                "name": "[steps('sqlServer').name]",
+                "tags": "[steps('tags').tagsByResource]"
+            },
+            "resourceGroupId": "[steps('basics').resourceScope.resourceGroup.id]"
+        }
+    }
+}
