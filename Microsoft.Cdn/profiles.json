@@ -9,10 +9,17 @@
             },
             "type": "object"
         },
+        "customDomains": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of custom domains that will be linked with the Azure CDN Profile."
+            },
+            "type": "array"
+        },
         "endpoints": {
             "defaultValue": [],
             "metadata": {
-                "description": "An array of endpoints that will be linked with the Azure CDN Profile."
+                "description": "An array of endpoints that will be configured within the Azure CDN Profile."
             },
             "type": "array"
         },
@@ -23,6 +30,41 @@
             },
             "minLength": 1,
             "type": "string"
+        },
+        "origins": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of origins that will be configured within the Azure CDN Profile."
+            },
+            "type": "array"
+        },
+        "originGroups": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of origin groups that will be configured within the Azure CDN Profile."
+            },
+            "type": "array"
+        },
+        "routes": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of routes that will be configured within the Azure CDN Profile."
+            },
+            "type": "array"
+        },
+        "rules": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of rules that will be configured within the Azure CDN Profile."
+            },
+            "type": "array"
+        },
+        "ruleSets": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of rule sets that will be configured within the Azure CDN Profile."
+            },
+            "type": "array"
         },
         "skuName": {
             "allowedValues": [
@@ -48,9 +90,17 @@
     },
     "variables": {
         "apiVersions": {
+            "afdEndpoints": "2021-06-01",
             "cdnEndpoints": "2020-09-01",
             "cdnProfiles": "2020-09-01",
-            "diagnosticSettings": "2017-05-01-preview"
+            "customDomains": "2021-06-01",
+            "deployments": "2021-04-01",
+            "diagnosticSettings": "2017-05-01-preview",
+            "originGroups": "2021-06-01",
+            "originGroupsOrigins": "2021-06-01",
+            "routes": "2021-06-01",
+            "ruleSets": "2021-06-01",
+            "ruleSetsRules": "2021-06-01"
         },
         "audit": "[union(variables('defaultResourceProperties').audit, parameters('audit'))]",
         "defaultResourceProperties": {
@@ -66,6 +116,15 @@
                     "isEnabled": true
                 }
             },
+            "customDomain": {
+                "dnsZone": {
+                    "resourceGroupName": "[variables('resourceGroupName')]",
+                    "subscriptionId": "[variables('subscriptionId')]"
+                },
+                "tlsSettings": {
+                    "minimumTlsVersion": "TLS12"
+                }
+            },
             "endpoint": {
                 "contentTypesToCompress": [
                     "application/x-javascript",
@@ -79,8 +138,28 @@
                 "isHttpsEnabled": true,
                 "originHostHeader": "",
                 "originPath": "[null()]",
+                "origins": [],
                 "queryStringCachingBehavior": "IgnoreQueryString",
                 "rules": []
+            },
+            "originGroup": {
+                "healthProbe": {
+                    "intervalInSeconds": 255,
+                    "path": "/",
+                    "protocol": "Https",
+                    "requestType": "HEAD"
+                },
+                "isSessionAffinityEnabled": false
+            },
+            "route": {
+                "forwardingProtocol": "MatchRequest",
+                "isEnabled": true,
+                "isHttpsRedirectEnabled": true,
+                "patternsToMatch": [ "/*" ],
+                "supportedProtocols": [ "Https" ]
+            },
+            "rule": {
+                "conditions": []
             }
         },
         "frontDoorDiagnosticsLogs": [
@@ -111,6 +190,7 @@
         ],
         "isAuditEnabled": "[variables('audit').isEnabled]",
         "isAuditLogAnalyticsWorkspaceNameNotEmpty": "[not(empty(variables('audit').logAnalyticsWorkspace.name))]",
+        "isFrontDoorCdn": "[endsWith(parameters('skuName'), 'AzureFrontDoor')]",
         "isVerizonCdn": "[endsWith(parameters('skuName'), 'Verizon')]",
         "microsoftDiagnosticsLogs": [
             {
@@ -132,7 +212,7 @@
     "resources": [
         {
             "apiVersion": "[variables('apiVersions').cdnProfiles]",
-            "location": "global",
+            "location": "Global",
             "name": "[parameters('name')]",
             "properties": {},
             "sku": {
@@ -142,7 +222,8 @@
             "type": "Microsoft.Cdn/profiles"
         },
         {
-            "apiVersion": "[variables('apiVersions').cdnEndpoints]",
+            "apiVersion": "[variables('apiVersions').afdEndpoints]",
+            "condition": "[variables('isFrontDoorCdn')]",
             "copy": {
                 "count": "[length(parameters('endpoints'))]",
                 "mode": "Parallel",
@@ -151,13 +232,32 @@
             "dependsOn": [
                 "[variables('resourceIds').cdnProfile]"
             ],
-            "location": "global",
+            "location": "Global",
+            "name": "[format('{0}/{1}', parameters('name'), parameters('endpoints')[copyIndex()].name)]",
+            "properties": {
+                "enabledState": "[if(union(createObject('isEnabled', true()), parameters('endpoints')[copyIndex()]).isEnabled, 'Enabled', 'Disabled')]"
+            },
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.Cdn/profiles/afdendpoints"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').cdnEndpoints]",
+            "condition": "[not(variables('isFrontDoorCdn'))]",
+            "copy": {
+                "count": "[length(parameters('endpoints'))]",
+                "mode": "Parallel",
+                "name": "endpointsCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').cdnProfile]"
+            ],
+            "location": "Global",
             "name": "[format('{0}/{1}', parameters('name'), parameters('endpoints')[copyIndex()].name)]",
             "properties": {
                 "contentTypesToCompress": "[if(variables('isVerizonCdn'), null(), union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).contentTypesToCompress)]",
                 "copy": [
                     {
-                        "count": "[length(parameters('endpoints')[copyIndex()].origins)]",
+                        "count": "[length(union(variables('defaultResourceProperties').endpoint, parameters('endpoints')[copyIndex()]).origins)]",
                         "input": {
                             "name": "[if(empty(union(createObject('name', ''), parameters('endpoints')[copyIndex()].origins[copyIndex('origins')]).name), replace(parameters('endpoints')[copyIndex()].origins[copyIndex('origins')].hostName, '.', '-'), parameters('endpoints')[copyIndex()].origins[copyIndex('origins')].name)]",
                             "properties": {
@@ -177,6 +277,233 @@
             },
             "tags": "[parameters('tags')]",
             "type": "Microsoft.Cdn/profiles/endpoints"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').customDomains]",
+            "copy": {
+                "count": "[length(parameters('customDomains'))]",
+                "mode": "Parallel",
+                "name": "customDomainsCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').cdnProfile]"
+            ],
+            "name": "[format('{0}/{1}', parameters('name'), replace(parameters('customDomains')[copyIndex()].name, '.', '-'))]",
+            "properties": {
+                "azureDnsZone": {
+                    "id": "[resourceId(union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).dnsZone.subscriptionId, union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).dnsZone.resourceGroupName, 'Microsoft.Network/dnszones', parameters('customDomains')[copyIndex()].dnsZone.name)]"
+                },
+                "hostName": "[parameters('customDomains')[copyIndex()].name]",
+                "tlsSettings": {
+                    "certificateType": "ManagedCertificate",
+                    "minimumTlsVersion": "[union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).tlsSettings.minimumTlsVersion]"
+                }
+            },
+            "type": "Microsoft.Cdn/profiles/customdomains"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').originGroups]",
+            "copy": {
+                "count": "[length(parameters('originGroups'))]",
+                "mode": "Parallel",
+                "name": "originGroupsCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').cdnProfile]"
+            ],
+            "name": "[format('{0}/{1}', parameters('name'), parameters('originGroups')[copyIndex()].name)]",
+            "properties": {
+                "healthProbeSettings": {
+                    "probeIntervalInSeconds": "[union(variables('defaultResourceProperties').originGroup, parameters('originGroups')[copyIndex()]).healthProbe.intervalInSeconds]",
+                    "probePath": "[union(variables('defaultResourceProperties').originGroup, parameters('originGroups')[copyIndex()]).healthProbe.path]",
+                    "probeProtocol": "[union(variables('defaultResourceProperties').originGroup, parameters('originGroups')[copyIndex()]).healthProbe.protocol]",
+                    "probeRequestType": "[union(variables('defaultResourceProperties').originGroup, parameters('originGroups')[copyIndex()]).healthProbe.requestType]"
+                },
+                "loadBalancingSettings": {
+                    "additionalLatencyInMilliseconds": 50,
+                    "sampleSize": 4,
+                    "successfulSamplesRequired": 3
+                },
+                "sessionAffinityState": "[if(union(variables('defaultResourceProperties').originGroup, parameters('originGroups')[copyIndex()]).isSessionAffinityEnabled, 'Enabled', 'Disabled')]"
+            },
+            "type": "Microsoft.Cdn/profiles/origingroups"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').ruleSets]",
+            "copy": {
+                "count": "[length(parameters('ruleSets'))]",
+                "mode": "Parallel",
+                "name": "ruleSetsCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').cdnProfile]"
+            ],
+            "name": "[format('{0}/{1}', parameters('name'), parameters('ruleSets')[copyIndex()].name)]",
+            "type": "Microsoft.Cdn/profiles/rulesets"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').originGroupsOrigins]",
+            "copy": {
+                "count": "[length(parameters('origins'))]",
+                "mode": "Parallel",
+                "name": "originsCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').cdnProfile]",
+                "originGroupsCopy"
+            ],
+            "name": "[format('{0}/{1}/{2}', parameters('name'), parameters('origins')[copyIndex()].originGroupName, parameters('origins')[copyIndex()].name)]",
+            "properties": {
+                "enabledState": "Enabled",
+                "enforceCertificateNameCheck": true,
+                "hostName": "[parameters('origins')[copyIndex()].hostName]",
+                "httpPort": 80,
+                "httpsPort": 443,
+                "originHostHeader": "[union(createObject('originHostHeader', parameters('origins')[copyIndex()].hostName), parameters('origins')[copyIndex()]).originHostHeader]",
+                "priority": "[parameters('origins')[copyIndex()].priority]",
+                "weight": "[parameters('origins')[copyIndex()].weight]"
+            },
+            "type": "Microsoft.Cdn/profiles/origingroups/origins"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').ruleSetsRules]",
+            "copy": {
+                "count": "[length(parameters('rules'))]",
+                "mode": "Parallel",
+                "name": "rulesCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').cdnProfile]",
+                "ruleSetsCopy"
+            ],
+            "name": "[format('{0}/{1}/{2}', parameters('name'), parameters('rules')[copyIndex()].ruleSetName, parameters('rules')[copyIndex()].name)]",
+            "properties": {
+                "actions": "[parameters('rules')[copyIndex()].actions]",
+                "conditions": "[union(variables('defaultResourceProperties').rule, parameters('rules')[copyIndex()]).conditions]",
+                "matchProcessingBehavior": "[parameters('rules')[copyIndex()].matchProcessingBehavior]",
+                "order": "[union(createObject('order', copyIndex()), parameters('rules')[copyIndex()]).order]"
+            },
+            "type": "Microsoft.Cdn/profiles/rulesets/rules"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').routes]",
+            "copy": {
+                "count": "[length(parameters('routes'))]",
+                "mode": "Parallel",
+                "name": "routesCopy"
+            },
+            "dependsOn": [
+                "[variables('resourceIds').cdnProfile]",
+                "customDomainsCopy",
+                "originGroupsCopy",
+                "originsCopy",
+                "rulesCopy",
+                "ruleSetsCopy"
+            ],
+            "name": "[format('{0}/{1}/{2}', parameters('name'), parameters('routes')[copyIndex()].endpointName, parameters('routes')[copyIndex()].name)]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(parameters('routes')[copyIndex()].customDomains)]",
+                        "input": {
+                            "id": "[resourceId('Microsoft.Cdn/profiles/customdomains', parameters('name'), replace(parameters('routes')[copyIndex()].customDomains[copyIndex('customDomains')], '.', '-'))]"
+                        },
+                        "name": "customDomains"
+                    },
+                    {
+                        "count": "[length(parameters('routes')[copyIndex()].ruleSets)]",
+                        "input": {
+                            "id": "[resourceId('Microsoft.Cdn/profiles/ruleSets', parameters('name'), parameters('routes')[copyIndex()].ruleSets[copyIndex('ruleSets')])]"
+                        },
+                        "name": "ruleSets"
+                    }
+                ],
+                "enabledState": "[if(union(variables('defaultResourceProperties').route, parameters('routes')[copyIndex()]).isEnabled, 'Enabled', 'Disabled')]",
+                "forwardingProtocol": "[union(variables('defaultResourceProperties').route, parameters('routes')[copyIndex()]).forwardingProtocol]",
+                "httpsRedirect": "[if(union(variables('defaultResourceProperties').route, parameters('routes')[copyIndex()]).isHttpsRedirectEnabled, 'Enabled', 'Disabled')]",
+                "linkToDefaultDomain": "Enabled",
+                "originGroup": {
+                    "id": "[resourceId('Microsoft.Cdn/profiles/origingroups', parameters('name'), parameters('routes')[copyIndex()].originGroupName)]"
+                },
+                "patternsToMatch": "[union(variables('defaultResourceProperties').route, parameters('routes')[copyIndex()]).patternsToMatch]",
+                "supportedProtocols": "[union(variables('defaultResourceProperties').route, parameters('routes')[copyIndex()]).supportedProtocols]"
+            },
+            "type": "Microsoft.Cdn/profiles/afdendpoints/routes"
+        },
+        {
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "copy": {
+                "count": "[length(parameters('customDomains'))]",
+                "mode": "Parallel",
+                "name": "aRecordsCopy"
+            },
+            "dependsOn": [
+                "customDomainsCopy"
+            ],
+            "name": "[format('UpdateDnsRecords_{0}', copyIndex())]",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "dnsZoneName": {
+                        "value": "[parameters('customDomains')[copyIndex()].dnsZone.name]"
+                    },
+                    "targetResourceId": {
+                        "value": "[resourceId(variables('subscriptionId'), variables('resourceGroupName'), 'Microsoft.Cdn/profiles/afdendpoints', parameters('name'), parameters('customDomains')[copyIndex()].endpointName)]"
+                    },
+                    "validationToken": {
+                        "value": "[reference(resourceId('Microsoft.Cdn/profiles/customDomains', parameters('name'), replace(parameters('customDomains')[copyIndex()].dnsZone.name, '.', '-'))).validationProperties.validationToken]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "dnsZoneName": {
+                            "type": "string"
+                        },
+                        "targetResourceId": {
+                            "type": "string"
+                        },
+                        "validationToken": {
+                            "type": "string"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "apiVersion": "2018-05-01",
+                            "name": "[format('{0}/@', parameters('dnsZoneName'))]",
+                            "properties": {
+                                "targetResource": {
+                                    "id": "[parameters('targetResourceId')]"
+                                },
+                                "TTL": 3600
+                            },
+                            "type": "Microsoft.Network/dnszones/A"
+                        },
+                        {
+                            "apiVersion": "2018-05-01",
+                            "name": "[format('{0}/_dnsauth', parameters('dnsZoneName'))]",
+                            "properties": {
+                                "TTL": 3600,
+                                "TXTRecords": [
+                                    {
+                                        "value": [
+                                            "[parameters('validationToken')]"
+                                        ]
+                                    }
+                                ]
+                            },
+                            "type": "Microsoft.Network/dnszones/TXT"
+                        }
+                    ]
+                }
+            },
+            "resourceGroup": "[union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).dnsZone.resourceGroupName]",
+            "subscriptionId": "[union(variables('defaultResourceProperties').customDomain, parameters('customDomains')[copyIndex()]).dnsZone.subscriptionId]",
+            "type": "Microsoft.Resources/deployments"
         },
         {
             "apiVersion": "[variables('apiVersions').diagnosticSettings]",

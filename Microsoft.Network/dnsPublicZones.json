@@ -57,6 +57,10 @@
         "aRecords": "[if(variables('aRecordsIsNotEmpty'), parameters('aRecords'), createArray(createObject('name', 'dummyA')))]",
         "aRecordsCount": "[length(parameters('aRecords'))]",
         "aRecordsDefaultProperties": {
+            "targetResource": {
+                "resourceGroupName": "[variables('resourceGroupName')]",
+                "subscriptionId": "[variables('subscriptionId')]"
+            },
             "timeToLiveInSeconds": 3600
         },
         "aRecordsIsNotEmpty": "[greater(variables('aRecordsCount'), 0)]",
@@ -79,6 +83,8 @@
             "timeToLiveInSeconds": 3600
         },
         "nsRecordsIsNotEmpty": "[greater(variables('nsRecordsCount'), 0)]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "subscriptionId": "[subscription().subscriptionId]",
         "txtRecords": "[if(variables('txtRecordsIsNotEmpty'), parameters('txtRecords'), createArray(createObject('name', 'dummyTXT')))]",
         "txtRecordsCount": "[length(parameters('txtRecords'))]",
         "txtRecordsDefaultProperties": {
@@ -112,8 +118,8 @@
             ],
             "name": "[format('{0}/{1}', parameters('name'), variables('aRecords')[copyIndex()].name)]",
             "properties": {
-                "ARecords": "[variables('aRecords')[copyIndex()].ipAddresses]",
-                "targetResource": {},
+                "ARecords": "[if(empty(union(createObject('ipAddresses', createArray()), variables('aRecords')[copyIndex()]).ipAddresses), null(), variables('aRecords')[copyIndex()].ipAddresses)]",
+                "targetResource": "[if(empty(union(createObject('targetResource', createObject()), variables('aRecords')[copyIndex()]).targetResource), null(), createObject('id', format('/subscriptions/{0}/resourceGroups/{1}/providers/{2}/{3}', union(variables('aRecordsDefaultProperties'), variables('aRecords')[copyIndex()]).targetResource.subscriptionId, union(variables('aRecordsDefaultProperties'), variables('aRecords')[copyIndex()]).targetResource.resourceGroupName, union(variables('aRecordsDefaultProperties'), variables('aRecords')[copyIndex()]).targetResource.type, union(variables('aRecordsDefaultProperties'), variables('aRecords')[copyIndex()]).targetResource.name)))]",
                 "TTL": "[union(variables('aRecordsDefaultProperties'), variables('aRecords')[copyIndex()]).timeToLiveInSeconds]"
             },
             "type": "Microsoft.Network/dnszones/A"
