@@ -31,17 +31,17 @@
             "minLength": 1,
             "type": "string"
         },
-        "origins": {
-            "defaultValue": [],
-            "metadata": {
-                "description": "An array of origins that will be configured within the Azure CDN Profile."
-            },
-            "type": "array"
-        },
         "originGroups": {
             "defaultValue": [],
             "metadata": {
                 "description": "An array of origin groups that will be configured within the Azure CDN Profile."
+            },
+            "type": "array"
+        },
+        "origins": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of origins that will be configured within the Azure CDN Profile."
             },
             "type": "array"
         },

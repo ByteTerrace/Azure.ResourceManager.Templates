@@ -272,7 +272,13 @@
             },
             "cdnProfile": {
                 "audit": "[variables('audit')]",
+                "customDomains": [],
                 "endpoints": [],
+                "originGroups": [],
+                "origins": [],
+                "routes": [],
+                "rules": [],
+                "ruleSets": [],
                 "skuName": "Standard_Microsoft",
                 "tags": "[parameters('tags')]"
             },
@@ -1717,11 +1723,29 @@
                     "audit": {
                         "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).audit]"
                     },
+                    "customDomains": {
+                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).customDomains]"
+                    },
                     "endpoints": {
                         "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).endpoints]"
                     },
                     "name": {
                         "value": "[variables('resourceDefinitions').cdnProfiles[copyIndex()].name]"
+                    },
+                    "originGroups": {
+                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).originGroups]"
+                    },
+                    "origins": {
+                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).origins]"
+                    },
+                    "routes": {
+                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).routes]"
+                    },
+                    "rules": {
+                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).rules]"
+                    },
+                    "ruleSets": {
+                        "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).ruleSets]"
                     },
                     "skuName": {
                         "value": "[union(variables('defaultResourceProperties').cdnProfile, variables('resourceDefinitions').cdnProfiles[copyIndex()]).skuName]"
