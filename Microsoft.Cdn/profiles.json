@@ -280,6 +280,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').customDomains]",
+            "condition": "[variables('isFrontDoorCdn')]",
             "copy": {
                 "count": "[length(parameters('customDomains'))]",
                 "mode": "Parallel",
@@ -303,6 +304,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').originGroups]",
+            "condition": "[variables('isFrontDoorCdn')]",
             "copy": {
                 "count": "[length(parameters('originGroups'))]",
                 "mode": "Parallel",
@@ -330,6 +332,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').ruleSets]",
+            "condition": "[variables('isFrontDoorCdn')]",
             "copy": {
                 "count": "[length(parameters('ruleSets'))]",
                 "mode": "Parallel",
@@ -343,6 +346,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').originGroupsOrigins]",
+            "condition": "[variables('isFrontDoorCdn')]",
             "copy": {
                 "count": "[length(parameters('origins'))]",
                 "mode": "Parallel",
@@ -367,6 +371,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').ruleSetsRules]",
+            "condition": "[variables('isFrontDoorCdn')]",
             "copy": {
                 "count": "[length(parameters('rules'))]",
                 "mode": "Parallel",
@@ -387,6 +392,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').routes]",
+            "condition": "[variables('isFrontDoorCdn')]",
             "copy": {
                 "count": "[length(parameters('routes'))]",
                 "mode": "Parallel",
@@ -432,6 +438,7 @@
         },
         {
             "apiVersion": "[variables('apiVersions').deployments]",
+            "condition": "[variables('isFrontDoorCdn')]",
             "copy": {
                 "count": "[length(parameters('customDomains'))]",
                 "mode": "Parallel",
@@ -451,7 +458,7 @@
                         "value": "[parameters('customDomains')[copyIndex()].dnsZone.name]"
                     },
                     "targetHostName": {
-                        "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('name'), parameters('customDomains')[copyIndex()].endpointName)).hostName]"
+                        "value": "[if(variables('isFrontDoorCdn'), reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('name'), parameters('customDomains')[copyIndex()].endpointName)).hostName, null())]"
                     },
                     "targetResourceId": {
                         "value": "[resourceId(variables('subscriptionId'), variables('resourceGroupName'), 'Microsoft.Cdn/profiles/afdendpoints', parameters('name'), parameters('customDomains')[copyIndex()].endpointName)]"
@@ -460,7 +467,7 @@
                         "value": "[format('_dnsauth{0}', if(equals(length(split(parameters('customDomains')[copyIndex()].name, '.')), 2), '', format('.{0}', parameters('customDomains')[copyIndex()].name)))]"
                     },
                     "validationToken": {
-                        "value": "[reference(resourceId('Microsoft.Cdn/profiles/customDomains', parameters('name'), replace(parameters('customDomains')[copyIndex()].name, '.', '-'))).validationProperties.validationToken]"
+                        "value": "[if(variables('isFrontDoorCdn'), reference(resourceId('Microsoft.Cdn/profiles/customDomains', parameters('name'), replace(parameters('customDomains')[copyIndex()].name, '.', '-'))).validationProperties.validationToken, null())]"
                     }
                 },
                 "template": {
