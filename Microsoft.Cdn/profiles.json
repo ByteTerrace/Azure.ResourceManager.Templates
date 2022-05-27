@@ -227,7 +227,7 @@
             "copy": {
                 "count": "[length(parameters('endpoints'))]",
                 "mode": "Parallel",
-                "name": "endpointsCopy"
+                "name": "afdEndpointsCopy"
             },
             "dependsOn": [
                 "[variables('resourceIds').cdnProfile]"
@@ -400,6 +400,7 @@
             },
             "dependsOn": [
                 "[variables('resourceIds').cdnProfile]",
+                "afdEndpointsCopy",
                 "customDomainsCopy",
                 "originGroupsCopy",
                 "originsCopy",
@@ -464,7 +465,7 @@
                         "value": "[resourceId(variables('subscriptionId'), variables('resourceGroupName'), 'Microsoft.Cdn/profiles/afdendpoints', parameters('name'), parameters('customDomains')[copyIndex()].endpointName)]"
                     },
                     "txtRecordName": {
-                        "value": "[format('_dnsauth{0}', if(equals(length(split(parameters('customDomains')[copyIndex()].name, '.')), 2), '', format('.{0}', parameters('customDomains')[copyIndex()].name)))]"
+                        "value": "[format('_dnsauth{0}', if(equals(length(split(parameters('customDomains')[copyIndex()].name, '.')), 2), '', format('.{0}', substring(parameters('customDomains')[copyIndex()].name, 0, sub(sub(length(parameters('customDomains')[copyIndex()].name), length(parameters('customDomains')[copyIndex()].dnsZone.name)), 1)))))]"
                     },
                     "validationToken": {
                         "value": "[if(variables('isFrontDoorCdn'), reference(resourceId('Microsoft.Cdn/profiles/customDomains', parameters('name'), replace(parameters('customDomains')[copyIndex()].name, '.', '-'))).validationProperties.validationToken, null())]"
@@ -491,12 +492,12 @@
                         }
                     },
                     "variables": {
-                        "isApex": "[endsWith(parameters('txtRecordName'), parameters('dnsZoneName'))]"
+                        "isApex": "[equals(parameters('txtRecordName'), '_dnsauth')]"
                     },
                     "resources": [
                         {
                             "apiVersion": "2018-05-01",
-                            "condition": "[not(variables('isApex'))]",
+                            "condition": "[variables('isApex')]",
                             "name": "[format('{0}/@', parameters('dnsZoneName'))]",
                             "properties": {
                                 "targetResource": {
@@ -508,8 +509,8 @@
                         },
                         {
                             "apiVersion": "2018-05-01",
-                            "condition": "[variables('isApex')]",
-                            "name": "[format('{0}/{1}', parameters('dnsZoneName'), if(variables('isApex'), substring(parameters('txtRecordName'), 9, sub(sub(length(parameters('txtRecordName')), length(parameters('dnsZoneName'))), 10)), '<NULL>'))]",
+                            "condition": "[not(variables('isApex'))]",
+                            "name": "[format('{0}/{1}', parameters('dnsZoneName'), if(variables('isApex'), '<NULL>', substring(parameters('txtRecordName'), 9)))]",
                             "properties": {
                                 "CNAMERecord": {
                                     "cname": "[parameters('targetHostName')]"
