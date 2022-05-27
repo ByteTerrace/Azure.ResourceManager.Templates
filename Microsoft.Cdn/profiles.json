@@ -440,7 +440,7 @@
             "dependsOn": [
                 "customDomainsCopy"
             ],
-            "name": "[format('UpdateDnsRecords_{0}', copyIndex())]",
+            "name": "[format('{0}-UpdateDnsRecords_{1}', deployment().name, copyIndex())]",
             "properties": {
                 "expressionEvaluationOptions": {
                     "scope": "inner"
@@ -450,11 +450,17 @@
                     "dnsZoneName": {
                         "value": "[parameters('customDomains')[copyIndex()].dnsZone.name]"
                     },
+                    "targetHostName": {
+                        "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('name'), parameters('customDomains')[copyIndex()].endpointName)).hostName]"
+                    },
                     "targetResourceId": {
                         "value": "[resourceId(variables('subscriptionId'), variables('resourceGroupName'), 'Microsoft.Cdn/profiles/afdendpoints', parameters('name'), parameters('customDomains')[copyIndex()].endpointName)]"
                     },
+                    "txtRecordName": {
+                        "value": "[format('_dnsauth{0}', if(equals(length(split(parameters('customDomains')[copyIndex()].name, '.')), 2), '', format('.{0}', parameters('customDomains')[copyIndex()].name)))]"
+                    },
                     "validationToken": {
-                        "value": "[reference(resourceId('Microsoft.Cdn/profiles/customDomains', parameters('name'), replace(parameters('customDomains')[copyIndex()].dnsZone.name, '.', '-'))).validationProperties.validationToken]"
+                        "value": "[reference(resourceId('Microsoft.Cdn/profiles/customDomains', parameters('name'), replace(parameters('customDomains')[copyIndex()].name, '.', '-'))).validationProperties.validationToken]"
                     }
                 },
                 "template": {
@@ -464,16 +470,26 @@
                         "dnsZoneName": {
                             "type": "string"
                         },
+                        "targetHostName": {
+                            "type": "string"
+                        },
                         "targetResourceId": {
+                            "type": "string"
+                        },
+                        "txtRecordName": {
                             "type": "string"
                         },
                         "validationToken": {
                             "type": "string"
                         }
                     },
+                    "variables": {
+                        "isApex": "[endsWith(parameters('txtRecordName'), parameters('dnsZoneName'))]"
+                    },
                     "resources": [
                         {
                             "apiVersion": "2018-05-01",
+                            "condition": "[not(variables('isApex'))]",
                             "name": "[format('{0}/@', parameters('dnsZoneName'))]",
                             "properties": {
                                 "targetResource": {
@@ -485,7 +501,19 @@
                         },
                         {
                             "apiVersion": "2018-05-01",
-                            "name": "[format('{0}/_dnsauth', parameters('dnsZoneName'))]",
+                            "condition": "[variables('isApex')]",
+                            "name": "[format('{0}/{1}', parameters('dnsZoneName'), if(variables('isApex'), substring(parameters('txtRecordName'), 9, sub(sub(length(parameters('txtRecordName')), length(parameters('dnsZoneName'))), 10)), '<NULL>'))]",
+                            "properties": {
+                                "CNAMERecord": {
+                                    "cname": "[parameters('targetHostName')]"
+                                },
+                                "TTL": 3600
+                            },
+                            "type": "Microsoft.Network/dnszones/CNAME"
+                        },
+                        {
+                            "apiVersion": "2018-05-01",
+                            "name": "[format('{0}/{1}', parameters('dnsZoneName'), parameters('txtRecordName'))]",
                             "properties": {
                                 "TTL": 3600,
                                 "TXTRecords": [
