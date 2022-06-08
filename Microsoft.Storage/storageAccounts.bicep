@@ -241,7 +241,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
                 }
             }
         }
-        immutableStorageWithVersioning: (servicesWithDefaults.blob.versioning.isEnabled ? {
+        immutableStorageWithVersioning: (servicesWithDefaults.blob.versioning.immutability.isEnabled ? {
             enabled : servicesWithDefaults.blob.versioning.immutability.isEnabled
             immutabilityPolicy: (servicesWithDefaults.blob.versioning.immutability.isEnabled ? {
                 allowProtectedAppendWrites: servicesWithDefaults.blob.versioning.immutability.isProtectedAppendWritesEnabled
@@ -258,7 +258,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
         minimumTlsVersion: 'TLS1_2'
         networkAcls: {
             bypass: (isAllowTrustedMicrosoftServicesEnabled ? 'AzureServices' : 'None')
-            defaultAction: (isPublicNetworkAccessEnabled ? 'Allow' : 'Deny')
+            defaultAction: ((empty(firewallRules) && empty(virtualNetworkRules)) ? 'Allow' : 'Deny')
             ipRules: [for rule in firewallRules: {
                 action: 'Allow'
                 value: rule
@@ -320,10 +320,8 @@ resource storageAccountDiagnosticSettings 'Microsoft.Insights/diagnosticSettings
 }
 
 resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2021-08-01' = {
-    dependsOn: [
-        storageAccount
-    ]
-    name: '${name}/default'
+    name: 'default'
+    parent: storageAccount
     properties: {
         changeFeed: {
             enabled: servicesWithDefaults.blob.changeFeed.isEnabled
@@ -386,10 +384,8 @@ resource blobDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-0
 }
 
 resource blobContainers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = [for container in servicesWithDefaults.blob.containers.collection: {
-    dependsOn: [
-        blobServices
-    ]
-    name: '${name}/default/${container.name}'
+    name: container.name
+    parent: blobServices
     properties: union({
         defaultEncryptionScope: null
         denyEncryptionScopeOverride: null
@@ -418,10 +414,8 @@ resource blobContainersImmutabilityPolicies 'Microsoft.Storage/storageAccounts/b
 }]
 
 resource fileServices 'Microsoft.Storage/storageAccounts/fileServices@2021-08-01' = {
-    dependsOn: [
-        storageAccount
-    ]
-    name: '${name}/default'
+    name: 'default'
+    parent: storageAccount
     properties: {
         cors: {
             corsRules: servicesWithDefaults.file.corsRules
@@ -478,10 +472,8 @@ resource fileDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-0
 }
 
 resource fileShares 'Microsoft.Storage/storageAccounts/fileServices/shares@2021-08-01' = [for share in servicesWithDefaults.file.shares.collection: {
-    dependsOn: [
-        fileServices
-    ]
-    name: '${name}/default/${share.name}'
+    name: share.name
+    parent: fileServices
     properties: {
         accessTier: union(defaults.share, share).accessTier
         enabledProtocols: union(defaults.share, share).enabledProtocols
@@ -493,10 +485,8 @@ resource fileShares 'Microsoft.Storage/storageAccounts/fileServices/shares@2021-
 }]
 
 resource queueServices 'Microsoft.Storage/storageAccounts/queueServices@2021-08-01' = {
-    dependsOn: [
-        storageAccount
-    ]
-    name: '${name}/default'
+    name: 'default'
+    parent: storageAccount
     properties: {
         cors: {
             corsRules: servicesWithDefaults.queue.corsRules
@@ -541,20 +531,16 @@ resource queueDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-
 }
 
 resource queues 'Microsoft.Storage/storageAccounts/queueServices/queues@2021-08-01' = [for queue in servicesWithDefaults.queue.collection: {
-    dependsOn: [
-        queueServices
-    ]
-    name: '${name}/default/${queue.name}'
+    name: queue.name
+    parent: queueServices
     properties: {
         metadata: union(defaults.queue, queue).metadata
     }
 }]
 
 resource tableServices 'Microsoft.Storage/storageAccounts/tableServices@2021-08-01' = {
-    dependsOn: [
-        storageAccount
-    ]
-    name: '${name}/default'
+    name: 'default'
+    parent: storageAccount
     properties: {
         cors: {
             corsRules: servicesWithDefaults.table.corsRules
@@ -599,8 +585,6 @@ resource tableDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-
 }
 
 resource tables 'Microsoft.Storage/storageAccounts/tableServices/tables@2021-08-01' = [for table in servicesWithDefaults.table.collection: {
-    dependsOn: [
-        tableServices
-    ]
-    name: '${name}/default/${table.name}'
+    name: table.name
+    parent: tableServices
 }]

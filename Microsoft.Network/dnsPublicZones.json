@@ -38,6 +38,13 @@
             },
             "type": "array"
         },
+        "srvRecords": {
+            "defaultValue": [],
+            "metadata": {
+                "description": "An array of SRV records that will be created within the public Azure DNS zone."
+            },
+            "type": "array"
+        },
         "tags": {
             "defaultValue": {},
             "metadata": {
@@ -84,6 +91,12 @@
         },
         "nsRecordsIsNotEmpty": "[greater(variables('nsRecordsCount'), 0)]",
         "resourceGroupName": "[resourceGroup().name]",
+        "srvRecords": "[if(variables('srvRecordsIsNotEmpty'), parameters('srvRecords'), createArray(createObject('name', 'dummySRV')))]",
+        "srvRecordsCount": "[length(parameters('srvRecords'))]",
+        "srvRecordsDefaultProperties": {
+            "timeToLiveInSeconds": 3600
+        },
+        "srvRecordsIsNotEmpty": "[greater(variables('srvRecordsCount'), 0)]",
         "subscriptionId": "[subscription().subscriptionId]",
         "txtRecords": "[if(variables('txtRecordsIsNotEmpty'), parameters('txtRecords'), createArray(createObject('name', 'dummyTXT')))]",
         "txtRecordsCount": "[length(parameters('txtRecords'))]",
@@ -185,6 +198,36 @@
         },
         {
             "apiVersion": "2018-05-01",
+            "condition": "[variables('srvRecordsIsNotEmpty')]",
+            "copy": {
+                "count": "[variables('srvRecordsCount')]",
+                "mode": "Parallel",
+                "name": "srvRecordsCopy"
+            },
+            "dependsOn": [
+                "[variables('dnsZoneResourceId')]"
+            ],
+            "name": "[format('{0}/{1}', parameters('name'), variables('srvRecords')[copyIndex()].name)]",
+            "properties": {
+                "copy": [
+                    {
+                        "count": "[length(variables('srvRecords')[copyIndex()].values)]",
+                        "input": {
+                            "port": "[variables('srvRecords')[copyIndex()].values[copyIndex('SRVRecords')].port]",
+                            "priority": "[variables('srvRecords')[copyIndex()].values[copyIndex('SRVRecords')].priority]",
+                            "target": "[variables('srvRecords')[copyIndex()].values[copyIndex('SRVRecords')].target]",
+                            "weight": "[variables('srvRecords')[copyIndex()].values[copyIndex('SRVRecords')].weight]"
+                        },
+                        "name": "SRVRecords"
+                    }
+                ],
+                "targetResource": {},
+                "TTL": "[union(variables('srvRecordsDefaultProperties'), variables('srvRecords')[copyIndex()]).timeToLiveInSeconds]"
+            },
+            "type": "Microsoft.Network/dnszones/SRV"
+        },
+        {
+            "apiVersion": "2018-05-01",
             "condition": "[variables('txtRecordsIsNotEmpty')]",
             "copy": {
                 "count": "[variables('txtRecordsCount')]",
@@ -198,7 +241,7 @@
             "properties": {
                 "copy": [
                     {
-                        "count": "[variables('txtRecordsCount')]",
+                        "count": "[length(variables('txtRecords')[copyIndex()].values)]",
                         "input": {
                             "value": [
                                 "[variables('txtRecords')[copyIndex()].values[copyIndex('TXTRecords')]]"
