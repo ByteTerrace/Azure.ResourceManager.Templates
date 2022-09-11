@@ -59,9 +59,6 @@ var containerRegistries = [
 var keyVaults = [
     {}
 ]
-var managedIdentities = [
-    {}
-]
 var natGateways = [
     {
         publicIpAddresses: [
@@ -221,6 +218,9 @@ var storageAccounts = [
         }
         skuName: 'Standard_LRS'
     }
+]
+var userAssignedIdentities = [
+    {}
 ]
 var virtualMachines = [
     {
@@ -491,7 +491,7 @@ module storageAccountsCopy 'br/tlk:microsoft.storage/storage-accounts:1.0.0' = [
         skuName: account.skuName
     }
 }]
-module userAssignedIdentitiesCopy 'br/tlk:microsoft.managed-identity/user-assigned-identities:1.0.0' = [for (identity, index) in managedIdentities: if (contains(includedTypes, 'microsoft.managed-identity/user-assigned-identities') && !contains(excludedTypes, 'microsoft.managed-identity/user-assigned-identities')) {
+module userAssignedIdentitiesCopy 'br/tlk:microsoft.managed-identity/user-assigned-identities:1.0.0' = [for (identity, index) in userAssignedIdentities: if (contains(includedTypes, 'microsoft.managed-identity/user-assigned-identities') && !contains(excludedTypes, 'microsoft.managed-identity/user-assigned-identities')) {
     name: '${deployment().name}-mi-${string(index)}'
     params: {
         location: location
@@ -503,6 +503,7 @@ module virtualMachinesCopy 'br/tlk:microsoft.compute/virtual-machines:1.0.0' = [
         availabilitySetsCopy
         networkInterfacesCopy
         proximityPlacementGroupsCopy
+        userAssignedIdentitiesCopy
         virtualNetworksCopy
     ]
     name: '${deployment().name}-vm-${string(index)}'
