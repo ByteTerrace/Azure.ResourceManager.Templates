@@ -1,0 +1,62 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "administrator": {
+            "value": {
+                "password": "Mandy0143Fd!",
+                "userName": "TheWindfish"
+            }
+        },
+        "availabilitySet": {
+            "value": {}
+        },
+        "availabilityZones": {
+            "value": []
+        },
+        "identity": {
+            "value": {
+                "type": "SystemAssigned,UserAssigned",
+                "userAssignedIdentities": [
+                    {
+                        "name": "tlk-mi-00000"
+                    }
+                ]
+            }
+        },
+        "imageReference": {
+            "value": {
+                "offer": "UbuntuServer",
+                "publisher": "Canonical",
+                "sku": "18_04-lts-gen2",
+                "version": "latest"
+            }
+        },
+        "linuxConfiguration": {
+            "value": {
+                "isVmAgentEnabled": true
+            }
+        },
+        "location": {
+            "value": "West US 3"
+        },
+        "name": {
+            "value": "tlkvm00000"
+        },
+        "networkInterfaces": {
+            "value": [
+                {
+                    "name": "tlk-nic-00000"
+                }
+            ]
+        },
+        "proximityPlacementGroup": {
+            "value": {
+                "name": "tlk-ppg-00000"
+            }
+        },
+        "skuName": {
+            "value": "Standard_B1ms"
+        }
+    }
+}

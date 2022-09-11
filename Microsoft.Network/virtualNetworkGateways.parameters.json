@@ -1,0 +1,56 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "clientConfiguration": {
+            "value": {
+                "addressPrefixes": [ "172.23.0.0/24" ],
+                "authenticationTypes": [ "Certificate" ],
+                "protocols": [ "SSTP" ],
+                "rootCertificates": [
+                    {
+                        "name": "tlk-root-ca",
+                        "publicCertificateData": "MIIDMzCCAtigAwIBAgICEAAwCgYIKoZIzj0EAwIwfjELMAkGA1UEBhMCVVMxGTAXBgNVBAoMEFRoZSBMQU4gS3JldyBMTEMxIjAgBgNVBAsMGVB1YmxpYyBLZXkgSW5mcmFzdHJ1Y3R1cmUxMDAuBgNVBAMMJ1RoZSBMQU4gS3JldyBSb290IENlcnRpZmljYXRlIEF1dGhvcml0eTAeFw0yMDAxMDEwMDAwMDBaFw0zODAxMTkwMzE0MDdaMH4xCzAJBgNVBAYTAlVTMRkwFwYDVQQKDBBUaGUgTEFOIEtyZXcgTExDMSIwIAYDVQQLDBlQdWJsaWMgS2V5IEluZnJhc3RydWN0dXJlMTAwLgYDVQQDDCdUaGUgTEFOIEtyZXcgUm9vdCBDZXJ0aWZpY2F0ZSBBdXRob3JpdHkwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATcO35AnKj2itLrBYDDNFk8SByRf9ucM7cPdAR+bAqzmW+wSMYlIZOsZ50BabEt+aIpj/QndMJnltcFpQSwLpQPo4IBRDCCAUAwHQYDVR0OBBYEFIIMdrwm7VbwIDgVSiMVmI1Lzsq2MIGrBgNVHSMEgaMwgaCAFIIMdrwm7VbwIDgVSiMVmI1Lzsq2oYGDpIGAMH4xCzAJBgNVBAYTAlVTMRkwFwYDVQQKDBBUaGUgTEFOIEtyZXcgTExDMSIwIAYDVQQLDBlQdWJsaWMgS2V5IEluZnJhc3RydWN0dXJlMTAwLgYDVQQDDCdUaGUgTEFOIEtyZXcgUm9vdCBDZXJ0aWZpY2F0ZSBBdXRob3JpdHmCAhAAMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgEGMFAGA1UdEQRJMEeCDnRoZWxhbmtyZXcuY29tgR1hZG1pbmlzdHJhdG9yQGJ5dGV0ZXJyYWNlLmNvbYYWaHR0cHM6Ly90aGVsYW5rcmV3LmNvbTAKBggqhkjOPQQDAgNJADBGAiEA85JqQ+/YYjYN3iWef5FfeXiXPMZmoVULtWQARg1Lu38CIQCNK7Gb2cbBtCrlkmJYzGNHSREuugV6WEj6Q+Hwmte39Q=="
+                    },
+                    {
+                        "name": "tlk-virtual-network-ca",
+                        "publicCertificateData": "MIICsTCCAligAwIBAgICEAEwCgYIKoZIzj0EAwIwfjELMAkGA1UEBhMCVVMxGTAXBgNVBAoMEFRoZSBMQU4gS3JldyBMTEMxIjAgBgNVBAsMGVB1YmxpYyBLZXkgSW5mcmFzdHJ1Y3R1cmUxMDAuBgNVBAMMJ1RoZSBMQU4gS3JldyBSb290IENlcnRpZmljYXRlIEF1dGhvcml0eTAeFw0yMDAxMDEwMDAwMDBaFw0zODAxMTkwMzE0MDdaMIGJMQswCQYDVQQGEwJVUzEZMBcGA1UECgwQVGhlIExBTiBLcmV3IExMQzEiMCAGA1UECwwZUHVibGljIEtleSBJbmZyYXN0cnVjdHVyZTE7MDkGA1UEAwwyVGhlIExBTiBLcmV3IFZpcnR1YWwgTmV0d29yayBDZXJ0aWZpY2F0ZSBBdXRob3JpdHkwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATOGWzhyqmnD+FhihnXEFGDrY0Jn+fmDrhedyqSnT+AS6TOwTOa3zYrSCNkAtr/nCO04qEns/xajnEM0/nmE5x0o4G5MIG2MB0GA1UdDgQWBBQLtNqhS4EG2cL4QckPvnoJr8c+wTAfBgNVHSMEGDAWgBSCDHa8Ju1W8CA4FUojFZiNS87KtjASBgNVHRMBAf8ECDAGAQH/AgEAMA4GA1UdDwEB/wQEAwIBBjBQBgNVHREESTBHgg50aGVsYW5rcmV3LmNvbYEdYWRtaW5pc3RyYXRvckBieXRldGVycmFjZS5jb22GFmh0dHBzOi8vdGhlbGFua3Jldy5jb20wCgYIKoZIzj0EAwIDRwAwRAIgMuUOpCyV5hiEHWtwx20X7+ywamBYlukoBGcHskd8QRECIGnUyBNSRF5bwKBF0kOG9qSzYxZLfwQtJQ+0XCa4e1ot"
+                    }
+                ]
+            }
+        },
+        "generation": {
+            "value": 1
+        },
+        "ipConfigurations": {
+            "value": [
+                {
+                    "publicIpAddress": {
+                        "name": "tlk-pip-00000"
+                    },
+                    "subnet": {
+                        "virtualNetworkName": "tlk-vnet-00000"
+                    }
+                }
+            ]
+        },
+        "isActiveActiveModeEnabled": {
+            "value": false
+        },
+        "location": {
+            "value": "West US 3"
+        },
+        "mode": {
+            "value": "RouteBased"
+        },
+        "name": {
+            "value": "tlk-vng-00000"
+        },
+        "skuName": {
+            "value": "Basic"
+        },
+        "type": {
+            "value": "Vpn"
+        }
+    }
+}

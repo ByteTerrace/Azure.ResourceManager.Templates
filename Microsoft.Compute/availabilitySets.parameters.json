@@ -1,0 +1,26 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "West US 3"
+        },
+        "name": {
+            "value": "tlk-as-00000"
+        },
+        "numberOfFaultDomains": {
+            "value": 3
+        },
+        "numberOfUpdateDomains": {
+            "value": 5
+        },
+        "proximityPlacementGroup": {
+            "value": {
+                "name": "tlk-ppg-00000"
+            }
+        },
+        "skuName": {
+            "value": "Aligned"
+        }
+    }
+}

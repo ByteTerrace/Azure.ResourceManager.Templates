@@ -1,0 +1,31 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "applicationSecurityGroups": {
+            "value": [
+                {
+                    "name": "tlk-asg-00000"
+                }
+            ]
+        },
+        "location": {
+            "value": "West US 3"
+        },
+        "name": {
+            "value": "tlkdata00000-web_tlk-vnet-00000_tlk-snet-00000"
+        },
+        "resource": {
+            "value": {
+                "name": "tlkdata00000/staticWebsite",
+                "type": "Microsoft.Storage/storageAccounts"
+            }
+        },
+        "subnet": {
+            "value": {
+                "name": "tlk-snet-00000",
+                "virtualNetworkName": "tlk-vnet-00000"
+            }
+        }
+    }
+}
