@@ -10,6 +10,8 @@ param size int
 param skuName string
 @description('Specifies the SKU tier of the Azure Public IP Prefix.')
 param skuTier string
+@description('Specifies the version of the Azure Public IP Prefix.')
+param version string
 
 var zones = [for zone in availabilityZones: string(zone)]
 
@@ -18,7 +20,7 @@ resource publicIpPrefix 'Microsoft.Network/publicIPPrefixes@2022-01-01' = {
     name: name
     properties: {
         prefixLength: size
-        publicIPAddressVersion: 'IPv4'
+        publicIPAddressVersion: version
     }
     sku: {
         name: skuName

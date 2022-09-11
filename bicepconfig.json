@@ -1,0 +1,10 @@
+{
+    "moduleAliases": {
+        "br": {
+            "tlk": {
+                "registry": "tlkcr00000.azurecr.io",
+                "modulePath": "azure/bicep"
+            }
+        }
+    }
+}
