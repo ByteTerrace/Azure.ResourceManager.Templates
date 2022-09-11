@@ -10,6 +10,7 @@ var excludedTypes = [for type in overrides.excludedTypes: toLower(type)]
 var includedTypes = [for type in empty(overrides.includedTypes) ? [
     'microsoft.compute/availability-sets'
     'microsoft.compute/proximity-placement-groups'
+    'microsoft.compute/virtual-machines'
     'microsoft.container-registry/registries'
     'microsoft.key-vault/vaults'
     'microsoft.network/dns-zones'
@@ -219,6 +220,40 @@ var storageAccounts = [
             }
         }
         skuName: 'Standard_LRS'
+    }
+]
+var virtualMachines = [
+    {
+        administrator: {
+            password: 'Mandy0143Fd!'
+            userName: 'TheWindfish'
+        }
+        identity: {
+            type: 'SystemAssigned,UserAssigned'
+            userAssignedIdentities: [
+                {
+                    name: 'tlk-mi-00000'
+                }
+            ]
+        }
+        imageReference: {
+            offer: 'UbuntuServer'
+            publisher: 'Canonical'
+            sku: '18_04-lts-gen2'
+            version: 'latest'
+        }
+        linuxConfiguration: {
+            isVmAgentEnabled: true
+        }
+        networkInterfaces: [
+            {
+                name: 'tlk-nic-00000'
+            }
+        ]
+        proximityPlacementGroup: {
+            name: 'tlk-ppg-00000'
+        }
+        skuName: 'Standard_B1ms'
     }
 ]
 var virtualNetworkGateways = [
@@ -461,6 +496,30 @@ module userAssignedIdentitiesCopy 'br/tlk:microsoft.managed-identity/user-assign
     params: {
         location: location
         name: '${projectName}-mi-${padLeft(index, 5, '0')}'
+    }
+}]
+module virtualMachinesCopy 'br/tlk:microsoft.compute/virtual-machines:1.0.0' = [for (machine, index) in virtualMachines: if (contains(includedTypes, 'microsoft.compute/virtual-machines') && !contains(excludedTypes, 'microsoft.compute/virtual-machines')) {
+    dependsOn: [
+        availabilitySetsCopy
+        networkInterfacesCopy
+        proximityPlacementGroupsCopy
+        virtualNetworksCopy
+    ]
+    name: '${deployment().name}-vm-${string(index)}'
+    params: {
+        administrator: machine.administrator
+        availabilitySet: union({ availabilitySet: {} }, machine).availabilitySet
+        availabilityZones: union({ availabilityZones: [] }, machine).availabilityZones
+        identity: union({ identity: {} }, machine).identity
+        imageReference: machine.imageReference
+        linuxConfiguration: union({ linuxConfiguration: {} }, machine).linuxConfiguration
+        location: location
+        name: '${projectName}vm${padLeft(index, 5, '0')}'
+        networkInterfaces: machine.networkInterfaces
+        proximityPlacementGroup: union({ proximityPlacementGroup: {} }, machine).proximityPlacementGroup
+        skuName: machine.skuName
+        subnet: union({ subnet: {} }, machine).subnet
+        windowsConfiguration: union({ windowsConfiguration: {} }, machine).windowsConfiguration
     }
 }]
 module virtualNetworkGatewaysCopy 'br/tlk:microsoft.network/virtual-network-gateways:1.0.0' = [for (gateway, index) in virtualNetworkGateways: if (contains(includedTypes, 'microsoft.network/virtual-network-gateways') && !contains(excludedTypes, 'microsoft.network/virtual-network-gateways')) {
