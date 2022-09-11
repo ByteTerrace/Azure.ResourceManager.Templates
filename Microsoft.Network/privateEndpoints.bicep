@@ -26,7 +26,7 @@ var knownTypeToGroupIdMap = {
     'Microsoft.Storage/storageAccounts/tableServices': [ 'table' ]
 }
 
-var privateDnsZoneGroups = [{ dnsZoneConfigurations: knownTypeToDnsZoneConfigurationMap[((1 == length(split(resource.name, '/'))) ? resource.type : ((2 == length(split(resource.name, '/'))) ? format('{0}{1}', resource.type, substring(resource.name, indexOf(resource.name, '/'))) : '<unsupported type>'))] }]
+var privateDnsZoneGroups = [{ dnsZoneConfigurations: knownTypeToDnsZoneConfigurationMap[format('{0}{1}', resource.type, ((1 == length(split(resource.name, '/')) ? '' : (2 == length(split(resource.name, '/'))) ? '/${last(split(resource.name, '/'))}' : '')))] }]
 var privateLinkServiceConnections = [{ resource: resource }]
 
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2022-01-01' = {
@@ -43,12 +43,12 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2022-01-01' = {
         privateLinkServiceConnections: [for connection in privateLinkServiceConnections: {
             name: union({ name: 'default' }, connection).name
             properties: {
-                groupIds: knownTypeToGroupIdMap[((1 == length(split(connection.resource.name, '/'))) ? connection.resource.type : ((2 == length(split(connection.resource.name, '/'))) ? format('{0}{1}', connection.resource.type, substring(connection.resource.name, indexOf(connection.resource.name, '/'))) : '<unsupported type>'))]
+                groupIds: knownTypeToGroupIdMap[format('{0}{1}', connection.resource.type, ((1 == length(split(connection.resource.name, '/')) ? '' : ((2 == length(split(connection.resource.name, '/'))) ? '/${last(split(connection.resource.name, '/'))}' : ''))))]
                 privateLinkServiceId: resourceId(union({
                     subscriptionId: subscription().subscriptionId
                 }, connection.resource).subscriptionId, union({
                     resourceGroupName: resourceGroup().name
-                }, connection.resource).resourceGroupName, connection.resource.type, substring(connection.resource.name, 0, indexOf(connection.resource.name, '/')))
+                }, connection.resource).resourceGroupName, connection.resource.type, first(split(connection.resource.name, '/')))
             }
         }]
         subnet: {

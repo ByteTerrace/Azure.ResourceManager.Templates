@@ -1,7 +1,6 @@
-// parameters
-var location = 'West US 3'
-var projectName = 'tlk'
-var overrides = {
+param location string = 'West US 3'
+param projectName string = 'tlk'
+param overrides object = {
     excludedTypes: []
     includedTypes: []
 }
@@ -12,16 +11,20 @@ var includedTypes = [for type in empty(overrides.includedTypes) ? [
     'microsoft.compute/availability-sets'
     'microsoft.compute/proximity-placement-groups'
     'microsoft.container-registry/registries'
+    'microsoft.key-vault/vaults'
+    'microsoft.network/dns-zones'
+    'microsoft.network/private-dns-zones'
     'microsoft.managed-identity/user-assigned-identities'
     'microsoft.network/application-security-groups'
     'microsoft.network/nat-gateways'
+    'microsoft.network/network-interfaces'
     'microsoft.network/network-security-groups'
+    'microsoft.network/private-endpoints'
     'microsoft.network/public-ip-addresses'
     'microsoft.network/public-ip-prefixes'
     'microsoft.network/virtual-network-gateways'
     'microsoft.network/virtual-networks'
     'microsoft.storage/storage-accounts'
-    'microsoft.vault/vaults'
 ] : overrides.includedTypes: toLower(type)]
 
 // resource definitions
@@ -67,6 +70,25 @@ var natGateways = [
         ]
     }
 ]
+var networkInterfaces = [
+    {
+        ipConfigurations: [
+                {
+                    name: 'Ipv4config'
+                    privateIpAddress: {
+                        allocationMethod: 'Static'
+                        value: '10.255.0.4'
+                    }
+                    subnet: {
+                        name: 'tlk-snet-00000'
+                        virtualNetworkName: 'tlk-vnet-00000'
+                    }
+                }
+        ]
+        isAcceleratedNetworkingEnabled: false
+        isIpForwardingEnabled: false
+    }
+]
 var networkSecurityGroups = [
     {
         securityRules: [
@@ -87,8 +109,67 @@ var networkSecurityGroups = [
         ]
     }
 ]
+var privateDnsZones = [
+    {
+        name: 'privatelink.web.${environment().suffixes.storage}'
+        virtualNetworkLinks: [
+            {
+                virtualNetwork: {
+                    name: 'tlk-vnet-00000'
+                }
+            }
+        ]
+    }
+]
+var privateEndpoints = [
+    {
+        name: 'tlk-kv-00000_tlk-vnet-00000_tlk-snet-00000'
+        resource: {
+            name: 'tlk-kv-00000'
+            type: 'Microsoft.KeyVault/vaults'
+        }
+        subnet: {
+            name: 'tlk-snet-00000'
+            virtualNetworkName: 'tlk-vnet-00000'
+        }
+    }
+    {
+        name: 'tlkdata00000-blobs_tlk-vnet-00000_tlk-snet-00000'
+        resource: {
+            name: 'tlkdata00000/blobServices'
+            type: 'Microsoft.Storage/storageAccounts'
+        }
+        subnet: {
+            name: 'tlk-snet-00000'
+            virtualNetworkName: 'tlk-vnet-00000'
+        }
+    }
+    {
+        name: 'tlkdata00000-web_tlk-vnet-00000_tlk-snet-00000'
+        resource: {
+            name: 'tlkdata00000/staticWebsite'
+            type: 'Microsoft.Storage/storageAccounts'
+        }
+        subnet: {
+            name: 'tlk-snet-00000'
+            virtualNetworkName: 'tlk-vnet-00000'
+        }
+    }
+]
 var proximityPlacementGroups = [
     {}
+]
+var publicDnsZones = [
+    {
+        cnameRecords: [
+            {
+                alias: 'default-dnfngvbjg9ckaddn.z01.azurefd.net'
+                name: 'data'
+                timeToLiveInSeconds: 3600
+            }
+        ]
+        name: 'thelankrew.com'
+    }
 ]
 var publicIpAddresses = [
     {
@@ -238,7 +319,7 @@ module containerRegistriesCopy 'br/tlk:microsoft.container-registry/registries:1
         skuName: registry.skuName
     }
 }]
-module keyVaultsCopy 'br/tlk:microsoft.vault/vaults:1.0.0' = [for (vault, index) in keyVaults: if (contains(includedTypes, 'microsoft.vault/vaults') && !contains(excludedTypes, 'microsoft.vault/vaults')) {
+module keyVaultsCopy 'br/tlk:microsoft.key-vault/vaults:1.0.0' = [for (vault, index) in keyVaults: if (contains(includedTypes, 'microsoft.key-vault/vaults') && !contains(excludedTypes, 'microsoft.key-vault/vaults')) {
     dependsOn: [
         userAssignedIdentitiesCopy
         virtualNetworksCopy
@@ -262,6 +343,22 @@ module natGatewaysCopy 'br/tlk:microsoft.network/nat-gateways:1.0.0' = [for (gat
         publicIpPrefixes: union({ publicIpPrefixes: [] }, gateway).publicIpPrefixes
     }
 }]
+module networkInterfacesCopy 'br/tlk:microsoft.network/network-interfaces:1.0.0' = [for (interface, index) in networkInterfaces: if (contains(includedTypes, 'microsoft.network/network-interfaces') && !contains(excludedTypes, 'microsoft.network/network-interfaces')) {
+    dependsOn: [
+        networkSecurityGroupsCopy
+        virtualNetworksCopy
+    ]
+    name: '${deployment().name}-nic-${string(index)}'
+    params: {
+        dnsServers: union({ dnsServers: [] }, interface).dnsServers
+        ipConfigurations: interface.ipConfigurations
+        isAcceleratedNetworkingEnabled: union({ isAcceleratedNetworkingEnabled: true }, interface).isAcceleratedNetworkingEnabled
+        isIpForwardingEnabled: union({ isIpForwardingEnabled: false }, interface).isIpForwardingEnabled
+        location: location
+        name: '${projectName}-nic-${padLeft(index, 5, '0')}'
+        networkSecurityGroup: union({ networkSecurityGroup: {} }, interface).networkSecurityGroup
+    }
+}]
 module networkSecurityGroupsCopy 'br/tlk:microsoft.network/network-security-groups:1.0.0' = [for (group, index) in networkSecurityGroups: if (contains(includedTypes, 'microsoft.network/network-security-groups') && !contains(excludedTypes, 'microsoft.network/network-security-groups')) {
     dependsOn: [ applicationSecurityGroupsCopy ]
     name: '${deployment().name}-nsg-${string(index)}'
@@ -271,12 +368,47 @@ module networkSecurityGroupsCopy 'br/tlk:microsoft.network/network-security-grou
         securityRules: group.securityRules
     }
 }]
+module privateDnsZonesCopy 'br/tlk:microsoft.network/private-dns-zones:1.0.0' = [for (zone, index) in privateDnsZones: if (contains(includedTypes, 'microsoft.network/private-dns-zones') && !contains(excludedTypes, 'microsoft.network/private-dns-zones')) {
+    dependsOn: [
+        virtualNetworksCopy
+    ]
+    name: '${deployment().name}-privatedns-${string(index)}'
+    params: {
+        aRecords: union({ aRecords: [] }, zone).aRecords
+        name: zone.name
+        virtualNetworkLinks: union({ virtualNetworkLinks: [] }, zone).virtualNetworkLinks
+    }
+}]
+module privateEndpointsCopy 'br/tlk:microsoft.network/private-endpoints:1.0.0' = [for (endpoint, index) in privateEndpoints: if (contains(includedTypes, 'microsoft.network/private-endpoints') && !contains(excludedTypes, 'microsoft.network/private-endpoints')) {
+    dependsOn: [
+        keyVaultsCopy
+        privateDnsZonesCopy
+        storageAccountsCopy
+        virtualNetworksCopy
+    ]
+    name: '${deployment().name}-pe-${string(index)}'
+    params: {
+        applicationSecurityGroups: union({ applicationSecurityGroups: [] }, endpoint).applicationSecurityGroups
+        location: location
+        name: endpoint.name
+        resource: endpoint.resource
+        subnet: endpoint.subnet
+    }
+}]
 module proximityPlacementGroupsCopy 'br/tlk:microsoft.compute/proximity-placement-groups:1.0.0' = [for (group, index) in proximityPlacementGroups: if (contains(includedTypes, 'microsoft.compute/proximity-placement-groups') && !contains(excludedTypes, 'microsoft.compute/proximity-placement-groups')) {
     name: '${deployment().name}-ppg-${string(index)}'
     params: {
         availabilityZones: union({ availabilityZones: [] }, group).availabilityZones
         location: location
         name: '${projectName}-ppg-${padLeft(index, 5, '0')}'
+    }
+}]
+module publicDnsZonesCopy 'br/tlk:microsoft.network/dns-zones:1.0.0' = [for (zone, index) in publicDnsZones: if (contains(includedTypes, 'microsoft.network/dns-zones') && !contains(excludedTypes, 'microsoft.network/dns-zones')) {
+    name: '${deployment().name}-publicdns-${string(index)}'
+    params: {
+        cnameRecords: union({ cnameRecords: [] }, zone).cnameRecords
+        name: zone.name
+        txtRecords: union({ txtRecords: [] }, zone).txtRecords
     }
 }]
 module publicIpAddressesCopy 'br/tlk:microsoft.network/public-ip-addresses:1.0.0' = [for (address, index) in publicIpAddresses: if (contains(includedTypes, 'microsoft.network/public-ip-addresses') && !contains(excludedTypes, 'microsoft.network/public-ip-addresses')) {
