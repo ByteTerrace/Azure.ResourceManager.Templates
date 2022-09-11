@@ -1,0 +1,68 @@
+@description('An object that encapsulates the properties of the identity that will be assigned to the Azure Container Registry.')
+param identity object
+@description('Indicates whether the Azure Container Registry is accessible from the internet.')
+param isPublicNetworkAccessEnabled bool
+@description('Specifies the location in which the Azure Container Registry resource(s) will be deployed.')
+param location string
+@description('Specifies the name of the Azure Container Registry.')
+param name string
+@description('Specifies the SKU name of the Azure Container Registry.')
+param skuName string
+
+var userAssignedIdentities = [for managedIdentity in union({
+    userAssignedIdentities: []
+}, identity).userAssignedIdentities: extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', union({
+    subscriptionId: subscription().subscriptionId
+}, managedIdentity).subscriptionId, union({
+    resourceGroupName: resourceGroup().name
+}, managedIdentity).resourceGroupName), 'Microsoft.ManagedIdentity/userAssignedIdentities', managedIdentity.name)]
+
+resource registry 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' = {
+    identity: {
+        type: union({ type: empty(userAssignedIdentities) ? 'None' : 'UserAssigned' }, identity).type
+        userAssignedIdentities: empty(userAssignedIdentities) ? null : json(replace(replace(replace(string(userAssignedIdentities), '",', '":{},'), '[', '{'), ']', ':{}}'))
+    }
+    location: location
+    name: name
+    properties: {
+        adminUserEnabled: false
+        anonymousPullEnabled: false
+        dataEndpointEnabled: false
+        encryption: {
+            status: 'disabled'
+        }
+        networkRuleBypassOptions: 'None'
+        networkRuleSet: ('basic' == toLower(skuName)) ? null : {
+            defaultAction: 'Deny'
+            ipRules: []
+        }
+        policies: {
+            azureADAuthenticationAsArmPolicy: {
+                status: 'enabled'
+            }
+            exportPolicy: {
+                status: 'enabled'
+            }
+            quarantinePolicy: {
+                status: 'disabled'
+            }
+            retentionPolicy: {
+                days: 7
+                status: 'disabled'
+            }
+            softDeletePolicy: {
+                retentionDays: 7
+                status: 'disabled'
+            }
+            trustPolicy: {
+                status: 'disabled'
+                type: 'Notary'
+            }
+        }
+        publicNetworkAccess: isPublicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
+        zoneRedundancy: 'Disabled'
+    }
+    sku: {
+        name: skuName
+    }
+}
