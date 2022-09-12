@@ -8,7 +8,9 @@ param overrides object = {
 // variables
 var excludedTypes = [for type in overrides.excludedTypes: toLower(type)]
 var includedTypes = [for type in empty(overrides.includedTypes) ? [
+    'microsoft.authorization/role-assignments'
     'microsoft.compute/availability-sets'
+    'microsoft.compute/disk-encryption-sets'
     'microsoft.compute/proximity-placement-groups'
     'microsoft.compute/virtual-machines'
     'microsoft.container-registry/registries'
@@ -56,13 +58,37 @@ var containerRegistries = [
         skuName: 'Basic'
     }
 ]
+var diskEncryptionSets = [
+    {
+        identity: {
+            type: 'SystemAssigned'
+        }
+        keyName: 'VirtualMachine-Disk-Encryption'
+        keyVault: {
+            name: 'tlk-kv-00000'
+        }
+    }
+]
 var keyVaults = [
     {
-        isAllowTrustedMicrosoftServicesEnabled: false
+        isAllowTrustedMicrosoftServicesEnabled: true
         isPublicNetworkAccessEnabled: false
         isPurgeProtectionEnabled: true
         isRbacAuthorizationEnabled: true
-        isTemplateDeploymentEnabled: false
+        isTemplateDeploymentEnabled: true
+        keys: {
+            'VirtualMachine-Disk-Encryption': {
+                allowedOperations: []
+                rotationPolicy: {
+                    expiryTime: 'P1Y'
+                    isAutomaticRotationEnabled: true
+                    rotationTime: 'P6M'
+                }
+                size: 2048
+                type: 'RSA'
+            }
+        }
+        secrets: {}
         skuName: 'premium'
     }
 ]
@@ -189,6 +215,41 @@ var publicIpAddresses = [
     }
 ]
 var publicIpPrefixes = []
+var roleAssignments = [
+    {
+        assignee: {
+            name: 'tlkdata00000'
+            type: 'Microsoft.Storage/storageAccounts'
+        }
+        assignor: {
+            name: 'tlk-kv-00000'
+            type: 'Microsoft.KeyVault/vaults'
+        }
+        roleDefinitionName: 'Key Vault Crypto Service Encryption User'
+    }
+    {
+        assignee: {
+            name: 'tlk-des-00000'
+            type: 'Microsoft.Compute/diskEncryptionSets'
+        }
+        assignor: {
+            name: 'tlk-kv-00000'
+            type: 'Microsoft.KeyVault/vaults'
+        }
+        roleDefinitionName: 'Key Vault Crypto Service Encryption User'
+    }
+    {
+        assignee: {
+            name: 'tlk-mi-00000'
+            type: 'Microsoft.ManagedIdentity/userAssignedIdentities'
+        }
+        assignor: {
+            name: 'tlk-kv-00000'
+            type: 'Microsoft.KeyVault/vaults'
+        }
+        roleDefinitionName: 'Key Vault Crypto Service Encryption User'
+    }
+]
 var storageAccounts = [
     {
         accessTier: 'Hot'
@@ -362,6 +423,21 @@ module containerRegistriesCopy 'br/tlk:microsoft.container-registry/registries:1
         skuName: registry.skuName
     }
 }]
+module diskEncryptionSetsCopy 'br/tlk:microsoft.compute/disk-encryption-sets:1.0.0' = [for (set, index) in diskEncryptionSets: if (contains(includedTypes, 'microsoft.compute/disk-encryption-sets') && !contains(excludedTypes, 'microsoft.compute/disk-encryption-sets')) {
+    dependsOn: [
+        keyVaultsCopy
+        userAssignedIdentitiesCopy
+    ]
+    name: '${deployment().name}-des-${string(index)}'
+    params: {
+        identity: union({ identity: {} }, set).identity
+        keyName: set.keyName
+        keyVault: set.keyVault
+        keyVersion: union({ keyVersion: '' }, set).keyVersion
+        location: location
+        name: '${projectName}-des-${padLeft(index, 5, '0')}'
+    }
+}]
 module keyVaultsCopy 'br/tlk:microsoft.key-vault/vaults:1.0.0' = [for (vault, index) in keyVaults: if (contains(includedTypes, 'microsoft.key-vault/vaults') && !contains(excludedTypes, 'microsoft.key-vault/vaults')) {
     dependsOn: [
         userAssignedIdentitiesCopy
@@ -370,11 +446,15 @@ module keyVaultsCopy 'br/tlk:microsoft.key-vault/vaults:1.0.0' = [for (vault, in
     name: '${deployment().name}-kv-${string(index)}'
     params: {
         firewallRules: union({ firewallRules: [] }, vault).firewallRules
-        isAllowTrustedMicrosoftServicesEnabled: union({ isAllowTrustedMicrosoftServicesEnabled: false }, vault).isAllowTrustedMicrosoftServicesEnabled
+        isAllowTrustedMicrosoftServicesEnabled: union({ isAllowTrustedMicrosoftServicesEnabled: true }, vault).isAllowTrustedMicrosoftServicesEnabled
         isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, vault).isPublicNetworkAccessEnabled
+        isPurgeProtectionEnabled: union({ isPurgeProtectionEnabled: true }, vault).isPurgeProtectionEnabled
         isRbacAuthorizationEnabled: union({ isRbacAuthorizationEnabled: true }, vault).isRbacAuthorizationEnabled
+        isTemplateDeploymentEnabled: union({ isTemplateDeploymentEnabled: true }, vault).isTemplateDeploymentEnabled
+        keys: union({ keys: {} }, vault).keys
         location: location
         name: '${projectName}-kv-${padLeft(index, 5, '0')}'
+        secrets: union({ secrets: {} }, vault).secrets
         skuName: union({ skuName: 'premium' }, vault).skuName
         tenantId: union({ tenantId: tenant().tenantId }, vault).tenantId
         virtualNetworkRules: union({ virtualNetworkRules: [] }, vault).virtualNetworkRules
@@ -518,9 +598,17 @@ module userAssignedIdentitiesCopy 'br/tlk:microsoft.managed-identity/user-assign
 }]
 module virtualMachinesCopy 'br/tlk:microsoft.compute/virtual-machines:1.0.0' = [for (machine, index) in virtualMachines: if (contains(includedTypes, 'microsoft.compute/virtual-machines') && !contains(excludedTypes, 'microsoft.compute/virtual-machines')) {
     dependsOn: [
+        applicationSecurityGroupsCopy
         availabilitySetsCopy
+        diskEncryptionSetsCopy
+        keyVaultsCopy
+        natGatewaysCopy
         networkInterfacesCopy
+        networkSecurityGroupsCopy
         proximityPlacementGroupsCopy
+        privateDnsZonesCopy
+        publicIpAddressesCopy
+        publicIpPrefixesCopy
         userAssignedIdentitiesCopy
         virtualNetworksCopy
     ]
@@ -573,4 +661,40 @@ module virtualNetworksCopy 'br/tlk:microsoft.network/virtual-networks:1.0.0' = [
         name: '${projectName}-vnet-${padLeft(index, 5, '0')}'
         subnets: network.subnets
     }
+}]
+
+resource roleAssignmentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (assignment, index) in roleAssignments: if (contains(includedTypes, 'microsoft.authorization/role-assignments') && !contains(excludedTypes, 'microsoft.authorization/role-assignments')) {
+    dependsOn: [
+        containerRegistriesCopy
+        diskEncryptionSetsCopy
+        keyVaultsCopy
+        storageAccountsCopy
+        userAssignedIdentitiesCopy
+        virtualMachinesCopy
+        virtualNetworksCopy
+    ]
+    name: '${deployment().name}-rbac-${string(index)}'
+    properties: {
+        expressionEvaluationOptions: {
+            scope: 'NotSpecified'
+        }
+        mode: 'Incremental'
+        parameters: {
+            assignee: {
+                value: assignment.assignee
+            }
+            assignor: {
+                value: assignment.assignor
+            }
+            roleDefinitionName: {
+                value: assignment.roleDefinitionName
+            }
+        }
+        templateLink: {
+            contentVersion: '1.0.0.0'
+            id: resourceId('fd49ea67-135b-449f-a62c-3e4b8d26d3d6', 'thelankrew', 'Microsoft.Resources/templateSpecs/versions', 'microsoft.authorization_role-assignments', '1.0.0')
+        }
+    }
+    resourceGroup: resourceGroup().name
+    subscriptionId: subscription().subscriptionId
 }]
