@@ -57,7 +57,14 @@ var containerRegistries = [
     }
 ]
 var keyVaults = [
-    {}
+    {
+        isAllowTrustedMicrosoftServicesEnabled: false
+        isPublicNetworkAccessEnabled: false
+        isPurgeProtectionEnabled: true
+        isRbacAuthorizationEnabled: true
+        isTemplateDeploymentEnabled: false
+        skuName: 'premium'
+    }
 ]
 var natGateways = [
     {
@@ -193,6 +200,7 @@ var storageAccounts = [
                 }
             ]
         }
+        isAllowTrustedMicrosoftServicesEnabled: false
         isHttpsOnlyModeEnabled: true
         isPublicNetworkAccessEnabled: true
         isSharedKeyAccessEnabled: true
@@ -361,8 +369,15 @@ module keyVaultsCopy 'br/tlk:microsoft.key-vault/vaults:1.0.0' = [for (vault, in
     ]
     name: '${deployment().name}-kv-${string(index)}'
     params: {
+        firewallRules: union({ firewallRules: [] }, vault).firewallRules
+        isAllowTrustedMicrosoftServicesEnabled: union({ isAllowTrustedMicrosoftServicesEnabled: false }, vault).isAllowTrustedMicrosoftServicesEnabled
+        isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, vault).isPublicNetworkAccessEnabled
+        isRbacAuthorizationEnabled: union({ isRbacAuthorizationEnabled: true }, vault).isRbacAuthorizationEnabled
         location: location
         name: '${projectName}-kv-${padLeft(index, 5, '0')}'
+        skuName: union({ skuName: 'premium' }, vault).skuName
+        tenantId: union({ tenantId: tenant().tenantId }, vault).tenantId
+        virtualNetworkRules: union({ virtualNetworkRules: [] }, vault).virtualNetworkRules
     }
 }]
 module natGatewaysCopy 'br/tlk:microsoft.network/nat-gateways:1.0.0' = [for (gateway, index) in natGateways: if (contains(includedTypes, 'microsoft.network/nat-gateways') && !contains(excludedTypes, 'microsoft.network/nat-gateways')) {
@@ -479,16 +494,19 @@ module storageAccountsCopy 'br/tlk:microsoft.storage/storage-accounts:1.0.0' = [
     ]
     name: '${deployment().name}-data-${string(index)}'
     params: {
-        accessTier: account.accessTier
-        identity: account.identity
-        isHttpsOnlyModeEnabled: account.isHttpsOnlyModeEnabled
-        isPublicNetworkAccessEnabled: account.isPublicNetworkAccessEnabled
-        isSharedKeyAccessEnabled: account.isSharedKeyAccessEnabled
+        accessTier: union({ accessTier: 'Hot' }, account).accessTier
+        firewallRules: union({ firewallRules: [] }, account).firewallRules
+        identity: union({ identity: {} }, account).identity
+        isAllowTrustedMicrosoftServicesEnabled: union({ isAllowTrustedMicrosoftServicesEnabled: false }, account).isAllowTrustedMicrosoftServicesEnabled
+        isHttpsOnlyModeEnabled: union({ isHttpsOnlyModeEnabled: true }, account).isHttpsOnlyModeEnabled
+        isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, account).isPublicNetworkAccessEnabled
+        isSharedKeyAccessEnabled: union({ isSharedKeyAccessEnabled: false }, account).isSharedKeyAccessEnabled
         kind: account.kind
         location: location
         name: '${projectName}data${padLeft(index, 5, '0')}'
         services: account.services
         skuName: account.skuName
+        virtualNetworkRules: union({ virtualNetworkRules: [] }, account).virtualNetworkRules
     }
 }]
 module userAssignedIdentitiesCopy 'br/tlk:microsoft.managed-identity/user-assigned-identities:1.0.0' = [for (identity, index) in userAssignedIdentities: if (contains(includedTypes, 'microsoft.managed-identity/user-assigned-identities') && !contains(excludedTypes, 'microsoft.managed-identity/user-assigned-identities')) {

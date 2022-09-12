@@ -1,23 +1,29 @@
 @description('Specifies the access tier of the Azure Storage Account.')
-param accessTier string
+param accessTier string = 'Hot'
+@description('An array of firewall rules that will be assigned to the Azure Storage Account.')
+param firewallRules array = []
 @description('An object that encapsulates the properties of the identity that will be assigned to the Azure Storage Account.')
-param identity object
+param identity object = {}
+@description('Indicates whether trusted Microsoft services are allowed to access the Azure Storage Account.')
+param isAllowTrustedMicrosoftServicesEnabled bool = false
 @description('Indicates whether HTTP network protocol support is restricted to HTTPS on the Azure Storage Account.')
-param isHttpsOnlyModeEnabled bool
+param isHttpsOnlyModeEnabled bool = true
 @description('Indicates whether the Azure Storage Account is accessible from the internet.')
-param isPublicNetworkAccessEnabled bool
+param isPublicNetworkAccessEnabled bool = false
 @description('Indicates whether shared keys are able to be used to access the Azure Storage Account.')
-param isSharedKeyAccessEnabled bool
+param isSharedKeyAccessEnabled bool = false
 @description('Specifies the kind of the Azure Storage Account.')
-param kind string
+param kind string = 'StorageV2'
 @description('Specifies the location in which the Azure Storage Account resource(s) will be deployed.')
-param location string
+param location string = resourceGroup().location
 @description('Specifies the name of the Azure Storage Account.')
 param name string
 @description('An object that encapsulates the properties of the services that will be configured on the Azure Storage Account.')
-param services object
+param services object = {}
 @description('Specifies the SKU name of the Azure Storage Account.')
-param skuName string
+param skuName string = 'Standard_LRS'
+@description('An array of virtual network rules that will be assigned to the Azure Storage Account.')
+param virtualNetworkRules array = []
 
 var default = {
     services: {
@@ -87,8 +93,20 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
         largeFileSharesState: servicesWithDefaults.file.shares.isLargeSupportEnabled ? 'Enabled' : 'Disabled'
         minimumTlsVersion: 'TLS1_2'
         networkAcls: {
-            bypass: 'None'
-            defaultAction: 'Allow'
+            bypass: isAllowTrustedMicrosoftServicesEnabled ? 'AzureServices' : 'None'
+            defaultAction: (isPublicNetworkAccessEnabled && (empty(firewallRules) || empty(virtualNetworkRules))) ? 'Allow' : 'Deny'
+            ipRules: [for rule in firewallRules: {
+                action: 'Allow'
+                value: rule
+            }]
+            virtualNetworkRules: [for rule in virtualNetworkRules: {
+                action: 'Allow'
+                id: resourceId(union({
+                    subscriptionId: subscription().subscriptionId
+                }, rule.subnet).subscriptionId, union({
+                    resourceGroupName: resourceGroup().name
+                }, rule.subnet).resourceGroupName, 'Microsoft.Network/virtualNetwork/subnets', rule.subnet.virtualNetworkName, rule.subnet.name)
+            }]
         }
         publicNetworkAccess: isPublicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
         supportsHttpsTrafficOnly: isHttpsOnlyModeEnabled
@@ -97,7 +115,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
         name: skuName
     }
 }
-
 resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2022-05-01' = {
     name: 'default'
     parent: storageAccount
@@ -107,7 +124,6 @@ resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2022-05-01
         }
     }
 }
-
 resource blobContainers 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-05-01' = [for container in servicesWithDefaults.blob.containers.collection: {
     name: container.name
     parent: blobServices
@@ -119,7 +135,6 @@ resource blobContainers 'Microsoft.Storage/storageAccounts/blobServices/containe
         enableNfsV3RootSquash: union({ isNetworkFileSystemV3RootSquashEnabled: false }, container).isNetworkFileSystemV3RootSquashEnabled
     }: {})
 }]
-
 resource fileServices 'Microsoft.Storage/storageAccounts/fileServices@2022-05-01' = {
     name: 'default'
     parent: storageAccount
@@ -129,7 +144,6 @@ resource fileServices 'Microsoft.Storage/storageAccounts/fileServices@2022-05-01
         }
     }
 }
-
 resource fileShares 'Microsoft.Storage/storageAccounts/fileServices/shares@2022-05-01' = [for share in servicesWithDefaults.file.shares.collection: {
     name: share.name
     parent: fileServices
