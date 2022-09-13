@@ -1,13 +1,17 @@
 @description('An object that encapsulates the properties of the identity that will be assigned to the Azure Container Registry.')
-param identity object
+param identity object = {}
 @description('Indicates whether the Azure Container Registry is accessible from the internet.')
-param isPublicNetworkAccessEnabled bool
+param isPublicNetworkAccessEnabled bool = false
+@description('Indicates whether the zone redundancy feature is enabled on the Azure Container Registry.')
+param isZoneRedundancyEnabled bool = true
 @description('Specifies the location in which the Azure Container Registry resource(s) will be deployed.')
-param location string
+param location string = resourceGroup().name
 @description('Specifies the name of the Azure Container Registry.')
 param name string
-@description('Specifies the SKU name of the Azure Container Registry.')
-param skuName string
+@description('Specifies the SKU of the Azure Container Registry.')
+param sku object = {
+    name: 'Premium'
+}
 
 var userAssignedIdentities = [for managedIdentity in union({
     userAssignedIdentities: []
@@ -32,7 +36,7 @@ resource registry 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' = 
             status: 'disabled'
         }
         networkRuleBypassOptions: 'None'
-        networkRuleSet: ('basic' == toLower(skuName)) ? null : {
+        networkRuleSet: ('basic' == toLower(sku.name)) ? null : {
             defaultAction: 'Deny'
             ipRules: []
         }
@@ -60,9 +64,7 @@ resource registry 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' = 
             }
         }
         publicNetworkAccess: isPublicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
-        zoneRedundancy: 'Disabled'
+        zoneRedundancy: isZoneRedundancyEnabled ? 'Enabled' : 'Disabled'
     }
-    sku: {
-        name: skuName
-    }
+    sku: sku
 }

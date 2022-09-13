@@ -39,6 +39,8 @@ var includedTypes = [for type in empty(overrides.includedTypes) ? [
     'microsoft.service-bus/namespaces'
     'microsoft.sql/servers'
     'microsoft.storage/storage-accounts'
+    'microsoft.web/server-farms'
+    'microsoft.web/sites'
 ] : overrides.includedTypes: toLower(type)]
 
 // resource definitions
@@ -138,6 +140,20 @@ var applicationInsights = [
 var applicationSecurityGroups = [
     {}
 ]
+var applicationServicePlans = [
+    {
+        isZoneRedundancyEnabled: false
+        sku: {
+            name: 'Y1'
+        }
+    }
+    {
+        isZoneRedundancyEnabled: false
+        sku: {
+            name: 'F1'
+        }
+    }
+]
 var availabilitySets = [
     {
         proximityPlacementGroup: {
@@ -160,7 +176,10 @@ var containerRegistries = [
             ]
         }
         isPublicNetworkAccessEnabled: true
-        skuName: 'Basic'
+        isZoneRedundancyEnabled: false
+        sku: {
+            name: 'Basic'
+        }
     }
 ]
 var deployments = []
@@ -487,6 +506,39 @@ var storageAccounts = [
 var userAssignedIdentities = [
     {}
 ]
+var webApplications = [
+    {
+        applicationInsights: {
+            name: 'tlk-ai-00000'
+        }
+        applicationSettings: {
+            FUNCTIONS_EXTENSION_VERSION: '~4'
+            FUNCTIONS_WORKER_RUNTIME: 'dotnet'
+            WEBSITE_CONTENTSHARE: 'tlk-fun-00000839a'
+        }
+        functionExtension: {
+            storageAccount: {
+                name: 'tlkdata00000'
+            }
+        }
+        servicePlan: {
+            name: 'tlk-asp-00000'
+        }
+    }
+    {
+        applicationInsights: {
+            name: 'tlk-ai-00000'
+        }
+        applicationSettings: {
+            ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
+            XDT_MicrosoftApplicationInsights_Mode: 'Recommended'
+        }
+        is32BitModeEnabled: true
+        servicePlan: {
+            name: 'tlk-asp-00001'
+        }
+    }
+]
 var virtualMachines = [
     {
         administrator: {
@@ -638,6 +690,15 @@ module applicationSecurityGroupsCopy 'br/tlk:microsoft.network/application-secur
         name: '${projectName}-asg-${padLeft(index, 5, '0')}'
     }
 }]
+module applicationServicePlansCopy 'br/tlk:microsoft.web/server-farms:1.0.0' = [for (plan, index) in applicationServicePlans: if (contains(includedTypes, 'microsoft.web/server-farms') && !contains(excludedTypes, 'microsoft.web/server-farms')) {
+    name: '${deployment().name}-asp-${string(index)}'
+    params: {
+        isZoneRedundancyEnabled: union({ isZoneRedundancyEnabled: true }, plan).isZoneRedundancyEnabled
+        location: location
+        name: '${projectName}-asp-${padLeft(index, 5, '0')}'
+        sku: plan.sku
+    }
+}]
 module availabilitySetsCopy 'br/tlk:microsoft.compute/availability-sets:1.0.0' = [for (set, index) in availabilitySets: if (contains(includedTypes, 'microsoft.compute/availability-sets') && !contains(excludedTypes, 'microsoft.compute/availability-sets')) {
     dependsOn: [
         proximityPlacementGroupsCopy
@@ -672,11 +733,12 @@ module containerRegistriesCopy 'br/tlk:microsoft.container-registry/registries:1
     ]
     name: '${deployment().name}-cr-${string(index)}'
     params: {
-        identity: registry.identity
-        isPublicNetworkAccessEnabled: registry.isPublicNetworkAccessEnabled
+        identity: union({ identity: {} }, registry).identity
+        isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, registry).isPublicNetworkAccessEnabled
+        isZoneRedundancyEnabled: union({ isZoneRedundancyEnabled: true }, registry).isZoneRedundancyEnabled
         location: location
         name: '${projectName}cr${padLeft(index, 5, '0')}'
-        skuName: registry.skuName
+        sku: union({ sku: { name: 'Premium' } }, registry).sku
     }
 }]
 module diskEncryptionSetsCopy 'br/tlk:microsoft.compute/disk-encryption-sets:1.0.0' = [for (set, index) in diskEncryptionSets: if (contains(includedTypes, 'microsoft.compute/disk-encryption-sets') && !contains(excludedTypes, 'microsoft.compute/disk-encryption-sets')) {
@@ -989,6 +1051,32 @@ module virtualNetworksCopy 'br/tlk:microsoft.network/virtual-networks:1.0.0' = [
         subnets: network.subnets
     }
 }]
+module webApplicationsCopy 'br/tlk:microsoft.web/sites:1.0.0' = [for (application, index) in webApplications: if (contains(includedTypes, 'microsoft.web/sites') && !contains(excludedTypes, 'microsoft.web/sites')) {
+    dependsOn: [
+        applicationConfigurationStoresCopy
+        applicationInsightsCopy
+        applicationServicePlansCopy
+        keyVaultsCopy
+        privateDnsZonesCopy
+        publicDnsZonesCopy
+        serviceBusNamespacesCopy
+        sqlServersCopy
+        storageAccountsCopy
+        virtualNetworksCopy
+    ]
+    name: '${deployment().name}-web-${string(index)}'
+    params: {
+        applicationInsights: union({ applicationInsights: {} }, application).applicationInsights
+        applicationSettings: union({ applicationSettings: {} }, application).applicationSettings
+        cors: union({ cors: {} }, application).cors
+        functionExtension: union({ functionExtension: {} }, application).functionExtension
+        identity: union({ identity: {} }, application).identity
+        is32BitModeEnabled: union({ is32BitModeEnabled: false }, application).is32BitModeEnabled
+        location: location
+        name: '${projectName}-web-${padLeft(index, 5, '0')}'
+        servicePlan: application.servicePlan
+    }
+}]
 
 resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (deployment, index) in deployments: if (contains(includedTypes, 'microsoft.resources/deployments') && !contains(excludedTypes, 'microsoft.resources/deployments')) {
     dependsOn: [
@@ -996,6 +1084,7 @@ resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (de
         applicationGatewaysCopy
         applicationInsightsCopy
         applicationSecurityGroupsCopy
+        applicationServicePlansCopy
         availabilitySetsCopy
         containerRegistriesCopy
         diskEncryptionSetsCopy
@@ -1019,6 +1108,7 @@ resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (de
         virtualMachinesCopy
         virtualNetworkGatewaysCopy
         virtualNetworksCopy
+        webApplicationsCopy
     ]
     name: '${deployment().name}-rm-${string(index)}'
     properties: {
@@ -1040,6 +1130,7 @@ resource roleAssignmentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for
         applicationGatewaysCopy
         applicationInsightsCopy
         applicationSecurityGroupsCopy
+        applicationServicePlansCopy
         availabilitySetsCopy
         containerRegistriesCopy
         diskEncryptionSetsCopy
@@ -1062,6 +1153,7 @@ resource roleAssignmentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for
         virtualMachinesCopy
         virtualNetworkGatewaysCopy
         virtualNetworksCopy
+        webApplicationsCopy
     ]
     name: '${deployment().name}-rbac-${string(index)}'
     properties: {
