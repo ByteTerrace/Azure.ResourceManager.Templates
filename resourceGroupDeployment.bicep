@@ -168,7 +168,15 @@ var availabilitySets = [
         }
     }
 ]
-var cdnProfiles = []
+var cdnProfiles = [
+    {
+        name: 'byteterrace'
+        resourceGroupName: 'byteterrace'
+        sku: {
+            name: 'Standard_AzureFrontDoor'
+        }
+    }
+]
 var containerRegistries = [
     {
         identity: {
@@ -725,10 +733,15 @@ module applicationConfigurationStoresCopy 'br/tlk:microsoft.app-configuration/co
         isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, store).isPublicNetworkAccessEnabled
         isPurgeProtectionEnabled: union({ isPurgeProtectionEnabled: true }, store).isPurgeProtectionEnabled
         location: union({ location: location }, store).location
-        name: '${projectName}-acs-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-acs-${padLeft(index, 5, '0')}' }, store).name
         settings: union({ settings: {} }, store).settings
         sku: union({ sku: { name: 'Premium' } }, store).sku
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, store).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, store).resourceGroupName)
 }]
 module applicationGatewaysCopy 'br/tlk:microsoft.network/application-gateways:1.0.0' = [for (gateway, index) in applicationGateways: if (contains(includedTypes, 'microsoft.network/application-gateways') && !contains(excludedTypes, 'microsoft.network/application-gateways')) {
     name: '${deployment().name}-ag-${string(index)}'
@@ -740,7 +753,7 @@ module applicationGatewaysCopy 'br/tlk:microsoft.network/application-gateways:1.
         httpListeners: gateway.httpListeners
         identity: union({ identity: {} }, gateway).identity
         location: union({ location: location }, gateway).location
-        name: 'tlk-ag-00001'
+        name: union({ name: '${projectName}-ag-${padLeft(index, 5, '0')}' }, gateway).name
         routingRules: gateway.routingRules
         sku: union({ sku: {
             capacity: 1
@@ -749,6 +762,11 @@ module applicationGatewaysCopy 'br/tlk:microsoft.network/application-gateways:1.
         } }, gateway).sku
         subnet: gateway.subnet
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, gateway).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, gateway).resourceGroupName)
 }]
 module applicationInsightsCopy 'br/tlk:microsoft.insights/components:1.0.0' = [for (component, index) in applicationInsights: if (contains(includedTypes, 'microsoft.insights/components') && !contains(excludedTypes, 'microsoft.insights/components')) {
     dependsOn: [
@@ -758,24 +776,39 @@ module applicationInsightsCopy 'br/tlk:microsoft.insights/components:1.0.0' = [f
     params: {
         location: union({ location: location }, component).location
         logAnalyticsWorkspace: component.logAnalyticsWorkspace
-        name: '${projectName}-ai-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-ai-${padLeft(index, 5, '0')}' }, component).name
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, component).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, component).resourceGroupName)
 }]
 module applicationSecurityGroupsCopy 'br/tlk:microsoft.network/application-security-groups:1.0.0' = [for (group, index) in applicationSecurityGroups: if (contains(includedTypes, 'microsoft.network/application-security-groups') && !contains(excludedTypes, 'microsoft.network/application-security-groups')) {
     name: '${deployment().name}-asg-${string(index)}'
     params: {
         location: union({ location: location }, group).location
-        name: '${projectName}-asg-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-asg-${padLeft(index, 5, '0')}' }, group).name
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, group).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, group).resourceGroupName)
 }]
 module applicationServicePlansCopy 'br/tlk:microsoft.web/server-farms:1.0.0' = [for (plan, index) in applicationServicePlans: if (contains(includedTypes, 'microsoft.web/server-farms') && !contains(excludedTypes, 'microsoft.web/server-farms')) {
     name: '${deployment().name}-asp-${string(index)}'
     params: {
         isZoneRedundancyEnabled: union({ isZoneRedundancyEnabled: true }, plan).isZoneRedundancyEnabled
         location: union({ location: location }, plan).location
-        name: '${projectName}-asp-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-asp-${padLeft(index, 5, '0')}' }, plan).name
         sku: plan.sku
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, plan).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, plan).resourceGroupName)
 }]
 module availabilitySetsCopy 'br/tlk:microsoft.compute/availability-sets:1.0.0' = [for (set, index) in availabilitySets: if (contains(includedTypes, 'microsoft.compute/availability-sets') && !contains(excludedTypes, 'microsoft.compute/availability-sets')) {
     dependsOn: [
@@ -784,12 +817,17 @@ module availabilitySetsCopy 'br/tlk:microsoft.compute/availability-sets:1.0.0' =
     name: '${deployment().name}-as-${string(index)}'
     params: {
         location: union({ location: location }, set).location
-        name: '${projectName}-as-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-as-${padLeft(index, 5, '0')}' }, set).name
         numberOfFaultDomains: set.numberOfFaultDomains
         numberOfUpdateDomains: set.numberOfUpdateDomains
         proximityPlacementGroup: union({ proximityPlacementGroup: {} }, set).proximityPlacementGroup
         sku: set.sku
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, set).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, set).resourceGroupName)
 }]
 module cdnProfilesCopy 'br/tlk:microsoft.cdn/profiles:1.0.0' = [for (profile, index) in cdnProfiles: if (contains(includedTypes, 'microsoft.cdn/profiles') && !contains(excludedTypes, 'microsoft.cdn/profiles')) {
     dependsOn: [
@@ -799,9 +837,14 @@ module cdnProfilesCopy 'br/tlk:microsoft.cdn/profiles:1.0.0' = [for (profile, in
     ]
     name: '${deployment().name}-cdn-${string(index)}'
     params: {
-        name: '${projectName}-cdn-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-cdn-${padLeft(index, 5, '0')}' }, profile).name
         sku: profile.sku
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, profile).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, profile).resourceGroupName)
 }]
 module containerRegistriesCopy 'br/tlk:microsoft.container-registry/registries:1.0.0' = [for (registry, index) in containerRegistries: if (contains(includedTypes, 'microsoft.container-registry/registries') && !contains(excludedTypes, 'microsoft.container-registry/registries')) {
     dependsOn: [
@@ -815,9 +858,14 @@ module containerRegistriesCopy 'br/tlk:microsoft.container-registry/registries:1
         isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, registry).isPublicNetworkAccessEnabled
         isZoneRedundancyEnabled: union({ isZoneRedundancyEnabled: true }, registry).isZoneRedundancyEnabled
         location: union({ location: location }, registry).location
-        name: '${projectName}cr${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}cr${padLeft(index, 5, '0')}'}, registry).name
         sku: union({ sku: { name: 'Premium' } }, registry).sku
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, registry).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, registry).resourceGroupName)
 }]
 module diskEncryptionSetsCopy 'br/tlk:microsoft.compute/disk-encryption-sets:1.0.0' = [for (set, index) in diskEncryptionSets: if (contains(includedTypes, 'microsoft.compute/disk-encryption-sets') && !contains(excludedTypes, 'microsoft.compute/disk-encryption-sets')) {
     dependsOn: [
@@ -831,8 +879,13 @@ module diskEncryptionSetsCopy 'br/tlk:microsoft.compute/disk-encryption-sets:1.0
         keyVault: set.keyVault
         keyVersion: union({ keyVersion: '' }, set).keyVersion
         location: union({ location: location }, set).location
-        name: '${projectName}-des-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-des-${padLeft(index, 5, '0')}' }, set).name
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, set).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, set).resourceGroupName)
 }]
 module keyVaultsCopy 'br/tlk:microsoft.key-vault/vaults:1.0.0' = [for (vault, index) in keyVaults: if (contains(includedTypes, 'microsoft.key-vault/vaults') && !contains(excludedTypes, 'microsoft.key-vault/vaults')) {
     dependsOn: [
@@ -849,12 +902,17 @@ module keyVaultsCopy 'br/tlk:microsoft.key-vault/vaults:1.0.0' = [for (vault, in
         isTemplateDeploymentEnabled: union({ isTemplateDeploymentEnabled: true }, vault).isTemplateDeploymentEnabled
         keys: union({ keys: {} }, vault).keys
         location: union({ location: location }, vault).location
-        name: '${projectName}-kv-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-kv-${padLeft(index, 5, '0')}' }, vault).name
         secrets: union({ secrets: {} }, vault).secrets
         sku: union({ sku: { name: 'premium' } }, vault).sku
         tenantId: union({ tenantId: tenant().tenantId }, vault).tenantId
         virtualNetworkRules: union({ virtualNetworkRules: [] }, vault).virtualNetworkRules
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, vault).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, vault).resourceGroupName)
 }]
 module logAnalyticsWorkspacesCopy 'br/tlk:microsoft.operational-insights/workspaces:1.0.0' = [for (workspace, index) in logAnalyticsWorkspaces: if (contains(includedTypes, 'microsoft.operational-insights/workspaces') && !contains(excludedTypes, 'microsoft.operational-insights/workspaces')) {
     name: '${deployment().name}-law-${string(index)}'
@@ -865,9 +923,14 @@ module logAnalyticsWorkspacesCopy 'br/tlk:microsoft.operational-insights/workspa
         isPublicNetworkAccessForIngestionEnabled: union({ isPublicNetworkAccessForIngestionEnabled: false }, workspace).isPublicNetworkAccessForIngestionEnabled
         isPublicNetworkAccessForQueryEnabled: union({ isPublicNetworkAccessForQueryEnabled: false }, workspace).isPublicNetworkAccessForQueryEnabled
         location: union({ location: location }, workspace).location
-        name: '${projectName}-law-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-law-${padLeft(index, 5, '0')}' }, workspace).name
         sku: union({ sku: { name: 'PerGB2018' } }, workspace).sku
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, workspace).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, workspace).resourceGroupName)
 }]
 module machineLearningWorkspacesCopy 'br/tlk:microsoft.machine-learning-services/workspaces:1.0.0' = [for (workspace, index) in machineLearningWorkspaces: if (contains(includedTypes, 'microsoft.machine-learning-services/workspaces') && !contains(excludedTypes, 'microsoft.machine-learning-services/workspaces')) {
     dependsOn: [
@@ -886,10 +949,15 @@ module machineLearningWorkspacesCopy 'br/tlk:microsoft.machine-learning-services
         isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, workspace).isPublicNetworkAccessEnabled
         keyVault: workspace.keyVault
         location: union({ location: location }, workspace).location
-        name: '${projectName}-mlw-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-mlw-${padLeft(index, 5, '0')}' }, workspace).name
         storageAccount: workspace.storageAccount
         sku: union({ sku: { name: 'Basic' } }, workspace).sku
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, workspace).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, workspace).resourceGroupName)
 }]
 module natGatewaysCopy 'br/tlk:microsoft.network/nat-gateways:1.0.0' = [for (gateway, index) in natGateways: if (contains(includedTypes, 'microsoft.network/nat-gateways') && !contains(excludedTypes, 'microsoft.network/nat-gateways')) {
     dependsOn: [
@@ -899,10 +967,15 @@ module natGatewaysCopy 'br/tlk:microsoft.network/nat-gateways:1.0.0' = [for (gat
     params: {
         availabilityZones: union({ availabilityZones: [] }, gateway).availabilityZones
         location: union({ location: location }, gateway).location
-        name: '${projectName}-nat-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-nat-${padLeft(index, 5, '0')}' }, gateway).name
         publicIpAddresses: union({ publicIpAddresses: [] }, gateway).publicIpAddresses
         publicIpPrefixes: union({ publicIpPrefixes: [] }, gateway).publicIpPrefixes
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, gateway).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, gateway).resourceGroupName)
 }]
 module networkInterfacesCopy 'br/tlk:microsoft.network/network-interfaces:1.0.0' = [for (interface, index) in networkInterfaces: if (contains(includedTypes, 'microsoft.network/network-interfaces') && !contains(excludedTypes, 'microsoft.network/network-interfaces')) {
     dependsOn: [
@@ -916,18 +989,28 @@ module networkInterfacesCopy 'br/tlk:microsoft.network/network-interfaces:1.0.0'
         isAcceleratedNetworkingEnabled: union({ isAcceleratedNetworkingEnabled: true }, interface).isAcceleratedNetworkingEnabled
         isIpForwardingEnabled: union({ isIpForwardingEnabled: false }, interface).isIpForwardingEnabled
         location: union({ location: location }, interface).location
-        name: '${projectName}-nic-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-nic-${padLeft(index, 5, '0')}' }, interface).name
         networkSecurityGroup: union({ networkSecurityGroup: {} }, interface).networkSecurityGroup
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, interface).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, interface).resourceGroupName)
 }]
 module networkSecurityGroupsCopy 'br/tlk:microsoft.network/network-security-groups:1.0.0' = [for (group, index) in networkSecurityGroups: if (contains(includedTypes, 'microsoft.network/network-security-groups') && !contains(excludedTypes, 'microsoft.network/network-security-groups')) {
     dependsOn: [ applicationSecurityGroupsCopy ]
     name: '${deployment().name}-nsg-${string(index)}'
     params: {
         location: union({ location: location }, group).location
-        name: '${projectName}-nsg-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-nsg-${padLeft(index, 5, '0')}' }, group).name
         securityRules: group.securityRules
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, group).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, group).resourceGroupName)
 }]
 module privateDnsZonesCopy 'br/tlk:microsoft.network/private-dns-zones:1.0.0' = [for (zone, index) in privateDnsZones: if (contains(includedTypes, 'microsoft.network/private-dns-zones') && !contains(excludedTypes, 'microsoft.network/private-dns-zones')) {
     dependsOn: [
@@ -939,6 +1022,11 @@ module privateDnsZonesCopy 'br/tlk:microsoft.network/private-dns-zones:1.0.0' = 
         name: zone.name
         virtualNetworkLinks: union({ virtualNetworkLinks: [] }, zone).virtualNetworkLinks
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, zone).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, zone).resourceGroupName)
 }]
 module privateEndpointsCopy 'br/tlk:microsoft.network/private-endpoints:1.0.0' = [for (endpoint, index) in privateEndpoints: if (contains(includedTypes, 'microsoft.network/private-endpoints') && !contains(excludedTypes, 'microsoft.network/private-endpoints')) {
     dependsOn: [
@@ -955,14 +1043,24 @@ module privateEndpointsCopy 'br/tlk:microsoft.network/private-endpoints:1.0.0' =
         resource: endpoint.resource
         subnet: endpoint.subnet
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, endpoint).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, endpoint).resourceGroupName)
 }]
 module proximityPlacementGroupsCopy 'br/tlk:microsoft.compute/proximity-placement-groups:1.0.0' = [for (group, index) in proximityPlacementGroups: if (contains(includedTypes, 'microsoft.compute/proximity-placement-groups') && !contains(excludedTypes, 'microsoft.compute/proximity-placement-groups')) {
     name: '${deployment().name}-ppg-${string(index)}'
     params: {
         availabilityZones: union({ availabilityZones: [] }, group).availabilityZones
         location: union({ location: location }, group).location
-        name: '${projectName}-ppg-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-ppg-${padLeft(index, 5, '0')}' }, group).name
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, group).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, group).resourceGroupName)
 }]
 module publicDnsZonesCopy 'br/tlk:microsoft.network/dns-zones:1.0.0' = [for (zone, index) in publicDnsZones: if (contains(includedTypes, 'microsoft.network/dns-zones') && !contains(excludedTypes, 'microsoft.network/dns-zones')) {
     name: '${deployment().name}-dnse-${string(index)}'
@@ -971,6 +1069,11 @@ module publicDnsZonesCopy 'br/tlk:microsoft.network/dns-zones:1.0.0' = [for (zon
         name: zone.name
         txtRecords: union({ txtRecords: [] }, zone).txtRecords
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, zone).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, zone).resourceGroupName)
 }]
 module publicIpAddressesCopy 'br/tlk:microsoft.network/public-ip-addresses:1.0.0' = [for (address, index) in publicIpAddresses: if (contains(includedTypes, 'microsoft.network/public-ip-addresses') && !contains(excludedTypes, 'microsoft.network/public-ip-addresses')) {
     name: '${deployment().name}-pip-${string(index)}'
@@ -979,21 +1082,31 @@ module publicIpAddressesCopy 'br/tlk:microsoft.network/public-ip-addresses:1.0.0
         availabilityZones: union({ availabilityZones: [] }, address).availabilityZones
         ipPrefix: union({ ipPrefix: {} }, address).ipPrefix
         location: union({ location: location }, address).location
-        name: '${projectName}-pip-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-pip-${padLeft(index, 5, '0')}' }, address).name
         sku: address.sku
         version: union({ version: 'IPv4' }, address).version
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, address).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, address).resourceGroupName)
 }]
 module publicIpPrefixesCopy 'br/tlk:microsoft.network/public-ip-prefixes:1.0.0' = [for (prefix, index) in publicIpPrefixes: if (contains(includedTypes, 'microsoft.network/public-ip-prefixes') && !contains(excludedTypes, 'microsoft.network/public-ip-prefixes')) {
     name: '${deployment().name}-pipp-${string(index)}'
     params: {
         availabilityZones: union({ availabilityZones: [] }, prefix).availabilityZones
         location: union({ location: location }, prefix).location
-        name: '${projectName}-pipp-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-pipp-${padLeft(index, 5, '0')}' }, prefix).name
         size: prefix.size
         sku: prefix.sku
         version: union({ version: 'IPv4' }, prefix).version
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, prefix).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, prefix).resourceGroupName)
 }]
 module serviceBusNamespacesCopy 'br/tlk:microsoft.service-bus/namespaces:1.0.0' = [for (namespace, index) in serviceBusNamespaces: if (contains(includedTypes, 'microsoft.service-bus/namespaces') && !contains(excludedTypes, 'microsoft.service-bus/namespaces')) {
     dependsOn: [
@@ -1006,9 +1119,14 @@ module serviceBusNamespacesCopy 'br/tlk:microsoft.service-bus/namespaces:1.0.0' 
         isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, namespace).isPublicNetworkAccessEnabled
         isZoneRedundancyEnabled: union({ isZoneRedundancyEnabled: true }, namespace).isZoneRedundancyEnabled
         location: union({ location: location }, namespace).location
-        name: '${projectName}-sb-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-sb-${padLeft(index, 5, '0')}' }, namespace).name
         sku: union({ sku: { name: 'Premium' } }, namespace).sku
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, namespace).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, namespace).resourceGroupName)
 }]
 module sqlServersCopy 'br/tlk:microsoft.sql/servers:1.0.0' = [for (server, index) in sqlServers: if (contains(includedTypes, 'microsoft.sql/servers') && !contains(excludedTypes, 'microsoft.sql/servers')) {
     dependsOn: [
@@ -1027,9 +1145,14 @@ module sqlServersCopy 'br/tlk:microsoft.sql/servers:1.0.0' = [for (server, index
         isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, server).isPublicNetworkAccessEnabled
         isSqlAuthenticationEnabled: union({ isSqlAuthenticationEnabled: false }, server).isSqlAuthenticationEnabled
         location: union({ location: location }, server).location
-        name: '${projectName}-sql-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-sql-${padLeft(index, 5, '0')}' }, server).name
         virtualNetworkRules: union({ virtualNetworkRules: [] }, server).virtualNetworkRules
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, server).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, server).resourceGroupName)
 }]
 module storageAccountsCopy 'br/tlk:microsoft.storage/storage-accounts:1.0.0' = [for (account, index) in storageAccounts: if (contains(includedTypes, 'microsoft.storage/storage-accounts') && !contains(excludedTypes, 'microsoft.storage/storage-accounts')) {
     dependsOn: [
@@ -1048,18 +1171,28 @@ module storageAccountsCopy 'br/tlk:microsoft.storage/storage-accounts:1.0.0' = [
         isSharedKeyAccessEnabled: union({ isSharedKeyAccessEnabled: false }, account).isSharedKeyAccessEnabled
         kind: account.kind
         location: union({ location: location }, account).location
-        name: '${projectName}data${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}data${padLeft(index, 5, '0')}' }, account).name
         services: account.services
         sku: account.sku
         virtualNetworkRules: union({ virtualNetworkRules: [] }, account).virtualNetworkRules
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, account).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, account).resourceGroupName)
 }]
 module userAssignedIdentitiesCopy 'br/tlk:microsoft.managed-identity/user-assigned-identities:1.0.0' = [for (identity, index) in userAssignedIdentities: if (contains(includedTypes, 'microsoft.managed-identity/user-assigned-identities') && !contains(excludedTypes, 'microsoft.managed-identity/user-assigned-identities')) {
     name: '${deployment().name}-mi-${string(index)}'
     params: {
         location: union({ location: location }, identity).location
-        name: '${projectName}-mi-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-mi-${padLeft(index, 5, '0')}' }, identity).name
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, identity).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, identity).resourceGroupName)
 }]
 module virtualMachinesCopy 'br/tlk:microsoft.compute/virtual-machines:1.0.0' = [for (machine, index) in virtualMachines: if (contains(includedTypes, 'microsoft.compute/virtual-machines') && !contains(excludedTypes, 'microsoft.compute/virtual-machines')) {
     dependsOn: [
@@ -1086,13 +1219,18 @@ module virtualMachinesCopy 'br/tlk:microsoft.compute/virtual-machines:1.0.0' = [
         imageReference: machine.imageReference
         linuxConfiguration: union({ linuxConfiguration: {} }, machine).linuxConfiguration
         location: union({ location: location }, machine).location
-        name: '${projectName}vm${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}vm${padLeft(index, 5, '0')}' }, machine).name
         networkInterfaces: machine.networkInterfaces
         proximityPlacementGroup: union({ proximityPlacementGroup: {} }, machine).proximityPlacementGroup
         sku: machine.sku
         subnet: union({ subnet: {} }, machine).subnet
         windowsConfiguration: union({ windowsConfiguration: {} }, machine).windowsConfiguration
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, machine).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, machine).resourceGroupName)
 }]
 module virtualNetworkGatewaysCopy 'br/tlk:microsoft.network/virtual-network-gateways:1.0.0' = [for (gateway, index) in virtualNetworkGateways: if (contains(includedTypes, 'microsoft.network/virtual-network-gateways') && !contains(excludedTypes, 'microsoft.network/virtual-network-gateways')) {
     dependsOn: [
@@ -1107,10 +1245,15 @@ module virtualNetworkGatewaysCopy 'br/tlk:microsoft.network/virtual-network-gate
         isActiveActiveModeEnabled: gateway.isActiveActiveModeEnabled
         location: union({ location: location }, gateway).location
         mode: gateway.mode
-        name: '${projectName}-vng-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-vng-${padLeft(index, 5, '0')}' }, gateway).name
         sku: gateway.sku
         type: gateway.type
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, gateway).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, gateway).resourceGroupName)
 }]
 module virtualNetworksCopy 'br/tlk:microsoft.network/virtual-networks:1.0.0' = [for (network, index) in virtualNetworks: if (contains(includedTypes, 'microsoft.network/virtual-networks') && !contains(excludedTypes, 'microsoft.network/virtual-networks')) {
     dependsOn: [
@@ -1123,9 +1266,14 @@ module virtualNetworksCopy 'br/tlk:microsoft.network/virtual-networks:1.0.0' = [
         ddosProtectionPlan: {}
         dnsServers: network.dnsServers
         location: union({ location: location }, network).location
-        name: '${projectName}-vnet-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-vnet-${padLeft(index, 5, '0')}' }, network).name
         subnets: network.subnets
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, network).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, network).resourceGroupName)
 }]
 module webApplicationsCopy 'br/tlk:microsoft.web/sites:1.0.0' = [for (application, index) in webApplications: if (contains(includedTypes, 'microsoft.web/sites') && !contains(excludedTypes, 'microsoft.web/sites')) {
     dependsOn: [
@@ -1149,9 +1297,14 @@ module webApplicationsCopy 'br/tlk:microsoft.web/sites:1.0.0' = [for (applicatio
         identity: union({ identity: {} }, application).identity
         is32BitModeEnabled: union({ is32BitModeEnabled: false }, application).is32BitModeEnabled
         location: union({ location: location }, application).location
-        name: '${projectName}-web-${padLeft(index, 5, '0')}'
+        name: union({ name: '${projectName}-web-${padLeft(index, 5, '0')}' }, application).name
         servicePlan: application.servicePlan
     }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, application).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, application).resourceGroupName)
 }]
 
 resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (deployment, index) in deployments: if (contains(includedTypes, 'microsoft.resources/deployments') && !contains(excludedTypes, 'microsoft.resources/deployments')) {
