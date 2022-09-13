@@ -1,7 +1,9 @@
 param location string = 'West US 3'
 param projectName string = 'tlk'
 param overrides object = {
-    excludedTypes: []
+    excludedTypes: [
+        'microsoft.network/application-gateways'
+    ]
     includedTypes: []
 }
 
@@ -20,6 +22,7 @@ var includedTypes = [for type in empty(overrides.includedTypes) ? [
     'microsoft.key-vault/vaults'
     'microsoft.machine-learning-services/workspaces'
     'microsoft.managed-identity/user-assigned-identities'
+    'microsoft.network/application-gateways'
     'microsoft.network/application-security-groups'
     'microsoft.network/dns-zones'
     'microsoft.network/nat-gateways'
@@ -63,6 +66,66 @@ var applicationConfigurationStores = [
             }
         }
         skuName: 'Free'
+    }
+]
+var applicationGateways = [
+    {
+        availabilityZones: []
+        backendAddressPools: [
+            {
+              name: 'default'
+            }
+        ]
+        backendHttpSettings: [
+            {
+                name: 'default'
+                port: 80
+                protocol: 'Http'
+            }
+        ]
+        frontEnd: {
+            ports: [
+                80
+            ]
+            privateIpAddress: {
+                value: '10.255.1.4'
+            }
+            publicIpAddress: {
+                name: 'tlk-pip-00002'
+            }
+        }
+        httpListeners: [
+            {
+                hostName: 'thelankrew.com'
+                name: 'default'
+                port: 80
+                protocol: 'Http'
+            }
+        ]
+        identity: {
+            userAssignedIdentities: [
+                {
+                    name: 'tlk-mi-00000'
+                }
+            ]
+        }
+        routingRules: [
+            {
+                backendAddressPoolName: 'default'
+                backendHttpSettingsCollectionName: 'default'
+                httpListenerName: 'default'
+                name: 'default'
+            }
+        ]
+        sku: {
+            capacity: 1
+            name: 'Standard_v2'
+            tier: 'Standard_v2'
+        }
+        subnet: {
+            name: 'tlk-snet-00002'
+            virtualNetworkName: 'tlk-vnet-00000'
+        }
     }
 ]
 var applicationInsights = [
@@ -186,7 +249,6 @@ var networkInterfaces = [
                 {
                     name: 'Ipv4config'
                     privateIpAddress: {
-                        allocationMethod: 'Static'
                         value: '10.255.0.4'
                     }
                     subnet: {
@@ -534,6 +596,28 @@ module applicationConfigurationStoresCopy 'br/tlk:microsoft.app-configuration/co
         name: '${projectName}-acs-${padLeft(index, 5, '0')}'
         settings: union({ settings: {} }, store).settings
         skuName: union({ skuName: 'Premium' }, store).skuName
+    }
+}]
+module applicationGatewaysCopy 'br/tlk:microsoft.network/application-gateways:1.0.0' = [for (gateway, index) in applicationGateways: if (contains(includedTypes, 'microsoft.network/application-gateways') && !contains(excludedTypes, 'microsoft.network/application-gateways')) {
+    name: '${deployment().name}-ag-${string(index)}'
+    params: {
+        availabilityZones: union({ availabilityZones: [] }, gateway).availabilityZones
+        backendAddressPools: gateway.backendAddressPools
+        backendHttpSettings: gateway.backendHttpSettings
+        frontEnd: gateway.frontEnd
+        httpListeners: gateway.httpListeners
+        identity: union({ identity: {} }, gateway).identity
+        location: location
+        name: 'tlk-ag-00001'
+        routingRules: gateway.routingRules
+        sku: union({
+            sku: {
+                capacity: 1
+                name: 'Standard_v2'
+                tier: 'Standard_v2'
+            }
+        }, gateway).sku
+        subnet: gateway.subnet
     }
 }]
 module applicationInsightsCopy 'br/tlk:microsoft.insights/components:1.0.0' = [for (component, index) in applicationInsights: if (contains(includedTypes, 'microsoft.insights/components') && !contains(excludedTypes, 'microsoft.insights/components')) {
@@ -909,6 +993,7 @@ module virtualNetworksCopy 'br/tlk:microsoft.network/virtual-networks:1.0.0' = [
 resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (deployment, index) in deployments: if (contains(includedTypes, 'microsoft.resources/deployments') && !contains(excludedTypes, 'microsoft.resources/deployments')) {
     dependsOn: [
         applicationConfigurationStoresCopy
+        applicationGatewaysCopy
         applicationInsightsCopy
         applicationSecurityGroupsCopy
         availabilitySetsCopy
@@ -952,6 +1037,7 @@ resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (de
 resource roleAssignmentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (assignment, index) in roleAssignments: if (contains(includedTypes, 'microsoft.authorization/role-assignments') && !contains(excludedTypes, 'microsoft.authorization/role-assignments')) {
     dependsOn: [
         applicationConfigurationStoresCopy
+        applicationGatewaysCopy
         applicationInsightsCopy
         applicationSecurityGroupsCopy
         availabilitySetsCopy

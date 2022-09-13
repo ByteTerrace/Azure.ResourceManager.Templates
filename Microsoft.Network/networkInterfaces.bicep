@@ -13,13 +13,6 @@ param name string
 @description('An object that encapsulates the properties of the Azure Network Security Group that this Azure Network Interface will be associated with.')
 param networkSecurityGroup object
 
-var defaults = {
-    privateIpAddress: {
-        allocationMethod: 'Dynamic'
-        version: 'IPv4'
-    }
-}
-
 resource networkInterface 'Microsoft.Network/networkInterfaces@2022-01-01' = {
     location: location
     name: name
@@ -33,9 +26,9 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2022-01-01' = {
             name: union({ name: (1 == length(ipConfigurations)) ? 'default': string(index) }, configuration).name
             properties: {
                 primary: union({ isPrimary: (1 == length(ipConfigurations)) }, configuration).isPrimary
-                privateIPAddress: ('Static' == union(defaults.privateIpAddress, configuration.privateIpAddress).allocationMethod) ? configuration.privateIpAddress.value : null
-                privateIPAddressVersion: union(defaults.privateIpAddress, configuration.privateIpAddress).version
-                privateIPAllocationMethod: union(defaults.privateIpAddress, configuration.privateIpAddress).allocationMethod
+                privateIPAddress: union({ value: null }, configuration.privateIpAddress).value
+                privateIPAddressVersion: union({ version: 'IPv4' }, configuration.privateIpAddress).version
+                privateIPAllocationMethod: empty(union({ value: null }, configuration.privateIpAddress).value) ? 'Dynamic' : 'Static'
                 publicIPAddress: empty(union({ publicIpAddress: {} }, configuration).publicIpAddress) ? null : {
                     id: resourceId(union({
                         subscriptionId: subscription().subscriptionId
