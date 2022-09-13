@@ -27,6 +27,7 @@ var includedTypes = [for type in empty(overrides.includedTypes) ? [
     'microsoft.network/public-ip-prefixes'
     'microsoft.network/virtual-network-gateways'
     'microsoft.network/virtual-networks'
+    'microsoft.resources/deployments'
     'microsoft.storage/storage-accounts'
 ] : overrides.includedTypes: toLower(type)]
 
@@ -58,6 +59,7 @@ var containerRegistries = [
         skuName: 'Basic'
     }
 ]
+var deployments = []
 var diskEncryptionSets = [
     {
         identity: {
@@ -663,6 +665,43 @@ module virtualNetworksCopy 'br/tlk:microsoft.network/virtual-networks:1.0.0' = [
     }
 }]
 
+resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (deployment, index) in deployments: if (contains(includedTypes, 'microsoft.resources/deployments') && !contains(excludedTypes, 'microsoft.resources/deployments')) {
+    dependsOn: [
+        applicationSecurityGroupsCopy
+        availabilitySetsCopy
+        containerRegistriesCopy
+        diskEncryptionSetsCopy
+        keyVaultsCopy
+        natGatewaysCopy
+        networkInterfacesCopy
+        networkSecurityGroupsCopy
+        privateDnsZonesCopy
+        privateEndpointsCopy
+        proximityPlacementGroupsCopy
+        publicDnsZonesCopy
+        publicIpAddressesCopy
+        publicIpPrefixesCopy
+        roleAssignmentsCopy
+        storageAccountsCopy
+        userAssignedIdentitiesCopy
+        virtualMachinesCopy
+        virtualNetworkGatewaysCopy
+        virtualNetworksCopy
+    ]
+    name: '${deployment().name}-rm-${string(index)}'
+    properties: {
+        expressionEvaluationOptions: {
+            scope: 'NotSpecified'
+        }
+        mode: union({ mode: 'Incremental' }, deployment).mode
+        parameters: union({ parameters: {} }, deployment).parameters
+        parametersLink: union({ parametersLink: null }, deployment).parametersLink
+        template: union({ template: null }, deployment).template
+        templateLink: union({ templateLink: null }, deployment).templateLink
+    }
+    resourceGroup: union({ resourceGroupName: resourceGroup().name }, deployment).resourceGroupName
+    subscriptionId: union({ subscriptionId: subscription().subscriptionId }, deployment).subscriptionId
+}]
 resource roleAssignmentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (assignment, index) in roleAssignments: if (contains(includedTypes, 'microsoft.authorization/role-assignments') && !contains(excludedTypes, 'microsoft.authorization/role-assignments')) {
     dependsOn: [
         containerRegistriesCopy
