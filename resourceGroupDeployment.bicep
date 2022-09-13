@@ -15,7 +15,9 @@ var includedTypes = [for type in empty(overrides.includedTypes) ? [
     'microsoft.compute/proximity-placement-groups'
     'microsoft.compute/virtual-machines'
     'microsoft.container-registry/registries'
+    'microsoft.insights/components'
     'microsoft.key-vault/vaults'
+    'microsoft.machine-learning-services/workspaces'
     'microsoft.managed-identity/user-assigned-identities'
     'microsoft.network/application-security-groups'
     'microsoft.network/dns-zones'
@@ -28,12 +30,20 @@ var includedTypes = [for type in empty(overrides.includedTypes) ? [
     'microsoft.network/public-ip-prefixes'
     'microsoft.network/virtual-network-gateways'
     'microsoft.network/virtual-networks'
+    'microsoft.operational-insights/workspaces'
     'microsoft.resources/deployments'
     'microsoft.sql/servers'
     'microsoft.storage/storage-accounts'
 ] : overrides.includedTypes: toLower(type)]
 
 // resource definitions
+var applicationInsights = [
+    {
+        logAnalyticsWorkspace: {
+            name: 'tlk-law-00000'
+        }
+    }
+]
 var applicationSecurityGroups = [
     {}
 ]
@@ -95,6 +105,38 @@ var keyVaults = [
         }
         secrets: {}
         skuName: 'premium'
+    }
+]
+var logAnalyticsWorkspaces = [
+    {
+        isPublicNetworkAccessForIngestionEnabled: true
+        isPublicNetworkAccessForQueryEnabled: true
+    }
+]
+var machineLearningWorkspaces = [
+    {
+        applicationInsights: {
+            name: 'tlk-ai-00000'
+        }
+        containerRegistry: {
+            name: 'tlkcr00000'
+        }
+        identity: {
+            type: 'SystemAssigned,UserAssigned'
+            userAssignedIdentities: [
+                {
+                    name: 'tlk-mi-00000'
+                }
+            ]
+        }
+        isPublicNetworkAccessEnabled: false
+        keyVault: {
+            name: 'tlk-kv-00000'
+        }
+        skuName: 'Basic'
+        storageAccount: {
+            name: 'tlkdata00000'
+        }
     }
 ]
 var natGateways = [
@@ -421,6 +463,17 @@ var virtualNetworks = [
 ]
 
 // module imports
+module applicationInsightsCopy 'br/tlk:microsoft.insights/components:1.0.0' = [for (component, index) in applicationInsights: if (contains(includedTypes, 'microsoft.insights/components') && !contains(excludedTypes, 'microsoft.insights/components')) {
+    dependsOn: [
+        logAnalyticsWorkspacesCopy
+    ]
+    name: '${deployment().name}-ai-${string(index)}'
+    params: {
+        location: location
+        logAnalyticsWorkspace: component.logAnalyticsWorkspace
+        name: '${projectName}-ai-${padLeft(index, 5, '0')}'
+    }
+}]
 module applicationSecurityGroupsCopy 'br/tlk:microsoft.network/application-security-groups:1.0.0' = [for (group, index) in applicationSecurityGroups: if (contains(includedTypes, 'microsoft.network/application-security-groups') && !contains(excludedTypes, 'microsoft.network/application-security-groups')) {
     name: '${deployment().name}-asg-${string(index)}'
     params: {
@@ -504,6 +557,41 @@ module keyVaultsCopy 'br/tlk:microsoft.key-vault/vaults:1.0.0' = [for (vault, in
         skuName: union({ skuName: 'premium' }, vault).skuName
         tenantId: union({ tenantId: tenant().tenantId }, vault).tenantId
         virtualNetworkRules: union({ virtualNetworkRules: [] }, vault).virtualNetworkRules
+    }
+}]
+module logAnalyticsWorkspacesCopy 'br/tlk:microsoft.operational-insights/workspaces:1.0.0' = [for (workspace, index) in logAnalyticsWorkspaces: if (contains(includedTypes, 'microsoft.operational-insights/workspaces') && !contains(excludedTypes, 'microsoft.operational-insights/workspaces')) {
+    name: '${deployment().name}-law-${string(index)}'
+    params: {
+        dataRetentionInDays: union({ dataRetentionInDays: 30 }, workspace).dataRetentionInDays
+        isDataExportEnabled: union({ isDataExportEnabled: true }, workspace).isDataExportEnabled
+        isImmediatePurgeDataOn30DaysEnabled: union({ isImmediatePurgeDataOn30DaysEnabled: true }, workspace).isImmediatePurgeDataOn30DaysEnabled
+        isPublicNetworkAccessForIngestionEnabled: union({ isPublicNetworkAccessForIngestionEnabled: false }, workspace).isPublicNetworkAccessForIngestionEnabled
+        isPublicNetworkAccessForQueryEnabled: union({ isPublicNetworkAccessForQueryEnabled: false }, workspace).isPublicNetworkAccessForQueryEnabled
+        location: location
+        name: '${projectName}-law-${padLeft(index, 5, '0')}'
+        skuName: union({ skuName: 'PerGB2018' }, workspace).skuName
+    }
+}]
+module machineLearningWorkspacesCopy 'br/tlk:microsoft.machine-learning-services/workspaces:1.0.0' = [for (workspace, index) in machineLearningWorkspaces: if (contains(includedTypes, 'microsoft.machine-learning-services/workspaces') && !contains(excludedTypes, 'microsoft.machine-learning-services/workspaces')) {
+    dependsOn: [
+        applicationInsightsCopy
+        containerRegistriesCopy
+        keyVaultsCopy
+        logAnalyticsWorkspacesCopy
+        storageAccountsCopy
+    ]
+    name: '${deployment().name}-mlw-${string(index)}'
+    params: {
+        applicationInsights: workspace.applicationInsights
+        containerRegistry: workspace.containerRegistry
+        identity: workspace.identity
+        isHighBusinessImpactFeatureEnabled: union({ isHighBusinessImpactFeatureEnabled: false }, workspace).isHighBusinessImpactFeatureEnabled
+        isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, workspace).isPublicNetworkAccessEnabled
+        keyVault: workspace.keyVault
+        location: location
+        name: '${projectName}-mlw-${padLeft(index, 5, '0')}'
+        storageAccount: workspace.storageAccount
+        skuName: union({ skuName: 'Basic' }, workspace).skuName
     }
 }]
 module natGatewaysCopy 'br/tlk:microsoft.network/nat-gateways:1.0.0' = [for (gateway, index) in natGateways: if (contains(includedTypes, 'microsoft.network/nat-gateways') && !contains(excludedTypes, 'microsoft.network/nat-gateways')) {
@@ -732,11 +820,14 @@ module virtualNetworksCopy 'br/tlk:microsoft.network/virtual-networks:1.0.0' = [
 
 resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (deployment, index) in deployments: if (contains(includedTypes, 'microsoft.resources/deployments') && !contains(excludedTypes, 'microsoft.resources/deployments')) {
     dependsOn: [
+        applicationInsightsCopy
         applicationSecurityGroupsCopy
         availabilitySetsCopy
         containerRegistriesCopy
         diskEncryptionSetsCopy
         keyVaultsCopy
+        logAnalyticsWorkspacesCopy
+        machineLearningWorkspacesCopy
         natGatewaysCopy
         networkInterfacesCopy
         networkSecurityGroupsCopy
@@ -770,11 +861,14 @@ resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (de
 }]
 resource roleAssignmentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (assignment, index) in roleAssignments: if (contains(includedTypes, 'microsoft.authorization/role-assignments') && !contains(excludedTypes, 'microsoft.authorization/role-assignments')) {
     dependsOn: [
+        applicationInsightsCopy
         applicationSecurityGroupsCopy
         availabilitySetsCopy
         containerRegistriesCopy
         diskEncryptionSetsCopy
         keyVaultsCopy
+        logAnalyticsWorkspacesCopy
+        machineLearningWorkspacesCopy
         natGatewaysCopy
         networkInterfacesCopy
         networkSecurityGroupsCopy
