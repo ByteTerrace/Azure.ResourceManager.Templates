@@ -12,8 +12,10 @@ param isPublicNetworkAccessForQueryEnabled bool = false
 param location string = resourceGroup().location
 @description('Specifies the name of the Azure Log Analytics Workspace.')
 param name string
-@description('Specifies the SKU name of the Azure Log Analytics Workspace.')
-param skuName string = 'PerGB2018'
+@description('Specifies the SKU of the Azure Log Analytics Workspace.')
+param sku object = {
+    name: 'PerGB2018'
+}
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
     location: location
@@ -28,9 +30,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview'
         publicNetworkAccessForIngestion: isPublicNetworkAccessForIngestionEnabled ? 'Enabled' : 'Disabled'
         publicNetworkAccessForQuery: isPublicNetworkAccessForQueryEnabled ? 'Enabled' : 'Disabled'
         retentionInDays: dataRetentionInDays
-        sku: {
-            name: skuName
-        }
+        sku: sku
         workspaceCapping: {
             dailyQuotaGb: -1
         }

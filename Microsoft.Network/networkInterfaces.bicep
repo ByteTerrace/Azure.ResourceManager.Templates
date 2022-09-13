@@ -1,17 +1,17 @@
 @description('An array of DNS servers that the Azure Network Interface will be configured to use.')
-param dnsServers array
+param dnsServers array = []
 @description('An array of IP configurations that will be applied to the Azure Network Interface.')
 param ipConfigurations array
 @description('Indicates whether the accelerated networking feature is enabled on the Azure Network Interface.')
-param isAcceleratedNetworkingEnabled bool
+param isAcceleratedNetworkingEnabled bool = true
 @description('Indicates whether the IP forwarding feature is enabled on the Azure Network Interface.')
-param isIpForwardingEnabled bool
+param isIpForwardingEnabled bool = false
 @description('Specifies the location in which the Azure Network Interface resource(s) will be deployed.')
-param location string
+param location string = resourceGroup().location
 @description('Specifies the name of the Azure Network Interface.')
 param name string
 @description('An object that encapsulates the properties of the Azure Network Security Group that this Azure Network Interface will be associated with.')
-param networkSecurityGroup object
+param networkSecurityGroup object = {}
 
 resource networkInterface 'Microsoft.Network/networkInterfaces@2022-01-01' = {
     location: location

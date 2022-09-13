@@ -52,6 +52,8 @@
     "variables": {
         "assignorResourceId": "[resourceId(parameters('assignor').type, parameters('assignor').name)]",
         "supportedRoleDefinitionGuids": {
+            "App Configuration Data Owner": "5ae67dd6-50cb-40e7-96ff-dc2bfa4b606b",
+            "App Configuration Data Reader": "516239f1-63e1-4d78-a4de-a74fb236a071",
             "Contributor": "b24988ac-6180-42a0-ab88-20f7382dd24c",
             "DNS Zone Contributor": "befefa01-2a29-4197-83a8-272ff33ce314",
             "Key Vault Administrator": "00482a5a-887f-4fb3-b363-3b7fe8e74483",

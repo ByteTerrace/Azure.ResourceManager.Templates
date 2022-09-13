@@ -1,7 +1,7 @@
 @description('An array of availability zones that the Azure Proximity Placement Group will be deployed within.')
-param availabilityZones array
+param availabilityZones array = []
 @description('Specifies the location in which the Azure Proximity Placement Group resource(s) will be deployed.')
-param location string
+param location string = resourceGroup().location
 @description('Specifies the name of the Azure Proximity Placement Group.')
 param name string
 

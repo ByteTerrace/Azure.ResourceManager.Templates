@@ -1,11 +1,11 @@
 @description('An array of address prefixes that will be reserved within the Azure Virtual Network.')
 param addressPrefixes array
 @description('An object that encapsulates the DDOS protection plan settings that will be applied to the Azure Virtual Network.')
-param ddosProtectionPlan object
+param ddosProtectionPlan object = {}
 @description('An array of DNS servers that the Azure Virtual Network will be associated with.')
-param dnsServers array
+param dnsServers array = []
 @description('Specifies the location in which the Azure Virtual Network resource(s) will be deployed.')
-param location string
+param location string = resourceGroup().location
 @description('Specifies the name of the Azure Virtual Network.')
 param name string
 @description('An array of subnets that will be configured within the Azure Virtual Network.')

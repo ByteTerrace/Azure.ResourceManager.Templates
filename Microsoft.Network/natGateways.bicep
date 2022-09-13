@@ -1,13 +1,13 @@
 @description('An array of availability zones that the Azure NAT Gateway will be deployed within.')
-param availabilityZones array
+param availabilityZones array = []
 @description('Specifies the location in which the Azure NAT Gateway resource(s) will be deployed.')
-param location string
+param location string = resourceGroup().location
 @description('Specifies the name of the Azure NAT Gateway.')
 param name string
 @description('An array of public IP addresses that the Azure NAT Gateway will be associated with.')
-param publicIpAddresses array
+param publicIpAddresses array = []
 @description('An array of public IP prefixes that the Azure NAT Gateway will be associated with.')
-param publicIpPrefixes array
+param publicIpPrefixes array = []
 
 var zones = [for zone in availabilityZones: string(zone)]
 

@@ -1,5 +1,5 @@
 @description('Specifies the location in which the Azure Application Security Group resource(s) will be deployed.')
-param location string
+param location string = resourceGroup().location
 @description('Specifies the name of the Azure Application Security Group.')
 param name string
 

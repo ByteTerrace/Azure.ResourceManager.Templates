@@ -67,7 +67,9 @@ var applicationConfigurationStores = [
                 value: '1.0.0'
             }
         }
-        skuName: 'Free'
+        sku: {
+            name: 'Free'
+        }
     }
 ]
 var applicationGateways = [
@@ -161,7 +163,9 @@ var availabilitySets = [
         }
         numberOfFaultDomains: 3
         numberOfUpdateDomains: 5
-        skuName: 'Aligned'
+        sku: {
+            name: 'Aligned'
+        }
     }
 ]
 var cdnProfiles = []
@@ -218,7 +222,9 @@ var keyVaults = [
                 value: 'It\'s a secret to everybody!'
             }
         }
-        skuName: 'premium'
+        sku: {
+            name: 'premium'
+        }
     }
 ]
 var logAnalyticsWorkspaces = [
@@ -247,7 +253,9 @@ var machineLearningWorkspaces = [
         keyVault: {
             name: 'tlk-kv-00000'
         }
-        skuName: 'Basic'
+        sku: {
+            name: 'Basic'
+        }
         storageAccount: {
             name: 'tlkdata00000'
         }
@@ -365,12 +373,16 @@ var publicDnsZones = [
 var publicIpAddresses = [
     {
         allocationMethod: 'Dynamic'
-        skuName: 'Basic'
+        sku: {
+            name: 'Basic'
+        }
         skuTier: 'Regional'
     }
     {
         allocationMethod: 'Static'
-        skuName: 'Standard'
+        sku: {
+            name: 'Standard'
+        }
         skuTier: 'Regional'
     }
 ]
@@ -431,6 +443,50 @@ var roleAssignments = [
         }
         roleDefinitionName: 'Key Vault Crypto Service Encryption User'
     }
+    {
+        assignee: {
+            name: 'tlk-web-00000'
+            type: 'Microsoft.Web/sites'
+        }
+        assignor: {
+            name: 'tlk-kv-00000'
+            type: 'Microsoft.KeyVault/vaults'
+        }
+        roleDefinitionName: 'Key Vault Secrets User'
+    }
+    {
+        assignee: {
+            name: 'tlk-web-00001'
+            type: 'Microsoft.Web/sites'
+        }
+        assignor: {
+            name: 'tlk-kv-00000'
+            type: 'Microsoft.KeyVault/vaults'
+        }
+        roleDefinitionName: 'Key Vault Secrets User'
+    }
+    {
+        assignee: {
+            name: 'tlk-web-00000'
+            type: 'Microsoft.Web/sites'
+        }
+        assignor: {
+            name: 'tlk-acs-00000'
+            type: 'Microsoft.AppConfiguration/configurationStores'
+        }
+        roleDefinitionName: 'App Configuration Data Reader'
+    }
+    {
+        assignee: {
+            name: 'tlk-web-00001'
+            type: 'Microsoft.Web/sites'
+        }
+        assignor: {
+            name: 'tlk-acs-00000'
+            type: 'Microsoft.AppConfiguration/configurationStores'
+        }
+        roleDefinitionName: 'App Configuration Data Reader'
+    }
 ]
 var serviceBusNamespaces = [
     {
@@ -444,7 +500,9 @@ var serviceBusNamespaces = [
         }
         isPublicNetworkAccessEnabled: true
         isZoneRedundancyEnabled: false
-        skuName: 'Basic'
+        sku: {
+            name: 'Basic'
+        }
     }
 ]
 var sqlServers = [
@@ -500,44 +558,13 @@ var storageAccounts = [
                 isNetworkFileSystemV3Enabled: false
             }
         }
-        skuName: 'Standard_LRS'
+        sku: {
+            name: 'Standard_LRS'
+        }
     }
 ]
 var userAssignedIdentities = [
     {}
-]
-var webApplications = [
-    {
-        applicationInsights: {
-            name: 'tlk-ai-00000'
-        }
-        applicationSettings: {
-            FUNCTIONS_EXTENSION_VERSION: '~4'
-            FUNCTIONS_WORKER_RUNTIME: 'dotnet'
-            WEBSITE_CONTENTSHARE: 'tlk-fun-00000839a'
-        }
-        functionExtension: {
-            storageAccount: {
-                name: 'tlkdata00000'
-            }
-        }
-        servicePlan: {
-            name: 'tlk-asp-00000'
-        }
-    }
-    {
-        applicationInsights: {
-            name: 'tlk-ai-00000'
-        }
-        applicationSettings: {
-            ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
-            XDT_MicrosoftApplicationInsights_Mode: 'Recommended'
-        }
-        is32BitModeEnabled: true
-        servicePlan: {
-            name: 'tlk-asp-00001'
-        }
-    }
 ]
 var virtualMachines = [
     {
@@ -570,7 +597,9 @@ var virtualMachines = [
         proximityPlacementGroup: {
             name: 'tlk-ppg-00000'
         }
-        skuName: 'Standard_B1ms'
+        sku: {
+            name: 'Standard_B1ms'
+        }
     }
 ]
 var virtualNetworkGateways = [
@@ -603,7 +632,9 @@ var virtualNetworkGateways = [
         ]
         isActiveActiveModeEnabled: false
         mode: 'RouteBased'
-        skuName: 'Basic'
+        sku: {
+            name: 'Basic'
+        }
         type: 'Vpn'
     }
 ]
@@ -633,6 +664,55 @@ var virtualNetworks = [
         ]
     }
 ]
+var webApplications = [
+    {
+        applicationInsights: {
+            name: 'tlk-ai-00000'
+        }
+        applicationSettings: {
+            FUNCTIONS_EXTENSION_VERSION: '~4'
+            FUNCTIONS_WORKER_RUNTIME: 'dotnet'
+            WEBSITE_CONTENTSHARE: 'tlk-fun-00000839a'
+        }
+        functionExtension: {
+            storageAccount: {
+                name: 'tlkdata00000'
+            }
+        }
+        identity: {
+            type: 'SystemAssigned,UserAssigned'
+            userAssignedIdentities: [
+                {
+                    name: 'tlk-mi-00000'
+                }
+            ]
+        }
+        servicePlan: {
+            name: 'tlk-asp-00000'
+        }
+    }
+    {
+        applicationInsights: {
+            name: 'tlk-ai-00000'
+        }
+        applicationSettings: {
+            ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
+            XDT_MicrosoftApplicationInsights_Mode: 'Recommended'
+        }
+        identity: {
+            type: 'SystemAssigned,UserAssigned'
+            userAssignedIdentities: [
+                {
+                    name: 'tlk-mi-00000'
+                }
+            ]
+        }
+        is32BitModeEnabled: true
+        servicePlan: {
+            name: 'tlk-asp-00001'
+        }
+    }
+]
 
 // module imports
 module applicationConfigurationStoresCopy 'br/tlk:microsoft.app-configuration/configuration-stores:1.0.0' = [for (store, index) in applicationConfigurationStores: if (contains(includedTypes, 'microsoft.app-configuration/configuration-stores') && !contains(excludedTypes, 'microsoft.app-configuration/configuration-stores')) {
@@ -644,10 +724,10 @@ module applicationConfigurationStoresCopy 'br/tlk:microsoft.app-configuration/co
         identity: union({ identity: {} }, store).identity
         isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, store).isPublicNetworkAccessEnabled
         isPurgeProtectionEnabled: union({ isPurgeProtectionEnabled: true }, store).isPurgeProtectionEnabled
-        location: location
+        location: union({ location: location }, store).location
         name: '${projectName}-acs-${padLeft(index, 5, '0')}'
         settings: union({ settings: {} }, store).settings
-        skuName: union({ skuName: 'Premium' }, store).skuName
+        sku: union({ sku: { name: 'Premium' } }, store).sku
     }
 }]
 module applicationGatewaysCopy 'br/tlk:microsoft.network/application-gateways:1.0.0' = [for (gateway, index) in applicationGateways: if (contains(includedTypes, 'microsoft.network/application-gateways') && !contains(excludedTypes, 'microsoft.network/application-gateways')) {
@@ -659,16 +739,14 @@ module applicationGatewaysCopy 'br/tlk:microsoft.network/application-gateways:1.
         frontEnd: gateway.frontEnd
         httpListeners: gateway.httpListeners
         identity: union({ identity: {} }, gateway).identity
-        location: location
+        location: union({ location: location }, gateway).location
         name: 'tlk-ag-00001'
         routingRules: gateway.routingRules
-        sku: union({
-            sku: {
-                capacity: 1
-                name: 'Standard_v2'
-                tier: 'Standard_v2'
-            }
-        }, gateway).sku
+        sku: union({ sku: {
+            capacity: 1
+            name: 'Standard_v2'
+            tier: 'Standard_v2'
+        } }, gateway).sku
         subnet: gateway.subnet
     }
 }]
@@ -678,7 +756,7 @@ module applicationInsightsCopy 'br/tlk:microsoft.insights/components:1.0.0' = [f
     ]
     name: '${deployment().name}-ai-${string(index)}'
     params: {
-        location: location
+        location: union({ location: location }, component).location
         logAnalyticsWorkspace: component.logAnalyticsWorkspace
         name: '${projectName}-ai-${padLeft(index, 5, '0')}'
     }
@@ -686,7 +764,7 @@ module applicationInsightsCopy 'br/tlk:microsoft.insights/components:1.0.0' = [f
 module applicationSecurityGroupsCopy 'br/tlk:microsoft.network/application-security-groups:1.0.0' = [for (group, index) in applicationSecurityGroups: if (contains(includedTypes, 'microsoft.network/application-security-groups') && !contains(excludedTypes, 'microsoft.network/application-security-groups')) {
     name: '${deployment().name}-asg-${string(index)}'
     params: {
-        location: location
+        location: union({ location: location }, group).location
         name: '${projectName}-asg-${padLeft(index, 5, '0')}'
     }
 }]
@@ -694,7 +772,7 @@ module applicationServicePlansCopy 'br/tlk:microsoft.web/server-farms:1.0.0' = [
     name: '${deployment().name}-asp-${string(index)}'
     params: {
         isZoneRedundancyEnabled: union({ isZoneRedundancyEnabled: true }, plan).isZoneRedundancyEnabled
-        location: location
+        location: union({ location: location }, plan).location
         name: '${projectName}-asp-${padLeft(index, 5, '0')}'
         sku: plan.sku
     }
@@ -705,12 +783,12 @@ module availabilitySetsCopy 'br/tlk:microsoft.compute/availability-sets:1.0.0' =
     ]
     name: '${deployment().name}-as-${string(index)}'
     params: {
-        location: location
+        location: union({ location: location }, set).location
         name: '${projectName}-as-${padLeft(index, 5, '0')}'
         numberOfFaultDomains: set.numberOfFaultDomains
         numberOfUpdateDomains: set.numberOfUpdateDomains
         proximityPlacementGroup: union({ proximityPlacementGroup: {} }, set).proximityPlacementGroup
-        skuName: set.skuName
+        sku: set.sku
     }
 }]
 module cdnProfilesCopy 'br/tlk:microsoft.cdn/profiles:1.0.0' = [for (profile, index) in cdnProfiles: if (contains(includedTypes, 'microsoft.cdn/profiles') && !contains(excludedTypes, 'microsoft.cdn/profiles')) {
@@ -722,7 +800,7 @@ module cdnProfilesCopy 'br/tlk:microsoft.cdn/profiles:1.0.0' = [for (profile, in
     name: '${deployment().name}-cdn-${string(index)}'
     params: {
         name: '${projectName}-cdn-${padLeft(index, 5, '0')}'
-        skuName: profile.skuName
+        sku: profile.sku
     }
 }]
 module containerRegistriesCopy 'br/tlk:microsoft.container-registry/registries:1.0.0' = [for (registry, index) in containerRegistries: if (contains(includedTypes, 'microsoft.container-registry/registries') && !contains(excludedTypes, 'microsoft.container-registry/registries')) {
@@ -736,7 +814,7 @@ module containerRegistriesCopy 'br/tlk:microsoft.container-registry/registries:1
         identity: union({ identity: {} }, registry).identity
         isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, registry).isPublicNetworkAccessEnabled
         isZoneRedundancyEnabled: union({ isZoneRedundancyEnabled: true }, registry).isZoneRedundancyEnabled
-        location: location
+        location: union({ location: location }, registry).location
         name: '${projectName}cr${padLeft(index, 5, '0')}'
         sku: union({ sku: { name: 'Premium' } }, registry).sku
     }
@@ -752,7 +830,7 @@ module diskEncryptionSetsCopy 'br/tlk:microsoft.compute/disk-encryption-sets:1.0
         keyName: set.keyName
         keyVault: set.keyVault
         keyVersion: union({ keyVersion: '' }, set).keyVersion
-        location: location
+        location: union({ location: location }, set).location
         name: '${projectName}-des-${padLeft(index, 5, '0')}'
     }
 }]
@@ -770,10 +848,10 @@ module keyVaultsCopy 'br/tlk:microsoft.key-vault/vaults:1.0.0' = [for (vault, in
         isRbacAuthorizationEnabled: union({ isRbacAuthorizationEnabled: true }, vault).isRbacAuthorizationEnabled
         isTemplateDeploymentEnabled: union({ isTemplateDeploymentEnabled: true }, vault).isTemplateDeploymentEnabled
         keys: union({ keys: {} }, vault).keys
-        location: location
+        location: union({ location: location }, vault).location
         name: '${projectName}-kv-${padLeft(index, 5, '0')}'
         secrets: union({ secrets: {} }, vault).secrets
-        skuName: union({ skuName: 'premium' }, vault).skuName
+        sku: union({ sku: { name: 'premium' } }, vault).sku
         tenantId: union({ tenantId: tenant().tenantId }, vault).tenantId
         virtualNetworkRules: union({ virtualNetworkRules: [] }, vault).virtualNetworkRules
     }
@@ -786,9 +864,9 @@ module logAnalyticsWorkspacesCopy 'br/tlk:microsoft.operational-insights/workspa
         isImmediatePurgeDataOn30DaysEnabled: union({ isImmediatePurgeDataOn30DaysEnabled: true }, workspace).isImmediatePurgeDataOn30DaysEnabled
         isPublicNetworkAccessForIngestionEnabled: union({ isPublicNetworkAccessForIngestionEnabled: false }, workspace).isPublicNetworkAccessForIngestionEnabled
         isPublicNetworkAccessForQueryEnabled: union({ isPublicNetworkAccessForQueryEnabled: false }, workspace).isPublicNetworkAccessForQueryEnabled
-        location: location
+        location: union({ location: location }, workspace).location
         name: '${projectName}-law-${padLeft(index, 5, '0')}'
-        skuName: union({ skuName: 'PerGB2018' }, workspace).skuName
+        sku: union({ sku: { name: 'PerGB2018' } }, workspace).sku
     }
 }]
 module machineLearningWorkspacesCopy 'br/tlk:microsoft.machine-learning-services/workspaces:1.0.0' = [for (workspace, index) in machineLearningWorkspaces: if (contains(includedTypes, 'microsoft.machine-learning-services/workspaces') && !contains(excludedTypes, 'microsoft.machine-learning-services/workspaces')) {
@@ -807,10 +885,10 @@ module machineLearningWorkspacesCopy 'br/tlk:microsoft.machine-learning-services
         isHighBusinessImpactFeatureEnabled: union({ isHighBusinessImpactFeatureEnabled: false }, workspace).isHighBusinessImpactFeatureEnabled
         isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, workspace).isPublicNetworkAccessEnabled
         keyVault: workspace.keyVault
-        location: location
+        location: union({ location: location }, workspace).location
         name: '${projectName}-mlw-${padLeft(index, 5, '0')}'
         storageAccount: workspace.storageAccount
-        skuName: union({ skuName: 'Basic' }, workspace).skuName
+        sku: union({ sku: { name: 'Basic' } }, workspace).sku
     }
 }]
 module natGatewaysCopy 'br/tlk:microsoft.network/nat-gateways:1.0.0' = [for (gateway, index) in natGateways: if (contains(includedTypes, 'microsoft.network/nat-gateways') && !contains(excludedTypes, 'microsoft.network/nat-gateways')) {
@@ -820,7 +898,7 @@ module natGatewaysCopy 'br/tlk:microsoft.network/nat-gateways:1.0.0' = [for (gat
     name: '${deployment().name}-nat-${string(index)}'
     params: {
         availabilityZones: union({ availabilityZones: [] }, gateway).availabilityZones
-        location: location
+        location: union({ location: location }, gateway).location
         name: '${projectName}-nat-${padLeft(index, 5, '0')}'
         publicIpAddresses: union({ publicIpAddresses: [] }, gateway).publicIpAddresses
         publicIpPrefixes: union({ publicIpPrefixes: [] }, gateway).publicIpPrefixes
@@ -837,7 +915,7 @@ module networkInterfacesCopy 'br/tlk:microsoft.network/network-interfaces:1.0.0'
         ipConfigurations: interface.ipConfigurations
         isAcceleratedNetworkingEnabled: union({ isAcceleratedNetworkingEnabled: true }, interface).isAcceleratedNetworkingEnabled
         isIpForwardingEnabled: union({ isIpForwardingEnabled: false }, interface).isIpForwardingEnabled
-        location: location
+        location: union({ location: location }, interface).location
         name: '${projectName}-nic-${padLeft(index, 5, '0')}'
         networkSecurityGroup: union({ networkSecurityGroup: {} }, interface).networkSecurityGroup
     }
@@ -846,7 +924,7 @@ module networkSecurityGroupsCopy 'br/tlk:microsoft.network/network-security-grou
     dependsOn: [ applicationSecurityGroupsCopy ]
     name: '${deployment().name}-nsg-${string(index)}'
     params: {
-        location: location
+        location: union({ location: location }, group).location
         name: '${projectName}-nsg-${padLeft(index, 5, '0')}'
         securityRules: group.securityRules
     }
@@ -855,7 +933,7 @@ module privateDnsZonesCopy 'br/tlk:microsoft.network/private-dns-zones:1.0.0' = 
     dependsOn: [
         virtualNetworksCopy
     ]
-    name: '${deployment().name}-privatedns-${string(index)}'
+    name: '${deployment().name}-dnsi-${string(index)}'
     params: {
         aRecords: union({ aRecords: [] }, zone).aRecords
         name: zone.name
@@ -882,12 +960,12 @@ module proximityPlacementGroupsCopy 'br/tlk:microsoft.compute/proximity-placemen
     name: '${deployment().name}-ppg-${string(index)}'
     params: {
         availabilityZones: union({ availabilityZones: [] }, group).availabilityZones
-        location: location
+        location: union({ location: location }, group).location
         name: '${projectName}-ppg-${padLeft(index, 5, '0')}'
     }
 }]
 module publicDnsZonesCopy 'br/tlk:microsoft.network/dns-zones:1.0.0' = [for (zone, index) in publicDnsZones: if (contains(includedTypes, 'microsoft.network/dns-zones') && !contains(excludedTypes, 'microsoft.network/dns-zones')) {
-    name: '${deployment().name}-publicdns-${string(index)}'
+    name: '${deployment().name}-dnse-${string(index)}'
     params: {
         cnameRecords: union({ cnameRecords: [] }, zone).cnameRecords
         name: zone.name
@@ -900,10 +978,9 @@ module publicIpAddressesCopy 'br/tlk:microsoft.network/public-ip-addresses:1.0.0
         allocationMethod: address.allocationMethod
         availabilityZones: union({ availabilityZones: [] }, address).availabilityZones
         ipPrefix: union({ ipPrefix: {} }, address).ipPrefix
-        location: location
+        location: union({ location: location }, address).location
         name: '${projectName}-pip-${padLeft(index, 5, '0')}'
-        skuName: address.skuName
-        skuTier: address.skuTier
+        sku: address.sku
         version: union({ version: 'IPv4' }, address).version
     }
 }]
@@ -911,11 +988,10 @@ module publicIpPrefixesCopy 'br/tlk:microsoft.network/public-ip-prefixes:1.0.0' 
     name: '${deployment().name}-pipp-${string(index)}'
     params: {
         availabilityZones: union({ availabilityZones: [] }, prefix).availabilityZones
-        location: location
+        location: union({ location: location }, prefix).location
         name: '${projectName}-pipp-${padLeft(index, 5, '0')}'
         size: prefix.size
-        skuName: prefix.skuName
-        skuTier: prefix.skuTier
+        sku: prefix.sku
         version: union({ version: 'IPv4' }, prefix).version
     }
 }]
@@ -929,9 +1005,9 @@ module serviceBusNamespacesCopy 'br/tlk:microsoft.service-bus/namespaces:1.0.0' 
         identity: union({ identity: {} }, namespace).identity
         isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, namespace).isPublicNetworkAccessEnabled
         isZoneRedundancyEnabled: union({ isZoneRedundancyEnabled: true }, namespace).isZoneRedundancyEnabled
-        location: location
+        location: union({ location: location }, namespace).location
         name: '${projectName}-sb-${padLeft(index, 5, '0')}'
-        skuName: union({ skuName: 'Premium' }, namespace).skuName
+        sku: union({ sku: { name: 'Premium' } }, namespace).sku
     }
 }]
 module sqlServersCopy 'br/tlk:microsoft.sql/servers:1.0.0' = [for (server, index) in sqlServers: if (contains(includedTypes, 'microsoft.sql/servers') && !contains(excludedTypes, 'microsoft.sql/servers')) {
@@ -950,7 +1026,7 @@ module sqlServersCopy 'br/tlk:microsoft.sql/servers:1.0.0' = [for (server, index
         isAllowTrustedMicrosoftServicesEnabled: union({ isAllowTrustedMicrosoftServicesEnabled: false }, server).isAllowTrustedMicrosoftServicesEnabled
         isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, server).isPublicNetworkAccessEnabled
         isSqlAuthenticationEnabled: union({ isSqlAuthenticationEnabled: false }, server).isSqlAuthenticationEnabled
-        location: location
+        location: union({ location: location }, server).location
         name: '${projectName}-sql-${padLeft(index, 5, '0')}'
         virtualNetworkRules: union({ virtualNetworkRules: [] }, server).virtualNetworkRules
     }
@@ -971,17 +1047,17 @@ module storageAccountsCopy 'br/tlk:microsoft.storage/storage-accounts:1.0.0' = [
         isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, account).isPublicNetworkAccessEnabled
         isSharedKeyAccessEnabled: union({ isSharedKeyAccessEnabled: false }, account).isSharedKeyAccessEnabled
         kind: account.kind
-        location: location
+        location: union({ location: location }, account).location
         name: '${projectName}data${padLeft(index, 5, '0')}'
         services: account.services
-        skuName: account.skuName
+        sku: account.sku
         virtualNetworkRules: union({ virtualNetworkRules: [] }, account).virtualNetworkRules
     }
 }]
 module userAssignedIdentitiesCopy 'br/tlk:microsoft.managed-identity/user-assigned-identities:1.0.0' = [for (identity, index) in userAssignedIdentities: if (contains(includedTypes, 'microsoft.managed-identity/user-assigned-identities') && !contains(excludedTypes, 'microsoft.managed-identity/user-assigned-identities')) {
     name: '${deployment().name}-mi-${string(index)}'
     params: {
-        location: location
+        location: union({ location: location }, identity).location
         name: '${projectName}-mi-${padLeft(index, 5, '0')}'
     }
 }]
@@ -1009,11 +1085,11 @@ module virtualMachinesCopy 'br/tlk:microsoft.compute/virtual-machines:1.0.0' = [
         identity: union({ identity: {} }, machine).identity
         imageReference: machine.imageReference
         linuxConfiguration: union({ linuxConfiguration: {} }, machine).linuxConfiguration
-        location: location
+        location: union({ location: location }, machine).location
         name: '${projectName}vm${padLeft(index, 5, '0')}'
         networkInterfaces: machine.networkInterfaces
         proximityPlacementGroup: union({ proximityPlacementGroup: {} }, machine).proximityPlacementGroup
-        skuName: machine.skuName
+        sku: machine.sku
         subnet: union({ subnet: {} }, machine).subnet
         windowsConfiguration: union({ windowsConfiguration: {} }, machine).windowsConfiguration
     }
@@ -1029,10 +1105,10 @@ module virtualNetworkGatewaysCopy 'br/tlk:microsoft.network/virtual-network-gate
         generation: gateway.generation
         ipConfigurations: gateway.ipConfigurations
         isActiveActiveModeEnabled: gateway.isActiveActiveModeEnabled
-        location: location
+        location: union({ location: location }, gateway).location
         mode: gateway.mode
         name: '${projectName}-vng-${padLeft(index, 5, '0')}'
-        skuName: gateway.skuName
+        sku: gateway.sku
         type: gateway.type
     }
 }]
@@ -1046,7 +1122,7 @@ module virtualNetworksCopy 'br/tlk:microsoft.network/virtual-networks:1.0.0' = [
         addressPrefixes: network.addressPrefixes
         ddosProtectionPlan: {}
         dnsServers: network.dnsServers
-        location: location
+        location: union({ location: location }, network).location
         name: '${projectName}-vnet-${padLeft(index, 5, '0')}'
         subnets: network.subnets
     }
@@ -1072,7 +1148,7 @@ module webApplicationsCopy 'br/tlk:microsoft.web/sites:1.0.0' = [for (applicatio
         functionExtension: union({ functionExtension: {} }, application).functionExtension
         identity: union({ identity: {} }, application).identity
         is32BitModeEnabled: union({ is32BitModeEnabled: false }, application).is32BitModeEnabled
-        location: location
+        location: union({ location: location }, application).location
         name: '${projectName}-web-${padLeft(index, 5, '0')}'
         servicePlan: application.servicePlan
     }

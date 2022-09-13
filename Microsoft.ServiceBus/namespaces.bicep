@@ -8,8 +8,10 @@ param isZoneRedundancyEnabled bool = true
 param location string = resourceGroup().location
 @description('Specifies the name of the Azure Service Bus Namespace.')
 param name string
-@description('Specifies the SKU name of the Azure Service Bus Namespace.')
-param skuName string = 'Premium'
+@description('Specifies the SKU of the Azure Service Bus Namespace.')
+param sku object = {
+    name: 'Premium'
+}
 
 var userAssignedIdentities = [for managedIdentity in union({
     userAssignedIdentities: []
@@ -32,7 +34,5 @@ resource namespace 'Microsoft.ServiceBus/namespaces@2022-01-01-preview' = {
         publicNetworkAccess: isPublicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
         zoneRedundant: isZoneRedundancyEnabled
     }
-    sku: {
-        name: skuName
-    }
+    sku: sku
 }

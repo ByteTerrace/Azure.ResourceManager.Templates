@@ -1,7 +1,7 @@
 @description('An array of application security groups that the Azure Private Endpoint will be associated with.')
-param applicationSecurityGroups array
+param applicationSecurityGroups array = []
 @description('Specifies the location in which the Azure Private Endpoint resource(s) will be deployed.')
-param location string
+param location string = resourceGroup().location
 @description('Specifies the name of the Azure Private Endpoint.')
 param name string
 @description('An object that encapsulates the properties of the resource that the Azure Private Endpoint will be associated with.')

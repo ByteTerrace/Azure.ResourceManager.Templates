@@ -20,8 +20,10 @@ param name string
 @description('An object that encapsulates the set of secrets that will be stored within the Azure Key Vault.')
 @secure()
 param secrets object = {}
-@description('Specifies the SKU name of the Azure Key Vault.')
-param skuName string = 'premium'
+@description('Specifies the SKU of the Azure Key Vault.')
+param sku object = {
+    name: 'premium'
+}
 @description('Specifies the Azure Active Directory tenant GUID that the Azure Key Vault will be associated with.')
 param tenantId string = tenant().tenantId
 @description('An array of virtual network rules that will be assigned to the Azure Key Vault.')
@@ -88,10 +90,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
             }]
         }
         publicNetworkAccess: isPublicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
-        sku: {
-            family: 'A'
-            name: skuName
-        }
+        sku: union({ family: 'A' }, sku)
         softDeleteRetentionInDays: 14
         tenantId: tenantId
     }

@@ -1,3 +1,5 @@
+@description('Indicates whether the feature that enables applications to scale independently is enabled on the Azure Application Service Plan.')
+param isPerSiteScalingEnabled bool = false
 @description('Indicates whether the zone redundancy feature is enabled on the Azure Application Service Plan.')
 param isZoneRedundancyEnabled bool = true
 @description('Specifies the location in which the Azure Application Service Plan resource(s) will be deployed.')
@@ -12,8 +14,7 @@ resource servicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
     name: name
     properties: {
         maximumElasticWorkerCount: 1
-        perSiteScaling: false
-        targetWorkerCount: 0
+        perSiteScaling: isPerSiteScalingEnabled
         zoneRedundant: isZoneRedundancyEnabled
     }
     sku: sku

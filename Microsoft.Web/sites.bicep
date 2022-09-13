@@ -3,10 +3,13 @@ param applicationInsights object = {}
 @description('An object that encapsulates the application settings that will be applied to the Azure Web Site.')
 @secure()
 param applicationSettings object = {}
+@description('An object that encapsulates the cross-Origin resource sharing settings that will be applied to the Azure Web Site.')
 param cors object = {}
+@description('An object that encapsulates the function extension settings that will be applied to the Azure Web Site.')
 param functionExtension object = {}
 @description('An object that encapsulates the properties of the identity that will be assigned to the Azure Web Site.')
 param identity object = {}
+@description('Indicates whether the Azure Web Site will run in 32-bit mode.')
 param is32BitModeEnabled bool = false
 @description('Specifies the location in which the Azure Web Site resource(s) will be deployed.')
 param location string = resourceGroup().location

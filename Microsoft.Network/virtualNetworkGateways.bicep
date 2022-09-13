@@ -1,21 +1,23 @@
 @description('An object that encapsulates the properties of the client configuration that will be applied to the Azure Virtual Network Gateway')
 param clientConfiguration object
 @description('Specifies the generaton of the Azure Virtual Network Gateway.')
-param generation int
+param generation int = 1
 @description('An array of IP configurations that will be applied to the Azure Virtual Network Gateway.')
 param ipConfigurations array
 @description('Indicates whether active-active mode is enabled on the Azure Virtual Network Gateway.')
-param isActiveActiveModeEnabled bool
+param isActiveActiveModeEnabled bool = false
 @description('Specifies the location in which the Azure Virtual Network Gateway resource(s) will be deployed.')
-param location string
+param location string = resourceGroup().location
 @description('Specifies the mode of the Azure Virtual Network Gateway.')
-param mode string
+param mode string = 'RouteBased'
 @description('Specifies the name of the Azure Virtual Network Gateway.')
 param name string
-@description('Specifies the SKU name of the Azure Virtual Network Gateway.')
-param skuName string
+@description('Specifies the SKU of the Azure Virtual Network Gateway.')
+param sku object = {
+    name: 'Basic'
+}
 @description('Specifies the type of the Azure Virtual Network Gateway.')
-param type string
+param type string = 'Vpn'
 
 resource virtualNetworkGateway 'Microsoft.Network/virtualNetworkGateways@2022-01-01' = {
     name: name
@@ -46,10 +48,7 @@ resource virtualNetworkGateway 'Microsoft.Network/virtualNetworkGateways@2022-01
                 }
             }
         }]
-        sku: {
-            name: skuName
-            tier: skuName
-        }
+        sku: sku
         vpnClientConfiguration: {
             vpnAuthenticationTypes: clientConfiguration.authenticationTypes
             vpnClientAddressPool: {

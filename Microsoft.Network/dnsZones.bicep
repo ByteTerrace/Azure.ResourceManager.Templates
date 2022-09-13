@@ -1,9 +1,9 @@
 @description('An array of CNAME records that will be created within the Azure DNS Zone.')
-param cnameRecords array
+param cnameRecords array = []
 @description('Specifies the name of the Azure DNS Zone.')
 param name string
 @description('An array of TXT records that will be created within the Azure DNS Zone.')
-param txtRecords array
+param txtRecords array = []
 
 resource dnsZone 'Microsoft.Network/dnsZones@2018-05-01' = {
     location: 'global'

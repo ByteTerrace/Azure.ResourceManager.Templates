@@ -14,8 +14,10 @@ param keyVault object
 param location string = resourceGroup().location
 @description('Specifies the name of the Azure Machine Learning Services Workspace.')
 param name string
-@description('Specifies the SKU name of the Azure Machine Learning Services Workspace.')
-param skuName string = 'Basic'
+@description('Specifies the SKU of the Azure Machine Learning Services Workspace.')
+param sku object = {
+    name: 'Basic'
+}
 @description('An object that encapsulates the properties of the Azure Storage Account that will be assocatied with the Azure Machine Learning Services Workspace.')
 param storageAccount object
 
@@ -60,7 +62,5 @@ resource workspace 'Microsoft.MachineLearningServices/workspaces@2022-06-01-prev
             resourceGroupName: resourceGroup().name
         }, storageAccount).resourceGroupName, 'Microsoft.Storage/storageAccounts', storageAccount.name)
     }
-    sku: {
-        name: skuName
-    }
+    sku: sku
 }

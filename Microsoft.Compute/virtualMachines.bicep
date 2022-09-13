@@ -2,25 +2,25 @@
 @secure()
 param administrator object
 @description('An object that encapsulates the properties of the Azure Availability Set that the Azure Virtual Machine will be deployed within.')
-param availabilitySet object
+param availabilitySet object = {}
 @description('An array of availability zones that the Azure Virtual Machine will be deployed within.')
-param availabilityZones array
+param availabilityZones array = []
 @description('An object that encapsulates the properties of the identity that will be assigned to the Azure Virtual Machine.')
-param identity object
+param identity object = {}
 @description('An object that encapsulates the properties of the image that will be used to provision the Azure Virtual Machine.')
 param imageReference object
 @description('An object that encapsulates the properties of the Linux configuration that will be applied to the Azure Virtual Machine.')
 param linuxConfiguration object = {}
 @description('Specifies the location in which the Azure Virtual Machine resource(s) will be deployed.')
-param location string
+param location string = resourceGroup().location
 @description('Specifies the name of the Azure Virtual Machine.')
 param name string
 @description('An array of network interfaces that will be associated to the Azure Virtual Machine.')
-param networkInterfaces array
+param networkInterfaces array = []
 @description('An object that encapsulates the properties of the Azure Proximity Placement Group that the Azure Virtual Machine will be deployed within.')
-param proximityPlacementGroup object
-@description('Specifies the SKU name of the Azure Virtual Machine.')
-param skuName string
+param proximityPlacementGroup object = {}
+@description('Specifies the SKU of the Azure Virtual Machine.')
+param sku object
 @description('An object that encapsulates the properties of the subnet that the Azure Virtual Machine will be deployed within.')
 param subnet object = {}
 @description('An object that encapsulates the properties of the Windows configuration that will be applied to the Azure Virtual Machine.')
@@ -52,7 +52,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = {
         }
         extensionsTimeBudget: 'PT15M'
         hardwareProfile: {
-            vmSize: skuName
+            vmSize: sku.name
         }
         networkProfile: {
             networkApiVersion: empty(networkInterfaces) ? '2022-01-01' : null

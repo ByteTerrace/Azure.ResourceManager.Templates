@@ -1,19 +1,20 @@
 @description('Specifies the allocation method of the Azure Public IP Address.')
-param allocationMethod string
+param allocationMethod string = 'Static'
 @description('An array of availability zones that the Azure Public IP Address will be deployed within.')
-param availabilityZones array
+param availabilityZones array = []
 @description('An object that encapsulates the properties of the Azure Public IP prefix that this Azure Public IP Address will be derived from.')
-param ipPrefix object
+param ipPrefix object = {}
 @description('Specifies the location in which the Azure Public IP Address resource(s) will be deployed.')
-param location string
+param location string = resourceGroup().location
 @description('Specifies the name of the Azure Public IP Address.')
 param name string
-@description('Specifies the SKU name of the Azure Public IP Address.')
-param skuName string
-@description('Specifies the SKU tier of the Azure Public IP Address.')
-param skuTier string
+@description('Specifies the SKU of the Azure Public IP Address.')
+param sku object = {
+    name: 'Standard'
+    tier: 'Regional'
+}
 @description('Specifies the version of the Azure Public IP Address.')
-param version string
+param version string = 'IPv4'
 
 var zones = [for zone in availabilityZones: string(zone)]
 
@@ -34,9 +35,6 @@ resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2022-01-01' = {
             }, ipPrefix).resourceGroupName, 'Microsoft.Network/publicIPPrefixes', ipPrefix.name)
         }
     }
-    sku: {
-        name: skuName
-        tier: skuTier
-    }
+    sku: sku
     zones: zones
 }

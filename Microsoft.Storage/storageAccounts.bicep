@@ -20,8 +20,10 @@ param location string = resourceGroup().location
 param name string
 @description('An object that encapsulates the properties of the services that will be configured on the Azure Storage Account.')
 param services object = {}
-@description('Specifies the SKU name of the Azure Storage Account.')
-param skuName string = 'Standard_LRS'
+@description('Specifies the SKU of the Azure Storage Account.')
+param sku object = {
+    name: 'Standard_LRS'
+}
 @description('An array of virtual network rules that will be assigned to the Azure Storage Account.')
 param virtualNetworkRules array = []
 
@@ -111,9 +113,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
         publicNetworkAccess: isPublicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
         supportsHttpsTrafficOnly: isHttpsOnlyModeEnabled
     }
-    sku: {
-        name: skuName
-    }
+    sku: sku
 }
 resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2022-05-01' = {
     name: 'default'

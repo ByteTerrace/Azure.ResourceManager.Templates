@@ -1,9 +1,9 @@
 @description('Specifies the location in which the Azure Network Security Group resource(s) will be deployed.')
-param location string
+param location string = resourceGroup().location
 @description('Specifies the name of the Azure Network Security Group.')
 param name string
 @description('An array of security rules that will be assigned to the Azure Network Security Group.')
-param securityRules array
+param securityRules array = []
 
 resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-01-01' = {
     location: location

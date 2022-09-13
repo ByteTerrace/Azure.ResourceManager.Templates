@@ -1,9 +1,9 @@
 @description('An array of A records that will be created within the Azure Private DNS Zone.')
-param aRecords array
+param aRecords array = []
 @description('Specifies the name of the Azure DNS Zone.')
 param name string
 @description('An array of virtual networks that the Azure DNS Zone will be linked with.')
-param virtualNetworkLinks array
+param virtualNetworkLinks array = []
 
 resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
     location: 'global'

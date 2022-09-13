@@ -11,8 +11,10 @@ param name string
 @description('An object that encapsulates the set of settings that will be stored within the Azure Application Configuration Store.')
 @secure()
 param settings object = {}
-@description('Specifies the SKU name of the Azure Application Configuration Store.')
-param skuName string = 'Premium'
+@description('Specifies the SKU of the Azure Application Configuration Store.')
+param sku object = {
+    name: 'Premium'
+}
 
 var userAssignedIdentities = [for managedIdentity in union({
     userAssignedIdentities: []
@@ -33,11 +35,9 @@ resource configurationStore 'Microsoft.AppConfiguration/configurationStores@2022
         disableLocalAuth: false
         enablePurgeProtection: isPurgeProtectionEnabled
         publicNetworkAccess: isPublicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
-        softDeleteRetentionInDays: ('free' == toLower(skuName)) ? null : 14
+        softDeleteRetentionInDays: ('free' == toLower(sku.name)) ? null : 14
     }
-    sku: {
-        name: skuName
-    }
+    sku: sku
 }
 resource keyVaultSecretReferencesCopy 'Microsoft.KeyVault/vaults/secrets@2022-07-01' existing = [for setting in items(settings): if (!empty(union({ keyVault: {} }, setting.value).keyVault)) {
     name: '${setting.value.keyVault.name}/${setting.value.keyVault.secretName}'
