@@ -254,12 +254,31 @@ var roleAssignments = [
         }
         roleDefinitionName: 'Key Vault Crypto Service Encryption User'
     }
+    {
+        assignee: {
+            name: 'tlk-sql-00000'
+            type: 'Microsoft.Sql/servers'
+        }
+        assignor: {
+            name: 'tlk-kv-00000'
+            type: 'Microsoft.KeyVault/vaults'
+        }
+        roleDefinitionName: 'Key Vault Crypto Service Encryption User'
+    }
 ]
 var sqlServers = [
     {
         administrator: {
             login: 'administrator@byteterrace.com'
             objectId: '84e6e9e4-e3d8-4484-ab7f-a77014fd182e'
+        }
+        identity: {
+            type: 'SystemAssigned,UserAssigned'
+            userAssignedIdentities: [
+                {
+                    name: 'tlk-mi-00000'
+                }
+            ]
         }
         isAllowTrustedMicrosoftServicesEnabled: false
         isPublicNetworkAccessEnabled: false
@@ -598,6 +617,8 @@ module sqlServersCopy 'br/tlk:microsoft.sql/servers:1.0.0' = [for (server, index
         keyVaultsCopy
         privateDnsZonesCopy
         publicDnsZonesCopy
+        userAssignedIdentitiesCopy
+        virtualNetworksCopy
     ]
     name: '${deployment().name}-sql-${string(index)}'
     params: {
@@ -726,6 +747,7 @@ resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (de
         publicIpAddressesCopy
         publicIpPrefixesCopy
         roleAssignmentsCopy
+        sqlServersCopy
         storageAccountsCopy
         userAssignedIdentitiesCopy
         virtualMachinesCopy
@@ -762,6 +784,7 @@ resource roleAssignmentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for
         publicDnsZonesCopy
         publicIpAddressesCopy
         publicIpPrefixesCopy
+        sqlServersCopy
         storageAccountsCopy
         userAssignedIdentitiesCopy
         virtualMachinesCopy

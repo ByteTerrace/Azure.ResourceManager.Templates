@@ -54,7 +54,6 @@ resource server 'Microsoft.Sql/servers@2022-02-01-preview' = {
         }
         minimalTlsVersion: '1.2'
         publicNetworkAccess: isPublicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
-        restrictOutboundNetworkAccess: 'Disabled'
         version: '12.0'
     }
 }
