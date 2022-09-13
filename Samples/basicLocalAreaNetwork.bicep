@@ -9,6 +9,7 @@ param overrides object = {
 var excludedTypes = [for type in overrides.excludedTypes: toLower(type)]
 var includedTypes = [for type in empty(overrides.includedTypes) ? [
     'microsoft.authorization/role-assignments'
+    'microsoft.cdn/profiles'
     'microsoft.compute/availability-sets'
     'microsoft.compute/disk-encryption-sets'
     'microsoft.compute/proximity-placement-groups'
@@ -28,6 +29,7 @@ var includedTypes = [for type in empty(overrides.includedTypes) ? [
     'microsoft.network/virtual-network-gateways'
     'microsoft.network/virtual-networks'
     'microsoft.resources/deployments'
+    'microsoft.sql/servers'
     'microsoft.storage/storage-accounts'
 ] : overrides.includedTypes: toLower(type)]
 
@@ -45,6 +47,7 @@ var availabilitySets = [
         skuName: 'Aligned'
     }
 ]
+var cdnProfiles = []
 var containerRegistries = [
     {
         identity: {
@@ -252,6 +255,13 @@ var roleAssignments = [
         roleDefinitionName: 'Key Vault Crypto Service Encryption User'
     }
 ]
+var sqlServers = [
+    {
+        administrator: {
+            password: 'It\'s a secret to everybody!'
+        }
+    }
+]
 var storageAccounts = [
     {
         accessTier: 'Hot'
@@ -296,7 +306,7 @@ var userAssignedIdentities = [
 var virtualMachines = [
     {
         administrator: {
-            password: 'Mandy0143Fd!'
+            password: 'It\'s a secret to everybody!'
             userName: 'TheWindfish'
         }
         identity: {
@@ -408,6 +418,18 @@ module availabilitySetsCopy 'br/tlk:microsoft.compute/availability-sets:1.0.0' =
         numberOfUpdateDomains: set.numberOfUpdateDomains
         proximityPlacementGroup: union({ proximityPlacementGroup: {} }, set).proximityPlacementGroup
         skuName: set.skuName
+    }
+}]
+module cdnProfilesCopy 'br/tlk:microsoft.cdn/profiles:1.0.0' = [for (profile, index) in cdnProfiles: if (contains(includedTypes, 'microsoft.cdn/profiles') && !contains(excludedTypes, 'microsoft.cdn/profiles')) {
+    dependsOn: [
+        keyVaultsCopy
+        privateDnsZonesCopy
+        publicDnsZonesCopy
+    ]
+    name: '${deployment().name}-cdn-${string(index)}'
+    params: {
+        name: '${projectName}-cdn-${padLeft(index, 5, '0')}'
+        skuName: profile.skuName
     }
 }]
 module containerRegistriesCopy 'br/tlk:microsoft.container-registry/registries:1.0.0' = [for (registry, index) in containerRegistries: if (contains(includedTypes, 'microsoft.container-registry/registries') && !contains(excludedTypes, 'microsoft.container-registry/registries')) {
@@ -568,6 +590,21 @@ module publicIpPrefixesCopy 'br/tlk:microsoft.network/public-ip-prefixes:1.0.0' 
         version: union({ version: 'IPv4' }, prefix).version
     }
 }]
+module sqlServersCopy 'br/tlk:microsoft.sql/servers:1.0.0' = [for (server, index) in sqlServers: if (contains(includedTypes, 'microsoft.sql/servers') && !contains(excludedTypes, 'microsoft.sql/servers')) {
+    dependsOn: [
+        keyVaultsCopy
+        privateDnsZonesCopy
+        publicDnsZonesCopy
+    ]
+    name: '${deployment().name}-sql-${string(index)}'
+    params: {
+        administrator: union({ name: uniqueString('${projectName}-sql-${padLeft(index, 5, '0')}') }, server.administrator)
+        identity: union({ identity: {} }, server).identity
+        isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, server).isPublicNetworkAccessEnabled
+        location: location
+        name: '${projectName}-sql-${padLeft(index, 5, '0')}'
+    }
+}]
 module storageAccountsCopy 'br/tlk:microsoft.storage/storage-accounts:1.0.0' = [for (account, index) in storageAccounts: if (contains(includedTypes, 'microsoft.storage/storage-accounts') && !contains(excludedTypes, 'microsoft.storage/storage-accounts')) {
     dependsOn: [
         keyVaultsCopy
@@ -704,12 +741,24 @@ resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (de
 }]
 resource roleAssignmentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (assignment, index) in roleAssignments: if (contains(includedTypes, 'microsoft.authorization/role-assignments') && !contains(excludedTypes, 'microsoft.authorization/role-assignments')) {
     dependsOn: [
+        applicationSecurityGroupsCopy
+        availabilitySetsCopy
         containerRegistriesCopy
         diskEncryptionSetsCopy
         keyVaultsCopy
+        natGatewaysCopy
+        networkInterfacesCopy
+        networkSecurityGroupsCopy
+        privateDnsZonesCopy
+        privateEndpointsCopy
+        proximityPlacementGroupsCopy
+        publicDnsZonesCopy
+        publicIpAddressesCopy
+        publicIpPrefixesCopy
         storageAccountsCopy
         userAssignedIdentitiesCopy
         virtualMachinesCopy
+        virtualNetworkGatewaysCopy
         virtualNetworksCopy
     ]
     name: '${deployment().name}-rbac-${string(index)}'
