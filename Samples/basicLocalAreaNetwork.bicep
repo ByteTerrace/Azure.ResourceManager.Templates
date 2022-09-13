@@ -258,8 +258,11 @@ var roleAssignments = [
 var sqlServers = [
     {
         administrator: {
-            password: 'It\'s a secret to everybody!'
+            login: 'administrator@byteterrace.com'
+            objectId: '84e6e9e4-e3d8-4484-ab7f-a77014fd182e'
         }
+        isAllowTrustedMicrosoftServicesEnabled: false
+        isPublicNetworkAccessEnabled: false
     }
 ]
 var storageAccounts = [
@@ -599,10 +602,14 @@ module sqlServersCopy 'br/tlk:microsoft.sql/servers:1.0.0' = [for (server, index
     name: '${deployment().name}-sql-${string(index)}'
     params: {
         administrator: union({ name: uniqueString('${projectName}-sql-${padLeft(index, 5, '0')}') }, server.administrator)
+        firewallRules: union({ firewallRules: [] }, server).firewallRules
         identity: union({ identity: {} }, server).identity
+        isAllowTrustedMicrosoftServicesEnabled: union({ isAllowTrustedMicrosoftServicesEnabled: false }, server).isAllowTrustedMicrosoftServicesEnabled
         isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, server).isPublicNetworkAccessEnabled
+        isSqlAuthenticationEnabled: union({ isSqlAuthenticationEnabled: false }, server).isSqlAuthenticationEnabled
         location: location
         name: '${projectName}-sql-${padLeft(index, 5, '0')}'
+        virtualNetworkRules: union({ virtualNetworkRules: [] }, server).virtualNetworkRules
     }
 }]
 module storageAccountsCopy 'br/tlk:microsoft.storage/storage-accounts:1.0.0' = [for (account, index) in storageAccounts: if (contains(includedTypes, 'microsoft.storage/storage-accounts') && !contains(excludedTypes, 'microsoft.storage/storage-accounts')) {
