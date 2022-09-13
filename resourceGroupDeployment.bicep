@@ -8,6 +8,7 @@ param overrides object = {
 // variables
 var excludedTypes = [for type in overrides.excludedTypes: toLower(type)]
 var includedTypes = [for type in empty(overrides.includedTypes) ? [
+    'microsoft.app-configuration/configuration-stores'
     'microsoft.authorization/role-assignments'
     'microsoft.cdn/profiles'
     'microsoft.compute/availability-sets'
@@ -32,11 +33,38 @@ var includedTypes = [for type in empty(overrides.includedTypes) ? [
     'microsoft.network/virtual-networks'
     'microsoft.operational-insights/workspaces'
     'microsoft.resources/deployments'
+    'microsoft.service-bus/namespaces'
     'microsoft.sql/servers'
     'microsoft.storage/storage-accounts'
 ] : overrides.includedTypes: toLower(type)]
 
 // resource definitions
+var applicationConfigurationStores = [
+    {
+        identity: {
+            type: 'SystemAssigned,UserAssigned'
+            userAssignedIdentities: [
+                {
+                    name: 'tlk-mi-00000'
+                }
+            ]
+        }
+        isPublicNetworkAccessEnabled: true
+        isPurgeProtectionEnabled: false
+        settings: {
+            'The:Password': {
+                keyVault: {
+                    name: 'tlk-kv-00000'
+                    secretName: 'The-Password'
+                }
+            }
+            Version: {
+                value: '1.0.0'
+            }
+        }
+        skuName: 'Free'
+    }
+]
 var applicationInsights = [
     {
         logAnalyticsWorkspace: {
@@ -103,7 +131,11 @@ var keyVaults = [
                 type: 'RSA'
             }
         }
-        secrets: {}
+        secrets: {
+            'The-Password': {
+                value: 'It\'s a secret to everybody!'
+            }
+        }
         skuName: 'premium'
     }
 ]
@@ -276,6 +308,17 @@ var roleAssignments = [
     }
     {
         assignee: {
+            name: 'tlk-acs-00000'
+            type: 'Microsoft.AppConfiguration/configurationStores'
+        }
+        assignor: {
+            name: 'tlk-kv-00000'
+            type: 'Microsoft.KeyVault/vaults'
+        }
+        roleDefinitionName: 'Key Vault Secrets User'
+    }
+    {
+        assignee: {
             name: 'tlk-des-00000'
             type: 'Microsoft.Compute/diskEncryptionSets'
         }
@@ -306,6 +349,21 @@ var roleAssignments = [
             type: 'Microsoft.KeyVault/vaults'
         }
         roleDefinitionName: 'Key Vault Crypto Service Encryption User'
+    }
+]
+var serviceBusNamespaces = [
+    {
+        identity: {
+            type: 'SystemAssigned,UserAssigned'
+            userAssignedIdentities: [
+                {
+                    name: 'tlk-mi-00000'
+                }
+            ]
+        }
+        isPublicNetworkAccessEnabled: true
+        isZoneRedundancyEnabled: false
+        skuName: 'Basic'
     }
 ]
 var sqlServers = [
@@ -463,6 +521,21 @@ var virtualNetworks = [
 ]
 
 // module imports
+module applicationConfigurationStoresCopy 'br/tlk:microsoft.app-configuration/configuration-stores:1.0.0' = [for (store, index) in applicationConfigurationStores: if (contains(includedTypes, 'microsoft.app-configuration/configuration-stores') && !contains(excludedTypes, 'microsoft.app-configuration/configuration-stores')) {
+    dependsOn: [
+        keyVaultsCopy
+    ]
+    name: '${deployment().name}-acs-${string(index)}'
+    params: {
+        identity: union({ identity: {} }, store).identity
+        isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, store).isPublicNetworkAccessEnabled
+        isPurgeProtectionEnabled: union({ isPurgeProtectionEnabled: true }, store).isPurgeProtectionEnabled
+        location: location
+        name: '${projectName}-acs-${padLeft(index, 5, '0')}'
+        settings: union({ settings: {} }, store).settings
+        skuName: union({ skuName: 'Premium' }, store).skuName
+    }
+}]
 module applicationInsightsCopy 'br/tlk:microsoft.insights/components:1.0.0' = [for (component, index) in applicationInsights: if (contains(includedTypes, 'microsoft.insights/components') && !contains(excludedTypes, 'microsoft.insights/components')) {
     dependsOn: [
         logAnalyticsWorkspacesCopy
@@ -700,6 +773,21 @@ module publicIpPrefixesCopy 'br/tlk:microsoft.network/public-ip-prefixes:1.0.0' 
         version: union({ version: 'IPv4' }, prefix).version
     }
 }]
+module serviceBusNamespacesCopy 'br/tlk:microsoft.service-bus/namespaces:1.0.0' = [for (namespace, index) in serviceBusNamespaces: if (contains(includedTypes, 'microsoft.service-bus/namespaces') && !contains(excludedTypes, 'microsoft.service-bus/namespaces')) {
+    dependsOn: [
+        keyVaultsCopy
+        virtualNetworksCopy
+    ]
+    name: '${deployment().name}-sb-${string(index)}'
+    params: {
+        identity: union({ identity: {} }, namespace).identity
+        isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, namespace).isPublicNetworkAccessEnabled
+        isZoneRedundancyEnabled: union({ isZoneRedundancyEnabled: true }, namespace).isZoneRedundancyEnabled
+        location: location
+        name: '${projectName}-sb-${padLeft(index, 5, '0')}'
+        skuName: union({ skuName: 'Premium' }, namespace).skuName
+    }
+}]
 module sqlServersCopy 'br/tlk:microsoft.sql/servers:1.0.0' = [for (server, index) in sqlServers: if (contains(includedTypes, 'microsoft.sql/servers') && !contains(excludedTypes, 'microsoft.sql/servers')) {
     dependsOn: [
         keyVaultsCopy
@@ -820,6 +908,7 @@ module virtualNetworksCopy 'br/tlk:microsoft.network/virtual-networks:1.0.0' = [
 
 resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (deployment, index) in deployments: if (contains(includedTypes, 'microsoft.resources/deployments') && !contains(excludedTypes, 'microsoft.resources/deployments')) {
     dependsOn: [
+        applicationConfigurationStoresCopy
         applicationInsightsCopy
         applicationSecurityGroupsCopy
         availabilitySetsCopy
@@ -838,6 +927,7 @@ resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (de
         publicIpAddressesCopy
         publicIpPrefixesCopy
         roleAssignmentsCopy
+        serviceBusNamespacesCopy
         sqlServersCopy
         storageAccountsCopy
         userAssignedIdentitiesCopy
@@ -861,6 +951,7 @@ resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (de
 }]
 resource roleAssignmentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (assignment, index) in roleAssignments: if (contains(includedTypes, 'microsoft.authorization/role-assignments') && !contains(excludedTypes, 'microsoft.authorization/role-assignments')) {
     dependsOn: [
+        applicationConfigurationStoresCopy
         applicationInsightsCopy
         applicationSecurityGroupsCopy
         availabilitySetsCopy
@@ -878,6 +969,7 @@ resource roleAssignmentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for
         publicDnsZonesCopy
         publicIpAddressesCopy
         publicIpPrefixesCopy
+        serviceBusNamespacesCopy
         sqlServersCopy
         storageAccountsCopy
         userAssignedIdentitiesCopy
