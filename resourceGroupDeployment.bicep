@@ -32,6 +32,7 @@ var includedTypes = [for type in empty(overrides.includedTypes) ? [
     'microsoft.network/private-endpoints'
     'microsoft.network/public-ip-addresses'
     'microsoft.network/public-ip-prefixes'
+    'microsoft.network/route-tables'
     'microsoft.network/virtual-network-gateways'
     'microsoft.network/virtual-networks'
     'microsoft.operational-insights/workspaces'
@@ -39,6 +40,7 @@ var includedTypes = [for type in empty(overrides.includedTypes) ? [
     'microsoft.service-bus/namespaces'
     'microsoft.signalr-service/signalr'
     'microsoft.solutions/application-definitions'
+    'microsoft.solutions/applications'
     'microsoft.sql/servers'
     'microsoft.storage/storage-accounts'
     'microsoft.web/server-farms'
@@ -274,6 +276,7 @@ var machineLearningWorkspaces = [
     }
 ]
 var managedApplicationDefinitions = []
+var managedApplications = []
 var natGateways = [
     {
         publicIpAddresses: [
@@ -522,6 +525,7 @@ var roleAssignments = [
         roleDefinitionName: 'App Configuration Data Reader'
     }
 ]
+var routeTables = []
 var serviceBusNamespaces = [
     {
         identity: {
@@ -1047,6 +1051,23 @@ module managedApplicationDefinitionsCopy 'br/tlk:microsoft.solutions/application
         resourceGroupName: resourceGroup().name
     }, definition).resourceGroupName)
 }]
+module managedApplicationsCopy 'br/tlk:microsoft.solutions/applications:1.0.0' = [for (application, index) in managedApplications: if (contains(includedTypes, 'microsoft.solutions/applications') && !contains(excludedTypes, 'microsoft.solutions/applications')) {
+    dependsOn: [
+        managedApplicationDefinitionsCopy
+    ]
+    name: '${deployment().name}-ma-${string(index)}'
+    params: {
+        definition: application.definition
+        location: union({ location: location }, application).location
+        name: union({ name: '${projectName}-ma-${padLeft(index, 5, '0')}' }, application).name
+        tags: union({ tags: {} }, application).tags
+    }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, application).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, application).resourceGroupName)
+}]
 module natGatewaysCopy 'br/tlk:microsoft.network/nat-gateways:1.0.0' = [for (gateway, index) in natGateways: if (contains(includedTypes, 'microsoft.network/nat-gateways') && !contains(excludedTypes, 'microsoft.network/nat-gateways')) {
     dependsOn: [
         publicIpAddressesCopy
@@ -1069,6 +1090,7 @@ module natGatewaysCopy 'br/tlk:microsoft.network/nat-gateways:1.0.0' = [for (gat
 module networkInterfacesCopy 'br/tlk:microsoft.network/network-interfaces:1.0.0' = [for (interface, index) in networkInterfaces: if (contains(includedTypes, 'microsoft.network/network-interfaces') && !contains(excludedTypes, 'microsoft.network/network-interfaces')) {
     dependsOn: [
         networkSecurityGroupsCopy
+        routeTablesCopy
         virtualNetworksCopy
     ]
     name: '${deployment().name}-nic-${string(index)}'
@@ -1124,6 +1146,7 @@ module privateEndpointsCopy 'br/tlk:microsoft.network/private-endpoints:1.0.0' =
     dependsOn: [
         keyVaultsCopy
         privateDnsZonesCopy
+        routeTablesCopy
         storageAccountsCopy
         virtualNetworksCopy
     ]
@@ -1204,6 +1227,20 @@ module publicIpPrefixesCopy 'br/tlk:microsoft.network/public-ip-prefixes:1.0.0' 
     }, prefix).subscriptionId, union({
         resourceGroupName: resourceGroup().name
     }, prefix).resourceGroupName)
+}]
+module routeTablesCopy 'br/tlk:microsoft.network/route-tables:1.0.0' = [for (route, index) in routeTables: if (contains(includedTypes, 'microsoft.network/route-tables') && !contains(excludedTypes, 'microsoft.network/route-tables')) {
+    name: '${deployment().name}-rt-${string(index)}'
+    params: {
+        location: union({ location: location }, route).location
+        name: union({ name: '${projectName}-ppg-${padLeft(index, 5, '0')}' }, route).name
+        routes: union({ routes: [] }, route).routes
+        tags: union({ tags: {} }, route).tags
+    }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, route).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, route).resourceGroupName)
 }]
 module serviceBusNamespacesCopy 'br/tlk:microsoft.service-bus/namespaces:1.0.0' = [for (namespace, index) in serviceBusNamespaces: if (contains(includedTypes, 'microsoft.service-bus/namespaces') && !contains(excludedTypes, 'microsoft.service-bus/namespaces')) {
     dependsOn: [
@@ -1387,6 +1424,7 @@ module virtualNetworksCopy 'br/tlk:microsoft.network/virtual-networks:1.0.0' = [
     dependsOn: [
         natGatewaysCopy
         networkSecurityGroupsCopy
+        routeTablesCopy
     ]
     name: '${deployment().name}-vnet-${string(index)}'
     params: {
@@ -1452,6 +1490,7 @@ resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (de
         logAnalyticsWorkspacesCopy
         machineLearningWorkspacesCopy
         managedApplicationDefinitionsCopy
+        managedApplicationsCopy
         natGatewaysCopy
         networkInterfacesCopy
         networkSecurityGroupsCopy
@@ -1462,6 +1501,7 @@ resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (de
         publicIpAddressesCopy
         publicIpPrefixesCopy
         roleAssignmentsCopy
+        routeTablesCopy
         serviceBusNamespacesCopy
         signalrServicesCopy
         sqlServersCopy
@@ -1500,6 +1540,7 @@ resource roleAssignmentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for
         logAnalyticsWorkspacesCopy
         machineLearningWorkspacesCopy
         managedApplicationDefinitionsCopy
+        managedApplicationsCopy
         natGatewaysCopy
         networkInterfacesCopy
         networkSecurityGroupsCopy
@@ -1509,6 +1550,7 @@ resource roleAssignmentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for
         publicDnsZonesCopy
         publicIpAddressesCopy
         publicIpPrefixesCopy
+        routeTablesCopy
         serviceBusNamespacesCopy
         signalrServicesCopy
         sqlServersCopy
