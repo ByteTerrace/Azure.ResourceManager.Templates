@@ -37,6 +37,7 @@ var includedTypes = [for type in empty(overrides.includedTypes) ? [
     'microsoft.operational-insights/workspaces'
     'microsoft.resources/deployments'
     'microsoft.service-bus/namespaces'
+    'microsoft.signalr-service/signalr'
     'microsoft.sql/servers'
     'microsoft.storage/storage-accounts'
     'microsoft.web/server-farms'
@@ -513,6 +514,22 @@ var serviceBusNamespaces = [
         }
     }
 ]
+var signalrServices = [
+    {
+        identity: {
+            userAssignedIdentities: [
+                {
+                    name: 'tlk-mi-00000'
+                }
+            ]
+        }
+        isPublicNetworkAccessEnabled: false
+        isSharedKeyAccessEnabled: false
+        sku: {
+            name: 'Free_F1'
+        }
+    }
+]
 var sqlServers = [
     {
         administrator: {
@@ -726,6 +743,7 @@ var webApplications = [
 module applicationConfigurationStoresCopy 'br/tlk:microsoft.app-configuration/configuration-stores:1.0.0' = [for (store, index) in applicationConfigurationStores: if (contains(includedTypes, 'microsoft.app-configuration/configuration-stores') && !contains(excludedTypes, 'microsoft.app-configuration/configuration-stores')) {
     dependsOn: [
         keyVaultsCopy
+        userAssignedIdentitiesCopy
     ]
     name: '${deployment().name}-acs-${string(index)}'
     params: {
@@ -744,6 +762,10 @@ module applicationConfigurationStoresCopy 'br/tlk:microsoft.app-configuration/co
     }, store).resourceGroupName)
 }]
 module applicationGatewaysCopy 'br/tlk:microsoft.network/application-gateways:1.0.0' = [for (gateway, index) in applicationGateways: if (contains(includedTypes, 'microsoft.network/application-gateways') && !contains(excludedTypes, 'microsoft.network/application-gateways')) {
+    dependsOn: [
+        userAssignedIdentitiesCopy
+        virtualNetworksCopy
+    ]
     name: '${deployment().name}-ag-${string(index)}'
     params: {
         availabilityZones: union({ availabilityZones: [] }, gateway).availabilityZones
@@ -889,7 +911,6 @@ module diskEncryptionSetsCopy 'br/tlk:microsoft.compute/disk-encryption-sets:1.0
 }]
 module keyVaultsCopy 'br/tlk:microsoft.key-vault/vaults:1.0.0' = [for (vault, index) in keyVaults: if (contains(includedTypes, 'microsoft.key-vault/vaults') && !contains(excludedTypes, 'microsoft.key-vault/vaults')) {
     dependsOn: [
-        userAssignedIdentitiesCopy
         virtualNetworksCopy
     ]
     name: '${deployment().name}-kv-${string(index)}'
@@ -915,6 +936,9 @@ module keyVaultsCopy 'br/tlk:microsoft.key-vault/vaults:1.0.0' = [for (vault, in
     }, vault).resourceGroupName)
 }]
 module logAnalyticsWorkspacesCopy 'br/tlk:microsoft.operational-insights/workspaces:1.0.0' = [for (workspace, index) in logAnalyticsWorkspaces: if (contains(includedTypes, 'microsoft.operational-insights/workspaces') && !contains(excludedTypes, 'microsoft.operational-insights/workspaces')) {
+    dependsOn: [
+        virtualNetworksCopy
+    ]
     name: '${deployment().name}-law-${string(index)}'
     params: {
         dataRetentionInDays: union({ dataRetentionInDays: 30 }, workspace).dataRetentionInDays
@@ -939,6 +963,7 @@ module machineLearningWorkspacesCopy 'br/tlk:microsoft.machine-learning-services
         keyVaultsCopy
         logAnalyticsWorkspacesCopy
         storageAccountsCopy
+        userAssignedIdentitiesCopy
     ]
     name: '${deployment().name}-mlw-${string(index)}'
     params: {
@@ -1111,6 +1136,7 @@ module publicIpPrefixesCopy 'br/tlk:microsoft.network/public-ip-prefixes:1.0.0' 
 module serviceBusNamespacesCopy 'br/tlk:microsoft.service-bus/namespaces:1.0.0' = [for (namespace, index) in serviceBusNamespaces: if (contains(includedTypes, 'microsoft.service-bus/namespaces') && !contains(excludedTypes, 'microsoft.service-bus/namespaces')) {
     dependsOn: [
         keyVaultsCopy
+        userAssignedIdentitiesCopy
         virtualNetworksCopy
     ]
     name: '${deployment().name}-sb-${string(index)}'
@@ -1127,6 +1153,28 @@ module serviceBusNamespacesCopy 'br/tlk:microsoft.service-bus/namespaces:1.0.0' 
     }, namespace).subscriptionId, union({
         resourceGroupName: resourceGroup().name
     }, namespace).resourceGroupName)
+}]
+module signalrServicesCopy 'br/tlk:microsoft.signalr-service/signalr:1.0.0' = [for (service, index) in signalrServices: if (contains(includedTypes, 'microsoft.signalr-service/signalr') && !contains(excludedTypes, 'microsoft.signalr-service/signalr')) {
+    dependsOn: [
+        userAssignedIdentitiesCopy
+        virtualNetworksCopy
+    ]
+    name: '${deployment().name}-sglr-${string(index)}'
+    params: {
+        cors: union({ cors: {} }, service).cors
+        identity: union({ identity: {} }, service).identity
+        isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, service).isPublicNetworkAccessEnabled
+        isSharedKeyAccessEnabled: union({ isSharedKeyAccessEnabled: false }, service).isSharedKeyAccessEnabled
+        location: union({ location: location }, service).location
+        name: union({ name: '${projectName}-sglr-${padLeft(index, 5, '0')}' }, service).name
+        serverless: union({ serverless: {} }, service).serverless
+        sku: union({ sku: { name: 'Standard_S1' } }, service).sku
+    }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, service).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, service).resourceGroupName)
 }]
 module sqlServersCopy 'br/tlk:microsoft.sql/servers:1.0.0' = [for (server, index) in sqlServers: if (contains(includedTypes, 'microsoft.sql/servers') && !contains(excludedTypes, 'microsoft.sql/servers')) {
     dependsOn: [
@@ -1286,6 +1334,7 @@ module webApplicationsCopy 'br/tlk:microsoft.web/sites:1.0.0' = [for (applicatio
         serviceBusNamespacesCopy
         sqlServersCopy
         storageAccountsCopy
+        userAssignedIdentitiesCopy
         virtualNetworksCopy
     ]
     name: '${deployment().name}-web-${string(index)}'
@@ -1331,6 +1380,7 @@ resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (de
         publicIpPrefixesCopy
         roleAssignmentsCopy
         serviceBusNamespacesCopy
+        signalrServicesCopy
         sqlServersCopy
         storageAccountsCopy
         userAssignedIdentitiesCopy
@@ -1376,6 +1426,7 @@ resource roleAssignmentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for
         publicIpAddressesCopy
         publicIpPrefixesCopy
         serviceBusNamespacesCopy
+        signalrServicesCopy
         sqlServersCopy
         storageAccountsCopy
         userAssignedIdentitiesCopy
