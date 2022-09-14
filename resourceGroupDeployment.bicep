@@ -38,6 +38,7 @@ var includedTypes = [for type in empty(overrides.includedTypes) ? [
     'microsoft.resources/deployments'
     'microsoft.service-bus/namespaces'
     'microsoft.signalr-service/signalr'
+    'microsoft.solutions/application-definitions'
     'microsoft.sql/servers'
     'microsoft.storage/storage-accounts'
     'microsoft.web/server-farms'
@@ -272,6 +273,7 @@ var machineLearningWorkspaces = [
         }
     }
 ]
+var managedApplicationDefinitions = []
 var natGateways = [
     {
         publicIpAddresses: [
@@ -401,6 +403,16 @@ var publicIpPrefixes = []
 var roleAssignments = [
     {
         assignee: {
+            principalId: '9523fd99-517b-41e0-a0bb-0ced54c9d691' // Appliance Resource Provider
+        }
+        assignor: {
+            name: 'tlkdata00000'
+            type: 'Microsoft.Storage/storageAccounts'
+        }
+        roleDefinitionName: 'Storage Account Contributor'
+    }
+    {
+        assignee: {
             name: 'tlkdata00000'
             type: 'Microsoft.Storage/storageAccounts'
         }
@@ -472,6 +484,17 @@ var roleAssignments = [
         }
         assignor: {
             name: 'tlk-kv-00000'
+            type: 'Microsoft.KeyVault/vaults'
+        }
+        roleDefinitionName: 'Key Vault Secrets User'
+    }
+    {
+        assignee: {
+            name: 'tlk-web-00001'
+            type: 'Microsoft.Web/sites'
+        }
+        assignor: {
+            name: 'tlk-kv-00000/secrets/The-Password'
             type: 'Microsoft.KeyVault/vaults'
         }
         roleDefinitionName: 'Key Vault Secrets User'
@@ -1001,6 +1024,29 @@ module machineLearningWorkspacesCopy 'br/tlk:microsoft.machine-learning-services
         resourceGroupName: resourceGroup().name
     }, workspace).resourceGroupName)
 }]
+module managedApplicationDefinitionsCopy 'br/tlk:microsoft.solutions/application-definitions:1.0.0' = [for (definition, index) in managedApplicationDefinitions: if (contains(includedTypes, 'microsoft.solutions/application-definitions') && !contains(excludedTypes, 'microsoft.solutions/application-definitions')) {
+    dependsOn: [
+        storageAccountsCopy
+    ]
+    name: '${deployment().name}-mad-${string(index)}'
+    params: {
+        authorizations: union({ authorizations: [] }, definition).authorizations
+        description: union({ description: '' }, definition).description
+        displayName: union({ displayName: '' }, definition).displayName
+        isEnabled: union({ isEnabled: true }, definition).isEnabled
+        location: union({ location: location }, definition).location
+        lockLevel: union({ lockLevel: 'ReadOnly' }, definition).lockLevel
+        name: union({ name: '${projectName}-mad-${padLeft(index, 5, '0')}' }, definition).name
+        packageFileUri: definition.packageFileUri
+        storageAccount: union({ storageAccount: {} }, definition).storageAccount
+        tags: union({ tags: {} }, definition).tags
+    }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, definition).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, definition).resourceGroupName)
+}]
 module natGatewaysCopy 'br/tlk:microsoft.network/nat-gateways:1.0.0' = [for (gateway, index) in natGateways: if (contains(includedTypes, 'microsoft.network/nat-gateways') && !contains(excludedTypes, 'microsoft.network/nat-gateways')) {
     dependsOn: [
         publicIpAddressesCopy
@@ -1405,6 +1451,7 @@ resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (de
         keyVaultsCopy
         logAnalyticsWorkspacesCopy
         machineLearningWorkspacesCopy
+        managedApplicationDefinitionsCopy
         natGatewaysCopy
         networkInterfacesCopy
         networkSecurityGroupsCopy
@@ -1452,6 +1499,7 @@ resource roleAssignmentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for
         keyVaultsCopy
         logAnalyticsWorkspacesCopy
         machineLearningWorkspacesCopy
+        managedApplicationDefinitionsCopy
         natGatewaysCopy
         networkInterfacesCopy
         networkSecurityGroupsCopy

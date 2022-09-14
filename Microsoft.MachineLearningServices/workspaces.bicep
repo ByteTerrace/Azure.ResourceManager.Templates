@@ -1,6 +1,6 @@
-@description('An object that encapsulates the properties of the Azure Application Insights that will be assocatied with the Azure Machine Learning Services Workspace.')
+@description('An object that encapsulates the properties of the Azure Application Insights that will be associated with the Azure Machine Learning Services Workspace.')
 param applicationInsights object
-@description('An object that encapsulates the properties of the Azure Container Registry that will be assocatied with the Azure Machine Learning Services Workspace.')
+@description('An object that encapsulates the properties of the Azure Container Registry that will be associated with the Azure Machine Learning Services Workspace.')
 param containerRegistry object
 @description('An object that encapsulates the properties of the identity that will be assigned to the Azure Machine Learning Services Workspace.')
 param identity object
@@ -8,7 +8,7 @@ param identity object
 param isHighBusinessImpactFeatureEnabled bool = false
 @description('Indicates whether the Azure Machine Learning Services Workspace is accessible from the internet.')
 param isPublicNetworkAccessEnabled bool = false
-@description('An object that encapsulates the properties of the Azure Key Vault that will be assocatied with the Azure Machine Learning Services Workspace.')
+@description('An object that encapsulates the properties of the Azure Key Vault that will be associated with the Azure Machine Learning Services Workspace.')
 param keyVault object
 @description('Specifies the location in which the Azure Machine Learning Services Workspace resource(s) will be deployed.')
 param location string = resourceGroup().location
@@ -18,7 +18,7 @@ param name string
 param sku object = {
     name: 'Basic'
 }
-@description('An object that encapsulates the properties of the Azure Storage Account that will be assocatied with the Azure Machine Learning Services Workspace.')
+@description('An object that encapsulates the properties of the Azure Storage Account that will be associated with the Azure Machine Learning Services Workspace.')
 param storageAccount object
 @description('Specifies the set of tag key-value pairs that will be assigned to the Azure Machine Learning Services Workspace.')
 param tags object = {}
