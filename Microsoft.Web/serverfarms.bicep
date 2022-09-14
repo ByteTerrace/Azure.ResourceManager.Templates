@@ -8,6 +8,8 @@ param location string = resourceGroup().location
 param name string
 @description('Specifies the SKU name of the Azure Application Service Plan.')
 param sku object
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Application Service Plan.')
+param tags object = {}
 
 resource servicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
     location: location
@@ -18,4 +20,5 @@ resource servicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
         zoneRedundant: isZoneRedundancyEnabled
     }
     sku: sku
+    tags: tags
 }

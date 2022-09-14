@@ -16,6 +16,8 @@ param name string
 param sku object = {
     name: 'Basic'
 }
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Virtual Network Gateway.')
+param tags object = {}
 @description('Specifies the type of the Azure Virtual Network Gateway.')
 param type string = 'Vpn'
 
@@ -65,4 +67,5 @@ resource virtualNetworkGateway 'Microsoft.Network/virtualNetworkGateways@2022-01
         vpnGatewayGeneration: 'Generation${string(generation)}'
         vpnType: mode
     }
+    tags: tags
 }

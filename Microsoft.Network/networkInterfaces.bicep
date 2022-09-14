@@ -12,6 +12,8 @@ param location string = resourceGroup().location
 param name string
 @description('An object that encapsulates the properties of the Azure Network Security Group that this Azure Network Interface will be associated with.')
 param networkSecurityGroup object = {}
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Network Interface.')
+param tags object = {}
 
 resource networkInterface 'Microsoft.Network/networkInterfaces@2022-01-01' = {
     location: location
@@ -53,4 +55,5 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2022-01-01' = {
             }, networkSecurityGroup).resourceGroupName, 'Microsoft.Network/networkSecurityGroups', networkSecurityGroup.name)
         }
     }
+    tags: tags
 }

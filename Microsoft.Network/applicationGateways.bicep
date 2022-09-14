@@ -24,6 +24,8 @@ param sku object = {
 }
 @description('An object that encapsulates the properties of the subnet that the Azure Application Gateway will be deployed within.')
 param subnet object
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Application Gateway.')
+param tags object = {}
 
 var frontEndPrivateIpAddress = union({ privateIpAddress: {} }, frontEnd).privateIpAddress
 var frontEndPublicIpAddress = union({ publicIpAddress: {} }, frontEnd).publicIpAddress
@@ -144,5 +146,6 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2022-01-01' =
         }]
         sku: sku
     }
+    tags: tags
     zones: zones
 }

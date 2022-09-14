@@ -15,6 +15,8 @@ param isSqlAuthenticationEnabled bool = false
 param location string = resourceGroup().location
 @description('Specifies the name of the Azure SQL Server.')
 param name string
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure SQL Server.')
+param tags object = {}
 @description('An array of virtual network rules that will be assigned to the Azure SQL Server.')
 param virtualNetworkRules array = []
 
@@ -56,6 +58,7 @@ resource server 'Microsoft.Sql/servers@2022-02-01-preview' = {
         publicNetworkAccess: isPublicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
         version: '12.0'
     }
+    tags: tags
 }
 resource trustedMicrosoftServicesfirewallRule 'Microsoft.Sql/servers/firewallRules@2022-02-01-preview' = if (isAllowTrustedMicrosoftServicesEnabled) {
     name: 'AllowAllWindowsAzureIps'

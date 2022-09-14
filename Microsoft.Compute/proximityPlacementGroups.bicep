@@ -4,6 +4,8 @@ param availabilityZones array = []
 param location string = resourceGroup().location
 @description('Specifies the name of the Azure Proximity Placement Group.')
 param name string
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Proximity Placement Group.')
+param tags object = {}
 
 var zones = [for zone in availabilityZones: string(zone)]
 
@@ -13,5 +15,6 @@ resource proximityPlacementGroup 'Microsoft.Compute/proximityPlacementGroups@202
     properties: {
         proximityPlacementGroupType: 'Standard'
     }
+    tags: tags
     zones: zones
 }

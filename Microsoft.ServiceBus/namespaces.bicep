@@ -2,6 +2,8 @@
 param identity object = {}
 @description('Indicates whether the Azure Service Bus Namespace is accessible from the internet.')
 param isPublicNetworkAccessEnabled bool = false
+@description('Indicates whether shared keys are able to be used to access the Azure Service Bus Namespace.')
+param isSharedKeyAccessEnabled bool = false
 @description('Indicates whether the zone redundancy feature is enabled on the Azure Service Bus Namespace.')
 param isZoneRedundancyEnabled bool = true
 @description('Specifies the location in which the Azure Service Bus Namespace resource(s) will be deployed.')
@@ -12,6 +14,8 @@ param name string
 param sku object = {
     name: 'Premium'
 }
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Service Bus Namespace.')
+param tags object = {}
 
 var userAssignedIdentities = [for managedIdentity in union({
     userAssignedIdentities: []
@@ -29,10 +33,11 @@ resource namespace 'Microsoft.ServiceBus/namespaces@2022-01-01-preview' = {
     location: location
     name: name
     properties: {
-        disableLocalAuth: true
+        disableLocalAuth: !isSharedKeyAccessEnabled
         minimumTlsVersion: '1.2'
         publicNetworkAccess: isPublicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
         zoneRedundant: isZoneRedundancyEnabled
     }
     sku: sku
+    tags: tags
 }

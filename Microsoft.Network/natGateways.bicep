@@ -8,6 +8,8 @@ param name string
 param publicIpAddresses array = []
 @description('An array of public IP prefixes that the Azure NAT Gateway will be associated with.')
 param publicIpPrefixes array = []
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure NAT Gateway.')
+param tags object = {}
 
 var zones = [for zone in availabilityZones: string(zone)]
 
@@ -34,5 +36,6 @@ resource natGateway 'Microsoft.Network/natGateways@2022-01-01' = {
     sku: {
         name: 'Standard'
     }
+    tags: tags
     zones: zones
 }

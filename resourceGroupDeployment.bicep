@@ -57,6 +57,7 @@ var applicationConfigurationStores = [
         }
         isPublicNetworkAccessEnabled: true
         isPurgeProtectionEnabled: false
+        isSharedKeyAccessEnabled: true
         settings: {
             'The:Password': {
                 keyVault: {
@@ -240,6 +241,7 @@ var logAnalyticsWorkspaces = [
     {
         isPublicNetworkAccessForIngestionEnabled: true
         isPublicNetworkAccessForQueryEnabled: true
+        isSharedKeyAccessEnabled: false
     }
 ]
 var machineLearningWorkspaces = [
@@ -508,6 +510,7 @@ var serviceBusNamespaces = [
             ]
         }
         isPublicNetworkAccessEnabled: true
+        isSharedKeyAccessEnabled: false
         isZoneRedundancyEnabled: false
         sku: {
             name: 'Basic'
@@ -750,10 +753,12 @@ module applicationConfigurationStoresCopy 'br/tlk:microsoft.app-configuration/co
         identity: union({ identity: {} }, store).identity
         isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, store).isPublicNetworkAccessEnabled
         isPurgeProtectionEnabled: union({ isPurgeProtectionEnabled: true }, store).isPurgeProtectionEnabled
+        isSharedKeyAccessEnabled: union({ isSharedKeyAccessEnabled: false }, store).isSharedKeyAccessEnabled
         location: union({ location: location }, store).location
         name: union({ name: '${projectName}-acs-${padLeft(index, 5, '0')}' }, store).name
         settings: union({ settings: {} }, store).settings
         sku: union({ sku: { name: 'Premium' } }, store).sku
+        tags: union({ tags: {} }, store).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -783,6 +788,7 @@ module applicationGatewaysCopy 'br/tlk:microsoft.network/application-gateways:1.
             tier: 'Standard_v2'
         } }, gateway).sku
         subnet: gateway.subnet
+        tags: union({ tags: {} }, gateway).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -799,6 +805,7 @@ module applicationInsightsCopy 'br/tlk:microsoft.insights/components:1.0.0' = [f
         location: union({ location: location }, component).location
         logAnalyticsWorkspace: component.logAnalyticsWorkspace
         name: union({ name: '${projectName}-ai-${padLeft(index, 5, '0')}' }, component).name
+        tags: union({ tags: {} }, component).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -811,6 +818,7 @@ module applicationSecurityGroupsCopy 'br/tlk:microsoft.network/application-secur
     params: {
         location: union({ location: location }, group).location
         name: union({ name: '${projectName}-asg-${padLeft(index, 5, '0')}' }, group).name
+        tags: union({ tags: {} }, group).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -825,6 +833,7 @@ module applicationServicePlansCopy 'br/tlk:microsoft.web/server-farms:1.0.0' = [
         location: union({ location: location }, plan).location
         name: union({ name: '${projectName}-asp-${padLeft(index, 5, '0')}' }, plan).name
         sku: plan.sku
+        tags: union({ tags: {} }, plan).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -844,6 +853,7 @@ module availabilitySetsCopy 'br/tlk:microsoft.compute/availability-sets:1.0.0' =
         numberOfUpdateDomains: set.numberOfUpdateDomains
         proximityPlacementGroup: union({ proximityPlacementGroup: {} }, set).proximityPlacementGroup
         sku: set.sku
+        tags: union({ tags: {} }, set).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -861,6 +871,7 @@ module cdnProfilesCopy 'br/tlk:microsoft.cdn/profiles:1.0.0' = [for (profile, in
     params: {
         name: union({ name: '${projectName}-cdn-${padLeft(index, 5, '0')}' }, profile).name
         sku: profile.sku
+        tags: union({ tags: {} }, profile).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -882,6 +893,7 @@ module containerRegistriesCopy 'br/tlk:microsoft.container-registry/registries:1
         location: union({ location: location }, registry).location
         name: union({ name: '${projectName}cr${padLeft(index, 5, '0')}'}, registry).name
         sku: union({ sku: { name: 'Premium' } }, registry).sku
+        tags: union({ tags: {} }, registry).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -902,6 +914,7 @@ module diskEncryptionSetsCopy 'br/tlk:microsoft.compute/disk-encryption-sets:1.0
         keyVersion: union({ keyVersion: '' }, set).keyVersion
         location: union({ location: location }, set).location
         name: union({ name: '${projectName}-des-${padLeft(index, 5, '0')}' }, set).name
+        tags: union({ tags: {} }, set).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -926,6 +939,7 @@ module keyVaultsCopy 'br/tlk:microsoft.key-vault/vaults:1.0.0' = [for (vault, in
         name: union({ name: '${projectName}-kv-${padLeft(index, 5, '0')}' }, vault).name
         secrets: union({ secrets: {} }, vault).secrets
         sku: union({ sku: { name: 'premium' } }, vault).sku
+        tags: union({ tags: {} }, vault).tags
         tenantId: union({ tenantId: tenant().tenantId }, vault).tenantId
         virtualNetworkRules: union({ virtualNetworkRules: [] }, vault).virtualNetworkRules
     }
@@ -946,9 +960,11 @@ module logAnalyticsWorkspacesCopy 'br/tlk:microsoft.operational-insights/workspa
         isImmediatePurgeDataOn30DaysEnabled: union({ isImmediatePurgeDataOn30DaysEnabled: true }, workspace).isImmediatePurgeDataOn30DaysEnabled
         isPublicNetworkAccessForIngestionEnabled: union({ isPublicNetworkAccessForIngestionEnabled: false }, workspace).isPublicNetworkAccessForIngestionEnabled
         isPublicNetworkAccessForQueryEnabled: union({ isPublicNetworkAccessForQueryEnabled: false }, workspace).isPublicNetworkAccessForQueryEnabled
+        isSharedKeyAccessEnabled: union({ isSharedKeyAccessEnabled: false }, workspace).isSharedKeyAccessEnabled
         location: union({ location: location }, workspace).location
         name: union({ name: '${projectName}-law-${padLeft(index, 5, '0')}' }, workspace).name
         sku: union({ sku: { name: 'PerGB2018' } }, workspace).sku
+        tags: union({ tags: {} }, workspace).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -977,6 +993,7 @@ module machineLearningWorkspacesCopy 'br/tlk:microsoft.machine-learning-services
         name: union({ name: '${projectName}-mlw-${padLeft(index, 5, '0')}' }, workspace).name
         storageAccount: workspace.storageAccount
         sku: union({ sku: { name: 'Basic' } }, workspace).sku
+        tags: union({ tags: {} }, workspace).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -995,6 +1012,7 @@ module natGatewaysCopy 'br/tlk:microsoft.network/nat-gateways:1.0.0' = [for (gat
         name: union({ name: '${projectName}-nat-${padLeft(index, 5, '0')}' }, gateway).name
         publicIpAddresses: union({ publicIpAddresses: [] }, gateway).publicIpAddresses
         publicIpPrefixes: union({ publicIpPrefixes: [] }, gateway).publicIpPrefixes
+        tags: union({ tags: {} }, gateway).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -1016,6 +1034,7 @@ module networkInterfacesCopy 'br/tlk:microsoft.network/network-interfaces:1.0.0'
         location: union({ location: location }, interface).location
         name: union({ name: '${projectName}-nic-${padLeft(index, 5, '0')}' }, interface).name
         networkSecurityGroup: union({ networkSecurityGroup: {} }, interface).networkSecurityGroup
+        tags: union({ tags: {} }, interface).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -1030,6 +1049,7 @@ module networkSecurityGroupsCopy 'br/tlk:microsoft.network/network-security-grou
         location: union({ location: location }, group).location
         name: union({ name: '${projectName}-nsg-${padLeft(index, 5, '0')}' }, group).name
         securityRules: group.securityRules
+        tags: union({ tags: {} }, group).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -1045,6 +1065,7 @@ module privateDnsZonesCopy 'br/tlk:microsoft.network/private-dns-zones:1.0.0' = 
     params: {
         aRecords: union({ aRecords: [] }, zone).aRecords
         name: zone.name
+        tags: union({ tags: {} }, zone).tags
         virtualNetworkLinks: union({ virtualNetworkLinks: [] }, zone).virtualNetworkLinks
     }
     scope: resourceGroup(union({
@@ -1067,6 +1088,7 @@ module privateEndpointsCopy 'br/tlk:microsoft.network/private-endpoints:1.0.0' =
         name: endpoint.name
         resource: endpoint.resource
         subnet: endpoint.subnet
+        tags: union({ tags: {} }, endpoint).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -1080,6 +1102,7 @@ module proximityPlacementGroupsCopy 'br/tlk:microsoft.compute/proximity-placemen
         availabilityZones: union({ availabilityZones: [] }, group).availabilityZones
         location: union({ location: location }, group).location
         name: union({ name: '${projectName}-ppg-${padLeft(index, 5, '0')}' }, group).name
+        tags: union({ tags: {} }, group).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -1092,6 +1115,7 @@ module publicDnsZonesCopy 'br/tlk:microsoft.network/dns-zones:1.0.0' = [for (zon
     params: {
         cnameRecords: union({ cnameRecords: [] }, zone).cnameRecords
         name: zone.name
+        tags: union({ tags: {} }, zone).tags
         txtRecords: union({ txtRecords: [] }, zone).txtRecords
     }
     scope: resourceGroup(union({
@@ -1109,6 +1133,7 @@ module publicIpAddressesCopy 'br/tlk:microsoft.network/public-ip-addresses:1.0.0
         location: union({ location: location }, address).location
         name: union({ name: '${projectName}-pip-${padLeft(index, 5, '0')}' }, address).name
         sku: address.sku
+        tags: union({ tags: {} }, address).tags
         version: union({ version: 'IPv4' }, address).version
     }
     scope: resourceGroup(union({
@@ -1125,6 +1150,7 @@ module publicIpPrefixesCopy 'br/tlk:microsoft.network/public-ip-prefixes:1.0.0' 
         name: union({ name: '${projectName}-pipp-${padLeft(index, 5, '0')}' }, prefix).name
         size: prefix.size
         sku: prefix.sku
+        tags: union({ tags: {} }, prefix).tags
         version: union({ version: 'IPv4' }, prefix).version
     }
     scope: resourceGroup(union({
@@ -1143,10 +1169,12 @@ module serviceBusNamespacesCopy 'br/tlk:microsoft.service-bus/namespaces:1.0.0' 
     params: {
         identity: union({ identity: {} }, namespace).identity
         isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, namespace).isPublicNetworkAccessEnabled
+        isSharedKeyAccessEnabled: union({ isSharedKeyAccessEnabled: false }, namespace).isSharedKeyAccessEnabled
         isZoneRedundancyEnabled: union({ isZoneRedundancyEnabled: true }, namespace).isZoneRedundancyEnabled
         location: union({ location: location }, namespace).location
         name: union({ name: '${projectName}-sb-${padLeft(index, 5, '0')}' }, namespace).name
         sku: union({ sku: { name: 'Premium' } }, namespace).sku
+        tags: union({ tags: {} }, namespace).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -1169,6 +1197,7 @@ module signalrServicesCopy 'br/tlk:microsoft.signalr-service/signalr:1.0.0' = [f
         name: union({ name: '${projectName}-sglr-${padLeft(index, 5, '0')}' }, service).name
         serverless: union({ serverless: {} }, service).serverless
         sku: union({ sku: { name: 'Standard_S1' } }, service).sku
+        tags: union({ tags: {} }, service).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -1194,6 +1223,7 @@ module sqlServersCopy 'br/tlk:microsoft.sql/servers:1.0.0' = [for (server, index
         isSqlAuthenticationEnabled: union({ isSqlAuthenticationEnabled: false }, server).isSqlAuthenticationEnabled
         location: union({ location: location }, server).location
         name: union({ name: '${projectName}-sql-${padLeft(index, 5, '0')}' }, server).name
+        tags: union({ tags: {} }, server).tags
         virtualNetworkRules: union({ virtualNetworkRules: [] }, server).virtualNetworkRules
     }
     scope: resourceGroup(union({
@@ -1222,6 +1252,7 @@ module storageAccountsCopy 'br/tlk:microsoft.storage/storage-accounts:1.0.0' = [
         name: union({ name: '${projectName}data${padLeft(index, 5, '0')}' }, account).name
         services: account.services
         sku: account.sku
+        tags: union({ tags: {} }, account).tags
         virtualNetworkRules: union({ virtualNetworkRules: [] }, account).virtualNetworkRules
     }
     scope: resourceGroup(union({
@@ -1235,6 +1266,7 @@ module userAssignedIdentitiesCopy 'br/tlk:microsoft.managed-identity/user-assign
     params: {
         location: union({ location: location }, identity).location
         name: union({ name: '${projectName}-mi-${padLeft(index, 5, '0')}' }, identity).name
+        tags: union({ tags: {} }, identity).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -1272,6 +1304,7 @@ module virtualMachinesCopy 'br/tlk:microsoft.compute/virtual-machines:1.0.0' = [
         proximityPlacementGroup: union({ proximityPlacementGroup: {} }, machine).proximityPlacementGroup
         sku: machine.sku
         subnet: union({ subnet: {} }, machine).subnet
+        tags: union({ tags: {} }, machine).tags
         windowsConfiguration: union({ windowsConfiguration: {} }, machine).windowsConfiguration
     }
     scope: resourceGroup(union({
@@ -1295,6 +1328,7 @@ module virtualNetworkGatewaysCopy 'br/tlk:microsoft.network/virtual-network-gate
         mode: gateway.mode
         name: union({ name: '${projectName}-vng-${padLeft(index, 5, '0')}' }, gateway).name
         sku: gateway.sku
+        tags: union({ tags: {} }, gateway).tags
         type: gateway.type
     }
     scope: resourceGroup(union({
@@ -1316,6 +1350,7 @@ module virtualNetworksCopy 'br/tlk:microsoft.network/virtual-networks:1.0.0' = [
         location: union({ location: location }, network).location
         name: union({ name: '${projectName}-vnet-${padLeft(index, 5, '0')}' }, network).name
         subnets: network.subnets
+        tags: union({ tags: {} }, network).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -1348,6 +1383,7 @@ module webApplicationsCopy 'br/tlk:microsoft.web/sites:1.0.0' = [for (applicatio
         location: union({ location: location }, application).location
         name: union({ name: '${projectName}-web-${padLeft(index, 5, '0')}' }, application).name
         servicePlan: application.servicePlan
+        tags: union({ tags: {} }, application).tags
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId

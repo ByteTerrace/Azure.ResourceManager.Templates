@@ -23,6 +23,8 @@ param proximityPlacementGroup object = {}
 param sku object
 @description('An object that encapsulates the properties of the subnet that the Azure Virtual Machine will be deployed within.')
 param subnet object = {}
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Virtual Machine.')
+param tags object = {}
 @description('An object that encapsulates the properties of the Windows configuration that will be applied to the Azure Virtual Machine.')
 param windowsConfiguration object = {}
 
@@ -141,5 +143,6 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = {
             }
         }
     }
+    tags: tags
     zones: zones
 }

@@ -12,6 +12,8 @@ param name string
 param sku object = {
     name: 'Premium'
 }
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Container Registry.')
+param tags object = {}
 
 var userAssignedIdentities = [for managedIdentity in union({
     userAssignedIdentities: []
@@ -67,4 +69,5 @@ resource registry 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' = 
         zoneRedundancy: isZoneRedundancyEnabled ? 'Enabled' : 'Disabled'
     }
     sku: sku
+    tags: tags
 }

@@ -4,6 +4,8 @@ param identity object = {}
 param isPublicNetworkAccessEnabled bool = false
 @description('Indicates whether the purge protection feature is enabled on the Azure Application Configuration Store.')
 param isPurgeProtectionEnabled bool = true
+@description('Indicates whether shared keys are able to be used to access the Azure Application Configuration Store.')
+param isSharedKeyAccessEnabled bool = false
 @description('Specifies the location in which the Azure Application Configuration Store resource(s) will be deployed.')
 param location string = resourceGroup().location
 @description('Specifies the name of the Azure Application Configuration Store.')
@@ -15,6 +17,8 @@ param settings object = {}
 param sku object = {
     name: 'Premium'
 }
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Application Configuration Store.')
+param tags object = {}
 
 var userAssignedIdentities = [for managedIdentity in union({
     userAssignedIdentities: []
@@ -32,12 +36,13 @@ resource configurationStore 'Microsoft.AppConfiguration/configurationStores@2022
     location: location
     name: name
     properties: {
-        disableLocalAuth: false
+        disableLocalAuth: !isSharedKeyAccessEnabled
         enablePurgeProtection: isPurgeProtectionEnabled
         publicNetworkAccess: isPublicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
         softDeleteRetentionInDays: ('free' == toLower(sku.name)) ? null : 14
     }
     sku: sku
+    tags: tags
 }
 resource keyVaultSecretReferencesCopy 'Microsoft.KeyVault/vaults/secrets@2022-07-01' existing = [for setting in items(settings): if (!empty(union({ keyVault: {} }, setting.value).keyVault)) {
     name: '${setting.value.keyVault.name}/${setting.value.keyVault.secretName}'

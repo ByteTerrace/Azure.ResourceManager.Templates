@@ -17,6 +17,8 @@ param location string = resourceGroup().location
 param name string
 @description('An object that encapsulates the properties of the Azure Application Service Plan will be associated with the Azure Web Site.')
 param servicePlan object
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Web Site.')
+param tags object = {}
 
 var applicationSettingsCopy = [for setting in items(applicationSettings): {
     name: setting.key
@@ -96,13 +98,13 @@ resource site 'Microsoft.Web/sites@2022-03-01' = {
         } : {})
         virtualNetworkSubnetId: null
     }
-    tags: isApplicationInsightsEnabled ? {
+    tags: union((isApplicationInsightsEnabled ? {
         'hidden-link: /app-insights-resource-id': resourceId(union({
             subscriptionId: subscription().subscriptionId
         }, applicationInsights).subscriptionId, union({
             resourceGroupName: resourceGroup().name
         }, applicationInsights).resourceGroupName, 'Microsoft.Insights/components', applicationInsights.name)
-    } : null
+    } : {}), tags)
 }
 resource storageAccountReference 'Microsoft.Storage/storageAccounts@2022-05-01' existing = if (isFunctionApplication) {
     name: functionExtension.storageAccount.name

@@ -12,6 +12,8 @@ param proximityPlacementGroup object = {}
 param sku object = {
     name: 'Aligned'
 }
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Availability Set.')
+param tags object = {}
 
 resource availabilitySet 'Microsoft.Compute/availabilitySets@2022-03-01' = {
     location: location
@@ -28,4 +30,5 @@ resource availabilitySet 'Microsoft.Compute/availabilitySets@2022-03-01' = {
         }
     }
     sku: sku
+    tags: tags
 }

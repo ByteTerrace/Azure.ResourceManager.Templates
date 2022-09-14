@@ -2,6 +2,8 @@
 param cnameRecords array = []
 @description('Specifies the name of the Azure DNS Zone.')
 param name string
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure DNS Zone.')
+param tags object = {}
 @description('An array of TXT records that will be created within the Azure DNS Zone.')
 param txtRecords array = []
 
@@ -11,6 +13,7 @@ resource dnsZone 'Microsoft.Network/dnsZones@2018-05-01' = {
     properties: {
         zoneType: 'Public'
     }
+    tags: tags
 }
 
 resource cnameRecordsCopy 'Microsoft.Network/dnsZones/CNAME@2018-05-01' = [for record in cnameRecords: {

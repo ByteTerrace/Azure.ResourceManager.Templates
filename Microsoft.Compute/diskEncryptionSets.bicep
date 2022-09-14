@@ -10,6 +10,8 @@ param keyVersion string = ''
 param location string = resourceGroup().location
 @description('Specifies the name of the Azure Disk Encryption Set.')
 param name string
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Disk Encryption Set.')
+param tags object = {}
 
 var keyVaultScope = resourceGroup(union({
     subscriptionId: subscription().subscriptionId
@@ -49,4 +51,5 @@ resource diskEncryptionSet 'Microsoft.Compute/diskEncryptionSets@2022-03-02' = {
         encryptionType: 'EncryptionAtRestWithPlatformAndCustomerKeys'
         rotationToLatestKeyVersionEnabled: true
     }
+    tags: tags
 }

@@ -24,6 +24,8 @@ param secrets object = {}
 param sku object = {
     name: 'premium'
 }
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Key Vault.')
+param tags object = {}
 @description('Specifies the Azure Active Directory tenant GUID that the Azure Key Vault will be associated with.')
 param tenantId string = tenant().tenantId
 @description('An array of virtual network rules that will be assigned to the Azure Key Vault.')
@@ -94,6 +96,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
         softDeleteRetentionInDays: 14
         tenantId: tenantId
     }
+    tags: tags
 }
 resource secretsCopy 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = [for secret in items(secrets): {
     name: secret.key

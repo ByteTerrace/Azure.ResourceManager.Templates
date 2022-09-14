@@ -2,8 +2,11 @@
 param location string = resourceGroup().location
 @description('Specifies the name of the Azure User-Assigned Managed Identity.')
 param name string
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure User-Assigned Managed Identity.')
+param tags object = {}
 
 resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
     location: location
     name: name
+    tags: tags
 }

@@ -26,6 +26,8 @@ param sku object = {
 }
 @description('An array of virtual network rules that will be assigned to the Azure Storage Account.')
 param virtualNetworkRules array = []
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Storage Account.')
+param tags object = {}
 
 var default = {
     services: {
@@ -114,6 +116,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
         supportsHttpsTrafficOnly: isHttpsOnlyModeEnabled
     }
     sku: sku
+    tags: tags
 }
 resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2022-05-01' = {
     name: 'default'

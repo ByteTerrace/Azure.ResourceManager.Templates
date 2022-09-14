@@ -4,6 +4,8 @@ param location string = resourceGroup().location
 param name string
 @description('An array of security rules that will be assigned to the Azure Network Security Group.')
 param securityRules array = []
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Network Security Group.')
+param tags object = {}
 
 resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-01-01' = {
     location: location
@@ -29,4 +31,5 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-01-0
             }
         }]
     }
+    tags: tags
 }

@@ -16,6 +16,8 @@ param serverless object = {}
 param sku object = {
     name: 'Standard_S1'
 }
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure SignalR Service.')
+param tags object = {}
 
 var isServerlessModeEnabled = !empty(serverless)
 var upstreamTemplates = [for template in union({ upstreamTemplates: [] }, serverless).upstreamTemplates: {
@@ -67,4 +69,5 @@ resource signalRService 'Microsoft.SignalRService/signalR@2022-02-01' = {
         } : null
     }
     sku: sku
+    tags: tags
 }

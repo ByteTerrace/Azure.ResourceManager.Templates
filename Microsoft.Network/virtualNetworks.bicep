@@ -10,6 +10,8 @@ param location string = resourceGroup().location
 param name string
 @description('An array of subnets that will be configured within the Azure Virtual Network.')
 param subnets array
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Virtual Network.')
+param tags object = {}
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-01-01' = {
     location: location
@@ -60,4 +62,5 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-01-01' = {
             }
         }]
     }
+    tags: tags
 }

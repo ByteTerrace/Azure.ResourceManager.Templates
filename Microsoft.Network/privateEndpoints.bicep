@@ -8,6 +8,8 @@ param name string
 param resource object
 @description('An object that encapsulates the properties of the subnet that the Azure Private Endpoint will be associated with.')
 param subnet object
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Private Endpoint.')
+param tags object = {}
 
 var knownTypeToDnsZoneConfigurationMap = {
     'Microsoft.KeyVault/vaults': [ { name: 'privatelink.vaultcore.azure.net' } ]
@@ -59,6 +61,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2022-01-01' = {
             }, subnet).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', subnet.virtualNetworkName, subnet.name)
         }
     }
+    tags: tags
 }
 
 resource privateDnsZoneGroupsCopy 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = [for group in privateDnsZoneGroups: {

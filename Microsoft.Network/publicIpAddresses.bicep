@@ -13,6 +13,8 @@ param sku object = {
     name: 'Standard'
     tier: 'Regional'
 }
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Public IP Address.')
+param tags object = {}
 @description('Specifies the version of the Azure Public IP Address.')
 param version string = 'IPv4'
 
@@ -36,5 +38,6 @@ resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2022-01-01' = {
         }
     }
     sku: sku
+    tags: tags
     zones: zones
 }

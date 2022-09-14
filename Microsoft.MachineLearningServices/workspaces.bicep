@@ -20,6 +20,8 @@ param sku object = {
 }
 @description('An object that encapsulates the properties of the Azure Storage Account that will be assocatied with the Azure Machine Learning Services Workspace.')
 param storageAccount object
+@description('Specifies the set of tag key-value pairs that will be assigned to the Azure Machine Learning Services Workspace.')
+param tags object = {}
 
 var userAssignedIdentities = [for managedIdentity in union({
     userAssignedIdentities: []
@@ -63,4 +65,5 @@ resource workspace 'Microsoft.MachineLearningServices/workspaces@2022-06-01-prev
         }, storageAccount).resourceGroupName, 'Microsoft.Storage/storageAccounts', storageAccount.name)
     }
     sku: sku
+    tags: tags
 }
