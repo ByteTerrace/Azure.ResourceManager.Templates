@@ -2,6 +2,7 @@ param location string = 'West US 3'
 param projectName string = 'tlk'
 param overrides object = {
     excludedTypes: [
+        'microsoft.api-management/service'
         'microsoft.network/application-gateways'
     ]
     includedTypes: []
@@ -10,6 +11,7 @@ param overrides object = {
 // variables
 var excludedTypes = [for type in overrides.excludedTypes: toLower(type)]
 var includedTypes = [for type in empty(overrides.includedTypes) ? [
+    'microsoft.api-management/service'
     'microsoft.app-configuration/configuration-stores'
     'microsoft.authorization/role-assignments'
     'microsoft.cdn/profiles'
@@ -48,6 +50,23 @@ var includedTypes = [for type in empty(overrides.includedTypes) ? [
 ] : overrides.includedTypes: toLower(type)]
 
 // resource definitions
+var apiManagementServices = [
+   {
+      identity: {
+          type: 'SystemAssigned,UserAssigned'
+          userAssignedIdentities: [
+              {
+                  name: 'tlk-mi-00000'
+              }
+          ]
+      }
+      isPublicNetworkAccessEnabled: true
+      publisher: {
+          email: 'administrator@byteterrace.com'
+          name: 'The Lan Krew'
+      }
+   }
+]
 var applicationConfigurationStores = [
     {
         identity: {
@@ -770,6 +789,37 @@ var webApplications = [
 ]
 
 // module imports
+module apiManagementServicesCopy 'br/tlk:microsoft.api-management/service:1.0.0' = [for (service, index) in apiManagementServices: if (contains(includedTypes, 'microsoft.api-management/service') && !contains(excludedTypes, 'microsoft.api-management/service')) {
+    dependsOn: [
+        keyVaultsCopy
+        publicIpAddressesCopy
+        userAssignedIdentitiesCopy
+        virtualNetworksCopy
+    ]
+    name: '${deployment().name}-apim-${string(index)}'
+    params: {
+        availabilityZones: union({ availabilityZones: [] }, service).availabilityZones
+        hostnameConfigurations: union({ hostnameConfigurations: [] }, service).hostnameConfigurations
+        identity: union({ identity: {} }, service).identity
+        isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, service).isPublicNetworkAccessEnabled
+        location: union({ location: location }, service).location
+        name: union({ name: '${projectName}-apim-${padLeft(index, 5, '0')}' }, service).name
+        publicIpAddress: union({ publicIpAddress: {} }, service).publicIpAddress
+        publisher: service.publisher
+        sku: union({ sku: {
+            capacity: 1
+            name: 'Standard'
+        } }, service).sku
+        subnet: union({ subnet: {} }, service).subnet
+        tags: union({ tags: {} }, service).tags
+        vpnType: union({ vpnType: empty(union({ subnet: {} }, service).subnet) ? 'None' : 'Internal' }, service).vpnType
+    }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, service).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, service).resourceGroupName)
+}]
 module applicationConfigurationStoresCopy 'br/tlk:microsoft.app-configuration/configuration-stores:1.0.0' = [for (store, index) in applicationConfigurationStores: if (contains(includedTypes, 'microsoft.app-configuration/configuration-stores') && !contains(excludedTypes, 'microsoft.app-configuration/configuration-stores')) {
     dependsOn: [
         keyVaultsCopy
@@ -1478,6 +1528,7 @@ module webApplicationsCopy 'br/tlk:microsoft.web/sites:1.0.0' = [for (applicatio
 
 resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (deployment, index) in deployments: if (contains(includedTypes, 'microsoft.resources/deployments') && !contains(excludedTypes, 'microsoft.resources/deployments')) {
     dependsOn: [
+        apiManagementServicesCopy
         applicationConfigurationStoresCopy
         applicationGatewaysCopy
         applicationInsightsCopy
@@ -1528,6 +1579,7 @@ resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (de
 }]
 resource roleAssignmentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (assignment, index) in roleAssignments: if (contains(includedTypes, 'microsoft.authorization/role-assignments') && !contains(excludedTypes, 'microsoft.authorization/role-assignments')) {
     dependsOn: [
+        apiManagementServicesCopy
         applicationConfigurationStoresCopy
         applicationGatewaysCopy
         applicationInsightsCopy
