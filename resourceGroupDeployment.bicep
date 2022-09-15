@@ -964,7 +964,12 @@ module containerRegistriesCopy 'br/tlk:microsoft.container-registry/registries:1
     ]
     name: '${deployment().name}-cr-${string(index)}'
     params: {
+        firewallRules: union({ firewallRules: [] }, registry).firewallRules
         identity: union({ identity: {} }, registry).identity
+        isAdministratorAccountEnabled: union({ isAdministratorAccountEnabled: false }, registry).isAdministratorAccountEnabled
+        isAllowTrustedMicrosoftServicesEnabled: union({ isAllowTrustedMicrosoftServicesEnabled: false }, registry).isAllowTrustedMicrosoftServicesEnabled
+        isAnonymousPullEnabled: union({ isAnonymousPullEnabled: false }, registry).isAnonymousPullEnabled
+        isDedicatedDataEndpointEnabled: union({ isDedicatedDataEndpointEnabled: false }, registry).isDedicatedDataEndpointEnabled
         isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, registry).isPublicNetworkAccessEnabled
         isZoneRedundancyEnabled: union({ isZoneRedundancyEnabled: true }, registry).isZoneRedundancyEnabled
         location: union({ location: location }, registry).location

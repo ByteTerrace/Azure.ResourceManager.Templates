@@ -1,5 +1,15 @@
+@description('An array of firewall rules that will be assigned to the Azure Container Registry.')
+param firewallRules array = []
 @description('An object that encapsulates the properties of the identity that will be assigned to the Azure Container Registry.')
 param identity object = {}
+@description('Indicates whether the Azure Container Registry administrator user account is enabled.')
+param isAdministratorAccountEnabled bool = false
+@description('Indicates whether trusted Microsoft services are allowed to access the Azure Container Registry.')
+param isAllowTrustedMicrosoftServicesEnabled bool = false
+@description('Indicates whether the Azure Container Registry will allow anonymous pull requests.')
+param isAnonymousPullEnabled bool = false
+@description('Indicates whether dedicated data endpoints are enabled for the Azure Container Registry.')
+param isDedicatedDataEndpointEnabled bool = false
 @description('Indicates whether the Azure Container Registry is accessible from the internet.')
 param isPublicNetworkAccessEnabled bool = false
 @description('Indicates whether the zone redundancy feature is enabled on the Azure Container Registry.')
@@ -15,6 +25,10 @@ param sku object = {
 @description('Specifies the set of tag key-value pairs that will be assigned to the Azure Container Registry.')
 param tags object = {}
 
+var firewallRulesCopy = [for rule in firewallRules: {
+    action: 'Allow'
+    value: rule
+}]
 var userAssignedIdentities = [for managedIdentity in union({
     userAssignedIdentities: []
 }, identity).userAssignedIdentities: extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', union({
@@ -31,17 +45,14 @@ resource registry 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' = 
     location: location
     name: name
     properties: {
-        adminUserEnabled: false
-        anonymousPullEnabled: false
-        dataEndpointEnabled: false
-        encryption: {
-            status: 'disabled'
-        }
-        networkRuleBypassOptions: 'None'
-        networkRuleSet: ('basic' == toLower(sku.name)) ? null : {
-            defaultAction: 'Deny'
-            ipRules: []
-        }
+        adminUserEnabled: isAdministratorAccountEnabled
+        anonymousPullEnabled: isAnonymousPullEnabled
+        dataEndpointEnabled: isDedicatedDataEndpointEnabled
+        networkRuleBypassOptions: isAllowTrustedMicrosoftServicesEnabled ? 'AzureServices' : 'None'
+        networkRuleSet: ('premium' == toLower(sku.name)) ? {
+            defaultAction: isPublicNetworkAccessEnabled ? 'Allow' : 'Deny'
+            ipRules: firewallRulesCopy
+        } : null
         policies: {
             azureADAuthenticationAsArmPolicy: {
                 status: 'enabled'
@@ -53,11 +64,11 @@ resource registry 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' = 
                 status: 'disabled'
             }
             retentionPolicy: {
-                days: 7
+                days: 14
                 status: 'disabled'
             }
             softDeletePolicy: {
-                retentionDays: 7
+                retentionDays: 14
                 status: 'disabled'
             }
             trustPolicy: {
