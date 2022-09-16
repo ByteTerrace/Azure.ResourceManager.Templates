@@ -1,3 +1,4 @@
+[CmdletBinding(DefaultParameterSetName = 'Template-SpecId')]
 param(
     [Parameter(Mandatory = $false)]
     [string]$Mode = 'Incremental',
@@ -9,11 +10,11 @@ param(
     [string]$ResourceGroupName,
     [Parameter(Mandatory = $false)]
     [string]$SubscriptionNameOrId = '',
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $true, ParameterSetName = 'Template-FilePath')]
     [string]$TemplateFilePath = '',
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $true, ParameterSetName = 'Template-SpecId')]
     [string]$TemplateSpecId = '',
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $true, ParameterSetName = 'Template-Uri')]
     [string]$TemplateUri = '',
     [Parameter(Mandatory = $false)]
     [switch]$WhatIf,

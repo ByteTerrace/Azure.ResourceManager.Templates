@@ -1,4 +1,4 @@
-param location string
+param location string = resourceGroup().location
 param overrides object = {}
 param projectName string
 param resourceDefinitions object = {}
