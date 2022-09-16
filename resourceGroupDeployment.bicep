@@ -6,6 +6,7 @@ param overrides object = {
         'microsoft.cache/redis'
         'microsoft.container-service/managed-clusters'
         'microsoft.network/application-gateways'
+        'microsoft.web/hosting-environments'
     ]
     includedTypes: []
 }
@@ -50,6 +51,7 @@ var includedTypes = [for type in empty(overrides.includedTypes) ? [
     'microsoft.solutions/applications'
     'microsoft.sql/servers'
     'microsoft.storage/storage-accounts'
+    'microsoft.web/hosting-environments'
     'microsoft.web/server-farms'
     'microsoft.web/sites'
 ] : overrides.includedTypes: toLower(type)]
@@ -171,6 +173,7 @@ var applicationInsights = [
 var applicationSecurityGroups = [
     {}
 ]
+var applicationServiceEnvironments = []
 var applicationServicePlans = [
     {
         isZoneRedundancyEnabled: false
@@ -939,7 +942,32 @@ module applicationSecurityGroupsCopy 'br/tlk:microsoft.network/application-secur
         resourceGroupName: resourceGroup().name
     }, group).resourceGroupName)
 }]
+module applicationServiceEnvironmentsCopy 'br/tlk:microsoft.web/hosting-environments:1.0.0' = [for (environment, index) in applicationServiceEnvironments: if (contains(includedTypes, 'microsoft.web/hosting-environments') && !contains(excludedTypes, 'microsoft.web/hosting-environments')) {
+    dependsOn: [
+        virtualNetworksCopy
+    ]
+    name: '${deployment().name}-ase-${string(index)}'
+    params: {
+        isDedicatedHostGroup: union({ isDedicatedHostGroup: false }, environment).isDedicatedHostGroup
+        isInternalEncryptionEnabled: union({ isInternalEncryptionEnabled: false }, environment).isInternalEncryptionEnabled
+        isMinimalSslCipherSuiteConfigurationEnabled: union({ isMinimalSslCipherSuiteConfigurationEnabled: true }, environment).isMinimalSslCipherSuiteConfigurationEnabled
+        isZoneRedundancyEnabled: union({ isZoneRedundancyEnabled: true }, environment).isZoneRedundancyEnabled
+        kind: union({ kind: 'ASEV3' }, environment).kind
+        location: union({ location: location }, environment).location
+        name: union({ name: '${projectName}-ase-${padLeft(index, 5, '0')}' }, environment).name
+        subnet: environment.subnet
+        tags: union({ tags: {} }, environment).tags
+    }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, environment).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, environment).resourceGroupName)
+}]
 module applicationServicePlansCopy 'br/tlk:microsoft.web/server-farms:1.0.0' = [for (plan, index) in applicationServicePlans: if (contains(includedTypes, 'microsoft.web/server-farms') && !contains(excludedTypes, 'microsoft.web/server-farms')) {
+    dependsOn: [
+        applicationServiceEnvironmentsCopy
+    ]
     name: '${deployment().name}-asp-${string(index)}'
     params: {
         isZoneRedundancyEnabled: union({ isZoneRedundancyEnabled: true }, plan).isZoneRedundancyEnabled
@@ -1636,6 +1664,7 @@ module webApplicationsCopy 'br/tlk:microsoft.web/sites:1.0.0' = [for (applicatio
     dependsOn: [
         applicationConfigurationStoresCopy
         applicationInsightsCopy
+        applicationServiceEnvironmentsCopy
         applicationServicePlansCopy
         keyVaultsCopy
         privateDnsZonesCopy
@@ -1673,6 +1702,7 @@ resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (de
         applicationGatewaysCopy
         applicationInsightsCopy
         applicationSecurityGroupsCopy
+        applicationServiceEnvironmentsCopy
         applicationServicePlansCopy
         availabilitySetsCopy
         containerRegistriesCopy
@@ -1726,6 +1756,7 @@ resource roleAssignmentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for
         applicationGatewaysCopy
         applicationInsightsCopy
         applicationSecurityGroupsCopy
+        applicationServiceEnvironmentsCopy
         applicationServicePlansCopy
         availabilitySetsCopy
         containerRegistriesCopy
