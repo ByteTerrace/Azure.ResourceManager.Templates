@@ -58,6 +58,47 @@ var userAssignedIdentities = [for managedIdentity in union({
     resourceGroupName: resourceGroup().name
 }, managedIdentity).resourceGroupName), 'Microsoft.ManagedIdentity/userAssignedIdentities', managedIdentity.name)]
 
+resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2022-05-01' = {
+    name: 'default'
+    parent: storageAccount
+    properties: {
+        cors: {
+            corsRules: servicesWithDefaults.blob.corsRules
+        }
+    }
+}
+resource blobContainers 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-05-01' = [for container in servicesWithDefaults.blob.containers.collection: {
+    name: container.name
+    parent: blobServices
+    properties: union({
+        metadata: union({ metadata: null }, container).metadata
+        publicAccess: union({ publicAccessLevel: 'None' }, container).publicAccessLevel
+    }, servicesWithDefaults.blob.isNetworkFileSystemV3Enabled ? {
+        enableNfsV3AllSquash: union({ isNetworkFileSystemV3AllSquashEnabled: false }, container).isNetworkFileSystemV3AllSquashEnabled
+        enableNfsV3RootSquash: union({ isNetworkFileSystemV3RootSquashEnabled: false }, container).isNetworkFileSystemV3RootSquashEnabled
+    }: {})
+}]
+resource fileServices 'Microsoft.Storage/storageAccounts/fileServices@2022-05-01' = {
+    name: 'default'
+    parent: storageAccount
+    properties: {
+        cors: {
+            corsRules: servicesWithDefaults.file.corsRules
+        }
+    }
+}
+resource fileShares 'Microsoft.Storage/storageAccounts/fileServices/shares@2022-05-01' = [for share in servicesWithDefaults.file.shares.collection: {
+    name: share.name
+    parent: fileServices
+    properties: {
+        accessTier: union({ accessTier: 'Hot' }, share).accessTier
+        enabledProtocols: union({ enabledProtocols: 'SMB' }, share).enabledProtocols
+        metadata: union({ metadata: null }, share).metadata
+        rootSquash: (toUpper(union({ enabledProtocols: null }, share).enabledProtocols) == 'NFS') ? union({ rootSquashMode: 'NoRootSquash' }, share).rootSquashMode : null
+        shareQuota: union({ quotaInGigabytes: 5 }, share).quotaInGigabytes
+        signedIdentifiers: null
+    }
+}]
 resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
     identity: {
         type: union({ type: empty(userAssignedIdentities) ? 'None' : 'UserAssigned' }, identity).type
@@ -118,44 +159,3 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
     sku: sku
     tags: tags
 }
-resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2022-05-01' = {
-    name: 'default'
-    parent: storageAccount
-    properties: {
-        cors: {
-            corsRules: servicesWithDefaults.blob.corsRules
-        }
-    }
-}
-resource blobContainers 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-05-01' = [for container in servicesWithDefaults.blob.containers.collection: {
-    name: container.name
-    parent: blobServices
-    properties: union({
-        metadata: union({ metadata: null }, container).metadata
-        publicAccess: union({ publicAccessLevel: 'None' }, container).publicAccessLevel
-    }, servicesWithDefaults.blob.isNetworkFileSystemV3Enabled ? {
-        enableNfsV3AllSquash: union({ isNetworkFileSystemV3AllSquashEnabled: false }, container).isNetworkFileSystemV3AllSquashEnabled
-        enableNfsV3RootSquash: union({ isNetworkFileSystemV3RootSquashEnabled: false }, container).isNetworkFileSystemV3RootSquashEnabled
-    }: {})
-}]
-resource fileServices 'Microsoft.Storage/storageAccounts/fileServices@2022-05-01' = {
-    name: 'default'
-    parent: storageAccount
-    properties: {
-        cors: {
-            corsRules: servicesWithDefaults.file.corsRules
-        }
-    }
-}
-resource fileShares 'Microsoft.Storage/storageAccounts/fileServices/shares@2022-05-01' = [for share in servicesWithDefaults.file.shares.collection: {
-    name: share.name
-    parent: fileServices
-    properties: {
-        accessTier: union({ accessTier: 'Hot' }, share).accessTier
-        enabledProtocols: union({ enabledProtocols: 'SMB' }, share).enabledProtocols
-        metadata: union({ metadata: null }, share).metadata
-        rootSquash: (toUpper(union({ enabledProtocols: null }, share).enabledProtocols) == 'NFS') ? union({ rootSquashMode: 'NoRootSquash' }, share).rootSquashMode : null
-        shareQuota: union({ quotaInGigabytes: 5 }, share).quotaInGigabytes
-        signedIdentifiers: null
-    }
-}]

@@ -23,8 +23,6 @@ param sku object = {
 param subnet object = {}
 @description('Specifies the set of tag key-value pairs that will be assigned to the Azure API Management Service.')
 param tags object = {}
-@description('Specifies the VPN type of the Azure API Management Service.')
-param vpnType string = empty(subnet) ? 'None' : 'Internal'
 
 var identityType = union({ type: empty(userAssignedIdentities) ? 'None' : 'UserAssigned' }, identity).type
 var isSubnetEmpty = empty(subnet)
@@ -90,7 +88,7 @@ resource service 'Microsoft.ApiManagement/service@2021-12-01-preview' = {
                 resourceGroupName: resourceGroup().name
             }, subnet).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', subnet.virtualNetworkName, subnet.name)
         }
-        virtualNetworkType: vpnType
+        virtualNetworkType: isSubnetEmpty ? 'None' : union({ virtualNetworkType: 'Internal' }, subnet).virtualNetworkType
     }
     sku: sku
     tags: tags

@@ -1,9 +1,9 @@
-@description('An object that encapsulates the properties of the Azure Application Insights that will be associated to the Azure Web Site.')
+@description('An object that encapsulates the properties of the Azure Application Insights that will be associated with the Azure Web Site.')
 param applicationInsights object = {}
 @description('An object that encapsulates the application settings that will be applied to the Azure Web Site.')
 @secure()
 param applicationSettings object = {}
-@description('An object that encapsulates the cross-Origin resource sharing settings that will be applied to the Azure Web Site.')
+@description('An object that encapsulates the cross-origin resource sharing settings that will be applied to the Azure Web Site.')
 param cors object = {}
 @description('An object that encapsulates the function extension settings that will be applied to the Azure Web Site.')
 param functionExtension object = {}
@@ -15,7 +15,7 @@ param is32BitModeEnabled bool = false
 param location string = resourceGroup().location
 @description('Specifies the name of the Azure Web Site.')
 param name string
-@description('An object that encapsulates the properties of the Azure Application Service Plan will be associated with the Azure Web Site.')
+@description('An object that encapsulates the properties of the Azure Application Service Plan that will be associated with the Azure Web Site.')
 param servicePlan object
 @description('Specifies the set of tag key-value pairs that will be assigned to the Azure Web Site.')
 param tags object = {}

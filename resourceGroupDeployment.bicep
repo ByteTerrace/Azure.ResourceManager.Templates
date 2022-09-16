@@ -3,6 +3,8 @@ param projectName string = 'tlk'
 param overrides object = {
     excludedTypes: [
         'microsoft.api-management/service'
+        'microsoft.cache/redis'
+        'microsoft.container-service/managed-clusters'
         'microsoft.network/application-gateways'
     ]
     includedTypes: []
@@ -14,12 +16,15 @@ var includedTypes = [for type in empty(overrides.includedTypes) ? [
     'microsoft.api-management/service'
     'microsoft.app-configuration/configuration-stores'
     'microsoft.authorization/role-assignments'
+    'microsoft.cache/redis'
     'microsoft.cdn/profiles'
     'microsoft.compute/availability-sets'
     'microsoft.compute/disk-encryption-sets'
     'microsoft.compute/proximity-placement-groups'
     'microsoft.compute/virtual-machines'
     'microsoft.container-registry/registries'
+    'microsoft.container-service/managed-clusters'
+    'microsoft.document-db/database-accounts'
     'microsoft.insights/components'
     'microsoft.key-vault/vaults'
     'microsoft.machine-learning-services/workspaces'
@@ -218,6 +223,19 @@ var containerRegistries = [
         }
     }
 ]
+var cosmosDbAccounts = [
+    {
+        identity: {
+            type: 'SystemAssigned,UserAssigned'
+            userAssignedIdentities: [
+                {
+                    name: 'tlk-mi-00000'
+                }
+            ]
+        }
+        isFreeTierEnabled: true
+    }
+]
 var deployments = []
 var diskEncryptionSets = [
     {
@@ -259,6 +277,7 @@ var keyVaults = [
         }
     }
 ]
+var kubernetesServicesClusters = []
 var logAnalyticsWorkspaces = [
     {
         isPublicNetworkAccessForIngestionEnabled: true
@@ -422,6 +441,24 @@ var publicIpAddresses = [
     }
 ]
 var publicIpPrefixes = []
+var redisCaches = [
+    {
+        identity: {
+            type: 'SystemAssigned,UserAssigned'
+            userAssignedIdentities: [
+                {
+                    name: 'tlk-mi-00000'
+                }
+            ]
+        }
+        isPublicNetworkAccessEnabled: true
+        sku: {
+            capacity: 0
+            family: 'C'
+            name: 'Basic'
+        }
+    }
+]
 var roleAssignments = [
     {
         assignee: {
@@ -812,7 +849,6 @@ module apiManagementServicesCopy 'br/tlk:microsoft.api-management/service:1.0.0'
         } }, service).sku
         subnet: union({ subnet: {} }, service).subnet
         tags: union({ tags: {} }, service).tags
-        vpnType: union({ vpnType: empty(union({ subnet: {} }, service).subnet) ? 'None' : 'Internal' }, service).vpnType
     }
     scope: resourceGroup(union({
         subscriptionId: subscription().subscriptionId
@@ -983,6 +1019,45 @@ module containerRegistriesCopy 'br/tlk:microsoft.container-registry/registries:1
         resourceGroupName: resourceGroup().name
     }, registry).resourceGroupName)
 }]
+module cosmosDbAccountsCopy 'br/tlk:microsoft.document-db/database-accounts:1.0.0' = [for (account, index) in cosmosDbAccounts: if (contains(includedTypes, 'microsoft.document-db/database-accounts') && !contains(excludedTypes, 'microsoft.document-db/database-accounts')) {
+    dependsOn: [
+        virtualNetworksCopy
+    ]
+    name: '${deployment().name}-cdb-${string(index)}'
+    params: {
+        backupPolicy: union({ backupPolicy: {
+            continuousModeProperties: {
+                tier: 'Continuous7Days'
+            }
+            type: 'Continuous'
+        } }, account).backupPolicy
+        capabilities: union({ capabilities: [] }, account).capabilities
+        consistencyPolicy: union({ consistencyPolicy: {} }, account).consistencyPolicy
+        corsRules: union({ corsRules: [] }, account).corsRules
+        firewallRules: union({ firewallRules: [] }, account).firewallRules
+        geoReplicationLocations: union({ geoReplicationLocations: [] }, account).geoReplicationLocations
+        identity: union({ identity: {} }, account).identity
+        isAllowTrustedMicrosoftServicesEnabled: union({ isAllowTrustedMicrosoftServicesEnabled: false }, account).isAllowTrustedMicrosoftServicesEnabled
+        isAnalyticalStorageEnabled: union({ isAnalyticalStorageEnabled: false }, account).isAnalyticalStorageEnabled
+        isAutomaticFailoverEnabled: union({ isAutomaticFailoverEnabled: false }, account).isAutomaticFailoverEnabled
+        isAzurePortalAccessEnabled: union({ isAzurePortalAccessEnabled: false }, account).isAzurePortalAccessEnabled
+        isAzurePublicDatacenterAccessEnabled: union({ isAzurePublicDatacenterAccessEnabled: true }, account).isAzurePublicDatacenterAccessEnabled
+        isFreeTierEnabled: union({ isFreeTierEnabled: false }, account).isFreeTierEnabled
+        isMultipleWriteLocationsEnabled: union({ isMultipleWriteLocationsEnabled: false }, account).isMultipleWriteLocationsEnabled
+        isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, account).isPublicNetworkAccessEnabled
+        isServerlessModeEnabled: union({ isServerlessModeEnabled: false }, account).isServerlessModeEnabled
+        kind: union({ kind: 'SQL' }, account).kind
+        location: union({ location: location }, account).location
+        name: union({ name: '${projectName}-cdb-${padLeft(index, 5, '0')}' }, account).name
+        tags: union({ tags: {} }, account).tags
+        virtualNetworkRules: union({ virtualNetworkRules: [] }, account).virtualNetworkRules
+    }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, account).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, account).resourceGroupName)
+}]
 module diskEncryptionSetsCopy 'br/tlk:microsoft.compute/disk-encryption-sets:1.0.0' = [for (set, index) in diskEncryptionSets: if (contains(includedTypes, 'microsoft.compute/disk-encryption-sets') && !contains(excludedTypes, 'microsoft.compute/disk-encryption-sets')) {
     dependsOn: [
         keyVaultsCopy
@@ -1031,6 +1106,35 @@ module keyVaultsCopy 'br/tlk:microsoft.key-vault/vaults:1.0.0' = [for (vault, in
         resourceGroupName: resourceGroup().name
     }, vault).resourceGroupName)
 }]
+module kubernetesServicesClustersCopy 'br/tlk:microsoft.container-service/managed-clusters:1.0.0' = [for (cluster, index) in kubernetesServicesClusters: if (contains(includedTypes, 'microsoft.container-service/managed-clusters') && !contains(excludedTypes, 'microsoft.container-service/managed-clusters')) {
+    dependsOn: [
+        keyVaultsCopy
+        virtualNetworksCopy
+    ]
+    name: '${deployment().name}-aks-${string(index)}'
+    params: {
+        addonProfiles: union({ addonProfiles: {} }, cluster).addonProfiles
+        agentPoolProfiles: union({ agentPoolProfiles: [] }, cluster).agentPoolProfiles
+        diskEncryptionSet: union({ diskEncryptionSet: {} }, cluster).diskEncryptionSet
+        identity: cluster.identity
+        isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, cluster).isPublicNetworkAccessEnabled
+        isRbacAuthorizationEnabled: union({ isRbacAuthorizationEnabled: true }, cluster).isRbacAuthorizationEnabled
+        location: union({ location: location }, cluster).location
+        name: union({ name: '${projectName}-aks-${padLeft(index, 5, '0')}' }, cluster).name
+        networkProfile: union({ networkProfile: {} }, cluster).networkProfile
+        sku: union({ sku: {
+            name: 'Basic'
+            tier: 'Free'
+        } }, cluster).sku
+        tags: union({ tags: {} }, cluster).tags
+        version: cluster.version
+    }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, cluster).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, cluster).resourceGroupName)
+}]
 module logAnalyticsWorkspacesCopy 'br/tlk:microsoft.operational-insights/workspaces:1.0.0' = [for (workspace, index) in logAnalyticsWorkspaces: if (contains(includedTypes, 'microsoft.operational-insights/workspaces') && !contains(excludedTypes, 'microsoft.operational-insights/workspaces')) {
     dependsOn: [
         virtualNetworksCopy
@@ -1066,7 +1170,9 @@ module machineLearningWorkspacesCopy 'br/tlk:microsoft.machine-learning-services
     name: '${deployment().name}-mlw-${string(index)}'
     params: {
         applicationInsights: workspace.applicationInsights
+        computeClusters: union({ computeClusters: [] }, workspace).envicomputeClustersronments
         containerRegistry: workspace.containerRegistry
+        environments: union({ environments: [] }, workspace).environments
         identity: workspace.identity
         isHighBusinessImpactFeatureEnabled: union({ isHighBusinessImpactFeatureEnabled: false }, workspace).isHighBusinessImpactFeatureEnabled
         isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, workspace).isPublicNetworkAccessEnabled
@@ -1282,6 +1388,35 @@ module publicIpPrefixesCopy 'br/tlk:microsoft.network/public-ip-prefixes:1.0.0' 
     }, prefix).subscriptionId, union({
         resourceGroupName: resourceGroup().name
     }, prefix).resourceGroupName)
+}]
+module redisCachesCopy 'br/tlk:microsoft.cache/redis:1.0.0' = [for (cache, index) in redisCaches: if (contains(includedTypes, 'microsoft.cache/redis') && !contains(excludedTypes, 'microsoft.cache/redis')) {
+    dependsOn: [
+        virtualNetworksCopy
+    ]
+    name: '${deployment().name}-redis-${string(index)}'
+    params: {
+        availabilityZones: union({ availabilityZones: [] }, cache).availabilityZones
+        configuration: union({ configuration: {} }, cache).configuration
+        firewallRules: union({ firewallRules: [] }, cache).firewallRules
+        identity: union({ identity: {} }, cache).identity
+        isPublicNetworkAccessEnabled: union({ isPublicNetworkAccessEnabled: false }, cache).isPublicNetworkAccessEnabled
+        location: union({ location: location }, cache).location
+        name: union({ name: '${projectName}-redis-${padLeft(index, 5, '0')}' }, cache).name
+        numberOfShards: union({ numberOfShards: 0 }, cache).numberOfShards
+        sku: union({ sku: {
+            capacity: 0
+            family: 'C'
+            name: 'Standard'
+        } }, cache).sku
+        subnet: union({ subnet: {} }, cache).subnet
+        tags: union({ tags: {} }, cache).tags
+        version: union({ version: 'latest' }, cache).version
+    }
+    scope: resourceGroup(union({
+        subscriptionId: subscription().subscriptionId
+    }, cache).subscriptionId, union({
+        resourceGroupName: resourceGroup().name
+    }, cache).resourceGroupName)
 }]
 module routeTablesCopy 'br/tlk:microsoft.network/route-tables:1.0.0' = [for (route, index) in routeTables: if (contains(includedTypes, 'microsoft.network/route-tables') && !contains(excludedTypes, 'microsoft.network/route-tables')) {
     name: '${deployment().name}-rt-${string(index)}'
@@ -1541,8 +1676,10 @@ resource deploymentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for (de
         applicationServicePlansCopy
         availabilitySetsCopy
         containerRegistriesCopy
+        cosmosDbAccountsCopy
         diskEncryptionSetsCopy
         keyVaultsCopy
+        kubernetesServicesClustersCopy
         logAnalyticsWorkspacesCopy
         machineLearningWorkspacesCopy
         managedApplicationDefinitionsCopy
@@ -1592,8 +1729,10 @@ resource roleAssignmentsCopy 'Microsoft.Resources/deployments@2021-04-01' = [for
         applicationServicePlansCopy
         availabilitySetsCopy
         containerRegistriesCopy
+        cosmosDbAccountsCopy
         diskEncryptionSetsCopy
         keyVaultsCopy
+        kubernetesServicesClustersCopy
         logAnalyticsWorkspacesCopy
         machineLearningWorkspacesCopy
         managedApplicationDefinitionsCopy
