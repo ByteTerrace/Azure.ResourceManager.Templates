@@ -1,14 +1,11 @@
 param location string
+param overrides object = {}
 param projectName string
-param overrides object = {
-    excludedTypes: []
-    includedTypes: []
-}
 param resourceDefinitions object = {}
 
 // variables
-var excludedTypes = [for type in overrides.excludedTypes: toLower(type)]
-var includedTypes = [for type in empty(overrides.includedTypes) ? [
+var excludedTypes = [for type in union({ excludedTypes: [] }, overrides).excludedTypes: toLower(type)]
+var includedTypes = [for type in empty(union({ includedTypes: [] }, overrides).includedTypes) ? [
     'microsoft.api-management/service'
     'microsoft.app-configuration/configuration-stores'
     'microsoft.authorization/role-assignments'
