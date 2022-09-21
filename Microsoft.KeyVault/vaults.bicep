@@ -87,7 +87,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
                     subscriptionId: subscription().subscriptionId
                 }, rule.subnet).subscriptionId, union({
                     resourceGroupName: resourceGroup().name
-                }, rule.subnet).resourceGroupName, 'Microsoft.Network/virtualNetwork/subnets', rule.subnet.virtualNetworkName, rule.subnet.name)
+                }, rule.subnet).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', rule.subnet.virtualNetworkName, rule.subnet.name)
                 ignoreMissingVnetServiceEndpoint: false
             }]
         }

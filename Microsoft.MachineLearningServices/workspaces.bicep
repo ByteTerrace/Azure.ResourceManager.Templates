@@ -55,7 +55,7 @@ resource computeClustersCopy 'Microsoft.MachineLearningServices/workspaces/compu
                     subscriptionId: subscription().subscriptionId
                 }, cluster.subnet).subscriptionId, union({
                     resourceGroupName: resourceGroup().name
-                }, cluster.subnet).resourceGroupName, 'Microsoft.Network/virtualNetwork/subnets', cluster.subnet.virtualNetworkName, cluster.subnet.name)
+                }, cluster.subnet).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', cluster.subnet.virtualNetworkName, cluster.subnet.name)
             }
             vmPriority: union({ virtualMachinePriority: 'Dedicated' }, cluster).virtualMachinePriority
             vmSize: cluster.virtualMachineSize

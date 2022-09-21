@@ -77,6 +77,6 @@ resource virtualNetworkRulesCopy 'Microsoft.Sql/servers/virtualNetworkRules@2022
             subscriptionId: subscription().subscriptionId
         }, rule.subnet).subscriptionId, union({
             resourceGroupName: resourceGroup().name
-        }, rule.subnet).resourceGroupName, 'Microsoft.Network/virtualNetwork/subnets', rule.subnet.virtualNetworkName, rule.subnet.name)
+        }, rule.subnet).resourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', rule.subnet.virtualNetworkName, rule.subnet.name)
     }
 }]
