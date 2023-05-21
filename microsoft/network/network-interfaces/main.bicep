@@ -1,7 +1,7 @@
-param location string
+param location string = resourceGroup().location
 param name string
 param properties object
-param tags object
+param tags object = {}
 
 var isNetworkSecurityGroupNotEmpty = !empty(properties.?networkInterface ?? {})
 var isPublicIpAddressNotEmpty = !empty(properties.?publicIpAddress ?? {})
