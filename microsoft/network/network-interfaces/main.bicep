@@ -41,6 +41,6 @@ resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2022-11-01' existi
   scope: resourceGroup(properties.publicIpAddress.?resourceGroupName)
 }
 resource subnets 'Microsoft.Network/virtualNetworks/subnets@2022-11-01' existing = [for configuration in properties.ipConfigurations: {
-  name: '${configuration.subnet.virtualNetworkName}/${configuration.subnet.name}'
-  scope: resourceGroup(configuration.subnet.?resourceGroup ?? resourceGroup().name)
+  name: '${configuration.privateIpAddress.subnet.virtualNetworkName}/${configuration.privateIpAddress.subnet.name}'
+  scope: resourceGroup(configuration.privateIpAddress.subnet.?resourceGroup ?? resourceGroup().name)
 }]

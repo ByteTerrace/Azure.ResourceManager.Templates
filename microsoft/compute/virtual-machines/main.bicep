@@ -6,34 +6,22 @@ param properties object
 param tags object = {}
 param utcNow string = sys.utcNow()
 
+var certificates = items(properties.?certificates ?? {})
+var identity = (properties.?identity ?? {})
 var isAgentPlatformUpdateEnabled = ('automaticbyplatform' == toLower(operatingSystemPatchSettings.patchMode))
 var isAvailabilitySetNotEmpty = !empty(properties.?availabilitySet ?? {})
 var isBootDiagnosticsStorageAccountNotEmpty = !empty(properties.?bootDiagnostics.?storageAccount ?? {})
-var isIdentityNotEmpty = !empty(properties.?identity ?? {})
+var isCertificatesNotEmpty = !empty(certificates)
+var isDiskEncryptionSetNotEmpty = !empty(properties.?diskEncryptionSet ?? {})
+var isGuestAttestationEnabled = (properties.?isGuestAttestationEnabled ?? (isSecureBootEnabled && isVirtualTrustedPlatformModuleEnabled))
+var isIdentityNotEmpty = !empty(identity)
 var isLinux = ('linux' == toLower(operatingSystemType))
 var isProximityPlacementGroupNotEmpty = !empty(properties.?proximityPlacementGroup ?? {})
-var isSecureBootEnabled = (properties.?isSecureBootEnabled ?? false)
+var isSecureBootEnabled = (properties.?isSecureBootEnabled ?? true)
+var isSystemAssignedIdentityEnabled = contains((identity.?type ?? ''), 'systemassigned')
 var isUserAssignedIdentitiesNotEmpty = !empty(userAssignedIdentities)
+var isVirtualTrustedPlatformModuleEnabled = (properties.?isVirtualTrustedPlatformModuleEnabled ?? true)
 var isWindows = ('windows' == toLower(operatingSystemType))
-var operatingSystemDisk = {
-  caching: (properties.operatingSystem.?disk.?cachingMode ?? 'ReadWrite')
-  createOption: (properties.operatingSystem.?disk.?createOption ?? 'FromImage')
-  deleteOption: (properties.operatingSystem.?disk.?deleteOption ?? 'Delete')
-  diffDiskSettings: (contains((properties.operatingSystem.?disk ?? {}), 'ephemeralPlacement') ? {
-    option: 'Local'
-    placement: properties.operatingSystem.disk.ephemeralPlacement
-  } : null)
-  diskSizeGB: (properties.operatingSystem.?disk.?sizeInGigabytes ?? null)
-  managedDisk: {
-    diskEncryptionSet: (empty(properties.operatingSystem.?disk.?encryptionSet ?? {}) ? null : {
-      id: resourceId((properties.operatingSystem.disk.encryptionSet.?subscriptionId ?? subscriptionId), (properties.operatingSystem.disk.encryptionSet.?resourceGroupName ?? resourceGroupName), 'Microsoft.Compute/diskEncryptionSets', properties.operatingSystem.disk.encryptionSet.name)
-    })
-    storageAccountType: (properties.operatingSystem.?disk.?storageAccountType ?? 'Standard_LRS')
-  }
-  name: (properties.operatingSystem.?disk.?name ?? '${name}-Disk00000')
-  osType: operatingSystemType
-  writeAcceleratorEnabled: (properties.operatingSystem.?disk.?isWriteAcceleratorEnabled ?? null)
-}
 var operatingSystemPatchSettings = {
   assessmentMode: (properties.operatingSystem.?patchSettings.?assessmentMode ?? 'AutomaticByPlatform')
   patchMode: (properties.operatingSystem.?patchSettings.?patchMode ?? 'AutomaticByPlatform')
@@ -64,9 +52,10 @@ var scripts = sort(map(range(0, length(properties.?scripts ?? [])), index => {
   value: (properties.scripts[index].?value ?? null)
 }), (x, y) => (x.index < y.index))
 var subscriptionId = subscription().subscriptionId
-var userAssignedIdentities = sort(map(range(0, length(properties.?identity.?userAssignedIdentities ?? [])), index => {
-  id: resourceId((properties.identity.userAssignedIdentities[index].?subscriptionId ?? subscriptionId), (properties.identity.userAssignedIdentities[index].?resourceGroupName ?? resourceGroupName), 'Microsoft.ManagedIdentity/userAssignedIdentities', properties.identity.userAssignedIdentities[index].name)
+var userAssignedIdentities = sort(map(range(0, length(identity.?userAssignedIdentities ?? [])), index => {
+  id: resourceId((identity.userAssignedIdentities[index].?subscriptionId ?? subscriptionId), (identity.userAssignedIdentities[index].?resourceGroupName ?? resourceGroupName), 'Microsoft.ManagedIdentity/userAssignedIdentities', identity.userAssignedIdentities[index].name)
   index: index
+  value: identity.userAssignedIdentities[index]
 }), (x, y) => (x.index < y.index))
 
 resource availabilitySetRef 'Microsoft.Compute/availabilitySets@2023-03-01' existing = if (isAvailabilitySetNotEmpty) {
@@ -77,7 +66,16 @@ resource bootDiagnosticsStorageAccountRef 'Microsoft.Storage/storageAccounts@202
   name: properties.bootDiagnostics.storageAccount.name
   scope: resourceGroup((properties.bootDiagnostics.?subscriptionId ?? subscriptionId), (properties.bootDiagnostics.?resourceGroupName ?? resourceGroupName))
 }
-resource guestAttestation 'Microsoft.Compute/virtualMachines/extensions@2023-03-01' = if (isSecureBootEnabled) {
+resource certificatesRef 'Microsoft.KeyVault/vaults/secrets@2023-02-01' existing = [for certificate in certificates: {
+  name: '${certificate.value.keyVault.name}/${certificate.key}'
+  scope: resourceGroup((certificate.value.keyVault.?subscriptionId ?? subscriptionId), (certificate.value.keyVault.?resourceGroupName ?? resourceGroupName))
+}]
+resource diskEncryptionSetRef 'Microsoft.Compute/diskEncryptionSets@2022-07-02' existing = if (isDiskEncryptionSetNotEmpty) {
+  name: properties.diskEncryptionSet.name
+  scope: resourceGroup((properties.diskEncryptionSet.?subscriptionId ?? subscriptionId), (properties.diskEncryptionSet.?resourceGroupName ?? resourceGroupName))
+}
+resource guestAttestation 'Microsoft.Compute/virtualMachines/extensions@2023-03-01' = if (isGuestAttestationEnabled) {
+  dependsOn: [ keyVaultIntegration ]
   location: location
   name: 'GuestAttestation'
   parent: virtualMachine
@@ -86,7 +84,37 @@ resource guestAttestation 'Microsoft.Compute/virtualMachines/extensions@2023-03-
     enableAutomaticUpgrade: true
     publisher: 'Microsoft.Azure.Security.${operatingSystemType}Attestation'
     type: 'GuestAttestation'
-    typeHandlerVersion: '1.0'
+    typeHandlerVersion: (isWindows ? '1.0' : (isLinux ? '1.0' : null))
+  }
+  tags: tags
+}
+resource keyVaultIntegration 'Microsoft.Compute/virtualMachines/extensions@2023-03-01' = if (isCertificatesNotEmpty) {
+  location: location
+  name: 'KeyVault'
+  parent: virtualMachine
+  properties: {
+    autoUpgradeMinorVersion: true
+    enableAutomaticUpgrade: true
+    publisher: 'Microsoft.Azure.KeyVault'
+    settings: {
+      authenticationSettings: {
+        msiClientId: (isSystemAssignedIdentityEnabled ? systemAssignedIdentityRef.properties.clientId : userAssignedIdentitiesRef[0].properties.clientId)
+        msiEndpoint: 'http://169.254.169.254/metadata/identity/oauth2/token'
+      }
+      secretsManagementSettings: {
+        observedCertificates: [for (certificate, index) in certificates: (isWindows ? {
+          accounts: (certificate.value.?accounts ?? null)
+          certificateStoreLocation: (certificate.value.?location ?? 'CurrentUser')
+          certificateStoreName: (certificate.value.?name ?? 'MY')
+          keyExportable: (certificate.value.?isExportable ?? false)
+          url: certificatesRef[index].properties.secretUri
+        } : certificatesRef[index].properties.secretUri)]
+        requireInitialSync: true
+      }
+    }
+    suppressFailures: false
+    type: 'KeyVaultFor${operatingSystemType}'
+    typeHandlerVersion: (isWindows ? '3.1' : (isLinux ? '2.2' : null))
   }
   tags: tags
 }
@@ -107,8 +135,12 @@ resource roleAssignmentsRef 'Microsoft.Authorization/roleAssignments@2022-04-01'
   }
   scope: virtualMachine
 }]
+@batchSize(1)
 resource runCommands 'Microsoft.Compute/virtualMachines/runCommands@2023-03-01' = [for script in scripts: {
-  dependsOn: [ guestAttestation ]
+  dependsOn: [
+    guestAttestation
+    keyVaultIntegration
+  ]
   location: location
   name: script.name
   parent: virtualMachine
@@ -147,9 +179,17 @@ resource runCommands 'Microsoft.Compute/virtualMachines/runCommands@2023-03-01' 
   }
   tags: script.tags
 }]
+resource systemAssignedIdentityRef 'Microsoft.ManagedIdentity/identities@2023-01-31' existing = if (isSystemAssignedIdentityEnabled) {
+  name: 'default'
+  scope: virtualMachine
+}
+resource userAssignedIdentitiesRef 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = [for identity in userAssignedIdentities: {
+  name: identity.value.name
+  scope: resourceGroup((identity.value.?subscriptionId ?? subscriptionId), (identity.value.?resourceGroupName ?? resourceGroupName))
+}]
 resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
   identity: (isIdentityNotEmpty ? {
-    type: properties.identity.type
+    type: identity.type
     userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty ? toObject(userAssignedIdentities, identity => identity.id, identity => {}) : null)
   } : null)
   location: location
@@ -172,7 +212,46 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
     }
     licenseType: (properties.?licenseType ?? null)
     networkProfile: {
-      networkInterfaces: [for (interface, index) in properties.networkInterfaces: { id: networkInterfacesRef[index].id }]
+      networkApiVersion: '2020-11-01'
+      networkInterfaceConfigurations: [for (interface, index) in filter(properties.networkInterfaces, interface => !contains(interface, 'name')): {
+        name: '${name}-Nic-00000'
+        properties: {
+          deleteOption: 'Delete'
+          disableTcpStateTracking: (contains(properties, 'isTcpStateTrackingEnabled') ? !interface.isTcpStateTrackingEnabled : null)
+          dnsSettings: {
+            dnsServers: (interface.?dnsServers ?? [])
+          }
+          dscpConfiguration: (contains(interface, 'dscpConfiguration') ? {
+            id: resourceId((interface.dscpConfiguration.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/dscpConfigurations', interface.dscpConfiguration.name)
+          } : null)
+          enableAcceleratedNetworking: (interface.?isAcceleratedNetworkingEnabled ?? true)
+          enableFpga: (interface.?isFpgaNetworkingEnabled ?? null)
+          enableIPForwarding: (interface.?isIpForwardingEnabled ?? null)
+          ipConfigurations: map(range(0, length(interface.ipConfigurations)), index => {
+            name: (interface.ipConfigurations[index].?name ?? index)
+            properties: {
+              applicationGatewayBackendAddressPools: flatten(map((interface.ipConfigurations[index].?applicationGateways ?? []), gateway => map(gateway.backEndAddressPoolNames, name => {
+                id: resourceId((gateway.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/applicationGateways/backendAddressPools', gateway.name, name)
+              })))
+              applicationSecurityGroups: map((interface.ipConfigurations[index].?applicationSecurityGroups ?? []), group => {
+                id: resourceId((group.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/applicationSecurityGroups', group.name)
+              })
+              loadBalancerBackendAddressPools: flatten(map((interface.ipConfigurations[index].?loadBalancers ?? []), loadBalancer => map(loadBalancer.backEndAddressPoolNames, name => {
+                id: resourceId((loadBalancer.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/loadBalancers/backendAddressPools', loadBalancer.name, name)
+              })))
+              primary: ((0 == index) && (0 == length(filter(interface.ipConfigurations, configuration => contains(configuration, 'isPrimary')))))
+              privateIPAddressVersion: (interface.ipConfigurations[index].privateIpAddress.?version ?? 'IPv4')
+              publicIPAddressConfiguration: null
+              subnet: { id: resourceId((interface.ipConfigurations[index].privateIpAddress.subnet.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/virtualNetworks/subnets', interface.ipConfigurations[index].privateIpAddress.subnet.virtualNetworkName, interface.ipConfigurations[index].privateIpAddress.subnet.name) }
+            }
+          })
+          networkSecurityGroup: (contains(interface, 'networkSecurityGroup') ? {
+            id: resourceId((interface.networkSecurityGroup.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/networkSecurityGroups', interface.networkSecurityGroup.name)
+          } : null)
+          primary: ((0 == index) && (0 == length(filter(properties.networkInterfaces, interface => contains(interface, 'isPrimary')))))
+        }
+      }]
+      networkInterfaces: [for (interface, index) in filter(properties.networkInterfaces, interface => contains(interface, 'name')): { id: networkInterfacesRef[index].id }]
     }
     osProfile: {
       adminPassword: (properties.?administrator.?password ?? '${guid}|${utcNow}!')
@@ -205,7 +284,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
       securityType: (isSecureBootEnabled ? 'TrustedLaunch' : null)
       uefiSettings: (isSecureBootEnabled ? {
         secureBootEnabled: true
-        vTpmEnabled: true
+        vTpmEnabled: isVirtualTrustedPlatformModuleEnabled
       } : null)
     }
     storageProfile: {
@@ -216,16 +295,30 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
         diskSizeGB: disk.sizeInGigabytes
         lun: index
         managedDisk: {
-          diskEncryptionSet: (contains(disk, 'encryptionSet') ? {
-            id: resourceId((disk.encryptionSet.?subscriptionId ?? subscriptionId), (disk.encryptionSet.?resourceGroupName ?? resourceGroupName), 'Microsoft.Compute/diskEncryptionSets', disk.encryptionSet.name)
-          } : null)
+          diskEncryptionSet: (isDiskEncryptionSetNotEmpty ? { id: diskEncryptionSetRef.id } : null)
           storageAccountType: (disk.?storageAccountType ?? 'Standard_LRS')
         }
         name: (disk.?name ?? '${name}-Disk${padLeft((index + 1), 5, '0')}')
         writeAcceleratorEnabled: (disk.?isWriteAcceleratorEnabled ?? null)
       }]
       imageReference: (properties.?imageReference ?? null)
-      osDisk: operatingSystemDisk
+      osDisk: {
+        caching: (properties.operatingSystem.?disk.?cachingMode ?? 'ReadWrite')
+        createOption: (properties.operatingSystem.?disk.?createOption ?? 'FromImage')
+        deleteOption: (properties.operatingSystem.?disk.?deleteOption ?? 'Delete')
+        diffDiskSettings: (contains((properties.operatingSystem.?disk ?? {}), 'ephemeralPlacement') ? {
+          option: 'Local'
+          placement: properties.operatingSystem.disk.ephemeralPlacement
+        } : null)
+        diskSizeGB: (properties.operatingSystem.?disk.?sizeInGigabytes ?? null)
+        managedDisk: {
+          diskEncryptionSet: (isDiskEncryptionSetNotEmpty ? { id: diskEncryptionSetRef.id } : null)
+          storageAccountType: (properties.operatingSystem.?disk.?storageAccountType ?? 'Standard_LRS')
+        }
+        name: (properties.operatingSystem.?disk.?name ?? '${name}-Disk-00000')
+        osType: operatingSystemType
+        writeAcceleratorEnabled: (properties.operatingSystem.?disk.?isWriteAcceleratorEnabled ?? null)
+      }
     }
   }
   tags: tags
