@@ -6,6 +6,7 @@ param properties object
 param tags object = {}
 param utcNow string = sys.utcNow()
 
+var isAgentPlatformUpdateEnabled = ('automaticbyplatform' == toLower(operatingSystemPatchSettings.patchMode))
 var isAvailabilitySetNotEmpty = !empty(properties.?availabilitySet ?? {})
 var isBootDiagnosticsStorageAccountNotEmpty = !empty(properties.?bootDiagnostics.?storageAccount ?? {})
 var isIdentitiesNotEmpty = !empty(properties.?identity ?? {})
@@ -14,6 +15,26 @@ var isProximityPlacementGroupNotEmpty = !empty(properties.?proximityPlacementGro
 var isSecureBootEnabled = (properties.?isSecureBootEnabled ?? false)
 var isUserAssignedIdentitiesNotEmpty = !empty(userAssignedIdentities)
 var isWindows = ('windows' == toLower(operatingSystemType))
+var operatingSystemDisk = {
+  caching: (properties.operatingSystem.?disk.?cachingMode ?? 'ReadWrite')
+  createOption: (properties.operatingSystem.?disk.?createOption ?? 'FromImage')
+  deleteOption: (properties.operatingSystem.?disk.?deleteOption ?? 'Delete')
+  diffDiskSettings: (contains((properties.operatingSystem.?disk ?? {}), 'ephemeralPlacement') ? {
+    option: 'Local'
+    placement: properties.operatingSystem.disk.ephemeralPlacement
+  } : null)
+  diskSizeGB: (properties.operatingSystem.?disk.?sizeInGigabytes ?? null)
+  managedDisk: {
+    storageAccountType: (properties.operatingSystem.?disk.?storageAccountType ?? 'Standard_LRS')
+  }
+  name: (properties.operatingSystem.?disk.?name ?? '${name}-00000')
+  osType: operatingSystemType
+  writeAcceleratorEnabled: (properties.operatingSystem.?disk.?isWriteAcceleratorEnabled ?? null)
+}
+var operatingSystemPatchSettings = {
+  assessmentMode: (properties.operatingSystem.?patchSettings.?assessmentMode ?? 'AutomaticByPlatform')
+  patchMode: (properties.operatingSystem.?patchSettings.?patchMode ?? 'AutomaticByPlatform')
+}
 var operatingSystemType = (properties.operatingSystem.?type ?? 'Windows')
 var resourceGroupName = resourceGroup().name
 var roleAssignments = map((properties.?roleAssignments ?? []), assignment => {
@@ -53,6 +74,19 @@ resource bootDiagnosticsStorageAccountRef 'Microsoft.Storage/storageAccounts@202
   name: properties.bootDiagnostics.storageAccount.name
   scope: resourceGroup((properties.bootDiagnostics.?subscriptionId ?? subscriptionId), (properties.bootDiagnostics.?resourceGroupName ?? resourceGroupName))
 }
+resource guestAttestation 'Microsoft.Compute/virtualMachines/extensions@2023-03-01' = if (isSecureBootEnabled) {
+  location: location
+  name: 'GuestAttestation'
+  parent: virtualMachine
+  properties: {
+    autoUpgradeMinorVersion: true
+    enableAutomaticUpgrade: true
+    publisher: 'Microsoft.Azure.Security.${operatingSystemType}Attestation'
+    type: 'GuestAttestation'
+    typeHandlerVersion: '1.0'
+  }
+  tags: tags
+}
 resource networkInterfacesRef 'Microsoft.Network/networkInterfaces@2022-11-01' existing = [for interface in properties.networkInterfaces: {
   name: interface.name
   scope: resourceGroup((interface.?subscriptionId ?? subscriptionId), (interface.?resourceGroupName ?? resourceGroupName))
@@ -71,6 +105,7 @@ resource roleAssignmentsRef 'Microsoft.Authorization/roleAssignments@2022-04-01'
   scope: virtualMachine
 }]
 resource runCommands 'Microsoft.Compute/virtualMachines/runCommands@2023-03-01' = [for script in scripts: {
+  dependsOn: [ guestAttestation ]
   location: location
   name: script.name
   parent: virtualMachine
@@ -142,26 +177,23 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
       allowExtensionOperations: true
       computerName: (properties.?computerName ?? name)
       linuxConfiguration: (isLinux ? {
-        enableVMAgentPlatformUpdates: true
+        enableVMAgentPlatformUpdates: isAgentPlatformUpdateEnabled
         patchSettings: {
-          assessmentMode: 'AutomaticByPlatform'
-          patchMode: 'AutomaticByPlatform'
-        }
-      } : null)
-      windowsConfiguration: (isWindows ? {
-        enableAutomaticUpdates: true
-        enableVMAgentPlatformUpdates: true
-        patchSettings: {
-          assessmentMode: 'AutomaticByPlatform'
-          automaticByPlatformSettings: {
-            bypassPlatformSafetyChecksOnUserSchedule: false
-            rebootSetting: 'IfRequired'
-          }
-          enableHotpatching: true
-          patchMode: 'AutomaticByPlatform'
+          assessmentMode: operatingSystemPatchSettings.assessmentMode
+          patchMode: operatingSystemPatchSettings.patchMode
         }
         provisionVMAgent: true
-        timeZone: null
+      } : null)
+      windowsConfiguration: (isWindows ? {
+        enableAutomaticUpdates: ('manual' != toLower(operatingSystemPatchSettings.patchMode))
+        enableVMAgentPlatformUpdates: isAgentPlatformUpdateEnabled
+        patchSettings: union(operatingSystemPatchSettings, {
+          assessmentMode: operatingSystemPatchSettings.assessmentMode
+          enableHotpatching: (properties.operatingSystem.?patchSettings.?isHotPatchingEnabled ?? isAgentPlatformUpdateEnabled)
+          patchMode: operatingSystemPatchSettings.patchMode
+        })
+        provisionVMAgent: true
+        timeZone: (properties.operatingSystem.?timeZone ?? null)
       } : null)
     }
     proximityPlacementGroup: (isProximityPlacementGroupNotEmpty ? { id: proximityPlacementGroupRef.id } : null)
@@ -175,22 +207,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
     }
     storageProfile: {
       imageReference: (properties.?imageReference ?? null)
-      osDisk: {
-        caching: (properties.operatingSystem.?disk.?cachingMode ?? 'ReadWrite')
-        createOption: (properties.operatingSystem.?disk.?createOption ?? 'FromImage')
-        deleteOption: (properties.operatingSystem.?disk.?deleteOption ?? 'Delete')
-        diffDiskSettings: (contains((properties.operatingSystem.?disk ?? {}), 'ephemeralPlacement') ? {
-          option: 'Local'
-          placement: properties.operatingSystem.disk.ephemeralPlacement
-        } : null)
-        diskSizeGB: (properties.operatingSystem.?disk.?sizeInGigabytes ?? null)
-        managedDisk: {
-          storageAccountType: (properties.operatingSystem.?disk.?sku.?name ?? 'Standard_LRS')
-        }
-        name: (properties.operatingSystem.?disk.?name ?? '${name}-00000')
-        osType: operatingSystemType
-        writeAcceleratorEnabled: (properties.operatingSystem.?disk.?isWriteAcceleratorEnabled ?? null)
-      }
+      osDisk: operatingSystemDisk
     }
   }
   tags: tags
