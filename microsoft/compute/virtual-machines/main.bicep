@@ -27,7 +27,7 @@ var operatingSystemDisk = {
   managedDisk: {
     storageAccountType: (properties.operatingSystem.?disk.?storageAccountType ?? 'Standard_LRS')
   }
-  name: (properties.operatingSystem.?disk.?name ?? '${name}-00000')
+  name: (properties.operatingSystem.?disk.?name ?? '${name}-Disk00000')
   osType: operatingSystemType
   writeAcceleratorEnabled: (properties.operatingSystem.?disk.?isWriteAcceleratorEnabled ?? null)
 }
