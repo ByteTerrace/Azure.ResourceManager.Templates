@@ -1,13 +1,14 @@
 param guid string = newGuid()
 param location string = resourceGroup().location
 param name string
+@secure()
 param properties object
 param tags object = {}
 param utcNow string = sys.utcNow()
 
 var isAvailabilitySetNotEmpty = !empty(properties.?availabilitySet ?? {})
-var isBootDiagnosticsEnabled = (properties.?bootDiagnostics.?isEnabled ?? false)
 var isBootDiagnosticsStorageAccountNotEmpty = !empty(properties.?bootDiagnostics.?storageAccount ?? {})
+var isIdentitiesNotEmpty = !empty(properties.?identity ?? {})
 var isLinux = ('linux' == toLower(operatingSystemType))
 var isProximityPlacementGroupNotEmpty = !empty(properties.?proximityPlacementGroup ?? {})
 var isSecureBootEnabled = (properties.?isSecureBootEnabled ?? false)
@@ -20,6 +21,24 @@ var roleAssignments = map((properties.?roleAssignments ?? []), assignment => {
   principalId: assignment.principalId
   roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', assignment.roleDefinitionId)
 })
+var scripts = sort(map(range(0, length(properties.?scripts ?? [])), index => {
+  blobPath: (properties.scripts[index].?blobPath ?? '')
+  errorBlobPath: (properties.scripts[index].?errorBlobPath ?? '')
+  errorBlobUri: (properties.scripts[index].?errorBlobUri ?? null)
+  containerName: (properties.scripts[index].?containerName ?? null)
+  index: index
+  name: (properties.scripts[index].?name ?? index)
+  outputBlobPath: (properties.scripts[index].?outputBlobPath ?? '')
+  outputBlobUri: (properties.scripts[index].?outputBlobUri ?? null)
+  parameters: (properties.scripts[index].?parameters ?? [])
+  storageAccount: (contains(properties.scripts[index], 'storageAccount') ? union({
+    id: resourceId('Microsoft.Storage/storageAccounts', properties.scripts[index].storageAccount.name)
+  }, properties.scripts[index].storageAccount) : {})
+  tags: (properties.scripts[index].?tags ?? tags)
+  timeoutInSeconds: (properties.scripts[index].?timeoutInSeconds ?? null)
+  uri: (properties.scripts[index].?uri ?? null)
+  value: (properties.scripts[index].?value ?? null)
+}), (x, y) => (x.index < y.index))
 var subscriptionId = subscription().subscriptionId
 var userAssignedIdentities = sort(map(range(0, length(properties.?identity.?userAssignedIdentities ?? [])), index => {
   id: resourceId((properties.identity.userAssignedIdentities[index].?subscriptionId ?? subscriptionId), (properties.identity.userAssignedIdentities[index].?resourceGroupName ?? resourceGroupName), 'Microsoft.ManagedIdentity/userAssignedIdentities', properties.identity.userAssignedIdentities[index].name)
@@ -51,8 +70,47 @@ resource roleAssignmentsRef 'Microsoft.Authorization/roleAssignments@2022-04-01'
   }
   scope: virtualMachine
 }]
+resource runCommands 'Microsoft.Compute/virtualMachines/runCommands@2023-03-01' = [for script in scripts: {
+  location: location
+  name: script.name
+  parent: virtualMachine
+  properties: {
+    asyncExecution: false
+    errorBlobUri: (empty(script.errorBlobPath) ? script.errorBlobUri : format('{0}{1}/{2}?{3}', reference(script.storageAccount.id, '2022-09-01').primaryEndpoints.blob, script.containerName, script.errorBlobPath, listAccountSAS(script.storageAccount.id, '2022-09-01', {
+      canonicalizedResource: '/blob/${script.storageAccount.name}/${script.containerName}/${script.errorBlobPath}'
+      signedExpiry: dateTimeAdd(utcNow, 'PT3H')
+      signedPermission: 'rwacu'
+      signedProtocol: 'https'
+      signedResourceTypes: 'o'
+      signedServices: 'b'
+    }).accountSasToken))
+    outputBlobUri: (empty(script.outputBlobPath) ? script.outputBlobUri : format('{0}{1}/{2}?{3}', reference(script.storageAccount.id, '2022-09-01').primaryEndpoints.blob, script.containerName, script.outputBlobPath, listAccountSAS(script.storageAccount.id, '2022-09-01', {
+      canonicalizedResource: '/blob/${script.storageAccount.name}/${script.containerName}/${script.outputBlobPath}'
+      signedExpiry: dateTimeAdd(utcNow, 'PT3H')
+      signedPermission: 'rwacu'
+      signedProtocol: 'https'
+      signedResourceTypes: 'o'
+      signedServices: 'b'
+    }).accountSasToken))
+    protectedParameters: script.parameters
+    source: {
+      script: script.value
+      scriptUri: (empty(script.blobPath) ? script.uri : format('{0}{1}/{2}?{3}', reference(script.storageAccount.id, '2022-09-01').primaryEndpoints.blob, script.containerName, script.blobPath, listAccountSAS(script.storageAccount.id, '2022-09-01', {
+        canonicalizedResource: '/blob/${script.storageAccount.name}/${script.containerName}/${script.blobPath}'
+        signedExpiry: dateTimeAdd(utcNow, 'PT3H')
+        signedPermission: 'r'
+        signedProtocol: 'https'
+        signedResourceTypes: 'o'
+        signedServices: 'b'
+      }).accountSasToken))
+    }
+    timeoutInSeconds: script.timeoutInSeconds
+    treatFailureAsDeploymentFailure: true
+  }
+  tags: script.tags
+}]
 resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
-  identity: (contains(properties, 'identity') ? {
+  identity: (isIdentitiesNotEmpty ? {
     type: properties.identity.type
     userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty ? toObject(userAssignedIdentities, identity => identity.id, identity => {}) : null)
   } : null)
@@ -66,7 +124,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
     availabilitySet: (isAvailabilitySetNotEmpty ? { id: availabilitySetRef.id } : null)
     diagnosticsProfile: {
       bootDiagnostics: {
-        enabled: isBootDiagnosticsEnabled
+        enabled: (properties.?bootDiagnostics.?isEnabled ?? false)
         storageUri: (isBootDiagnosticsStorageAccountNotEmpty ? bootDiagnosticsStorageAccountRef.properties.primaryEndpoints.blob : null)
       }
     }
