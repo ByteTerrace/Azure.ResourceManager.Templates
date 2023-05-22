@@ -9,7 +9,7 @@ param utcNow string = sys.utcNow()
 var isAgentPlatformUpdateEnabled = ('automaticbyplatform' == toLower(operatingSystemPatchSettings.patchMode))
 var isAvailabilitySetNotEmpty = !empty(properties.?availabilitySet ?? {})
 var isBootDiagnosticsStorageAccountNotEmpty = !empty(properties.?bootDiagnostics.?storageAccount ?? {})
-var isIdentitiesNotEmpty = !empty(properties.?identity ?? {})
+var isIdentityNotEmpty = !empty(properties.?identity ?? {})
 var isLinux = ('linux' == toLower(operatingSystemType))
 var isProximityPlacementGroupNotEmpty = !empty(properties.?proximityPlacementGroup ?? {})
 var isSecureBootEnabled = (properties.?isSecureBootEnabled ?? false)
@@ -25,6 +25,9 @@ var operatingSystemDisk = {
   } : null)
   diskSizeGB: (properties.operatingSystem.?disk.?sizeInGigabytes ?? null)
   managedDisk: {
+    diskEncryptionSet: (empty(properties.operatingSystem.?disk.?encryptionSet ?? {}) ? null : {
+      id: resourceId((properties.operatingSystem.disk.encryptionSet.?subscriptionId ?? subscriptionId), (properties.operatingSystem.disk.encryptionSet.?resourceGroupName ?? resourceGroupName), 'Microsoft.Compute/diskEncryptionSets', properties.operatingSystem.disk.encryptionSet.name)
+    })
     storageAccountType: (properties.operatingSystem.?disk.?storageAccountType ?? 'Standard_LRS')
   }
   name: (properties.operatingSystem.?disk.?name ?? '${name}-Disk00000')
@@ -145,7 +148,7 @@ resource runCommands 'Microsoft.Compute/virtualMachines/runCommands@2023-03-01' 
   tags: script.tags
 }]
 resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
-  identity: (isIdentitiesNotEmpty ? {
+  identity: (isIdentityNotEmpty ? {
     type: properties.identity.type
     userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty ? toObject(userAssignedIdentities, identity => identity.id, identity => {}) : null)
   } : null)
@@ -200,12 +203,27 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
     securityProfile: {
       encryptionAtHost: (properties.?isEncryptionAtHostEnabled ?? null)
       securityType: (isSecureBootEnabled ? 'TrustedLaunch' : null)
-      uefiSettings: {
-        secureBootEnabled: isSecureBootEnabled
-        vTpmEnabled: isSecureBootEnabled
-      }
+      uefiSettings: (isSecureBootEnabled ? {
+        secureBootEnabled: true
+        vTpmEnabled: true
+      } : null)
     }
     storageProfile: {
+      dataDisks: [for (disk, index) in properties.?dataDisks: {
+        caching: (disk.?cachingMode ?? 'None')
+        createOption: (disk.?createOption ?? 'Empty')
+        deleteOption: (disk.?deleteOption ?? 'Delete')
+        diskSizeGB: disk.sizeInGigabytes
+        lun: index
+        managedDisk: {
+          diskEncryptionSet: (contains(disk, 'encryptionSet') ? {
+            id: resourceId((disk.encryptionSet.?subscriptionId ?? subscriptionId), (disk.encryptionSet.?resourceGroupName ?? resourceGroupName), 'Microsoft.Compute/diskEncryptionSets', disk.encryptionSet.name)
+          } : null)
+          storageAccountType: (disk.?storageAccountType ?? 'Standard_LRS')
+        }
+        name: (disk.?name ?? '${name}-Disk${padLeft((index + 1), 5, '0')}')
+        writeAcceleratorEnabled: (disk.?isWriteAcceleratorEnabled ?? null)
+      }]
       imageReference: (properties.?imageReference ?? null)
       osDisk: operatingSystemDisk
     }
