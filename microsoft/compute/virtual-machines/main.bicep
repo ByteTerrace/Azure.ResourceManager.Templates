@@ -13,6 +13,7 @@ var isAvailabilitySetNotEmpty = !empty(properties.?availabilitySet ?? {})
 var isBootDiagnosticsStorageAccountNotEmpty = !empty(properties.?bootDiagnostics.?storageAccount ?? {})
 var isCertificatesNotEmpty = !empty(certificates)
 var isDiskEncryptionSetNotEmpty = !empty(properties.?diskEncryptionSet ?? {})
+var isGuestAgentEnabled = (properties.?isGuestAgentEnabled ?? true)
 var isGuestAttestationEnabled = (properties.?isGuestAttestationEnabled ?? (isSecureBootEnabled && isVirtualTrustedPlatformModuleEnabled))
 var isIdentityNotEmpty = !empty(identity)
 var isLinux = ('linux' == toLower(operatingSystemType))
@@ -102,6 +103,7 @@ resource keyVaultIntegration 'Microsoft.Compute/virtualMachines/extensions@2023-
         msiEndpoint: 'http://169.254.169.254/metadata/identity/oauth2/token'
       }
       secretsManagementSettings: {
+        linkOnRenewal: (isWindows ? true : null)
         observedCertificates: [for (certificate, index) in certificates: (isWindows ? {
           accounts: (certificate.value.?accounts ?? null)
           certificateStoreLocation: (certificate.value.?location ?? 'CurrentUser')
@@ -202,22 +204,22 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
     availabilitySet: (isAvailabilitySetNotEmpty ? { id: availabilitySetRef.id } : null)
     diagnosticsProfile: {
       bootDiagnostics: {
-        enabled: (properties.?bootDiagnostics.?isEnabled ?? false)
+        enabled: (properties.?bootDiagnostics.?isEnabled ?? isBootDiagnosticsStorageAccountNotEmpty)
         storageUri: (isBootDiagnosticsStorageAccountNotEmpty ? bootDiagnosticsStorageAccountRef.properties.primaryEndpoints.blob : null)
       }
     }
-    extensionsTimeBudget: 'PT1H30M'
+    extensionsTimeBudget: 'PT47M'
     hardwareProfile: {
       vmSize: properties.sku.name
     }
     licenseType: (properties.?licenseType ?? null)
     networkProfile: {
-      networkApiVersion: '2020-11-01'
+      networkApiVersion: ((0 != length(filter(properties.networkInterfaces, interface => !contains(interface, 'name')))) ? '2020-11-01' : null)
       networkInterfaceConfigurations: [for (interface, index) in filter(properties.networkInterfaces, interface => !contains(interface, 'name')): {
         name: '${name}-Nic-00000'
         properties: {
           deleteOption: 'Delete'
-          disableTcpStateTracking: (contains(properties, 'isTcpStateTrackingEnabled') ? !interface.isTcpStateTrackingEnabled : null)
+          disableTcpStateTracking: !(interface.?isTcpStateTrackingEnabled ?? true)
           dnsSettings: {
             dnsServers: (interface.?dnsServers ?? [])
           }
@@ -226,7 +228,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
           } : null)
           enableAcceleratedNetworking: (interface.?isAcceleratedNetworkingEnabled ?? true)
           enableFpga: (interface.?isFpgaNetworkingEnabled ?? null)
-          enableIPForwarding: (interface.?isIpForwardingEnabled ?? null)
+          enableIPForwarding: (interface.?isIpForwardingEnabled ?? false)
           ipConfigurations: map(range(0, length(interface.ipConfigurations)), index => {
             name: (interface.ipConfigurations[index].?name ?? index)
             properties: {
@@ -264,17 +266,17 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
           assessmentMode: operatingSystemPatchSettings.assessmentMode
           patchMode: operatingSystemPatchSettings.patchMode
         }
-        provisionVMAgent: true
+        provisionVMAgent: isGuestAgentEnabled
       } : null)
       windowsConfiguration: (isWindows ? {
         enableAutomaticUpdates: ('manual' != toLower(operatingSystemPatchSettings.patchMode))
         enableVMAgentPlatformUpdates: isAgentPlatformUpdateEnabled
-        patchSettings: union(operatingSystemPatchSettings, {
+        patchSettings: {
           assessmentMode: operatingSystemPatchSettings.assessmentMode
           enableHotpatching: (properties.operatingSystem.?patchSettings.?isHotPatchingEnabled ?? isAgentPlatformUpdateEnabled)
           patchMode: operatingSystemPatchSettings.patchMode
-        })
-        provisionVMAgent: true
+        }
+        provisionVMAgent: isGuestAgentEnabled
         timeZone: (properties.operatingSystem.?timeZone ?? null)
       } : null)
     }
@@ -288,7 +290,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
       } : null)
     }
     storageProfile: {
-      dataDisks: [for (disk, index) in properties.?dataDisks: {
+      dataDisks: [for (disk, index) in (properties.?dataDisks ?? []): {
         caching: (disk.?cachingMode ?? 'None')
         createOption: (disk.?createOption ?? 'Empty')
         deleteOption: (disk.?deleteOption ?? 'Delete')
@@ -298,7 +300,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
           diskEncryptionSet: (isDiskEncryptionSetNotEmpty ? { id: diskEncryptionSetRef.id } : null)
           storageAccountType: (disk.?storageAccountType ?? 'Standard_LRS')
         }
-        name: (disk.?name ?? '${name}-Disk${padLeft((index + 1), 5, '0')}')
+        name: (disk.?name ?? '${name}-Disk-${padLeft((index + 1), 5, '0')}')
         writeAcceleratorEnabled: (disk.?isWriteAcceleratorEnabled ?? null)
       }]
       imageReference: (properties.?imageReference ?? null)
