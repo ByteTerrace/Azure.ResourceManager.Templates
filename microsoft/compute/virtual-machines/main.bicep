@@ -9,8 +9,10 @@ param utcNow string = sys.utcNow()
 var certificates = items(properties.?certificates ?? {})
 var identity = (properties.?identity ?? {})
 var isAgentPlatformUpdateEnabled = ('automaticbyplatform' == toLower(operatingSystemPatchSettings.patchMode))
+var isAutomaticShutdownNotEmpty = !empty(properties.?automaticShutdown ?? {})
 var isAvailabilitySetNotEmpty = !empty(properties.?availabilitySet ?? {})
 var isBootDiagnosticsStorageAccountNotEmpty = !empty(properties.?bootDiagnostics.?storageAccount ?? {})
+var isCapacityReservationGroupNotEmpty = !empty(properties.?capacityReservationGroup ?? {})
 var isCertificatesNotEmpty = !empty(certificates)
 var isDiskEncryptionSetNotEmpty = !empty(properties.?diskEncryptionSet ?? {})
 var isGuestAgentEnabled = (properties.?isGuestAgentEnabled ?? true)
@@ -19,8 +21,10 @@ var isIdentityNotEmpty = !empty(identity)
 var isLinux = ('linux' == toLower(operatingSystemType))
 var isProximityPlacementGroupNotEmpty = !empty(properties.?proximityPlacementGroup ?? {})
 var isSecureBootEnabled = (properties.?isSecureBootEnabled ?? true)
+var isSpotSettingsNotEmpty = !empty(properties.?spotSettings ?? {})
 var isSystemAssignedIdentityEnabled = contains((identity.?type ?? ''), 'systemassigned')
 var isUserAssignedIdentitiesNotEmpty = !empty(userAssignedIdentities)
+var isVirtualMachineScaleSetNotEmpty = !empty(properties.?virtualMachineScaleSet ?? {})
 var isVirtualTrustedPlatformModuleEnabled = (properties.?isVirtualTrustedPlatformModuleEnabled ?? true)
 var isWindows = ('windows' == toLower(operatingSystemType))
 var operatingSystemPatchSettings = {
@@ -59,6 +63,24 @@ var userAssignedIdentities = sort(map(range(0, length(identity.?userAssignedIden
   value: identity.userAssignedIdentities[index]
 }), (x, y) => (x.index < y.index))
 
+resource automaticShutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = if (isAutomaticShutdownNotEmpty) {
+  location: location
+  name: 'shutdown-computevm-${name}'
+  properties: {
+    dailyRecurrence: (properties.automaticShutdown.?dailyRecurrence ?? null)
+    hourlyRecurrence: (properties.automaticShutdown.?hourlyRecurrence ?? null)
+    notificationSettings: (contains(properties.automaticShutdown, 'notificationSettings') ? {
+      emailRecipient: (contains(properties.automaticShutdown.notificationSettings, 'emailRecipients') ? join(properties.automaticShutdown.notificationSettings.emailRecipients, ';') : null)
+      webhookUrl: (properties.automaticShutdown.notificationSettings.?webhookUrl ?? null)
+    } : null)
+    status: ((properties.automaticShutdown.?isEnabled ?? isAutomaticShutdownNotEmpty) ? 'Enabled' : 'Disabled')
+    targetResourceId: virtualMachine.id
+    taskType: 'ComputeVmShutdownTask'
+    timeZoneId: properties.automaticShutdown.timeZone
+    weeklyRecurrence: (properties.automaticShutdown.?weeklyRecurrence ?? null)
+  }
+  tags: tags
+}
 resource availabilitySetRef 'Microsoft.Compute/availabilitySets@2023-03-01' existing = if (isAvailabilitySetNotEmpty) {
   name: properties.availabilitySet.name
   scope: resourceGroup((properties.availabilitySet.?subscriptionId ?? subscriptionId), (properties.availabilitySet.?resourceGroupName ?? resourceGroupName))
@@ -66,6 +88,10 @@ resource availabilitySetRef 'Microsoft.Compute/availabilitySets@2023-03-01' exis
 resource bootDiagnosticsStorageAccountRef 'Microsoft.Storage/storageAccounts@2022-09-01' existing = if (isBootDiagnosticsStorageAccountNotEmpty) {
   name: properties.bootDiagnostics.storageAccount.name
   scope: resourceGroup((properties.bootDiagnostics.?subscriptionId ?? subscriptionId), (properties.bootDiagnostics.?resourceGroupName ?? resourceGroupName))
+}
+resource capacityReservationGroupRef 'Microsoft.Compute/capacityReservationGroups@2023-03-01' existing = if (isCapacityReservationGroupNotEmpty) {
+  name: properties.capacityReservationGroup.name
+  scope: resourceGroup((properties.capacityReservationGroup.?subscriptionId ?? subscriptionId), (properties.capacityReservationGroup.?resourceGroupName ?? resourceGroupName))
 }
 resource certificatesRef 'Microsoft.KeyVault/vaults/secrets@2023-02-01' existing = [for certificate in certificates: {
   name: '${certificate.value.keyVault.name}/${certificate.key}'
@@ -202,12 +228,17 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
       ultraSSDEnabled: (properties.?isUltraSsdEnabled ?? null)
     }
     availabilitySet: (isAvailabilitySetNotEmpty ? { id: availabilitySetRef.id } : null)
+    capacityReservation: (isCapacityReservationGroupNotEmpty ? { capacityReservationGroup: { id: capacityReservationGroupRef.id } } : null)
     diagnosticsProfile: {
       bootDiagnostics: {
         enabled: (properties.?bootDiagnostics.?isEnabled ?? isBootDiagnosticsStorageAccountNotEmpty)
         storageUri: (isBootDiagnosticsStorageAccountNotEmpty ? bootDiagnosticsStorageAccountRef.properties.primaryEndpoints.blob : null)
       }
     }
+    evictionPolicy: (isSpotSettingsNotEmpty ? properties.spotSettings.evictionPolicy : null)
+    billingProfile: (isSpotSettingsNotEmpty ? {
+      maxPrice: (properties.spotSettings.?maximumPrice ?? -1)
+    } : null)
     extensionsTimeBudget: 'PT47M'
     hardwareProfile: {
       vmSize: properties.sku.name
@@ -253,7 +284,13 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
           primary: ((0 == index) && (0 == length(filter(properties.networkInterfaces, interface => contains(interface, 'isPrimary')))))
         }
       }]
-      networkInterfaces: [for (interface, index) in filter(properties.networkInterfaces, interface => contains(interface, 'name')): { id: networkInterfacesRef[index].id }]
+      networkInterfaces: [for (interface, index) in filter(properties.networkInterfaces, interface => contains(interface, 'name')): {
+        id: networkInterfacesRef[index].id
+        properties: {
+          deleteOption: (interface.?deleteOption ?? 'Detach')
+          primary: ((0 == index) && (0 == length(filter(properties.networkInterfaces, interface => contains(interface, 'isPrimary')))))
+        }
+      }]
     }
     osProfile: {
       adminPassword: (properties.?administrator.?password ?? '${guid}|${utcNow}!')
@@ -280,6 +317,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
         timeZone: (properties.operatingSystem.?timeZone ?? null)
       } : null)
     }
+    priority: (isSpotSettingsNotEmpty ? 'Spot' : null)
     proximityPlacementGroup: (isProximityPlacementGroupNotEmpty ? { id: proximityPlacementGroupRef.id } : null)
     securityProfile: {
       encryptionAtHost: (properties.?isEncryptionAtHostEnabled ?? null)
@@ -322,6 +360,12 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
         writeAcceleratorEnabled: (properties.operatingSystem.?disk.?isWriteAcceleratorEnabled ?? null)
       }
     }
+    virtualMachineScaleSet: (isVirtualMachineScaleSetNotEmpty ? { id: virtualMachineScaleSet.id } : null)
   }
   tags: tags
+  zones: (properties.?availabilityZones ?? null)
+}
+resource virtualMachineScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2023-03-01' existing = if (isVirtualMachineScaleSetNotEmpty) {
+  name: properties.virtualMachineScaleSet.name
+  scope: resourceGroup((properties.virtualMachineScaleSet.?subscriptionId ?? subscriptionId), (properties.virtualMachineScaleSet.?resourceGroupName ?? resourceGroupName))
 }
