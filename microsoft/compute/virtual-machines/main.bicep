@@ -18,7 +18,7 @@ var isDiskEncryptionSetNotEmpty = !empty(properties.?diskEncryptionSet ?? {})
 var isGuestAgentEnabled = (properties.?isGuestAgentEnabled ?? true)
 var isGuestAttestationEnabled = (properties.?isGuestAttestationEnabled ?? (isSecureBootEnabled && isVirtualTrustedPlatformModuleEnabled))
 var isIdentityNotEmpty = !empty(identity)
-var isLinux = ('linux' == toLower(operatingSystemType))
+var isLinux = ('linux' == toLower(properties.operatingSystem.type))
 var isProximityPlacementGroupNotEmpty = !empty(properties.?proximityPlacementGroup ?? {})
 var isSecureBootEnabled = (properties.?isSecureBootEnabled ?? true)
 var isSpotSettingsNotEmpty = !empty(properties.?spotSettings ?? {})
@@ -26,12 +26,11 @@ var isSystemAssignedIdentityEnabled = contains((identity.?type ?? ''), 'systemas
 var isUserAssignedIdentitiesNotEmpty = !empty(userAssignedIdentities)
 var isVirtualMachineScaleSetNotEmpty = !empty(properties.?virtualMachineScaleSet ?? {})
 var isVirtualTrustedPlatformModuleEnabled = (properties.?isVirtualTrustedPlatformModuleEnabled ?? true)
-var isWindows = ('windows' == toLower(operatingSystemType))
+var isWindows = ('windows' == toLower(properties.operatingSystem.type))
 var operatingSystemPatchSettings = {
   assessmentMode: (properties.operatingSystem.?patchSettings.?assessmentMode ?? 'AutomaticByPlatform')
   patchMode: (properties.operatingSystem.?patchSettings.?patchMode ?? 'AutomaticByPlatform')
 }
-var operatingSystemType = (properties.operatingSystem.?type ?? 'Windows')
 var resourceGroupName = resourceGroup().name
 var roleAssignments = map((properties.?roleAssignments ?? []), assignment => {
   description: (assignment.?description ?? 'Created via automation.')
@@ -109,7 +108,7 @@ resource guestAttestation 'Microsoft.Compute/virtualMachines/extensions@2023-03-
   properties: {
     autoUpgradeMinorVersion: true
     enableAutomaticUpgrade: true
-    publisher: 'Microsoft.Azure.Security.${operatingSystemType}Attestation'
+    publisher: 'Microsoft.Azure.Security.${properties.operatingSystem.type}Attestation'
     type: 'GuestAttestation'
     typeHandlerVersion: (isWindows ? '1.0' : (isLinux ? '1.0' : null))
   }
@@ -141,7 +140,7 @@ resource keyVaultIntegration 'Microsoft.Compute/virtualMachines/extensions@2023-
       }
     }
     suppressFailures: false
-    type: 'KeyVaultFor${operatingSystemType}'
+    type: 'KeyVaultFor${properties.operatingSystem.type}'
     typeHandlerVersion: (isWindows ? '3.1' : (isLinux ? '2.2' : null))
   }
   tags: tags
@@ -247,7 +246,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
     networkProfile: {
       networkApiVersion: ((0 != length(filter(properties.networkInterfaces, interface => !contains(interface, 'name')))) ? '2020-11-01' : null)
       networkInterfaceConfigurations: [for (interface, index) in filter(properties.networkInterfaces, interface => !contains(interface, 'name')): {
-        name: '${name}-Nic-00000'
+        name: '${name}-Nic-${padLeft(index, 5, '0')}'
         properties: {
           deleteOption: 'Delete'
           disableTcpStateTracking: !(interface.?isTcpStateTrackingEnabled ?? true)
@@ -272,23 +271,35 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
               loadBalancerBackendAddressPools: flatten(map((interface.ipConfigurations[index].?loadBalancers ?? []), loadBalancer => map(loadBalancer.backEndAddressPoolNames, name => {
                 id: resourceId((loadBalancer.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/loadBalancers/backendAddressPools', loadBalancer.name, name)
               })))
-              primary: ((0 == index) && (0 == length(filter(interface.ipConfigurations, configuration => contains(configuration, 'isPrimary')))))
+              primary: (interface.ipConfigurations[index].?isPrimary ?? ((0 == index) && (0 == length(filter(interface.ipConfigurations, configuration => contains(configuration, 'isPrimary'))))))
               privateIPAddressVersion: (interface.ipConfigurations[index].privateIpAddress.?version ?? 'IPv4')
-              publicIPAddressConfiguration: null
+              publicIPAddressConfiguration: (contains(interface.ipConfigurations[index], 'publicIpAddress') ? {
+                name: '${name}-Pip-${padLeft(index, 5, '0')}'
+                properties: {
+                  deleteOption: 'Delete'
+                  dnsSettings: (contains(interface.ipConfigurations[index].publicIpAddress, 'domainNameLabel') ? {
+                    domainNameLabel: interface.ipConfigurations[index].publicIpAddress.domainNameLabel
+                  } : null)
+                  idleTimeoutInMinutes: (interface.ipConfigurations[index].publicIpAddress.?idleTimeoutInMinutes ?? null)
+                  publicIPAddressVersion: (interface.ipConfigurations[index].publicIpAddress.?version ?? 'IPv4')
+                  publicIPAllocationMethod: (interface.ipConfigurations[index].publicIpAddress.?allocationMethod ?? 'Static')
+                }
+                sku: (interface.ipConfigurations[index].publicIpAddress.?sku ?? { name: 'Standard' })
+              } : null)
               subnet: { id: resourceId((interface.ipConfigurations[index].privateIpAddress.subnet.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/virtualNetworks/subnets', interface.ipConfigurations[index].privateIpAddress.subnet.virtualNetworkName, interface.ipConfigurations[index].privateIpAddress.subnet.name) }
             }
           })
           networkSecurityGroup: (contains(interface, 'networkSecurityGroup') ? {
             id: resourceId((interface.networkSecurityGroup.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/networkSecurityGroups', interface.networkSecurityGroup.name)
           } : null)
-          primary: ((0 == index) && (0 == length(filter(properties.networkInterfaces, interface => contains(interface, 'isPrimary')))))
+          primary: (interface.?isPrimary ?? ((0 == index) && (0 == length(filter(properties.networkInterfaces, interface => contains(interface, 'isPrimary'))))))
         }
       }]
       networkInterfaces: [for (interface, index) in filter(properties.networkInterfaces, interface => contains(interface, 'name')): {
         id: networkInterfacesRef[index].id
         properties: {
           deleteOption: (interface.?deleteOption ?? 'Detach')
-          primary: ((0 == index) && (0 == length(filter(properties.networkInterfaces, interface => contains(interface, 'isPrimary')))))
+          primary: (interface.?isPrimary ?? ((0 == index) && (0 == length(filter(properties.networkInterfaces, interface => contains(interface, 'isPrimary'))))))
         }
       }]
     }
@@ -296,7 +307,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
       adminPassword: (properties.?administrator.?password ?? '${guid}|${utcNow}!')
       adminUsername: (properties.?administrator.?name ?? uniqueString(toLower(name)))
       allowExtensionOperations: true
-      computerName: (properties.?computerName ?? name)
+      computerName: (properties.?operatingSystem.?computerName ?? name)
       linuxConfiguration: (isLinux ? {
         enableVMAgentPlatformUpdates: isAgentPlatformUpdateEnabled
         patchSettings: {
@@ -356,7 +367,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
           storageAccountType: (properties.operatingSystem.?disk.?storageAccountType ?? 'Standard_LRS')
         }
         name: (properties.operatingSystem.?disk.?name ?? '${name}-Disk-00000')
-        osType: operatingSystemType
+        osType: properties.operatingSystem.type
         writeAcceleratorEnabled: (properties.operatingSystem.?disk.?isWriteAcceleratorEnabled ?? null)
       }
     }
