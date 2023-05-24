@@ -1,9 +1,11 @@
 {
+    "experimentalFeaturesEnabled": {
+        "userDefinedTypes": false
+    },
     "moduleAliases": {
         "br": {
-            "main": {
-                "registry": "tlkcr00000.azurecr.io",
-                "modulePath": "azure/bicep"
+            "bytrc": {
+                "registry": "byteterrace.azurecr.io"
             }
         }
     }
