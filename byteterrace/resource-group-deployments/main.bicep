@@ -56,7 +56,8 @@ type diskEncryptionSet = {
   tags: object?
 }
 type keyVault = {
-  firewallRules: string[]
+  firewallRules: string[]?
+  isAllowTrustedMicrosoftServicesEnabled: bool?
   isDiskEncryptionEnabled: bool?
   isPublicNetworkAccessEnabled: bool?
   isPurgeProtectionEnabled: bool?
@@ -352,6 +353,7 @@ module keyVaults 'br/bytrc:microsoft/key-vault/vaults:0.0.0' = [for (vault, inde
     name: (vault.?name ?? 'kv${padLeft(index, 5, '0')}')
     properties: {
       firewallRules: (vault.?firewallRules ?? null)
+      isAllowTrustedMicrosoftServicesEnabled: (vault.?isAllowTrustedMicrosoftServicesEnabled ?? null)
       isDiskEncryptionEnabled: (vault.?isDiskEncryptionEnabled ?? null)
       isPublicNetworkAccessEnabled: (vault.?isPublicNetworkAccessEnabled ?? null)
       isPurgeProtectionEnabled: (vault.?isPurgeProtectionEnabled ?? null)

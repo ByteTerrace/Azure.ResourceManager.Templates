@@ -43,6 +43,24 @@ module sandbox 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
           name: 'byteterrace'
         }
       ]
+      keyVaults: [
+        {
+          isAllowTrustedMicrosoftServicesEnabled: true
+          isPublicNetworkAccessEnabled: true
+          name: 'byteterrace'
+          sku: {
+            name: 'Premium'
+          }
+          virtualNetworkRules: [
+            {
+              subnet: {
+                name: 'AzureDevOpsAgents-0000'
+                virtualNetworkName: 'byteterrace'
+              }
+            }
+          ]
+        }
+      ]
       proximityPlacementGroups: [
         {
           name: 'byteterrace'
