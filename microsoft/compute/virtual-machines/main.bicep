@@ -32,11 +32,6 @@ var operatingSystemPatchSettings = {
   patchMode: (properties.operatingSystem.?patchSettings.?patchMode ?? 'AutomaticByPlatform')
 }
 var resourceGroupName = resourceGroup().name
-var roleAssignments = map((properties.?roleAssignments ?? []), assignment => {
-  description: (assignment.?description ?? 'Created via automation.')
-  principalId: assignment.principalId
-  roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', assignment.roleDefinitionId)
-})
 var scripts = sort(map(range(0, length(properties.?scripts ?? [])), index => {
   blobPath: (properties.scripts[index].?blobPath ?? '')
   errorBlobPath: (properties.scripts[index].?errorBlobPath ?? '')
@@ -153,7 +148,11 @@ resource proximityPlacementGroupRef 'Microsoft.Compute/availabilitySets@2023-03-
   name: properties.proximityPlacementGroup.name
   scope: resourceGroup((properties.proximityPlacementGroup.?subscriptionId ?? subscriptionId), (properties.proximityPlacementGroup.?resourceGroupName ?? resourceGroupName))
 }
-resource roleAssignmentsRef 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in roleAssignments: {
+resource roleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in map((properties.?roleAssignments ?? []), assignment => {
+  description: (assignment.?description ?? 'Created via automation.')
+  principalId: assignment.principalId
+  roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', assignment.roleDefinitionId)
+}): {
   name: sys.guid(virtualMachine.id, assignment.roleDefinitionId, assignment.principalId)
   properties: {
     description: assignment.description
@@ -216,7 +215,7 @@ resource userAssignedIdentitiesRef 'Microsoft.ManagedIdentity/userAssignedIdenti
 }]
 resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
   identity: (isIdentityNotEmpty ? {
-    type: identity.type
+    type: ((isUserAssignedIdentitiesNotEmpty && !contains(identity, 'type')) ? 'UserAssigned' : identity.type)
     userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty ? toObject(userAssignedIdentities, identity => identity.id, identity => {}) : null)
   } : null)
   location: location

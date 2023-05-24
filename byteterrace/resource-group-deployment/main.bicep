@@ -1,9 +1,72 @@
+type applicationSecurityGroup = {
+  location: string?
+  name: string?
+  tags: object?
+}
+type capacityReservationGroup = {
+  availabilityZones: string[]?
+  location: string?
+  name: string?
+  reservations: {
+    availabilityZones: string[]?
+    name: string?
+    sku: resourceSku
+    tags: object?
+  }[]?
+  tags: object?
+}
+type containerRegistry = {
+  firewallRules: string[]?
+  identity: resourceIdentity?
+  isAllowTrustedMicrosoftServicesEnabled: bool?
+  isAnonymousPullEnabled: bool?
+  isContentTrustPolicyEnabled: bool?
+  isDedicatedDataEndpointEnabled: bool?
+  isExportPolicyEnabled: bool?
+  isPublicNetworkAccessEnabled: bool?
+  isQuarantinePolicyEnabled: bool?
+  isZoneRedundancyEnabled: bool?
+  location: string?
+  name: string?
+  roleAssignments: array?
+  sku: resourceSku
+  tags: object?
+}
+type diskEncryptionSet = {
+  encryptionType: ('ConfidentialVmEncryptedWithCustomerKey' | 'EncryptionAtRestWithCustomerKey' | 'EncryptionAtRestWithPlatformAndCustomerKeys')
+  identity: resourceIdentity
+  keyName: string
+  location: string?
+  name: string?
+  tags: object?
+}
+type keyVault = {
+  firewallRules: string[]
+  isDiskEncryptionEnabled: bool?
+  isPublicNetworkAccessEnabled: bool?
+  isPurgeProtectionEnabled: bool?
+  isTemplateDeploymentEnabled: bool?
+  isVirtualMachineDeploymentEnabled: bool?
+  location: string?
+  name: string?
+  sku: resourceSku?
+  softDeleteRetentionInDays: int?
+  tags: object?
+  tenantId: string?
+  virtualNetworkRules: virtualNetworkRule[]?
+}
 type managedDiskStorageAccountType = ('Premium_LRS' | 'Premium_ZRS' | 'PremiumV2_LRS' | 'Standard_LRS' | 'StandardSSD_LRS' | 'StandardSSD_ZRS' | 'UltraSSD_LRS')
 type parametersInfo = {
+  applicationSecurityGroup: applicationSecurityGroup[]?
+  capacityReservationGroups: capacityReservationGroup[]?
+  containerRegistries: containerRegistry[]?
+  diskEncryptionSets: diskEncryptionSet[]?
+  keyVaults: keyVault[]?
+  userAssignedIdentities: userAssignedIdentity[]?
   virtualMachines: virtualMachine[]?
 }
 type resourceIdentity = {
-  type: string
+  type: string?
   userAssignedIdentities: resourceReference[]?
 }
 type resourceReference = {
@@ -86,14 +149,14 @@ type virtualMachine = {
     isTcpStateTrackingEnabled: bool?
     ipConfigurations: {
       applicationGateways: {
-        backEndAddressPoolNames: string[]?
+        backEndAddressPoolNames: string[]
         name: string
         resourceGroupName: string?
       }[]?
       applicationSecurityGroups: resourceReference[]?
       isPrimary: bool?
       loadBalancers: {
-        backEndAddressPoolNames: string[]?
+        backEndAddressPoolNames: string[]
         name: string
         resourceGroupName: string?
       }[]?
@@ -148,6 +211,15 @@ type virtualMachine = {
   }?
   tags: object?
   virtualMachineScaleSet: resourceReference?
+}
+type virtualNetworkRule = {
+  name: string?
+  subnet: subnetReference
+}
+type userAssignedIdentity = {
+  location: string?
+  name: string?
+  tags: object?
 }
 
 param location string = resourceGroup().location
