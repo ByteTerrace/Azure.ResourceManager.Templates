@@ -271,7 +271,7 @@ module applicationSecurityGroups 'br/bytrc:microsoft/network/application-securit
     tags: (group.?tags ?? tags)
   }
 }]
-module capacityReservationGroups 'br/bytrc:microsoft/compute/capacity-reservation-groups:0.0.0' = [for (group, index) in (parameters.?proximityPlacementGroups ?? []): {
+module capacityReservationGroups 'br/bytrc:microsoft/compute/capacity-reservation-groups:0.0.0' = [for (group, index) in (parameters.?capacityReservationGroups ?? []): {
   name: '${deployment.name}-crg-${padLeft(index, 3, '0')}'
   params: {
     location: (group.?location ?? deployment.location)
@@ -327,7 +327,7 @@ module diskEncryptionSets 'br/bytrc:microsoft/compute/disk-encryption-sets:0.0.0
     tags: (set.?tags ?? tags)
   }
 }]
-module keyVaults 'br/bytrc:microsoft/key-vault/vaults:0.0.0' = [for (vault, index) in (parameters.?proximityPlacementGroups ?? []): {
+module keyVaults 'br/bytrc:microsoft/key-vault/vaults:0.0.0' = [for (vault, index) in (parameters.?keyVaults ?? []): {
   name: '${deployment.name}-kv-${padLeft(index, 3, '0')}'
   params: {
     location: (vault.?location ?? deployment.location)
