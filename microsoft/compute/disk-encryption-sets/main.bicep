@@ -4,6 +4,7 @@ param name string
 param properties object
 param tags object = {}
 
+var identity = (properties.?identity ?? {})
 var isIdentityNotEmpty = !empty(properties.?identity ?? {})
 var isUserAssignedIdentitiesNotEmpty = !empty(userAssignedIdentities)
 var resourceGroupName = resourceGroup().name
@@ -15,7 +16,7 @@ var userAssignedIdentities = sort(map(range(0, length(properties.?identity.?user
 
 resource diskEncryptionSet 'Microsoft.Compute/diskEncryptionSets@2022-07-02' = {
   identity: (isIdentityNotEmpty ? {
-    type: properties.identity.type
+    type: ((isUserAssignedIdentitiesNotEmpty && !contains(identity, 'type')) ? 'UserAssigned' : identity.type)
     userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty ? toObject(userAssignedIdentities, identity => identity.id, identity => {}) : null)
   } : null)
   location: location
