@@ -3,6 +3,14 @@ type applicationSecurityGroup = {
   name: string?
   tags: object?
 }
+type availabilitySet = {
+  faultDomainCount: int
+  location: string?
+  name: string?
+  proximityPlacementGroup: resourceReference?
+  tags: object?
+  updateDomainCount: int
+}
 type capacityReservationGroup = {
   availabilityZones: string[]?
   location: string?
@@ -57,13 +65,20 @@ type keyVault = {
 }
 type managedDiskStorageAccountType = ('Premium_LRS' | 'Premium_ZRS' | 'PremiumV2_LRS' | 'Standard_LRS' | 'StandardSSD_LRS' | 'StandardSSD_ZRS' | 'UltraSSD_LRS')
 type parametersInfo = {
-  applicationSecurityGroup: applicationSecurityGroup[]?
+  applicationSecurityGroups: applicationSecurityGroup[]?
+  availabilitySets: availabilitySet[]?
   capacityReservationGroups: capacityReservationGroup[]?
   containerRegistries: containerRegistry[]?
   diskEncryptionSets: diskEncryptionSet[]?
   keyVaults: keyVault[]?
+  proximityPlacementGroups: proximityPlacementGroup[]?
   userAssignedIdentities: userAssignedIdentity[]?
   virtualMachines: virtualMachine[]?
+}
+type proximityPlacementGroup = {
+  location: string?
+  name: string?
+  tags: object?
 }
 type resourceIdentity = {
   type: string?
