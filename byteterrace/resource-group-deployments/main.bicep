@@ -23,6 +23,12 @@ type capacityReservationGroup = {
   }[]?
   tags: object?
 }
+type computeGallery = {
+  description: string?
+  location: string?
+  name: string?
+  tags: object?
+}
 type containerRegistry = {
   firewallRules: string[]?
   identity: resourceIdentity?
@@ -66,10 +72,11 @@ type keyVault = {
   virtualNetworkRules: virtualNetworkRule[]?
 }
 type managedDiskStorageAccountType = ('Premium_LRS' | 'Premium_ZRS' | 'PremiumV2_LRS' | 'Standard_LRS' | 'StandardSSD_LRS' | 'StandardSSD_ZRS' | 'UltraSSD_LRS')
-type parametersInfo = {
+type propertiesInfo = {
   applicationSecurityGroups: applicationSecurityGroup[]?
   availabilitySets: availabilitySet[]?
   capacityReservationGroups: capacityReservationGroup[]?
+  computeGalleries: computeGallery[]?
   containerRegistries: containerRegistry[]?
   diskEncryptionSets: diskEncryptionSet[]?
   keyVaults: keyVault[]?
@@ -241,7 +248,7 @@ type userManagedIdentity = {
 }
 
 param location string = resourceGroup().location
-param parameters parametersInfo = {}
+param properties propertiesInfo = {}
 param tags object = {}
 
 var deployment = {
@@ -249,7 +256,7 @@ var deployment = {
   name: az.deployment().name
 }
 
-module availabilitySets 'br/bytrc:microsoft/compute/availability-sets:0.0.0' = [for (set, index) in (parameters.?availabilitySets ?? []): {
+module availabilitySets 'br/bytrc:microsoft/compute/availability-sets:0.0.0' = [for (set, index) in (properties.?availabilitySets ?? []): {
   dependsOn: [ proximityPlacementGroups ]
   name: '${deployment.name}-as-${padLeft(index, 3, '0')}'
   params: {
@@ -263,7 +270,7 @@ module availabilitySets 'br/bytrc:microsoft/compute/availability-sets:0.0.0' = [
     tags: (set.?tags ?? tags)
   }
 }]
-module applicationSecurityGroups 'br/bytrc:microsoft/network/application-security-groups:0.0.0' = [for (group, index) in (parameters.?applicationSecurityGroups ?? []): {
+module applicationSecurityGroups 'br/bytrc:microsoft/network/application-security-groups:0.0.0' = [for (group, index) in (properties.?applicationSecurityGroups ?? []): {
   name: '${deployment.name}-asg-${padLeft(index, 3, '0')}'
   params: {
     location: (group.?location ?? deployment.location)
@@ -271,7 +278,7 @@ module applicationSecurityGroups 'br/bytrc:microsoft/network/application-securit
     tags: (group.?tags ?? tags)
   }
 }]
-module capacityReservationGroups 'br/bytrc:microsoft/compute/capacity-reservation-groups:0.0.0' = [for (group, index) in (parameters.?capacityReservationGroups ?? []): {
+module capacityReservationGroups 'br/bytrc:microsoft/compute/capacity-reservation-groups:0.0.0' = [for (group, index) in (properties.?capacityReservationGroups ?? []): {
   name: '${deployment.name}-crg-${padLeft(index, 3, '0')}'
   params: {
     location: (group.?location ?? deployment.location)
@@ -283,7 +290,18 @@ module capacityReservationGroups 'br/bytrc:microsoft/compute/capacity-reservatio
     tags: (group.?tags ?? tags)
   }
 }]
-module containerRegistries 'br/bytrc:microsoft/container-registry/registries:0.0.0' = [for (registry, index) in (parameters.?containerRegistries ?? []): {
+module computeGalleries 'br/bytrc:microsoft/compute/galleries:0.0.0' = [for (gallery, index) in (properties.?computeGalleries ?? []): {
+  name: '${deployment.name}-cg-${padLeft(index, 3, '0')}'
+  params: {
+    location: (gallery.?location ?? deployment.location)
+    name: (gallery.?name ?? 'cg${padLeft(index, 5, '0')}')
+    properties: {
+      description: (gallery.?description ?? null)
+    }
+    tags: (gallery.?tags ?? tags)
+  }
+}]
+module containerRegistries 'br/bytrc:microsoft/container-registry/registries:0.0.0' = [for (registry, index) in (properties.?containerRegistries ?? []): {
   dependsOn: [
     keyVaults
     userManagedIdentities
@@ -309,7 +327,7 @@ module containerRegistries 'br/bytrc:microsoft/container-registry/registries:0.0
     tags: (registry.?tags ?? tags)
   }
 }]
-module diskEncryptionSets 'br/bytrc:microsoft/compute/disk-encryption-sets:0.0.0' = [for (set, index) in (parameters.?diskEncryptionSets ?? []): {
+module diskEncryptionSets 'br/bytrc:microsoft/compute/disk-encryption-sets:0.0.0' = [for (set, index) in (properties.?diskEncryptionSets ?? []): {
   dependsOn: [
     keyVaults
     userManagedIdentities
@@ -327,7 +345,7 @@ module diskEncryptionSets 'br/bytrc:microsoft/compute/disk-encryption-sets:0.0.0
     tags: (set.?tags ?? tags)
   }
 }]
-module keyVaults 'br/bytrc:microsoft/key-vault/vaults:0.0.0' = [for (vault, index) in (parameters.?keyVaults ?? []): {
+module keyVaults 'br/bytrc:microsoft/key-vault/vaults:0.0.0' = [for (vault, index) in (properties.?keyVaults ?? []): {
   name: '${deployment.name}-kv-${padLeft(index, 3, '0')}'
   params: {
     location: (vault.?location ?? deployment.location)
@@ -348,7 +366,7 @@ module keyVaults 'br/bytrc:microsoft/key-vault/vaults:0.0.0' = [for (vault, inde
     tags: (vault.?tags ?? tags)
   }
 }]
-module proximityPlacementGroups 'br/bytrc:microsoft/compute/proximity-placement-groups:0.0.0' = [for (group, index) in (parameters.?proximityPlacementGroups ?? []): {
+module proximityPlacementGroups 'br/bytrc:microsoft/compute/proximity-placement-groups:0.0.0' = [for (group, index) in (properties.?proximityPlacementGroups ?? []): {
   name: '${deployment.name}-ppg-${padLeft(index, 3, '0')}'
   params: {
     location: (group.?location ?? deployment.location)
@@ -356,7 +374,7 @@ module proximityPlacementGroups 'br/bytrc:microsoft/compute/proximity-placement-
     tags: (group.?tags ?? tags)
   }
 }]
-module userManagedIdentities 'br/bytrc:microsoft/managed-identity/user-assigned-identities:0.0.0' = [for (identity, index) in (parameters.?userManagedIdentities ?? []): {
+module userManagedIdentities 'br/bytrc:microsoft/managed-identity/user-assigned-identities:0.0.0' = [for (identity, index) in (properties.?userManagedIdentities ?? []): {
   name: '${deployment.name}-umi-${padLeft(index, 3, '0')}'
   params: {
     location: (identity.?location ?? deployment.location)
@@ -364,11 +382,12 @@ module userManagedIdentities 'br/bytrc:microsoft/managed-identity/user-assigned-
     tags: (identity.?tags ?? tags)
   }
 }]
-module virtualMachines 'br/bytrc:microsoft/compute/virtual-machines:0.0.0' = [for (machine, index) in (parameters.?virtualMachines ?? []): {
+module virtualMachines 'br/bytrc:microsoft/compute/virtual-machines:0.0.0' = [for (machine, index) in (properties.?virtualMachines ?? []): {
   dependsOn: [
     applicationSecurityGroups
     availabilitySets
     capacityReservationGroups
+    computeGalleries
     diskEncryptionSets
     keyVaults
     proximityPlacementGroups
