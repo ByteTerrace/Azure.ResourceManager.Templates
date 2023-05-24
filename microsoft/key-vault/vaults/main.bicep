@@ -10,6 +10,19 @@ var resourceGroupName = resourceGroup().name
 var subscriptionId = subscription().subscriptionId
 var virtualNetworkRules = (properties.?virtualNetworkRules ?? [])
 
+resource roleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in map((properties.?roleAssignments ?? []), assignment => {
+  description: (assignment.?description ?? 'Created via automation.')
+  principalId: assignment.principalId
+  roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', assignment.roleDefinitionId)
+}): {
+  name: sys.guid(vault.id, assignment.roleDefinitionId, assignment.principalId)
+  properties: {
+    description: assignment.description
+    principalId: assignment.principalId
+    roleDefinitionId: any(assignment.roleDefinitionId)
+  }
+  scope: vault
+}]
 resource subnetsRef 'Microsoft.Network/virtualNetworks/subnets@2022-11-01' existing = [for rule in virtualNetworkRules: {
   name: '${rule.subnet.virtualNetworkName}/${rule.subnet.name}'
   scope: resourceGroup((rule.subnet.?subscriptionId ?? subscriptionId), (rule.subnet.?resourceGroupName ?? resourceGroupName))

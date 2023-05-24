@@ -44,6 +44,7 @@ type diskEncryptionSet = {
   encryptionType: ('ConfidentialVmEncryptedWithCustomerKey' | 'EncryptionAtRestWithCustomerKey' | 'EncryptionAtRestWithPlatformAndCustomerKeys')
   identity: resourceIdentity
   keyName: string
+  keyVault: resourceReference?
   location: string?
   name: string?
   tags: object?
@@ -57,7 +58,8 @@ type keyVault = {
   isVirtualMachineDeploymentEnabled: bool?
   location: string?
   name: string?
-  sku: resourceSku?
+  roleAssignments: array?
+  sku: resourceSku
   softDeleteRetentionInDays: int?
   tags: object?
   tenantId: string?
@@ -72,7 +74,7 @@ type parametersInfo = {
   diskEncryptionSets: diskEncryptionSet[]?
   keyVaults: keyVault[]?
   proximityPlacementGroups: proximityPlacementGroup[]?
-  userAssignedIdentities: userAssignedIdentity[]?
+  userManagedIdentities: userManagedIdentity[]?
   virtualMachines: virtualMachine[]?
 }
 type proximityPlacementGroup = {
@@ -192,7 +194,7 @@ type virtualMachine = {
     networkSecurityGroup: resourceReference?
     resourceGroupName: string?
     subscriptionId: string?
-  }[]?
+  }[]
   operatingSystem: {
     administrator: {
       name: string?
@@ -215,11 +217,12 @@ type virtualMachine = {
       patchMode: ('AutomaticByOS' | 'AutomaticByPlatform' | 'Manual')?
     }?
     timeZone: string?
-  }?
+    type: ('Linux' | 'Windows')
+  }
   proximityPlacementGroup: resourceReference?
   roleAssignments: array?
   scripts: array?
-  sku: resourceSku?
+  sku: resourceSku
   spotSettings: {
     evictionPolicy: ('Deallocate' | 'Delete')
     maximumPrice: int?
@@ -231,7 +234,7 @@ type virtualNetworkRule = {
   name: string?
   subnet: subnetReference
 }
-type userAssignedIdentity = {
+type userManagedIdentity = {
   location: string?
   name: string?
   tags: object?
@@ -246,7 +249,131 @@ var deployment = {
   name: az.deployment().name
 }
 
-module virtualMachines '../../microsoft/compute/virtual-machines/main.bicep' = [for (machine, index) in (parameters.?virtualMachines ?? []): {
+module availabilitySets 'br/bytrc:microsoft/compute/availability-sets:0.0.0' = [for (set, index) in (parameters.?availabilitySets ?? []): {
+  dependsOn: [ proximityPlacementGroups ]
+  name: '${deployment.name}-as-${padLeft(index, 3, '0')}'
+  params: {
+    location: (set.?location ?? deployment.location)
+    name: (set.?name ?? 'as${padLeft(index, 5, '0')}')
+    properties: {
+      faultDomainCount: set.faultDomainCount
+      proximityPlacementGroup: (set.?proximityPlacementGroup ?? null)
+      updateDomainCount: set.updateDomainCount
+    }
+    tags: (set.?tags ?? tags)
+  }
+}]
+module applicationSecurityGroups 'br/bytrc:microsoft/network/application-security-groups:0.0.0' = [for (group, index) in (parameters.?applicationSecurityGroups ?? []): {
+  name: '${deployment.name}-asg-${padLeft(index, 3, '0')}'
+  params: {
+    location: (group.?location ?? deployment.location)
+    name: (group.?name ?? 'asg${padLeft(index, 5, '0')}')
+    tags: (group.?tags ?? tags)
+  }
+}]
+module capacityReservationGroups 'br/bytrc:microsoft/compute/capacity-reservation-groups:0.0.0' = [for (group, index) in (parameters.?proximityPlacementGroups ?? []): {
+  name: '${deployment.name}-crg-${padLeft(index, 3, '0')}'
+  params: {
+    location: (group.?location ?? deployment.location)
+    name: (group.?name ?? 'crg${padLeft(index, 5, '0')}')
+    properties: {
+      availabilityZones: (group.?availabilityZones ?? null)
+      reservations: (group.?reservations ?? null)
+    }
+    tags: (group.?tags ?? tags)
+  }
+}]
+module containerRegistries 'br/bytrc:microsoft/container-registry/registries:0.0.0' = [for (registry, index) in (parameters.?containerRegistries ?? []): {
+  dependsOn: [
+    keyVaults
+    userManagedIdentities
+  ]
+  name: '${deployment.name}-cr-${padLeft(index, 3, '0')}'
+  params: {
+    location: (registry.?location ?? deployment.location)
+    name: (registry.?name ?? 'cr${padLeft(index, 5, '0')}')
+    properties: {
+      firewallRules: (registry.?firewallRules ?? null)
+      identity: (registry.?identity ?? null)
+      isAllowTrustedMicrosoftServicesEnabled: (registry.?isAllowTrustedMicrosoftServicesEnabled ?? null)
+      isAnonymousPullEnabled: (registry.?isAnonymousPullEnabled ?? null)
+      isContentTrustPolicyEnabled: (registry.?isContentTrustPolicyEnabled ?? null)
+      isDedicatedDataEndpointEnabled: (registry.?isDedicatedDataEndpointEnabled ?? null)
+      isExportPolicyEnabled: (registry.?isExportPolicyEnabled ?? null)
+      isPublicNetworkAccessEnabled: (registry.?isPublicNetworkAccessEnabled ?? null)
+      isQuarantinePolicyEnabled: (registry.?isQuarantinePolicyEnabled ?? null)
+      isZoneRedundancyEnabled: (registry.?isZoneRedundancyEnabled ?? null)
+      roleAssignments: (registry.?roleAssignments ?? null)
+      sku: registry.sku
+    }
+    tags: (registry.?tags ?? tags)
+  }
+}]
+module diskEncryptionSets 'br/bytrc:microsoft/compute/disk-encryption-sets:0.0.0' = [for (set, index) in (parameters.?diskEncryptionSets ?? []): {
+  dependsOn: [
+    keyVaults
+    userManagedIdentities
+  ]
+  name: '${deployment.name}-des-${padLeft(index, 3, '0')}'
+  params: {
+    location: (set.?location ?? deployment.location)
+    name: (set.?name ?? 'des${padLeft(index, 5, '0')}')
+    properties: {
+      encryptionType: set.encryptionType
+      identity: (set.?identity ?? null)
+      keyName: set.keyName
+      keyVault: set.keyVault
+    }
+    tags: (set.?tags ?? tags)
+  }
+}]
+module keyVaults 'br/bytrc:microsoft/key-vault/vaults:0.0.0' = [for (vault, index) in (parameters.?proximityPlacementGroups ?? []): {
+  name: '${deployment.name}-kv-${padLeft(index, 3, '0')}'
+  params: {
+    location: (vault.?location ?? deployment.location)
+    name: (vault.?name ?? 'kv${padLeft(index, 5, '0')}')
+    properties: {
+      firewallRules: (vault.?firewallRules ?? null)
+      isDiskEncryptionEnabled: (vault.?isDiskEncryptionEnabled ?? null)
+      isPublicNetworkAccessEnabled: (vault.?isPublicNetworkAccessEnabled ?? null)
+      isPurgeProtectionEnabled: (vault.?isPurgeProtectionEnabled ?? null)
+      isTemplateDeploymentEnabled: (vault.?isTemplateDeploymentEnabled ?? null)
+      isVirtualMachineDeploymentEnabled: (vault.?isVirtualMachineDeploymentEnabled ?? null)
+      roleAssignments: (vault.?roleAssignments ?? null)
+      sku: vault.sku
+      softDeleteRetentionInDays: (vault.?softDeleteRetentionInDays ?? null)
+      tenantId: (vault.?tenantId ?? null)
+      virtualNetworkRules: (vault.?virtualNetworkRules ?? null)
+    }
+    tags: (vault.?tags ?? tags)
+  }
+}]
+module proximityPlacementGroups 'br/bytrc:microsoft/compute/proximity-placement-groups:0.0.0' = [for (group, index) in (parameters.?proximityPlacementGroups ?? []): {
+  name: '${deployment.name}-ppg-${padLeft(index, 3, '0')}'
+  params: {
+    location: (group.?location ?? deployment.location)
+    name: (group.?name ?? 'ppg${padLeft(index, 5, '0')}')
+    tags: (group.?tags ?? tags)
+  }
+}]
+module userManagedIdentities 'br/bytrc:microsoft/managed-identity/user-assigned-identities:0.0.0' = [for (identity, index) in (parameters.?userManagedIdentities ?? []): {
+  name: '${deployment.name}-umi-${padLeft(index, 3, '0')}'
+  params: {
+    location: (identity.?location ?? deployment.location)
+    name: (identity.?name ?? 'umi${padLeft(index, 5, '0')}')
+    tags: (identity.?tags ?? tags)
+  }
+}]
+module virtualMachines 'br/bytrc:microsoft/compute/virtual-machines:0.0.0' = [for (machine, index) in (parameters.?virtualMachines ?? []): {
+  dependsOn: [
+    applicationSecurityGroups
+    availabilitySets
+    capacityReservationGroups
+    diskEncryptionSets
+    keyVaults
+    proximityPlacementGroups
+    userManagedIdentities
+  ]
   name: '${deployment.name}-vm-${padLeft(index, 3, '0')}'
   params: {
     location: (machine.?location ?? deployment.location)
@@ -269,11 +396,11 @@ module virtualMachines '../../microsoft/compute/virtual-machines/main.bicep' = [
       isVirtualTrustedPlatformModuleEnabled: (machine.?isVirtualTrustedPlatformModuleEnabled ?? null)
       licenseType: (machine.?licenseType ?? null)
       networkInterfaces: machine.networkInterfaces
-      operatingSystem: (machine.?operatingSystem ?? null)
+      operatingSystem: machine.operatingSystem
       proximityPlacementGroup: (machine.?proximityPlacementGroup ?? null)
       roleAssignments: (machine.?roleAssignments ?? null)
       scripts: (machine.?scripts ?? null)
-      sku: (machine.?sku ?? null)
+      sku: machine.sku
       spotSettings: (machine.?spotSettings ?? null)
       virtualMachineScaleSet: (machine.?virtualMachineScaleSet ?? null)
     }

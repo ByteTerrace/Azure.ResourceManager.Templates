@@ -10,7 +10,7 @@ resource capacityReservationGroup 'Microsoft.Compute/capacityReservationGroups@2
   tags: tags
   zones: (properties.?availabilityZones ?? null)
 }
-resource capacityReservations 'Microsoft.Compute/capacityReservationGroups/capacityReservations@2023-03-01' = [for reservation in (properties.?capacityReservations ?? []): {
+resource capacityReservations 'Microsoft.Compute/capacityReservationGroups/capacityReservations@2023-03-01' = [for reservation in (properties.?reservations ?? []): {
   location: location
   name: reservation.name
   parent: capacityReservationGroup
