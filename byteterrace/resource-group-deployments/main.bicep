@@ -25,6 +25,25 @@ type capacityReservationGroup = {
 }
 type computeGallery = {
   description: string?
+  imageDefinitions: {
+    architecture: ('Arm64' | 'x64')?
+    description: string?
+    generation: ('V1' | 'V2')?
+    identifier: {
+      offer: string
+      publisher: string
+      sku: string
+    }
+    isAcceleratedNetworkingSupported: bool?
+    isHibernateSupported: bool?
+    name: string
+    operatingSystem: {
+      state: ('Generalized' | 'Specialized')
+      type: ('Linux' | 'Windows')
+    }
+    securityType: ('ConfidentialVM' | 'ConfidentialVmSupported' | 'Standard' | 'TrustedLaunch' | 'TrustedLaunchSupported')?
+    tags: object?
+  }[]?
   location: string?
   name: string?
   tags: object?
@@ -229,7 +248,21 @@ type virtualMachine = {
   }
   proximityPlacementGroup: resourceReference?
   roleAssignments: array?
-  scripts: array?
+  scripts: {
+    blobPath: string?
+    containerName: string?
+    errorBlobPath: string?
+    errorBlobUri: string?
+    name: string?
+    outputBlobPath: string?
+    outputBlobUri: string?
+    parameters: object?
+    storageAccount: resourceReference?
+    tags: object?
+    timeoutInSeconds: int?
+    uri: string?
+    value: string?
+  }[]?
   sku: resourceSku
   spotSettings: {
     evictionPolicy: ('Deallocate' | 'Delete')
@@ -298,6 +331,7 @@ module computeGalleries 'br/bytrc:microsoft/compute/galleries:0.0.0' = [for (gal
     name: (gallery.?name ?? 'cg${padLeft(index, 5, '0')}')
     properties: {
       description: (gallery.?description ?? null)
+      imageDefinitions: (gallery.?imageDefinitions ?? null)
     }
     tags: (gallery.?tags ?? tags)
   }

@@ -5,8 +5,8 @@ var userManagedIdentity = {
   name: 'byteterrace'
 }
 
-module sandbox 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
-  name: '${deployment().name}-sb'
+module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
+  name: '${deployment().name}-main'
   params: {
     properties: {
       applicationSecurityGroups: [
@@ -16,6 +16,25 @@ module sandbox 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
       ]
       computeGalleries: [
         {
+          imageDefinitions: [
+            {
+              architecture: 'x64'
+              generation: 'V2'
+              identifier: {
+                offer: 'WindowsServer'
+                publisher: 'ByteTerrace'
+                sku: '2022-Datacenter-DevOpsAgent'
+              }
+              isAcceleratedNetworkingSupported: true
+              isHibernateSupported: false
+              name: '2022-Datacenter-DevOpsAgent'
+              operatingSystem: {
+                state: 'Generalized'
+                type: 'Windows'
+              }
+              securityType: 'TrustedLaunch'
+            }
+          ]
           name: 'byteterrace'
         }
       ]
@@ -100,12 +119,20 @@ module sandbox 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
             }
           ]
           operatingSystem: {
-            disk: {
-              cachingMode: 'ReadOnly'
-              ephemeralPlacement: 'ResourceDisk'
-            }
             type: 'Windows'
           }
+          scripts: [
+            {
+              blobPath: 'Invoke-GeneralizeAzureImageForWindows.ps1'
+              containerName: 'scripts'
+              parameters: {
+                logFilePath: 'C:/WindowsAzure/ByteTerrace/main.log'
+              }
+              storageAccount: {
+                name: 'byteterrace'
+              }
+            }
+          ]
           sku: {
             name: 'Standard_D2d_v4'
           }

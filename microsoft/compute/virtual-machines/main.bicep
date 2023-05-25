@@ -6,6 +6,10 @@ param properties object
 param tags object = {}
 param utcNow string = sys.utcNow()
 
+var administrator = {
+  name: (properties.?administrator.?name ?? uniqueString(toLower(name)))
+  password: (properties.?administrator.?password ?? '${guid}|${utcNow}!')
+}
 var certificates = items(properties.?certificates ?? {})
 var identity = (properties.?identity ?? {})
 var isAgentPlatformUpdateEnabled = ('automaticbyplatform' == toLower(operatingSystemPatchSettings.patchMode))
@@ -41,7 +45,10 @@ var scripts = sort(map(range(0, length(properties.?scripts ?? [])), index => {
   name: (properties.scripts[index].?name ?? index)
   outputBlobPath: (properties.scripts[index].?outputBlobPath ?? '')
   outputBlobUri: (properties.scripts[index].?outputBlobUri ?? null)
-  parameters: (properties.scripts[index].?parameters ?? [])
+  parameters: map(items(properties.scripts[index].?parameters ?? {}), parameter => {
+    name: parameter.key
+    value: parameter.value
+  })
   storageAccount: (contains(properties.scripts[index], 'storageAccount') ? union({
     id: resourceId('Microsoft.Storage/storageAccounts', properties.scripts[index].storageAccount.name)
   }, properties.scripts[index].storageAccount) : {})
@@ -189,6 +196,8 @@ resource runCommands 'Microsoft.Compute/virtualMachines/runCommands@2023-03-01' 
       signedServices: 'b'
     }).accountSasToken))
     protectedParameters: script.parameters
+    runAsPassword: administrator.password
+    runAsUser: administrator.name
     source: {
       script: script.value
       scriptUri: (empty(script.blobPath) ? script.uri : format('{0}{1}/{2}?{3}', reference(script.storageAccount.id, '2022-09-01').primaryEndpoints.blob, script.containerName, script.blobPath, listAccountSAS(script.storageAccount.id, '2022-09-01', {
@@ -303,8 +312,8 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
       }]
     }
     osProfile: {
-      adminPassword: (properties.?administrator.?password ?? '${guid}|${utcNow}!')
-      adminUsername: (properties.?administrator.?name ?? uniqueString(toLower(name)))
+      adminPassword: administrator.password
+      adminUsername: administrator.name
       allowExtensionOperations: true
       computerName: (properties.?operatingSystem.?computerName ?? name)
       linuxConfiguration: (isLinux ? {
