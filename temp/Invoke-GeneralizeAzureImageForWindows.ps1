@@ -13,16 +13,27 @@ function Confirm-Environment {
         throw 'Unable to access Azure IMDS.';
     }
 }
-function Get-TimeMarker() {
+function Get-TimeMarker {
     return Get-Date -Format "yyyyMMddTHH:mm:ssK";
+}
+function Write-Log {
+    param(
+        [string]$LogFilePath,
+        [string]$Message
+    );
+
+    Add-Content `
+        -Path $LogFilePath `
+        -Value "[$([IO.Path]::GetFileName($PSCommandPath))@$(Get-TimeMarker)] - ${Message}";
 }
 
 $ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
+$ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
 
 Confirm-Environment;
 
 $attemptDelayTimeInSeconds = 13;
-$commandTimeoutInMinutes = 47;
+$commandTimeoutInMinutes = 17;
 $currentNumberOfAttempts = 0;
 $isLoggingEnabled = (-not [string]::IsNullOrEmpty($LogFilePath));
 $maximumNumberOfAttempts = (($commandTimeoutInMinutes * 60) / $attemptDelayTimeInSeconds);
@@ -46,9 +57,9 @@ $waitForServiceNames | ForEach-Object {
 
     if (Get-Service -ErrorAction ([Management.Automation.ActionPreference]::SilentlyContinue) -Name $serviceName) {
         if ($isLoggingEnabled) {
-            Add-Content `
-                -Path $LogFilePath `
-                -Value "[$(Get-TimeMarker)] - Waiting for $serviceName...";
+            Write-Log `
+                -Message "Waiting for $serviceName..." `
+                -Path $LogFilePath;
         }
 
         while (($maximumNumberOfAttempts -gt ++$currentNumberOfAttempts) -and ('Running' -ne (Get-Service -Name $serviceName).Status)) {
@@ -65,16 +76,16 @@ if (Test-Path -Path $unattendXmlPath) {
 
 while (($maximumNumberOfAttempts -gt ++$currentNumberOfAttempts) -and ('IMAGE_STATE_GENERALIZE_RESEAL_TO_OOBE' -ne ($imageState = (Get-ItemProperty -Path $setupStateKeyPath).ImageState))) {
     if ($isLoggingEnabled) {
-        Add-Content `
-            -Path $LogFilePath `
-            -Value "[$(Get-TimeMarker)] - ${imageState}";
+        Write-Log `
+            -Message $imageState `
+            -Path ([IO.Path]::GetDirectoryName($LogFilePath));
     }
 
     Start-Sleep -Seconds $attemptDelayTimeInSeconds;
 }
 
 if ($isLoggingEnabled) {
-    Add-Content `
-        -Path $LogFilePath `
-        -Value "[$(Get-TimeMarker)] - Complete!";
+    Write-Log `
+        -Message 'Complete!' `
+        -Path $LogFilePath;
 }
