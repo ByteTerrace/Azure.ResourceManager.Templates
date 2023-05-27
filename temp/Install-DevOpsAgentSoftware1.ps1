@@ -4,9 +4,7 @@ param(
 
 function Get-File {
     param(
-        [Parameter(Mandatory = $true)]
         [string]$SourceUri,
-        [Parameter(Mandatory = $true)]
         [string]$TargetPath
     );
 
@@ -29,11 +27,8 @@ function Get-TimeMarker {
 }
 function Install-VisualStudioExtension {
     param(
-        [Parameter(Mandatory = $true)]
         [string]$Name,
-        [Parameter(Mandatory = $true)]
         [string]$Publisher,
-        [Parameter(Mandatory = $true)]
         [string]$Version
     );
 
@@ -65,7 +60,6 @@ function Install-VisualStudioExtension {
 }
 function Install-VsixBootstrapper {
     param(
-        [Parameter(Mandatory = $true)]
         [string]$Version
     );
 
@@ -78,7 +72,6 @@ function Install-VsixBootstrapper {
 }
 function Install-VsWhere {
     param(
-        [Parameter(Mandatory = $true)]
         [string]$Version
     );
 
@@ -91,17 +84,26 @@ function Install-VsWhere {
 }
 function Write-Log {
     param(
-        [string]$LogFilePath,
-        [string]$Message
+        [string]$Message,
+        [string]$Path
     );
 
     Add-Content `
-        -Path $LogFilePath `
+        -Path $Path `
         -Value "[$([IO.Path]::GetFileName($PSCommandPath))@$(Get-TimeMarker)] - ${Message}";
 }
 
 $ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
 $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
+
+$isLoggingEnabled = (-not [string]::IsNullOrEmpty($LogFilePath));
+
+if ($isLoggingEnabled) {
+    New-Item `
+        -Force `
+        -ItemType 'Directory' `
+        -Path ([IO.Path]::GetDirectoryName($LogFilePath));
+}
 
 $visualStudioExtensions = @(
     @{
@@ -135,6 +137,8 @@ $visualStudioExtensions | ForEach-Object {
         -Version $extension.Version;
 };
 
-Write-Log `
-    -Message 'Complete!' `
-    -Path $LogFilePath;
+if ($isLoggingEnabled) {
+    Write-Log `
+        -Message 'Complete!' `
+        -Path $LogFilePath;
+}

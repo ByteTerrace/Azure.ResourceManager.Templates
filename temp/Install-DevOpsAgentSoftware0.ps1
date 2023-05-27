@@ -7,14 +7,10 @@ function Get-TimeMarker {
 }
 function Install-VisualStudio {
     param(
-        [Parameter(Mandatory = $true)]
         [string[]]$Components,
-        [Parameter(Mandatory = $false)]
-        [string]$Edition = 'Enterprise',
-        [Parameter(Mandatory = $true)]
+        [string]$Edition,
         [string]$LogFilePath,
-        [Parameter(Mandatory = $false)]
-        [string]$Version = '17'
+        [string]$Version
     );
 
     $bootstrapperFileName = "vs_${Edition}.exe";
@@ -72,17 +68,26 @@ function Resize-SystemDrive {
 }
 function Write-Log {
     param(
-        [string]$LogFilePath,
-        [string]$Message
+        [string]$Message,
+        [string]$Path
     );
 
     Add-Content `
-        -Path $LogFilePath `
+        -Path $Path `
         -Value "[$([IO.Path]::GetFileName($PSCommandPath))@$(Get-TimeMarker)] - ${Message}";
 }
 
 $ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
 $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
+
+$isLoggingEnabled = (-not [string]::IsNullOrEmpty($LogFilePath));
+
+if ($isLoggingEnabled) {
+    New-Item `
+        -Force `
+        -ItemType 'Directory' `
+        -Path ([IO.Path]::GetDirectoryName($LogFilePath));
+}
 
 Resize-SystemDrive;
 Install-VisualStudio `
@@ -134,7 +139,12 @@ Install-VisualStudio `
         'Microsoft.VisualStudio.Workload.VisualStudioExtension',
         'wasm.tools'
     ) `
-    -LogFilePath $LogFilePath;
-Write-Log `
-    -Message 'Complete!' `
-    -Path $LogFilePath;
+    -Edition 'Enterprise' `
+    -LogFilePath $LogFilePath `
+    -Version '17';
+
+if ($isLoggingEnabled) {
+    Write-Log `
+        -Message 'Complete!' `
+        -Path $LogFilePath;
+}
