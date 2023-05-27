@@ -81,6 +81,9 @@ function Write-Log {
         -Value "[$([IO.Path]::GetFileName($PSCommandPath))@$(Get-TimeMarker)] - ${Message}";
 }
 
+$ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
+$ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
+
 Resize-SystemDrive;
 Install-VisualStudio `
     -Components @(
@@ -132,3 +135,6 @@ Install-VisualStudio `
         'wasm.tools'
     ) `
     -LogFilePath $LogFilePath;
+Write-Log `
+    -Message 'Complete!' `
+    -Path $LogFilePath;
