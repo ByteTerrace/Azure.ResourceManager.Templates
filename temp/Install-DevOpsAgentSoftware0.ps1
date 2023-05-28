@@ -2,8 +2,108 @@ param(
     [string]$LogFilePath
 );
 
+function Enable-DotNetStrongCrypto {
+    $path = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319';
+
+    if (Test-Path -Path $path){
+        Set-ItemProperty `
+            -Name 'SchUseStrongCrypto' `
+            -Path $path `
+            -Type 'DWORD' `
+            -Value '1';
+    }
+
+    $path = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319';
+
+    if (Test-Path -Path $path){
+        Set-ItemProperty `
+            -Name 'SchUseStrongCrypto' `
+            -Path $path `
+            -Type 'DWORD' `
+            -Value '1';
+    }
+}
+function Get-File {
+    param(
+        [hashtable]$Headers,
+        [string]$LogFilePath,
+        [string]$SourceUri,
+        [string]$TargetPath
+    );
+
+    $webClient = $null;
+
+    try {
+        Write-Log `
+            -Message "Downloading file from '${SourceUri}' to '${TargetPath}'." `
+            -Path $LogFilePath;
+
+        $webClient = [Net.WebClient]::new();
+
+        if ($null -ne $Headers) {
+            foreach ($header in $Headers.GetEnumerator()) {
+                $webClient.Headers.Add($header.Key, $header.Value);
+            }
+        }
+
+        $webClient.DownloadFile($SourceUri, $TargetPath);
+
+        return $TargetPath;
+    }
+    finally {
+        if ($null -ne $webClient) {
+            $webClient.Dispose();
+        }
+    }
+
+    return $null;
+}
 function Get-TimeMarker {
     return Get-Date -Format 'yyyyMMddTHH:mm:ssK';
+}
+function Install-PowerShell {
+    param(
+        [string]$LogFilePath,
+        [string]$Version
+    );
+
+    if ([string]::IsNullOrEmpty($Version) -or ('latest' -eq $Version)) {
+        $Version = (Invoke-WebRequest `
+            -Uri 'https://raw.githubusercontent.com/PowerShell/PowerShell/master/tools/metadata.json' `
+            -UseBasicParsing |
+            ConvertFrom-Json).LTSReleaseTag.Substring(1);
+    }
+
+    $installerFileName = "PowerShell-${Version}-win-x64.msi";
+    $installerFilePath = Get-File `
+        -LogFilePath $LogFilePath `
+        -SourceUri "https://github.com/PowerShell/PowerShell/releases/download/v${Version}/${installerFileName}" `
+        -TargetPath ([IO.Path]::Combine((Get-Location), $installerFileName));
+
+    Write-Log `
+        -Message "Installing PowerShell ${Version}." `
+        -Path $LogFilePath;
+
+    $process = Start-Process `
+        -ArgumentList @(
+            '/i', "`"$installerFilePath`""
+            '/quiet'
+        ) `
+        -FilePath 'msiexec.exe' `
+        -PassThru `
+        -Wait;
+
+    if (0 -ne $process.ExitCode) {
+        throw "Non-zero exit code returned by the process: $($process.ExitCode).";
+    }
+
+    Start-Sleep -Seconds 3;
+
+    if (Test-Path -Path $installerFilePath) {
+        Remove-Item `
+            -Force `
+            -Path $installerFilePath;
+    }
 }
 function Install-WindowsFeatures {
     param (
@@ -146,6 +246,10 @@ try {
             'VirtualMachinePlatform'
         ) `
         -LogFilePath $LogFilePath;
+    Enable-DotNetStrongCrypto;
+    Install-PowerShell `
+        -LogFilePath $LogFilePath `
+        -Version 'latest';
     Write-Log `
         -Message 'Complete!' `
         -Path $LogFilePath;

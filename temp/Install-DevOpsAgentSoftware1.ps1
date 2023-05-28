@@ -179,7 +179,7 @@ function Write-Log {
 
     Add-Content `
         -Path $Path `
-        -Value "[Install-DevOpsAgentSoftware0.ps1@$(Get-TimeMarker)] - ${Message}";
+        -Value "[Install-DevOpsAgentSoftware1.ps1@$(Get-TimeMarker)] - ${Message}";
 }
 
 try {
@@ -190,7 +190,7 @@ try {
         $LogFilePath = 'C:/WindowsAzure/ByteTerrace/main.log';
     }
 
-    <#Install-VisualStudio `
+    Install-VisualStudio `
         -Components @(
             'Component.Dotfuscator',
             'Microsoft.Component.Azure.DataLake.Tools',
@@ -241,7 +241,7 @@ try {
         ) `
         -Edition 'Enterprise' `
         -LogFilePath $LogFilePath `
-        -Version '17';#>
+        -Version '17';
 
     <#$visualStudioExtensions = @(
         @{
