@@ -24,7 +24,7 @@ function Write-Log {
 
     Add-Content `
         -Path $LogFilePath `
-        -Value "[$([IO.Path]::GetFileName($PSCommandPath))@$(Get-TimeMarker)] - ${Message}";
+        -Value "[Invoke-GeneralizeAzureImageForWindows.ps1@$(Get-TimeMarker)] - ${Message}";
 }
 
 $ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;

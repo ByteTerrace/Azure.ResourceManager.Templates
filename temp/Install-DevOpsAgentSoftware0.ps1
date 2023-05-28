@@ -3,67 +3,97 @@ param(
 );
 
 function Get-TimeMarker {
-    return Get-Date -Format "yyyyMMddTHH:mm:ssK";
+    return Get-Date -Format 'yyyyMMddTHH:mm:ssK';
 }
-function Install-VisualStudio {
-    param(
-        [string[]]$Components,
-        [string]$Edition,
-        [string]$LogFilePath,
-        [string]$Version
+function Install-WindowsFeatures {
+    param (
+        [hashtable[]]$Features,
+        [string]$LogFilePath
     );
 
-    $bootstrapperFileName = "vs_${Edition}.exe";
-    $bootstrapperFilePath = [IO.Path]::Combine((Get-Location), $bootstrapperFileName);
-    $webClient = $null;
-
-    try {
-        $webClient = [Net.WebClient]::new();
-        $webClient.DownloadFile("https://aka.ms/vs/${Version}/release/${bootstrapperFileName}", $bootstrapperFilePath);
+    foreach ($feature in $Features) {
+        Write-Log `
+            -Message "Installing Windows feature '$($feature.Name)'." `
+            -Path $LogFilePath;
+        Install-WindowsFeature @feature | Out-Null;
     }
-    finally {
-        $webClient.Dispose();
-    }
-
-    $argumentList = @(
-        '--addProductLang', 'en-US',
-        '--includeRecommended',
-        '--nickname', 'DevOps',
-        '--norestart',
-        '--quiet'
+}
+function Install-WindowsOptionalFeatures {
+    param (
+        [string[]]$FeatureNames,
+        [string]$LogFilePath
     );
 
-    $Components | ForEach-Object {
-        $argumentList += '--add';
-        $argumentList += $_;
-    }
-
-    $process = Start-Process `
-        -ArgumentList $argumentList `
-        -FilePath $bootstrapperFilePath `
-        -PassThru `
-        -Wait;
-
-    if ((0 -ne $process.ExitCode) -and (3010 -ne $process.ExitCode)) {
-        throw "Non-zero exit code returned by the process: $($process.ExitCode).";
-    }
-
-    Start-Sleep -Seconds 3;
-
-    if (Test-Path -Path $bootstrapperFilePath) {
-        Remove-Item `
-            -Force `
-            -Path $bootstrapperFilePath;
+    foreach ($name in $FeatureNames) {
+        Write-Log `
+            -Message "Enabling Windows optional feature '${name}'." `
+            -Path $LogFilePath;
+        Enable-WindowsOptionalFeature `
+            -FeatureName $name `
+            -NoRestart `
+            -Online |
+            Out-Null;
     }
 }
 function Resize-SystemDrive {
-    $systemDriveLetter = ${Env:SystemDrive}[0];
-    $systemDriveMaximumSize = (Get-PartitionSupportedSize -DriveLetter $systemDriveLetter).SizeMax;
+    param(
+        [string]$LogFilePath,
+        [long]$MaximumSize
+    );
 
-    if ($systemDriveMaximumSize -gt (Get-Partition -DriveLetter $systemDriveLetter).Size) {
+    $driveLetter = ${Env:SystemDrive}[0];
+
+    if (0 -ge $MaximumSize) {
+        $MaximumSize = (Get-PartitionSupportedSize -DriveLetter $driveLetter).SizeMax;
+    }
+
+    Write-Log `
+        -Message "Ensuring that system drive '${driveLetter}' size matches requested size of ${MaximumSize} bytes." `
+        -Path $LogFilePath;
+
+    if ($MaximumSize -gt (Get-Partition -DriveLetter $driveLetter).Size) {
         Resize-Partition `
-            -DriveLetter $systemDriveLetter `
-            -Size $systemDriveMaximumSize;
+            -DriveLetter $driveLetter `
+            -Size $MaximumSize;
+    }
+}
+function Set-WindowsDefenderConfiguration {
+    $advancedthreatProtectionKey = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Advanced Threat Protection'
+    $preferences = @{
+        DisableArchiveScanning = $true;
+        DisableAutoExclusions = $true;
+        DisableBehaviorMonitoring = $true;
+        DisableBlockAtFirstSeen = $true;
+        DisableCatchupFullScan = $true;
+        DisableCatchupQuickScan = $true;
+        DisableIOAVProtection = $true;
+        DisablePrivacyMode = $true;
+        DisableRealtimeMonitoring = $true;
+        DisableScanningNetworkFiles = $true;
+        DisableScriptScanning = $true;
+        EnableControlledFolderAccess = 'Disable';
+        EnableNetworkProtection = 'Disabled';
+        ExclusionPath = @('C:\', 'D:\');
+        MAPSReporting = 0;
+        PUAProtection = 0;
+        ScanAvgCPULoadFactor = 5;
+        SignatureDisableUpdateOnStartupWithoutEngine = $true;
+        SubmitSamplesConsent = 2;
+    };
+
+    Write-Log `
+        -Message "Configuring Windows Defender." `
+        -Path $LogFilePath;
+
+    Set-MpPreference @preferences | Out-Null;
+    Get-ScheduledTask -TaskPath '\Microsoft\Windows\Windows Defender\' | Disable-ScheduledTask | Out-Null;
+
+    if (Test-Path -Path $advancedthreatProtectionKey) {
+        Set-ItemProperty `
+            -Name 'ForceDefenderPassiveMode' `
+            -Path $advancedthreatProtectionKey `
+            -Type 'DWORD' `
+            -Value '1';
     }
 }
 function Write-Log {
@@ -74,77 +104,59 @@ function Write-Log {
 
     Add-Content `
         -Path $Path `
-        -Value "[$([IO.Path]::GetFileName($PSCommandPath))@$(Get-TimeMarker)] - ${Message}";
+        -Value "[Install-DevOpsAgentSoftware0.ps1@$(Get-TimeMarker)] - ${Message}";
 }
 
-$ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
-$ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
+try {
+    $global:ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
+    $global:ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
 
-$isLoggingEnabled = (-not [string]::IsNullOrEmpty($LogFilePath));
+    if ([string]::IsNullOrEmpty($LogFilePath)) {
+        $LogFilePath = 'C:/WindowsAzure/ByteTerrace/main.log';
+    }
 
-if ($isLoggingEnabled) {
     New-Item `
         -Force `
         -ItemType 'Directory' `
-        -Path ([IO.Path]::GetDirectoryName($LogFilePath));
-}
-
-Resize-SystemDrive;
-Install-VisualStudio `
-    -Components @(
-        'Component.Dotfuscator',
-        'Microsoft.Component.Azure.DataLake.Tools',
-        'Microsoft.Net.Component.4.5.2.TargetingPack',
-        'Microsoft.Net.Component.4.6.TargetingPack',
-        'Microsoft.Net.Component.4.6.1.TargetingPack',
-        'Microsoft.Net.Component.4.6.2.TargetingPack',
-        'Microsoft.Net.Component.4.7.TargetingPack',
-        'Microsoft.Net.Component.4.7.1.TargetingPack',
-        'Microsoft.Net.Component.4.7.2.TargetingPack',
-        'Microsoft.Net.Component.4.8.TargetingPack',
-        'Microsoft.Net.Component.4.8.1.SDK',
-        'Microsoft.Net.Component.4.8.1.TargetingPack',
-        'Microsoft.VisualStudio.Component.AspNet',
-        'Microsoft.VisualStudio.Component.AspNet45',
-        'Microsoft.VisualStudio.Component.Azure.ServiceFabric.Tools',
-        'Microsoft.VisualStudio.Component.AzureDevOps.OfficeIntegration',
-        'Microsoft.VisualStudio.Component.Debugger.JustInTime',
-        'Microsoft.VisualStudio.Component.DotNetModelBuilder',
-        'Microsoft.VisualStudio.Component.DslTools',
-        'Microsoft.VisualStudio.Component.EntityFramework',
-        'Microsoft.VisualStudio.Component.LinqToSql',
-        'Microsoft.VisualStudio.Component.PortableLibrary',
-        'Microsoft.VisualStudio.Component.SecurityIssueAnalysis',
-        'Microsoft.VisualStudio.Component.Sharepoint.Tools',
-        'Microsoft.VisualStudio.Component.SQL.SSDT',
-        'Microsoft.VisualStudio.Component.WebDeploy',
-        'Microsoft.VisualStudio.Component.Windows10SDK.20348',
-        'Microsoft.VisualStudio.Component.Windows11SDK.22621',
-        'Microsoft.VisualStudio.ComponentGroup.Azure.CloudServices',
-        'Microsoft.VisualStudio.ComponentGroup.Azure.ResourceManager.Tools',
-        'Microsoft.VisualStudio.ComponentGroup.Web.CloudTools',
-        'Microsoft.VisualStudio.Workload.Azure',
-        'Microsoft.VisualStudio.Workload.Data',
-        'Microsoft.VisualStudio.Workload.DataScience',
-        'Microsoft.VisualStudio.Workload.ManagedDesktop',
-        'Microsoft.VisualStudio.Workload.NativeCrossPlat',
-        'Microsoft.VisualStudio.Workload.NativeDesktop',
-        'Microsoft.VisualStudio.Workload.NativeMobile',
-        'Microsoft.VisualStudio.Workload.NetCrossPlat',
-        'Microsoft.VisualStudio.Workload.NetWeb',
-        'Microsoft.VisualStudio.Workload.Node',
-        'Microsoft.VisualStudio.Workload.Office',
-        'Microsoft.VisualStudio.Workload.Python',
-        'Microsoft.VisualStudio.Workload.Universal',
-        'Microsoft.VisualStudio.Workload.VisualStudioExtension',
-        'wasm.tools'
-    ) `
-    -Edition 'Enterprise' `
-    -LogFilePath $LogFilePath `
-    -Version '17';
-
-if ($isLoggingEnabled) {
+        -Path ([IO.Path]::GetDirectoryName($LogFilePath)) |
+        Out-Null;
+    Resize-SystemDrive `
+        -LogFilePath $LogFilePath `
+        -MaximumSize 0;
+    Set-WindowsDefenderConfiguration -LogFilePath $LogFilePath;
+    Install-WindowsFeatures `
+        -Features @(
+            @{
+                Name = 'Containers';
+            },
+            @{
+                IncludeAllSubFeature = $true;
+                Name = 'Hyper-V';
+            },
+            @{
+                IncludeAllSubFeature = $true;
+                Name = 'NET-Framework-45-Features';
+            }
+        ) `
+        -LogFilePath $LogFilePath;
+    Install-WindowsOptionalFeatures `
+        -FeatureNames @(
+            'HypervisorPlatform',
+            'Microsoft-Windows-Subsystem-Linux',
+            'VirtualMachinePlatform'
+        ) `
+        -LogFilePath $LogFilePath;
     Write-Log `
         -Message 'Complete!' `
         -Path $LogFilePath;
+}
+catch {
+    Write-Log `
+        -Message $_ `
+        -Path $LogFilePath;
+    Write-Log `
+        -Message 'Failed!' `
+        -Path $LogFilePath;
+
+    throw;
 }
