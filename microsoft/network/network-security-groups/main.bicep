@@ -13,7 +13,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-11-0
   name: name
   properties: {
     securityRules: [for (rule, index) in securityRules: {
-      name: (rule.?name ?? '')
+      name: rule.name
       properties: {
         access: rule.access
         description: (rule.?description ?? null)

@@ -104,6 +104,7 @@ type networkSecurityGroup = {
       ports: string[]
     }
     direction: ('Inbound' | 'Outbound')
+    name: string
     protocol: ('*' | 'Ah' | 'Esp' | 'Icmp' | 'Tcp' | 'Udp')
     source: {
       addressPrefixes: string[]

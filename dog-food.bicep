@@ -9,82 +9,27 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
   name: '${deployment().name}-main'
   params: {
     properties: {
-      /*applicationSecurityGroups: [
+      networkSecurityGroups: [
         {
           name: 'byteterrace'
-        }
-      ]
-      computeGalleries: [
-        {
-          imageDefinitions: [
+          securityRules: [
             {
-              architecture: 'x64'
-              generation: 'V2'
-              identifier: {
-                offer: 'WindowsServer'
-                publisher: 'ByteTerrace'
-                sku: '2022-Datacenter-DevOpsAgent'
+              access: 'Allow'
+              destination: {
+                addressPrefixes: [ 'VirtualNetwork' ]
+                ports: [ '3389' ]
               }
-              isAcceleratedNetworkingSupported: true
-              isHibernateSupported: false
-              name: '2022-Datacenter-DevOpsAgent'
-              operatingSystem: {
-                state: 'Generalized'
-                type: 'Windows'
-              }
-              securityType: 'TrustedLaunch'
-            }
-          ]
-          name: 'byteterrace'
-        }
-      ]
-      containerRegistries: [
-        {
-          identity: identity
-          isContentTrustPolicyEnabled: false
-          isExportPolicyEnabled: true
-          isPublicNetworkAccessEnabled: true
-          isQuarantinePolicyEnabled: false
-          name: 'byteterrace'
-          sku: {
-            name: 'Standard'
-          }
-        }
-      ]
-      diskEncryptionSets: [
-        {
-          encryptionType: 'EncryptionAtRestWithPlatformAndCustomerKeys'
-          identity: identity
-          keyName: 'temp'
-          keyVault: {
-            name: 'byteterrace'
-          }
-          name: 'byteterrace'
-        }
-      ]
-      keyVaults: [
-        {
-          isAllowTrustedMicrosoftServicesEnabled: true
-          isPublicNetworkAccessEnabled: true
-          name: 'byteterrace'
-          sku: {
-            name: 'Premium'
-          }
-          virtualNetworkRules: [
-            {
-              subnet: {
-                name: 'AzureDevOpsAgents-0000'
-                virtualNetworkName: 'byteterrace'
+              direction: 'Inbound'
+              name: 'AllowKittoesRdpInbound'
+              protocol: 'Tcp'
+              source: {
+                addressPrefixes: [ '' ]
+                ports: [ '*' ]
               }
             }
           ]
         }
       ]
-      proximityPlacementGroups: [
-        {
-          name: 'byteterrace'
-        }
-      ]*/
       userManagedIdentities: [
         {
           name: 'byteterrace'
@@ -96,7 +41,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
           imageReference: {
             offer: 'WindowsServer'
             publisher: 'MicrosoftWindowsServer'
-            sku: '2022-datacenter-smalldisk'
+            sku: '2022-datacenter-smalldisk-g2'
             version: 'latest'
           }
           isEncryptionAtHostEnabled: true
@@ -174,6 +119,24 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
           spotSettings: {
             evictionPolicy: 'Delete'
           }
+        }
+      ]
+      virtualNetworks: [
+        {
+          addressPrefixes: [ '10.0.0.0/20' ]
+          name: 'byteterrace'
+          subnets: [
+            {
+              addressPrefixes: [ '10.0.0.0/24' ]
+              name: 'Test000'
+              networkSecurityGroup: {
+                name: 'byteterrace'
+              }
+              routeTable: {
+                name: 'byteterrace'
+              }
+            }
+          ]
         }
       ]
     }
