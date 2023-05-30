@@ -103,10 +103,6 @@ try {
     $ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
     $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
 
-    if ([string]::IsNullOrEmpty($LogFilePath)) {
-        $LogFilePath = 'C:/WindowsAzure/ByteTerrace/main.log';
-    }
-
     Add-Content `
         -Path ($profile.AllUsersAllHosts) `
         -Value '$ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;';

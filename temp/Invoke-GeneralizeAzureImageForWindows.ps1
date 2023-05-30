@@ -61,7 +61,7 @@ try {
                 Start-Sleep -Seconds $attemptDelayTimeInSeconds;
             }
         }
-    };
+    }
 
     if (Test-Path -Path $unattendXmlPath) {
         Remove-Item -Force -Path $unattendXmlPath;

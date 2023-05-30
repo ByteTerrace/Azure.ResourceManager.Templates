@@ -40,6 +40,144 @@ function Get-File {
 function Get-TimeMarker {
     return Get-Date -Format 'yyyyMMddTHH:mm:ssK';
 }
+function Install-GoogleChrome {
+    param(
+        [string]$LogFilePath
+    );
+
+    $installerFileName = 'googlechromestandaloneenterprise64.msi';
+    $installerFilePath = Get-File `
+        -LogFilePath $LogFilePath `
+        -SourceUri "https://dl.google.com/tag/s/dl/chrome/install/${installerFileName}" `
+        -TargetPath ([IO.Path]::Combine((Get-Location), $installerFileName));
+
+    Write-Log `
+        -Message 'Installing Google Chrome.' `
+        -Path $LogFilePath;
+
+    $process = Start-Process `
+        -ArgumentList @(
+            '/i', "`"$installerFilePath`""
+            '/quiet'
+        ) `
+        -FilePath 'msiexec.exe' `
+        -PassThru `
+        -Wait;
+
+    if (0 -ne $process.ExitCode) {
+        throw "Non-zero exit code returned by the process: $($process.ExitCode).";
+    }
+
+    Start-Sleep -Seconds 3;
+
+    if (Test-Path -Path $installerFilePath) {
+        Remove-Item `
+            -Force `
+            -Path $installerFilePath;
+    }
+
+    New-NetFirewallRule `
+        -Action Block `
+        -DisplayName 'BlockGoogleUpdate' `
+        -Direction Outbound `
+        -Program ((Get-Item -Path "${Env:ProgramFiles(x86)}/Google/Update/GoogleUpdate.exe").FullName) |
+        Out-Null;
+
+    @(
+        'gupdate',
+        'gupdatem'
+    ) | ForEach-Object {
+        $service = Get-Service -Name $_;
+        $service | Set-Service -StartupType ([ServiceProcess.ServiceStartMode]::Disabled);
+        $service | Stop-Service;
+        $service.WaitForStatus('Stopped', '00:00:53');
+    }
+
+    $googleChromeRegistryPath = 'HKLM:/SOFTWARE/Policies/Google/Chrome';
+    $googleUpdateRegistryPath = 'HKLM:/SOFTWARE/Policies/Google/Update';
+
+    New-Item -Force -Path $googleChromeRegistryPath | Out-Null;
+    New-Item -Force -Path $googleUpdateRegistryPath | Out-Null;
+
+    @(
+        @{
+            Name = 'AutoUpdateCheckPeriodMinutes';
+            Value = 0;
+        }
+        @{
+            Name = 'DisableAutoUpdateChecksCheckboxValue';
+            Value = 1;
+        }
+        @{
+            Name = 'UpdateDefault';
+            Value = 0;
+        }
+        @{
+            Name = 'Update{8A69D345-D564-463C-AFF1-A69D9E530F96}';
+            Value = 0;
+        }
+    ) | ForEach-Object {
+        New-ItemProperty `
+            -Force `
+            -Path $googleUpdateRegistryPath `
+            -Name ($_.Name) `
+            -Type 'DWORD' `
+            -Value ($_.Value) |
+            Out-Null;
+    }
+
+    New-ItemProperty `
+        -Force `
+        -Path $googleChromeRegistryPath `
+        -Name 'DefaultBrowserSettingEnabled' `
+        -Type 'DWORD' `
+        -Value 0 |
+        Out-Null;
+}
+function Install-MozillaFirefox {
+    param(
+        [string]$LogFilePath,
+        [string]$Version
+    );
+
+    if ([string]::IsNullOrEmpty($Version) -or ('latest' -eq $Version)) {
+        $Version = (Invoke-WebRequest `
+            -Uri 'https://product-details.mozilla.org/1.0/firefox_versions.json' `
+            -UseBasicParsing |
+            ConvertFrom-Json).LATEST_FIREFOX_VERSION;
+    }
+
+    $installerFileName = "Firefox_Windows_Amd64.exe";
+    $installerFilePath = Get-File `
+        -LogFilePath $LogFilePath `
+        -SourceUri "https://download.mozilla.org/?lang=en-US&product=firefox-${Version}&os=win64" `
+        -TargetPath ([IO.Path]::Combine((Get-Location), $installerFileName));
+
+    Write-Log `
+        -Message "Installing Mozilla Firefox ${Version}." `
+        -Path $LogFilePath;
+
+    $process = Start-Process `
+        -ArgumentList @(
+            '/install',
+            '/silent'
+        ) `
+        -FilePath $installerFilePath `
+        -PassThru `
+        -Wait;
+
+    if (0 -ne $process.ExitCode) {
+        throw "Non-zero exit code returned by the process: $($process.ExitCode).";
+    }
+
+    Start-Sleep -Seconds 3;
+
+    if (Test-Path -Path $installerFilePath) {
+        Remove-Item `
+            -Force `
+            -Path $installerFilePath;
+    }
+}
 function Install-VisualStudioExtension {
     param(
         [string]$LogFilePath,
@@ -93,10 +231,6 @@ try {
     $ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
     $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
 
-    if ([string]::IsNullOrEmpty($LogFilePath)) {
-        $LogFilePath = 'C:/WindowsAzure/ByteTerrace/main.log';
-    }
-
     $visualStudioExtensions = @(
         @{
             Name = 'MicrosoftAnalysisServicesModelingProjects2022';
@@ -130,6 +264,10 @@ try {
             -Version $extension.Version;
     };
 
+    Install-GoogleChrome -LogFilePath $LogFilePath;
+    Install-MozillaFirefox `
+        -LogFilePath $LogFilePath `
+        -Version 'latest';
     Write-Log `
         -Message 'Complete!' `
         -Path $LogFilePath;

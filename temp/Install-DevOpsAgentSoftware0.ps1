@@ -1,12 +1,19 @@
 param(
+    [string]$AgentToolsDirectoryPath,
     [string]$LogFilePath
 );
 
-function Disable-NetworkDiscoverability {
+function Disable-NetworkDiscoverabilityPopup {
     New-Item `
         -Force `
         -Name 'NewNetworkWindowOff' `
         -Path 'HKLM:/SYSTEM/CurrentControlSet/Control/Network' |
+        Out-Null;
+}
+function Disable-ServerManagerPopup {
+    Get-ScheduledTask `
+        -TaskName 'ServerManager' |
+        Disable-ScheduledTask |
         Out-Null;
 }
 function Disable-UserAccessControl {
@@ -52,6 +59,16 @@ function Enable-LongPathBehavior {
             -Type 'DWORD' `
             -Value 1;
     }
+}
+function Enable-RootHypervisorScheduler {
+    # https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/manage/manage-hyper-v-scheduler-types#the-root-scheduler
+
+    bcdedit.exe /set hypervisorschedulertype root | Out-Null;
+}
+function Enable-TestSignedDriverLoad {
+    # https://learn.microsoft.com/en-us/windows-hardware/drivers/install/the-testsigning-boot-configuration-option#enable-or-disable-use-of-test-signed-code
+
+    bcdedit.exe /set TESTSIGNING ON | Out-Null;
 }
 function Get-File {
     param(
@@ -140,7 +157,7 @@ function Install-AzureCli {
         -TargetPath ([IO.Path]::Combine((Get-Location), 'azure-cli.msi'));
 
     Write-Log `
-        -Message "Installing Azure CLI." `
+        -Message 'Installing Azure CLI.' `
         -Path $LogFilePath;
     New-Item `
         -Force `
@@ -175,6 +192,46 @@ function Install-AzureCli {
             -Path $installerFilePath;
     }
 }
+function Install-GitHubCli {
+    param(
+        [string]$LogFilePath
+    );
+
+    $installerFileName = 'GitHubCli_Windows_Amd64.msi';
+    $installerFilePath = Get-File `
+        -LogFilePath $LogFilePath `
+        -SourceUri ((Invoke-RestMethod `
+            -Method 'GET' `
+            -Uri 'https://api.github.com/repos/cli/cli/releases/latest' `
+            -UseBasicParsing).assets.browser_download_url -match 'windows_amd64.msi' |
+            Select-Object -First 1) `
+        -TargetPath ([IO.Path]::Combine((Get-Location), $installerFileName));
+
+    Write-Log `
+        -Message 'Installing GitHub CLI.' `
+        -Path $LogFilePath;
+
+    $process = Start-Process `
+        -ArgumentList @(
+            '/i', "`"$installerFilePath`""
+            '/quiet'
+        ) `
+        -FilePath 'msiexec.exe' `
+        -PassThru `
+        -Wait;
+
+    if (0 -ne $process.ExitCode) {
+        throw "Non-zero exit code returned by the process: $($process.ExitCode).";
+    }
+
+    Start-Sleep -Seconds 3;
+
+    if (Test-Path -Path $installerFilePath) {
+        Remove-Item `
+            -Force `
+            -Path $installerFilePath;
+    }
+}
 function Install-GoogleCloudCli {
     param(
         [string]$LogFilePath
@@ -187,7 +244,7 @@ function Install-GoogleCloudCli {
         -TargetPath ([IO.Path]::Combine((Get-Location), $installerFileName));
 
     Write-Log `
-        -Message "Installing Google Cloud CLI." `
+        -Message 'Installing Google Cloud CLI.' `
         -Path $LogFilePath;
 
     $process = Start-Process `
@@ -361,33 +418,39 @@ function Write-Log {
 try {
     $ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
     $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12;
 
-    if ([string]::IsNullOrEmpty($LogFilePath)) {
-        $LogFilePath = 'C:/WindowsAzure/ByteTerrace/main.log';
-    }
-
-    Add-Content `
-        -Path ($profile.AllUsersAllHosts) `
-        -Value '$ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;';
-    Add-Content `
-        -Path ($profile.AllUsersAllHosts) `
-        -Value '$ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;';
-    Disable-NetworkDiscoverability;
-    Disable-UserAccessControl;
-    Enable-LongPathBehavior;
-    Get-ScheduledTask `
-        -TaskName 'ServerManager' |
-        Disable-ScheduledTask |
+    New-Item `
+        -Force `
+        -ItemType 'Directory' `
+        -Path $AgentToolsDirectoryPath |
         Out-Null;
     New-Item `
         -Force `
         -ItemType 'Directory' `
         -Path ([IO.Path]::GetDirectoryName($LogFilePath)) |
         Out-Null;
+    Add-Content `
+        -Path ($profile.AllUsersAllHosts) `
+        -Value '$ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;';
+    Add-Content `
+        -Path ($profile.AllUsersAllHosts) `
+        -Value '$ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;';
+    [Environment]::SetEnvironmentVariable( `
+        'AGENT_TOOLSDIRECTORY', `
+        ((Get-Item -Path $AgentToolsDirectoryPath).FullName), `
+        [System.EnvironmentVariableTarget]::Machine `
+    );
+    Disable-NetworkDiscoverabilityPopup;
+    Disable-ServerManagerPopup;
+    Disable-UserAccessControl;
+    Enable-LongPathBehavior;
+    Enable-RootHypervisorScheduler;
+    Enable-TestSignedDriverLoad;
+    Set-WindowsDefenderConfiguration -LogFilePath $LogFilePath;
     Resize-SystemDrive `
         -LogFilePath $LogFilePath `
         -MaximumSize 0;
-    Set-WindowsDefenderConfiguration -LogFilePath $LogFilePath;
     Install-WindowsFeatures `
         -Features @(
             @{
@@ -405,18 +468,20 @@ try {
         -LogFilePath $LogFilePath;
     Install-WindowsOptionalFeatures `
         -FeatureNames @(
+            'Client-ProjFS',
             'HypervisorPlatform',
             'Microsoft-Windows-Subsystem-Linux',
             'VirtualMachinePlatform'
         ) `
         -LogFilePath $LogFilePath;
     Enable-DotNetStrongCrypto;
+    Install-AmazonWebServicesCli -LogFilePath $LogFilePath;
+    Install-AzureCli -LogFilePath $LogFilePath;
+    Install-GitHubCli -LogFilePath $LogFilePath;
+    Install-GoogleCloudCli -LogFilePath $LogFilePath;
     Install-PowerShell `
         -LogFilePath $LogFilePath `
         -Version 'latest';
-    Install-AmazonWebServicesCli -LogFilePath $LogFilePath;
-    Install-AzureCli -LogFilePath $LogFilePath;
-    Install-GoogleCloudCli -LogFilePath $LogFilePath;
     Write-Log `
         -Message 'Complete!' `
         -Path $LogFilePath;
