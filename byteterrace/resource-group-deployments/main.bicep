@@ -227,6 +227,8 @@ type virtualMachine = {
   diskEncryptionSet: resourceReference?
   identity: resourceIdentity?
   imageReference: {
+    gallery: resourceReference?
+    name: string?
     offer: string?
     publisher: string?
     sku: string?

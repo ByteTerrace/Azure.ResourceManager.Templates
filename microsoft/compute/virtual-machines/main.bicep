@@ -18,6 +18,7 @@ var isAvailabilitySetNotEmpty = !empty(properties.?availabilitySet ?? {})
 var isBootDiagnosticsStorageAccountNotEmpty = !empty(properties.?bootDiagnostics.?storageAccount ?? {})
 var isCapacityReservationGroupNotEmpty = !empty(properties.?capacityReservationGroup ?? {})
 var isCertificatesNotEmpty = !empty(certificates)
+var isComputeGalleryNotEmpty = !empty(properties.?imageReference.?gallery ?? {})
 var isDiskEncryptionSetNotEmpty = !empty(properties.?diskEncryptionSet ?? {})
 var isGuestAgentEnabled = (properties.?isGuestAgentEnabled ?? true)
 var isGuestAttestationEnabled = (properties.?isGuestAttestationEnabled ?? (isSecureBootEnabled && isVirtualTrustedPlatformModuleEnabled))
@@ -38,9 +39,9 @@ var operatingSystemPatchSettings = {
 var resourceGroupName = resourceGroup().name
 var scripts = sort(map(range(0, length(properties.?scripts ?? [])), index => {
   blobPath: (properties.scripts[index].?blobPath ?? '')
+  containerName: (properties.scripts[index].?containerName ?? null)
   errorBlobPath: (properties.scripts[index].?errorBlobPath ?? '')
   errorBlobUri: (properties.scripts[index].?errorBlobUri ?? null)
-  containerName: (properties.scripts[index].?containerName ?? null)
   index: index
   name: (properties.scripts[index].?name ?? index)
   outputBlobPath: (properties.scripts[index].?outputBlobPath ?? '')
@@ -98,6 +99,10 @@ resource certificatesRef 'Microsoft.KeyVault/vaults/secrets@2023-02-01' existing
   name: '${certificate.value.keyVault.name}/${certificate.key}'
   scope: resourceGroup((certificate.value.keyVault.?subscriptionId ?? subscriptionId), (certificate.value.keyVault.?resourceGroupName ?? resourceGroupName))
 }]
+resource computeGalleryImageRef 'Microsoft.Compute/galleries/images/versions@2022-03-03' existing = if (isComputeGalleryNotEmpty) {
+  name: '${properties.imageReference.gallery.name}/${properties.imageReference.name}/${(properties.imageReference.?version ?? 'latest')}'
+  scope: resourceGroup((properties.imageReference.gallery.?subscriptionId ?? subscriptionId), (properties.imageReference.gallery.?resourceGroupName ?? resourceGroupName))
+}
 resource diskEncryptionSetRef 'Microsoft.Compute/diskEncryptionSets@2022-07-02' existing = if (isDiskEncryptionSetNotEmpty) {
   name: properties.diskEncryptionSet.name
   scope: resourceGroup((properties.diskEncryptionSet.?subscriptionId ?? subscriptionId), (properties.diskEncryptionSet.?resourceGroupName ?? resourceGroupName))
@@ -360,7 +365,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
         name: (disk.?name ?? '${name}-Disk-${padLeft((index + 1), 5, '0')}')
         writeAcceleratorEnabled: (disk.?isWriteAcceleratorEnabled ?? null)
       }]
-      imageReference: (properties.?imageReference ?? null)
+      imageReference: (isComputeGalleryNotEmpty ? { id: computeGalleryImageRef.id } : (properties.?imageReference ?? null))
       osDisk: {
         caching: (properties.operatingSystem.?disk.?cachingMode ?? 'ReadWrite')
         createOption: (properties.operatingSystem.?disk.?createOption ?? 'FromImage')

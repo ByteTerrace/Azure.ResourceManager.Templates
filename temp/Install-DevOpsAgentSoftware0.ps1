@@ -3,14 +3,11 @@ param(
 );
 
 function Disable-NetworkDiscoverability {
-    $path = 'HKLM:/SYSTEM/CurrentControlSet/Control/Network';
-
-    if (-not (Test-Path -Path $path)) {
-        New-Item `
-            -Force `
-            -Name 'NewNetworkWindowOff' `
-            -Path $path;
-    }
+    New-Item `
+        -Force `
+        -Name 'NewNetworkWindowOff' `
+        -Path 'HKLM:/SYSTEM/CurrentControlSet/Control/Network' |
+        Out-Null;
 }
 function Disable-UserAccessControl {
     $path = 'HKLM:/SOFTWARE/Microsoft/Windows/CurrentVersion/Policies/System';
