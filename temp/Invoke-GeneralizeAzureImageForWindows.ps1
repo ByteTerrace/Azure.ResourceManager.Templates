@@ -31,10 +31,6 @@ try {
     $ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
     $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
 
-    if ([string]::IsNullOrEmpty($LogFilePath)) {
-        $LogFilePath = 'C:/WindowsAzure/ByteTerrace/main.log';
-    }
-
     Confirm-Environment;
 
     $attemptDelayTimeInSeconds = 13;
@@ -42,7 +38,7 @@ try {
     $currentNumberOfAttempts = 0;
     $maximumNumberOfAttempts = (($commandTimeoutInMinutes * 60) / $attemptDelayTimeInSeconds);
     $setupStateKeyPath = 'HKLM:/SOFTWARE/Microsoft/Windows/CurrentVersion/Setup/State';
-    $unattendXmlPath = "${Env:SystemRoot}/system32/Sysprep/unattend.xml";
+    $unattendXmlPath = "${Env:SystemRoot}/System32/Sysprep/unattend.xml";
     $waitForServiceNames = @(
         'RdAgent',
         'WindowsAzureGuestAgent',
