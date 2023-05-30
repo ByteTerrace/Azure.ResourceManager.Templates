@@ -103,6 +103,7 @@ type propertiesInfo = {
   proximityPlacementGroups: proximityPlacementGroup[]?
   userManagedIdentities: userManagedIdentity[]?
   virtualMachines: virtualMachine[]?
+  virtualNetworks: virtualNetwork[]?
 }
 type proximityPlacementGroup = {
   location: string?
@@ -270,6 +271,33 @@ type virtualMachine = {
   }?
   tags: object?
   virtualMachineScaleSet: resourceReference?
+}
+type virtualNetwork = {
+  addressPrefixes: string[]
+  ddosProtectionPlan: resourceReference?
+  dnsServers: string[]?
+  location: string?
+  name: string?
+  subnets: {
+    addressPrefixes: string[]
+    delegations: string[]?
+    name: string
+    natGateway: resourceReference?
+    networkSecurityGroup: resourceReference?
+    privateEndpointNetworkPolicies: {
+      isNetworkSecurityGroupEnabled: bool?
+      isRouteTableEnabled: bool?
+    }?
+    privateLinkServiceNetworkPolicies: {
+      isEnabled: bool?
+    }?
+    routeTable: resourceReference?
+    serviceEndpoints: {
+      locations: string[]?
+      name: string
+    }[]?
+  }[]?
+  tags: object?
 }
 type virtualNetworkRule = {
   name: string?
@@ -460,5 +488,19 @@ module virtualMachines 'br/bytrc:microsoft/compute/virtual-machines:0.0.0' = [fo
       virtualMachineScaleSet: (machine.?virtualMachineScaleSet ?? null)
     }
     tags: (machine.?tags ?? tags)
+  }
+}]
+module virtualNetworks 'br/bytrc:microsoft/network/virtual-networks:0.0.0' = [for (network, index) in (properties.?virtualNetworks ?? []): {
+  name: '${deployment.name}-vnet-${padLeft(index, 3, '0')}'
+  params: {
+    location: (network.?location ?? deployment.location)
+    name: (network.?name ?? 'vnet${padLeft(index, 5, '0')}')
+    properties: {
+      addressPrefixes: network.addressPrefixes
+      ddosProtectionPlan: (network.?ddosProtectionPlan ?? null)
+      dnsServers: (network.?dnsServers ?? null)
+      subnets: network.subnets
+    }
+    tags: (network.?tags ?? tags)
   }
 }]

@@ -7,8 +7,8 @@ param tags object = {}
 param utcNow string = sys.utcNow()
 
 var administrator = {
-  name: (properties.?administrator.?name ?? uniqueString(toLower(name)))
-  password: (properties.?administrator.?password ?? '${guid}|${utcNow}!')
+  name: (properties.operatingSystem.?administrator.?name ?? uniqueString(toLower(name)))
+  password: (properties.operatingSystem.?administrator.?password ?? '${guid}|${utcNow}!')
 }
 var certificates = items(properties.?certificates ?? {})
 var identity = (properties.?identity ?? {})
@@ -126,7 +126,7 @@ resource keyVaultIntegration 'Microsoft.Compute/virtualMachines/extensions@2023-
     publisher: 'Microsoft.Azure.KeyVault'
     settings: {
       authenticationSettings: {
-        msiClientId: (isSystemAssignedIdentityEnabled ? systemAssignedIdentityRef.properties.clientId : userAssignedIdentitiesRef[0].properties.clientId)
+        msiClientId: (isSystemAssignedIdentityEnabled ? systemAssignedIdentityRef.properties.clientId : (isUserAssignedIdentitiesNotEmpty ? userAssignedIdentitiesRef[0].properties.clientId : null))
         msiEndpoint: 'http://169.254.169.254/metadata/identity/oauth2/token'
       }
       secretsManagementSettings: {

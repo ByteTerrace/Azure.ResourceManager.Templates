@@ -9,7 +9,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
   name: '${deployment().name}-main'
   params: {
     properties: {
-      applicationSecurityGroups: [
+      /*applicationSecurityGroups: [
         {
           name: 'byteterrace'
         }
@@ -84,7 +84,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
         {
           name: 'byteterrace'
         }
-      ]
+      ]*/
       userManagedIdentities: [
         {
           name: 'byteterrace'
@@ -92,16 +92,19 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
       ]
       virtualMachines: [
         {
-          diskEncryptionSet: {
-            name: 'byteterrace'
-          }
           identity: union({ type: 'SystemAssigned, UserAssigned' }, identity)
           imageReference: {
             offer: 'WindowsServer'
             publisher: 'MicrosoftWindowsServer'
-            sku: '2022-datacenter-azure-edition-core-smalldisk'
+            sku: '2022-datacenter-smalldisk'
             version: 'latest'
           }
+          isEncryptionAtHostEnabled: true
+          isGuestAgentEnabled: true
+          isHibernationEnabled: false
+          isSecureBootEnabled: false
+          isUltraSsdEnabled: false
+          isVirtualTrustedPlatformModuleEnabled: false
           licenseType: 'Windows_Server'
           name: 'byteterrace'
           networkInterfaces: [
@@ -110,31 +113,66 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
                 {
                   privateIpAddress: {
                     subnet: {
-                      name: 'AzureDevOpsAgents-0000'
+                      name: 'Test000'
                       virtualNetworkName: 'byteterrace'
                     }
                   }
+                  publicIpAddress: {}
                 }
               ]
             }
           ]
           operatingSystem: {
+            disk: {
+              sizeInGigabytes: 256
+            }
+            patchSettings: {
+              assessmentMode: 'ImageDefault'
+              isHotPatchingEnabled: false
+              patchMode: 'Manual'
+            }
             type: 'Windows'
           }
           scripts: [
             {
-              blobPath: 'Invoke-GeneralizeAzureImageForWindows.ps1'
-              containerName: 'scripts'
-              parameters: {
+              parameters:{
                 logFilePath: 'C:/WindowsAzure/ByteTerrace/main.log'
               }
-              storageAccount: {
-                name: 'byteterrace'
+              timeoutInSeconds: 1800
+              uri: 'https://byteterrace.blob.core.windows.net/scripts/Install-DevOpsAgentSoftware0.ps1'
+            }
+            {
+              timeoutInSeconds: 300
+              value: 'Restart-Computer -Force;'
+            }
+            {
+              parameters:{
+                logFilePath: 'C:/WindowsAzure/ByteTerrace/main.log'
               }
+              timeoutInSeconds: 7200
+              uri: 'https://byteterrace.blob.core.windows.net/scripts/Install-DevOpsAgentSoftware1.ps1'
+            }
+            {
+              timeoutInSeconds: 300
+              value: 'Restart-Computer -Force;'
+            }
+            {
+              parameters:{
+                logFilePath: 'C:/WindowsAzure/ByteTerrace/main.log'
+              }
+              timeoutInSeconds: 7200
+              uri: 'https://byteterrace.blob.core.windows.net/scripts/Install-DevOpsAgentSoftware2.ps1'
+            }
+            {
+              timeoutInSeconds: 300
+              value: 'Restart-Computer -Force;'
             }
           ]
           sku: {
-            name: 'Standard_D2d_v4'
+            name: 'Standard_D8ds_v5'
+          }
+          spotSettings: {
+            evictionPolicy: 'Delete'
           }
         }
       ]

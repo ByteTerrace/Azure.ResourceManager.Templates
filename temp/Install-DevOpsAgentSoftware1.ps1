@@ -2,49 +2,7 @@ param(
     [string]$LogFilePath
 );
 
-function Get-AzureAccessToken {
-    param(
-        [string]$ClientId,
-        [string]$LogFilePath,
-        [string]$ResourceUri
-    );
-
-    $uri = "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2021-12-13&resource=${ResourceUri}";
-
-    if (-not ([string]::IsNullOrEmpty($ClientId))) {
-        $uri += "&client_id=${ClientId}";
-    }
-
-    return (Invoke-WebRequest `
-        -Headers @{ Metadata = 'true'; } `
-        -Uri $uri `
-        -UseBasicParsing |
-        ConvertFrom-Json).access_token;
-}
-function Get-AzureStorageBlob {
-    param (
-        [string]$AccountName,
-        [string]$BlobPath,
-        [string]$ClientId,
-        [string]$ContainerName,
-        [string]$LogFilePath,
-        [string]$TargetPath
-    );
-
-    $accessToken = Get-AzureAccessToken `
-        -ClientId $ClientId `
-        -LogFilePath $LogFilePath `
-        -ResourceUri 'https://storage.azure.com';
-
-    return Get-File `
-        -Headers @{
-            Authorization = "Bearer ${accessToken}";
-            'x-ms-version' = '2022-11-02';
-        } `
-        -LogFilePath $LogFilePath `
-        -SourceUri "https://${AccountName}.blob.core.windows.net/${ContainerName}/${BlobPath}" `
-        -TargetPath $TargetPath;
-}
+$command = {
 function Get-File {
     param(
         [hashtable]$Headers,
@@ -131,46 +89,6 @@ function Install-VisualStudio {
             -Path $bootstrapperFilePath;
     }
 }
-function Install-VisualStudioExtension {
-    param(
-        [string]$Name,
-        [string]$Publisher,
-        [string]$Version
-    );
-
-    $extensionFilePath = Get-File `
-        -SourceUri "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/${Publisher}/vsextensions/${Name}/${Version}/vspackage" `
-        -TargetPath ([IO.Path]::Combine((Get-Location), "${Name}.vsix"));
-    $visualStudioBasePath = $null;
-
-    try {
-        $visualStudioBasePath = (& "${Env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe" -latest -property installationPath);
-    }
-    catch [Management.Automation.CommandNotFoundException] {
-        throw 'Unable to find ''vswhere.exe''; Visual Studio must be installed before running this script.';
-    }
-
-    $process = Start-Process `
-        -ArgumentList @(
-            '/quiet',
-            "`"${extensionFilePath}`""
-        ) `
-        -FilePath "${visualStudioBasePath}/Common7/IDE/VSIXInstaller.exe" `
-        -PassThru `
-        -Wait;
-
-    if ((0 -ne $process.ExitCode) -and (1001 -ne $process.ExitCode)) {
-        throw "Non-zero exit code returned by the process: $($process.ExitCode).";
-    }
-
-    Start-Sleep -Seconds 3;
-
-    if (Test-Path -Path $extensionFilePath) {
-        Remove-Item `
-            -Force `
-            -Path $extensionFilePath;
-    }
-}
 function Write-Log {
     param(
         [string]$Message,
@@ -183,13 +101,19 @@ function Write-Log {
 }
 
 try {
-    $global:ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
-    $global:ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
+    $ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
+    $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
 
     if ([string]::IsNullOrEmpty($LogFilePath)) {
         $LogFilePath = 'C:/WindowsAzure/ByteTerrace/main.log';
     }
 
+    Add-Content `
+        -Path ($profile.AllUsersAllHosts) `
+        -Value '$ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;';
+    Add-Content `
+        -Path ($profile.AllUsersAllHosts) `
+        -Value '$ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;';
     Install-VisualStudio `
         -Components @(
             'Component.Dotfuscator',
@@ -242,39 +166,6 @@ try {
         -Edition 'Enterprise' `
         -LogFilePath $LogFilePath `
         -Version '17';
-
-    <#$visualStudioExtensions = @(
-        @{
-            Name = 'MicrosoftAnalysisServicesModelingProjects2022';
-            Publisher = 'ProBITools';
-            Version = '3.0.10';
-        },
-        @{
-            Name = 'MicrosoftReportProjectsforVisualStudio2022';
-            Publisher = 'ProBITools';
-            Version = '3.0.7';
-        },
-        @{
-            Name = 'MicrosoftVisualStudio2022InstallerProjects';
-            Publisher = 'VisualStudioClient';
-            Version = '2.0.0';
-        },
-        @{
-            Name = 'WixToolsetVisualStudio2022Extension';
-            Publisher = 'WixToolset';
-            Version = '1.0.0.22';
-        }
-    );
-
-    $visualStudioExtensions | ForEach-Object {
-        $extension = $_;
-
-        Install-VisualStudioExtension `
-            -Name $extension.Name `
-            -Publisher $extension.Publisher `
-            -Version $extension.Version;
-    };#>
-
     Write-Log `
         -Message 'Complete!' `
         -Path $LogFilePath;
@@ -288,4 +179,19 @@ catch {
         -Path $LogFilePath;
 
     throw;
+}
+};
+
+$tempScriptPath = [IO.Path]::Combine([IO.Path]::GetTempPath(), "$([guid]::NewGuid()).ps1");
+
+$command | Out-File -FilePath $tempScriptPath;
+
+& pwsh.exe -File $tempScriptPath $LogFilePath;
+
+Start-Sleep -Seconds 3;
+
+if (Test-Path -Path $tempScriptPath) {
+    Remove-Item `
+        -Force `
+        -Path $tempScriptPath;
 }

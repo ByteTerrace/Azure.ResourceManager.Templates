@@ -2,25 +2,58 @@ param(
     [string]$LogFilePath
 );
 
+function Disable-NetworkDiscoverability {
+    $path = 'HKLM:/SYSTEM/CurrentControlSet/Control/Network';
+
+    if (-not (Test-Path -Path $path)) {
+        New-Item `
+            -Force `
+            -Name 'NewNetworkWindowOff' `
+            -Path $path;
+    }
+}
+function Disable-UserAccessControl {
+    $path = 'HKLM:/SOFTWARE/Microsoft/Windows/CurrentVersion/Policies/System';
+
+    if (Test-Path -Path $path) {
+        Set-ItemProperty `
+            -Force `
+            -Name 'ConsentPromptBehaviorAdmin' `
+            -Path $path `
+            -Type 'DWORD' `
+            -Value 0;
+    }
+}
 function Enable-DotNetStrongCrypto {
-    $path = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319';
+    $path = 'HKLM:/SOFTWARE/Microsoft/.NETFramework/v4.0.30319';
 
     if (Test-Path -Path $path){
         Set-ItemProperty `
             -Name 'SchUseStrongCrypto' `
             -Path $path `
             -Type 'DWORD' `
-            -Value '1';
+            -Value 1;
     }
 
-    $path = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319';
+    $path = 'HKLM:/SOFTWARE/Wow6432Node/Microsoft/.NETFramework/v4.0.30319';
 
     if (Test-Path -Path $path){
         Set-ItemProperty `
             -Name 'SchUseStrongCrypto' `
             -Path $path `
             -Type 'DWORD' `
-            -Value '1';
+            -Value 1;
+    }
+}
+function Enable-LongPathBehavior {
+    $path = 'HKLM:/SYSTEM/CurrentControlSet/Control/FileSystem';
+
+    if (Test-Path -Path $path){
+        Set-ItemProperty `
+            -Name 'LongPathsEnabled' `
+            -Path $path `
+            -Type 'DWORD' `
+            -Value 1;
     }
 }
 function Get-File {
@@ -60,6 +93,127 @@ function Get-File {
 }
 function Get-TimeMarker {
     return Get-Date -Format 'yyyyMMddTHH:mm:ssK';
+}
+function Install-AmazonWebServicesCli {
+    param(
+        [string]$LogFilePath
+    );
+
+    $installerFileName = 'AWSCLIV2.msi';
+    $installerFilePath = Get-File `
+        -LogFilePath $LogFilePath `
+        -SourceUri "https://awscli.amazonaws.com/${installerFileName}" `
+        -TargetPath ([IO.Path]::Combine((Get-Location), $installerFileName));
+
+    Write-Log `
+        -Message "Installing Amazon Web Services CLI." `
+        -Path $LogFilePath;
+
+    $process = Start-Process `
+        -ArgumentList @(
+            '/i', "`"${installerFilePath}`"",
+            '/norestart',
+            '/qn'
+        ) `
+        -FilePath "msiexec.exe" `
+        -PassThru `
+        -Wait;
+
+    if ((0 -ne $process.ExitCode) -and (3010 -ne $process.ExitCode)) {
+        throw "Non-zero exit code returned by the process: $($process.ExitCode).";
+    }
+
+    Start-Sleep -Seconds 3;
+
+    if (Test-Path -Path $installerFilePath) {
+        Remove-Item `
+            -Force `
+            -Path $installerFilePath;
+    }
+}
+function Install-AzureCli {
+    param(
+        [string]$LogFilePath
+    );
+
+    $extensionsPath = ([IO.Path]::Combine(${Env:CommonProgramFiles}, 'AzureCliExtensions'));;
+    $installerFilePath = Get-File `
+        -LogFilePath $LogFilePath `
+        -SourceUri 'https://aka.ms/installazurecliwindows' `
+        -TargetPath ([IO.Path]::Combine((Get-Location), 'azure-cli.msi'));
+
+    Write-Log `
+        -Message "Installing Azure CLI." `
+        -Path $LogFilePath;
+    New-Item `
+        -Force `
+        -ItemType 'Directory' `
+        -Path $extensionsPath |
+        Out-Null;
+    [Environment]::SetEnvironmentVariable( `
+        'AZURE_EXTENSION_DIR', `
+        $extensionsPath, `
+        [System.EnvironmentVariableTarget]::Machine `
+    );
+
+    $process = Start-Process `
+        -ArgumentList @(
+            '/i', "`"${installerFilePath}`"",
+            '/norestart',
+            '/qn'
+        ) `
+        -FilePath "msiexec.exe" `
+        -PassThru `
+        -Wait;
+
+    if ((0 -ne $process.ExitCode) -and (3010 -ne $process.ExitCode)) {
+        throw "Non-zero exit code returned by the process: $($process.ExitCode).";
+    }
+
+    Start-Sleep -Seconds 3;
+
+    if (Test-Path -Path $installerFilePath) {
+        Remove-Item `
+            -Force `
+            -Path $installerFilePath;
+    }
+}
+function Install-GoogleCloudCli {
+    param(
+        [string]$LogFilePath
+    );
+
+    $installerFileName = 'GoogleCloudSDKInstaller.exe';
+    $installerFilePath = Get-File `
+        -LogFilePath $LogFilePath `
+        -SourceUri "https://dl.google.com/dl/cloudsdk/channels/rapid/${installerFileName}" `
+        -TargetPath ([IO.Path]::Combine((Get-Location), $installerFileName));
+
+    Write-Log `
+        -Message "Installing Google Cloud CLI." `
+        -Path $LogFilePath;
+
+    $process = Start-Process `
+        -ArgumentList @(
+            '/allusers',
+            '/noreporting',
+            '/S'
+        ) `
+        -FilePath $installerFilePath `
+        -PassThru `
+        -Wait;
+
+    if ((0 -ne $process.ExitCode) -and (3010 -ne $process.ExitCode)) {
+        throw "Non-zero exit code returned by the process: $($process.ExitCode).";
+    }
+
+    Start-Sleep -Seconds 3;
+
+    if (Test-Path -Path $installerFilePath) {
+        Remove-Item `
+            -Force `
+            -Path $installerFilePath;
+    }
 }
 function Install-PowerShell {
     param(
@@ -158,7 +312,7 @@ function Resize-SystemDrive {
     }
 }
 function Set-WindowsDefenderConfiguration {
-    $advancedthreatProtectionKey = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Advanced Threat Protection'
+    $advancedthreatProtectionKey = 'HKLM:/SOFTWARE/Policies/Microsoft/Windows Advanced Threat Protection'
     $preferences = @{
         DisableArchiveScanning = $true;
         DisableAutoExclusions = $true;
@@ -208,13 +362,25 @@ function Write-Log {
 }
 
 try {
-    $global:ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
-    $global:ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
+    $ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
+    $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
 
     if ([string]::IsNullOrEmpty($LogFilePath)) {
         $LogFilePath = 'C:/WindowsAzure/ByteTerrace/main.log';
     }
 
+    Add-Content `
+        -Path ($profile.AllUsersAllHosts) `
+        -Value '$ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;';
+    Add-Content `
+        -Path ($profile.AllUsersAllHosts) `
+        -Value '$ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;';
+    Disable-NetworkDiscoverability;
+    Disable-UserAccessControl;
+    Get-ScheduledTask `
+        -TaskName 'ServerManager' |
+        Disable-ScheduledTask |
+        Out-Null;
     New-Item `
         -Force `
         -ItemType 'Directory' `
@@ -250,6 +416,9 @@ try {
     Install-PowerShell `
         -LogFilePath $LogFilePath `
         -Version 'latest';
+    Install-AmazonWebServicesCli -LogFilePath $LogFilePath;
+    Install-AzureCli -LogFilePath $LogFilePath;
+    Install-GoogleCloudCli -LogFilePath $LogFilePath;
     Write-Log `
         -Message 'Complete!' `
         -Path $LogFilePath;
