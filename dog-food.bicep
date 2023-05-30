@@ -1,7 +1,7 @@
 param ipAddress string
 
 var dnsResolversSubnet = {
-  name: 'VirtualMachines'
+  name: 'DnsResolvers'
   virtualNetworkName: virtualNetwork.name
 }
 var identity = {

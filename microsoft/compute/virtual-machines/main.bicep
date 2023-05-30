@@ -156,7 +156,7 @@ resource networkInterfacesRef 'Microsoft.Network/networkInterfaces@2022-11-01' e
   name: interface.name
   scope: resourceGroup((interface.?subscriptionId ?? subscriptionId), (interface.?resourceGroupName ?? resourceGroupName))
 }]
-resource proximityPlacementGroupRef 'Microsoft.Compute/availabilitySets@2023-03-01' existing = if (isProximityPlacementGroupNotEmpty) {
+resource proximityPlacementGroupRef 'Microsoft.Compute/proximityPlacementGroups@2023-03-01' existing = if (isProximityPlacementGroupNotEmpty) {
   name: properties.proximityPlacementGroup.name
   scope: resourceGroup((properties.proximityPlacementGroup.?subscriptionId ?? subscriptionId), (properties.proximityPlacementGroup.?resourceGroupName ?? resourceGroupName))
 }
