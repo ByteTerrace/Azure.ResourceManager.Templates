@@ -54,6 +54,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-07-01' = {
     dhcpOptions: {
       dnsServers: (properties.?dnsServers ?? [])
     }
+    enableDdosProtection: isDdosProtectionPlanNotEmpty
     subnets: [for subnet in subnets: {
       name: subnet.name
       properties: {

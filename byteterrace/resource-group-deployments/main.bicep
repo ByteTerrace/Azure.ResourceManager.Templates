@@ -74,6 +74,29 @@ type diskEncryptionSet = {
   name: string?
   tags: object?
 }
+type dnsResolver = {
+  inboundEndpoints: {
+    name: string?
+    privateIpAddress: {
+      subnet: {
+        name: string
+      }
+      value: string?
+    }
+    tags: object?
+  }[]?
+  location: string?
+  name: string?
+  outboundEndpoints: {
+    name: string?
+    subnet: {
+      name: string
+    }
+    tags: object?
+  }[]?
+  tags: object?
+  virtualNetwork: resourceReference?
+}
 type keyVault = {
   firewallRules: string[]?
   isAllowTrustedMicrosoftServicesEnabled: bool?
@@ -121,6 +144,7 @@ type propertiesInfo = {
   computeGalleries: computeGallery[]?
   containerRegistries: containerRegistry[]?
   diskEncryptionSets: diskEncryptionSet[]?
+  dnsResolvers: dnsResolver[]?
   keyVaults: keyVault[]?
   networkSecurityGroups: networkSecurityGroup[]?
   proximityPlacementGroups: proximityPlacementGroup[]?
@@ -440,6 +464,20 @@ module diskEncryptionSets 'br/bytrc:microsoft/compute/disk-encryption-sets:0.0.0
       keyVault: set.keyVault
     }
     tags: (set.?tags ?? tags)
+  }
+}]
+module dnsResolvers 'br/bytrc:microsoft/network/dns-resolvers:0.0.0' = [for (resolver, index) in (properties.?dnsResolvers ?? []): {
+  dependsOn: [ virtualNetworks ]
+  name: '${deployment.name}-dnsr-${padLeft(index, 3, '0')}'
+  params: {
+    location: (resolver.?location ?? deployment.location)
+    name: (resolver.?name ?? 'dnsr${padLeft(index, 5, '0')}')
+    properties: {
+      inboundEndpoints: resolver.inboundEndpoints
+      outboundEndpoints: resolver.outboundEndpoints
+      virtualNetwork: resolver.virtualNetwork
+    }
+    tags: (resolver.?tags ?? tags)
   }
 }]
 module keyVaults 'br/bytrc:microsoft/key-vault/vaults:0.0.0' = [for (vault, index) in (properties.?keyVaults ?? []): {
