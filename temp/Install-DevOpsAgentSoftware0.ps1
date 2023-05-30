@@ -377,6 +377,7 @@ try {
         -Value '$ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;';
     Disable-NetworkDiscoverability;
     Disable-UserAccessControl;
+    Enable-LongPathBehavior;
     Get-ScheduledTask `
         -TaskName 'ServerManager' |
         Disable-ScheduledTask |

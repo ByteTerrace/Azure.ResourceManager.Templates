@@ -1,7 +1,7 @@
 param location string = resourceGroup().location
 param name string
 @secure()
-param properties object = {}
+param properties object
 param tags object = {}
 
 var imageDefinitions = (properties.?imageDefinitions ?? [])

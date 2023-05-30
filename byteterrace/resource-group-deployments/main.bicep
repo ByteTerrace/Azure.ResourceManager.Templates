@@ -92,6 +92,27 @@ type keyVault = {
   virtualNetworkRules: virtualNetworkRule[]?
 }
 type managedDiskStorageAccountType = ('Premium_LRS' | 'Premium_ZRS' | 'PremiumV2_LRS' | 'Standard_LRS' | 'StandardSSD_LRS' | 'StandardSSD_ZRS' | 'UltraSSD_LRS')
+type networkSecurityGroup = {
+  location: string?
+  name: string?
+  securityRules: {
+    access: ('Allow' | 'Deny')
+    description: string?
+    destination: {
+      addressPrefixes: string[]
+      applicationSecurityGroups: resourceReference[]?
+      ports: string[]
+    }
+    direction: ('Inbound' | 'Outbound')
+    protocol: ('*' | 'Ah' | 'Esp' | 'Icmp' | 'Tcp' | 'Udp')
+    source: {
+      addressPrefixes: string[]
+      applicationSecurityGroups: resourceReference[]?
+      ports: string[]
+    }
+  }[]?
+  tags: object?
+}
 type propertiesInfo = {
   applicationSecurityGroups: applicationSecurityGroup[]?
   availabilitySets: availabilitySet[]?
@@ -100,7 +121,9 @@ type propertiesInfo = {
   containerRegistries: containerRegistry[]?
   diskEncryptionSets: diskEncryptionSet[]?
   keyVaults: keyVault[]?
+  networkSecurityGroups: networkSecurityGroup[]?
   proximityPlacementGroups: proximityPlacementGroup[]?
+  routeTables: routeTable[]?
   userManagedIdentities: userManagedIdentity[]?
   virtualMachines: virtualMachine[]?
   virtualNetworks: virtualNetwork[]?
@@ -123,6 +146,16 @@ type resourceSku = {
   capacity: int?
   name: string
   tier: string?
+}
+type routeTable = {
+  location: string?
+  name: string?
+  routes: {
+    addressPrefix: string
+    name: string
+    nextHopIpAddress: string?
+  }[]?
+  tags: object?
 }
 type subnetReference = {
   name: string
@@ -430,12 +463,34 @@ module keyVaults 'br/bytrc:microsoft/key-vault/vaults:0.0.0' = [for (vault, inde
     tags: (vault.?tags ?? tags)
   }
 }]
+module networkSecurityGroups 'br/bytrc:microsoft/network/network-security-groups:0.0.0' = [for (group, index) in (properties.?networkSecurityGroups ?? []): {
+  name: '${deployment.name}-nsg-${padLeft(index, 3, '0')}'
+  params: {
+    location: (group.?location ?? deployment.location)
+    name: (group.?name ?? 'nsg${padLeft(index, 5, '0')}')
+    properties: {
+      securityRules: (group.?securityRules ?? null)
+    }
+    tags: (group.?tags ?? tags)
+  }
+}]
 module proximityPlacementGroups 'br/bytrc:microsoft/compute/proximity-placement-groups:0.0.0' = [for (group, index) in (properties.?proximityPlacementGroups ?? []): {
   name: '${deployment.name}-ppg-${padLeft(index, 3, '0')}'
   params: {
     location: (group.?location ?? deployment.location)
     name: (group.?name ?? 'ppg${padLeft(index, 5, '0')}')
     tags: (group.?tags ?? tags)
+  }
+}]
+module routeTables 'br/bytrc:microsoft/network/route-tables:0.0.0' = [for (table, index) in (properties.?routeTables ?? []): {
+  name: '${deployment.name}-rt-${padLeft(index, 3, '0')}'
+  params: {
+    location: (table.?location ?? deployment.location)
+    name: (table.?name ?? 'rt${padLeft(index, 5, '0')}')
+    properties: {
+      routes: (table.?routes ?? null)
+    }
+    tags: (table.?tags ?? tags)
   }
 }]
 module userManagedIdentities 'br/bytrc:microsoft/managed-identity/user-assigned-identities:0.0.0' = [for (identity, index) in (properties.?userManagedIdentities ?? []): {
@@ -454,8 +509,11 @@ module virtualMachines 'br/bytrc:microsoft/compute/virtual-machines:0.0.0' = [fo
     computeGalleries
     diskEncryptionSets
     keyVaults
+    networkSecurityGroups
     proximityPlacementGroups
+    routeTables
     userManagedIdentities
+    virtualNetworks
   ]
   name: '${deployment.name}-vm-${padLeft(index, 3, '0')}'
   params: {
@@ -491,6 +549,11 @@ module virtualMachines 'br/bytrc:microsoft/compute/virtual-machines:0.0.0' = [fo
   }
 }]
 module virtualNetworks 'br/bytrc:microsoft/network/virtual-networks:0.0.0' = [for (network, index) in (properties.?virtualNetworks ?? []): {
+  dependsOn: [
+    applicationSecurityGroups
+    networkSecurityGroups
+    routeTables
+  ]
   name: '${deployment.name}-vnet-${padLeft(index, 3, '0')}'
   params: {
     location: (network.?location ?? deployment.location)

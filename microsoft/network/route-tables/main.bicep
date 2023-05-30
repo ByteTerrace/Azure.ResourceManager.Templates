@@ -11,7 +11,7 @@ resource routeTable 'Microsoft.Network/routeTables@2022-11-01' = {
     routes: [for route in (properties.?routes ?? []): {
       name: route.name
       properties: {
-        addressPrefix: route.addressPrefixOrServiceTag
+        addressPrefix: route.addressPrefix
         hasBgpOverride: null
         nextHopType: route.nextHopType
         nextHopIpAddress: (route.?nextHopIpAddress ?? null)

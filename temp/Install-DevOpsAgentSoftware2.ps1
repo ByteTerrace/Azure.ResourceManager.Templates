@@ -2,7 +2,6 @@ param(
     [string]$LogFilePath
 );
 
-$command = {
 function Get-File {
     param(
         [hashtable]$Headers,
@@ -144,19 +143,4 @@ catch {
         -Path $LogFilePath;
 
     throw;
-}
-};
-
-$tempScriptPath = [IO.Path]::Combine([IO.Path]::GetTempPath(), "$([guid]::NewGuid()).ps1");
-
-$command | Out-File -FilePath $tempScriptPath;
-
-& pwsh.exe -File $tempScriptPath $LogFilePath;
-
-Start-Sleep -Seconds 3;
-
-if (Test-Path -Path $tempScriptPath) {
-    Remove-Item `
-        -Force `
-        -Path $tempScriptPath;
 }
