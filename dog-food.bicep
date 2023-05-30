@@ -1,7 +1,29 @@
+param ipAddress string
+
+var dnsResolversSubnet = {
+  name: 'VirtualMachines'
+  virtualNetworkName: virtualNetwork.name
+}
 var identity = {
   userAssignedIdentities: [ userManagedIdentity ]
 }
+var networkSecurityGroup = {
+  name: 'byteterrace'
+}
+var proximityPlacementGroup = {
+  name: 'byteterrace'
+}
+var routeTable = {
+  name: 'byteterrace'
+}
 var userManagedIdentity = {
+  name: 'byteterrace'
+}
+var virtualMachinesSubnet = {
+  name: 'VirtualMachines'
+  virtualNetworkName: virtualNetwork.name
+}
+var virtualNetwork = {
   name: 'byteterrace'
 }
 
@@ -39,7 +61,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
             {
               privateIpAddress: {
                 subnet: {
-                  name: 'DnsResolvers'
+                  name: dnsResolversSubnet.name
                 }
                 value: '172.16.128.5'
               }
@@ -47,14 +69,12 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
           ]
           name: 'byteterrace'
           outboundEndpoints: []
-          virtualNetwork: {
-            name: 'byteterrace'
-          }
+          virtualNetwork: virtualNetwork
         }
       ]
       networkSecurityGroups: [
         {
-          name: 'byteterrace'
+          name: networkSecurityGroup.name
           securityRules: [
             {
               access: 'Allow'
@@ -63,19 +83,29 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
                 ports: [ '3389' ]
               }
               direction: 'Inbound'
-              name: 'AllowKittoesRdpInbound'
+              name: 'AllowRdpInbound'
               protocol: 'Tcp'
               source: {
-                addressPrefixes: [ '47.188.41.3' ]
+                addressPrefixes: [ ipAddress ]
                 ports: [ '*' ]
               }
             }
           ]
         }
       ]
+      proximityPlacementGroups: [
+        {
+          name: proximityPlacementGroup.name
+        }
+      ]
+      routeTables: [
+        {
+          name: routeTable.name
+        }
+      ]
       userManagedIdentities: [
         {
-          name: 'byteterrace'
+          name: userManagedIdentity.name
         }
       ]
       virtualMachines: [
@@ -101,10 +131,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
               ipConfigurations: [
                 {
                   privateIpAddress: {
-                    subnet: {
-                      name: 'VirtualMachines'
-                      virtualNetworkName: 'byteterrace'
-                    }
+                    subnet: virtualMachinesSubnet
                   }
                   publicIpAddress: {}
                 }
@@ -115,7 +142,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
             disk: {
               cachingMode: 'ReadOnly'
               ephemeralPlacement: 'ResourceDisk'
-              sizeInGigabytes: 256
+              sizeInGigabytes: 300
             }
             patchSettings: {
               assessmentMode: 'ImageDefault'
@@ -124,6 +151,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
             }
             type: 'Windows'
           }
+          proximityPlacementGroup: proximityPlacementGroup
           sku: {
             name: 'Standard_D8ds_v5'
           }
@@ -138,22 +166,18 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
             '10.128.0.0/20'
             '172.16.128.0/20'
           ]
-          name: 'byteterrace'
+          name: virtualNetwork.name
           subnets: [
             {
               addressPrefixes: [ '172.16.128.0/28' ]
               delegations: [ 'Microsoft.Network/dnsResolvers' ]
-              name: 'DnsResolvers'
+              name: dnsResolversSubnet.name
             }
             {
               addressPrefixes: [ '10.128.0.0/24' ]
-              name: 'VirtualMachines'
-              networkSecurityGroup: {
-                name: 'byteterrace'
-              }
-              routeTable: {
-                name: 'byteterrace'
-              }
+              name: virtualMachinesSubnet.name
+              networkSecurityGroup: networkSecurityGroup
+              routeTable: routeTable
             }
           ]
         }
