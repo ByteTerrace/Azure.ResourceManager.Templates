@@ -382,24 +382,26 @@ type virtualNetwork = {
   dnsServers: string[]?
   location: string?
   subnets: {
-    addressPrefixes: string[]
-    delegations: string[]?
-    name: string
-    natGateway: resourceReference?
-    networkSecurityGroup: resourceReference?
-    privateEndpointNetworkPolicies: {
-      isNetworkSecurityGroupEnabled: bool?
-      isRouteTableEnabled: bool?
-    }?
-    privateLinkServiceNetworkPolicies: {
-      isEnabled: bool?
-    }?
-    routeTable: resourceReference?
-    serviceEndpoints: {
-      locations: string[]?
-      name: string
-    }[]?
-  }[]?
+    *: {
+      addressPrefixes: string[]
+      delegations: string[]?
+      natGateway: resourceReference?
+      networkSecurityGroup: resourceReference?
+      privateEndpointNetworkPolicies: {
+        isNetworkSecurityGroupEnabled: bool?
+        isRouteTableEnabled: bool?
+      }?
+      privateLinkServiceNetworkPolicies: {
+        isEnabled: bool?
+      }?
+      routeTable: resourceReference?
+      serviceEndpoints: {
+        *: {
+          locations: string[]?
+        }
+      }?
+    }
+  }?
   tags: object?
 }
 type virtualNetworkRule = {

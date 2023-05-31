@@ -6,23 +6,22 @@ param tags object = {}
 
 var isDdosProtectionPlanNotEmpty = !empty(properties.?ddosProtectionPlan ?? {})
 var resourceGroupName = resourceGroup().name
-var subnets = sort(map(range(0, length(properties.?subnets ?? [])), index => {
-  addressPrefixes: properties.subnets[index].addressPrefixes
-  delegations: (properties.subnets[index].?delegations ?? [])
-  index: index
-  name: properties.subnets[index].name
-  natGateway: (properties.subnets[index].?natGateway ?? {})
-  networkSecurityGroup: (properties.subnets[index].?networkSecurityGroup ?? {})
+var subnets = sort(map(items(properties.?subnets ?? {}), subnet => {
+  addressPrefixes: subnet.value.addressPrefixes
+  delegations: (subnet.value.?delegations ?? [])
+  name: subnet.key
+  natGateway: (subnet.value.?natGateway ?? {})
+  networkSecurityGroup: (subnet.value.?networkSecurityGroup ?? {})
   privateEndpointNetworkPolicies: {
-    isNetworkSecurityGroupEnabled: (properties.subnets[index].?privateEndpointNetworkPolicies.?isNetworkSecurityGroupEnabled ?? true)
-    isRouteTableEnabled: (properties.subnets[index].?privateEndpointNetworkPolicies.?isRouteTableEnabled ?? true)
+    isNetworkSecurityGroupEnabled: (subnet.value.?privateEndpointNetworkPolicies.?isNetworkSecurityGroupEnabled ?? true)
+    isRouteTableEnabled: (subnet.value.?privateEndpointNetworkPolicies.?isRouteTableEnabled ?? true)
   }
   privateLinkServiceNetworkPolicies: {
-    isEnabled: (properties.subnets[index].?privateLinkServiceNetworkPolicies.?isEnabled ?? true)
+    isEnabled: (subnet.value.?privateLinkServiceNetworkPolicies.?isEnabled ?? true)
   }
-  routeTable: (properties.subnets[index].?routeTable ?? {})
-  serviceEndpoints: (properties.subnets[index].?serviceEndpoints ?? [])
-}), (x, y) => (x.index < y.index))
+  routeTable: (subnet.value.?routeTable ?? {})
+  serviceEndpoints: (subnet.value.?serviceEndpoints ?? [])
+}), (x, y) => (x.name < y.name))
 var subscriptionId = subscription().subscriptionId
 
 resource ddosProtectionPlan 'Microsoft.Network/ddosProtectionPlans@2022-11-01' existing = if (isDdosProtectionPlanNotEmpty) {
@@ -48,14 +47,12 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-07-01' = {
     addressSpace: {
       addressPrefixes: properties.addressPrefixes
     }
-    ddosProtectionPlan: (isDdosProtectionPlanNotEmpty ? {
-      id: ddosProtectionPlan.id
-    } : null)
+    ddosProtectionPlan: (isDdosProtectionPlanNotEmpty ? { id: ddosProtectionPlan.id } : null)
     dhcpOptions: {
       dnsServers: (properties.?dnsServers ?? [])
     }
     enableDdosProtection: isDdosProtectionPlanNotEmpty
-    subnets: [for subnet in subnets: {
+    subnets: [for (subnet, index) in subnets: {
       name: subnet.name
       properties: {
         addressPrefix: ((1 == length(subnet.addressPrefixes)) ? first(subnet.addressPrefixes) : null)
@@ -66,20 +63,14 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-07-01' = {
             serviceName: delegation
           }
         })
-        natGateway: (empty(subnet.natGateway) ? null : {
-          id: natGateways[subnet.index].id
-        })
-        networkSecurityGroup: (empty(subnet.networkSecurityGroup) ? null : {
-          id: networkSecurityGroups[subnet.index].id
-        })
+        natGateway: (empty(subnet.natGateway) ? null : { id: natGateways[index].id })
+        networkSecurityGroup: (empty(subnet.networkSecurityGroup) ? null : { id: networkSecurityGroups[index].id })
         privateEndpointNetworkPolicies: ((subnet.privateEndpointNetworkPolicies.isNetworkSecurityGroupEnabled && subnet.privateEndpointNetworkPolicies.isRouteTableEnabled) ? 'Enabled' : (subnet.privateEndpointNetworkPolicies.isNetworkSecurityGroupEnabled ? 'NetworkSecurityGroupEnabled' : (subnet.privateEndpointNetworkPolicies.isRouteTableEnabled ? 'RouteTableEnabled' : 'Disabled')))
         privateLinkServiceNetworkPolicies: (subnet.privateLinkServiceNetworkPolicies.isEnabled ? 'Enabled' : 'Disabled')
-        routeTable: (empty(subnet.routeTable) ? null : {
-          id: routeTables[subnet.index].id
-        })
-        serviceEndpoints: map(subnet.serviceEndpoints, endpoint => {
-          locations: (endpoint.?locations ?? null)
-          service: endpoint.name
+        routeTable: (empty(subnet.routeTable) ? null : { id: routeTables[index].id })
+        serviceEndpoints: map(items(subnet.serviceEndpoints), endpoint => {
+          locations: (endpoint.value.?locations ?? null)
+          service: endpoint.key
         })
       }
     }]

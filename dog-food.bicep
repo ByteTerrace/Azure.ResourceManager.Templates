@@ -207,20 +207,18 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
             '10.128.0.0/20'
             '172.16.128.0/20'
           ]
-          subnets: [
-            {
+          subnets: {
+            '${dnsResolversSubnet.name}': {
               addressPrefixes: [ '172.16.128.0/28' ]
               delegations: [ 'Microsoft.Network/dnsResolvers' ]
-              name: dnsResolversSubnet.name
             }
-            {
+            '${virtualMachinesSubnet.name}': {
               addressPrefixes: [ '10.128.0.0/24' ]
-              name: virtualMachinesSubnet.name
               natGateway: natGateway
               networkSecurityGroup: networkSecurityGroup
               routeTable: routeTable
             }
-          ]
+          }
         }
       }
     }
