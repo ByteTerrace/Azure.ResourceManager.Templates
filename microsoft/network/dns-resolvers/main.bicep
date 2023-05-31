@@ -4,6 +4,10 @@ param name string
 param properties object
 param tags object = {}
 
+var endpoints = {
+  inbound: sort(items(properties.?inboundEndpoints ?? {}), (x, y) => (x.key < y.key))
+  outbound: sort(items(properties.?outboundEndpoints ?? {}), (x, y) => (x.key < y.key))
+}
 var resourceGroupName = resourceGroup().name
 var subscriptionId = subscription().subscriptionId
 
@@ -15,36 +19,36 @@ resource dnsResolver 'Microsoft.Network/dnsResolvers@2022-07-01' = {
   }
   tags: tags
 }
-resource inboundEndpoints 'Microsoft.Network/dnsResolvers/inboundEndpoints@2022-07-01' = [for (endpoint, index) in properties.inboundEndpoints: {
+resource inboundEndpoints 'Microsoft.Network/dnsResolvers/inboundEndpoints@2022-07-01' = [for (endpoint, index) in endpoints.inbound: {
   location: location
-  name: (endpoint.?name ?? index)
+  name: endpoint.key
   parent: dnsResolver
   properties: {
     ipConfigurations: [
       {
-        privateIpAddress: (endpoint.privateIpAddress.?value ?? null)
-        privateIpAllocationMethod: (contains(endpoint.privateIpAddress, 'value') ? 'Static' : 'Dynamic')
+        privateIpAddress: (endpoint.value.privateIpAddress.?value ?? null)
+        privateIpAllocationMethod: (contains(endpoint.value.privateIpAddress, 'value') ? 'Static' : 'Dynamic')
         subnet: { id: inboundSubnetsRef[index].id }
       }
     ]
   }
-  tags: (endpoint.?tags ?? tags)
+  tags: (endpoint.value.?tags ?? tags)
 }]
-resource inboundSubnetsRef 'Microsoft.Network/virtualNetworks/subnets@2022-11-01' existing = [for endpoint in properties.inboundEndpoints: {
-  name: '${endpoint.privateIpAddress.subnet.name}'
+resource inboundSubnetsRef 'Microsoft.Network/virtualNetworks/subnets@2022-11-01' existing = [for endpoint in endpoints.inbound: {
+  name: '${endpoint.value.privateIpAddress.subnet.name}'
   parent: virtualNetworkRef
 }]
-resource outboundEndpoints 'Microsoft.Network/dnsResolvers/outboundEndpoints@2022-07-01' = [for (endpoint, index) in properties.outboundEndpoints: {
+resource outboundEndpoints 'Microsoft.Network/dnsResolvers/outboundEndpoints@2022-07-01' = [for (endpoint, index) in endpoints.outbound: {
   location: location
-  name: (endpoint.?name ?? index)
+  name: endpoint.key
   parent: dnsResolver
   properties: {
     subnet: { id: outboundSubnetsRef[index].id }
   }
-  tags: (endpoint.?tags ?? tags)
+  tags: (endpoint.value.?tags ?? tags)
 }]
-resource outboundSubnetsRef 'Microsoft.Network/virtualNetworks/subnets@2022-11-01' existing = [for endpoint in properties.outboundEndpoints: {
-  name: '${endpoint.subnet.name}'
+resource outboundSubnetsRef 'Microsoft.Network/virtualNetworks/subnets@2022-11-01' existing = [for endpoint in endpoints.outbound: {
+  name: '${endpoint.value.subnet.name}'
   parent: virtualNetworkRef
 }]
 resource virtualNetworkRef 'Microsoft.Network/virtualNetworks@2022-11-01' existing = {

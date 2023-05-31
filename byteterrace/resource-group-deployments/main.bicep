@@ -13,34 +13,36 @@ type capacityReservationGroup = {
   availabilityZones: string[]?
   location: string?
   reservations: {
-    availabilityZones: string[]?
-    name: string?
-    sku: resourceSku
-    tags: object?
-  }[]?
+    *: {
+      availabilityZones: string[]?
+      sku: resourceSku
+      tags: object?
+    }
+  }?
   tags: object?
 }
 type computeGallery = {
   description: string?
   imageDefinitions: {
-    architecture: ('Arm64' | 'x64')?
-    description: string?
-    generation: ('V1' | 'V2')?
-    identifier: {
-      offer: string
-      publisher: string
-      sku: string
+    *: {
+      architecture: ('Arm64' | 'x64')?
+      description: string?
+      generation: ('V1' | 'V2')?
+      identifier: {
+        offer: string
+        publisher: string
+        sku: string
+      }
+      isAcceleratedNetworkingSupported: bool?
+      isHibernateSupported: bool?
+      operatingSystem: {
+        state: ('Generalized' | 'Specialized')
+        type: ('Linux' | 'Windows')
+      }
+      securityType: ('ConfidentialVM' | 'ConfidentialVmSupported' | 'Standard' | 'TrustedLaunch' | 'TrustedLaunchSupported')?
+      tags: object?
     }
-    isAcceleratedNetworkingSupported: bool?
-    isHibernateSupported: bool?
-    name: string
-    operatingSystem: {
-      state: ('Generalized' | 'Specialized')
-      type: ('Linux' | 'Windows')
-    }
-    securityType: ('ConfidentialVM' | 'ConfidentialVmSupported' | 'Standard' | 'TrustedLaunch' | 'TrustedLaunchSupported')?
-    tags: object?
-  }[]?
+  }?
   location: string?
   tags: object?
 }
@@ -70,23 +72,25 @@ type diskEncryptionSet = {
 }
 type dnsResolver = {
   inboundEndpoints: {
-    name: string?
-    privateIpAddress: {
+    *: {
+      privateIpAddress: {
+        subnet: {
+          name: string
+        }
+        value: string?
+      }
+      tags: object?
+    }
+  }?
+  location: string?
+  outboundEndpoints: {
+    *: {
       subnet: {
         name: string
       }
-      value: string?
+      tags: object?
     }
-    tags: object?
-  }[]?
-  location: string?
-  outboundEndpoints: {
-    name: string?
-    subnet: {
-      name: string
-    }
-    tags: object?
-  }[]?
+  }?
   tags: object?
   virtualNetwork: resourceReference?
 }
@@ -118,15 +122,16 @@ type natGateway = {
 type networkInterface = {
   dnsServers: string[]?
   ipConfigurations: {
-    isPrimary: bool?
-    name: string?
-    privateIpAddress: {
-      subnet: subnetReference
-      value: string?
-      version: ('IPv4' | 'IPv6')?
+    *: {
+      isPrimary: bool?
+      privateIpAddress: {
+        subnet: subnetReference
+        value: string?
+        version: ('IPv4' | 'IPv6')?
+      }
+      publicIpAddress: resourceReference?
     }
-    publicIpAddress: resourceReference?
-  }[]
+  }
   isAcceleratedNetworkingEnabled: bool?
   isIpForwardingEnabled: bool?
   isTcpStateTrackingEnabled: bool?
@@ -138,22 +143,23 @@ type networkInterface = {
 type networkSecurityGroup = {
   location: string?
   securityRules: {
-    access: ('Allow' | 'Deny')
-    description: string?
-    destination: {
-      addressPrefixes: string[]
-      applicationSecurityGroups: resourceReference[]?
-      ports: string[]
+    *: {
+      access: ('Allow' | 'Deny')
+      description: string?
+      destination: {
+        addressPrefixes: string[]
+        applicationSecurityGroups: resourceReference[]?
+        ports: string[]
+      }
+      direction: ('Inbound' | 'Outbound')
+      protocol: ('*' | 'Ah' | 'Esp' | 'Icmp' | 'Tcp' | 'Udp')
+      source: {
+        addressPrefixes: string[]
+        applicationSecurityGroups: resourceReference[]?
+        ports: string[]
+      }
     }
-    direction: ('Inbound' | 'Outbound')
-    name: string
-    protocol: ('*' | 'Ah' | 'Esp' | 'Icmp' | 'Tcp' | 'Udp')
-    source: {
-      addressPrefixes: string[]
-      applicationSecurityGroups: resourceReference[]?
-      ports: string[]
-    }
-  }[]?
+  }?
   tags: object?
 }
 type propertiesInfo = {
@@ -194,7 +200,6 @@ type publicIpPrefix = {
   customPrefix: resourceReference?
   length: int
   location: string?
-  natGateway: resourceReference?
   sku: resourceSku
   tags: object?
   version: ('IPv4' | 'IPV6')?
@@ -216,10 +221,12 @@ type resourceSku = {
 type routeTable = {
   location: string?
   routes: {
-    addressPrefix: string
-    name: string
-    nextHopIpAddress: string?
-  }[]?
+    *: {
+      addressPrefix: string
+      name: string
+      nextHopIpAddress: string?
+    }
+  }?
   tags: object?
 }
 type subnetReference = {
@@ -261,14 +268,15 @@ type virtualMachine = {
     }
   }?
   dataDisks: {
-    cachingMode: ('None' | 'ReadOnly' | 'ReadWrite')?
-    createOption: ('Attach' | 'Empty' | 'FromImage')?
-    deleteOption: ('Delete' | 'Detach')?
-    isWriteAcceleratorEnabled: bool?
-    name: string?
-    sizeInGigabytes: int
-    storageAccountType: managedDiskStorageAccountType?
-  }[]?
+    *: {
+      cachingMode: ('None' | 'ReadOnly' | 'ReadWrite')?
+      createOption: ('Attach' | 'Empty' | 'FromImage')?
+      deleteOption: ('Delete' | 'Detach')?
+      isWriteAcceleratorEnabled: bool?
+      sizeInGigabytes: int
+      storageAccountType: managedDiskStorageAccountType?
+    }
+  }?
   diskEncryptionSet: resourceReference?
   identity: resourceIdentity?
   imageReference: {
@@ -288,45 +296,54 @@ type virtualMachine = {
   licenseType: string?
   location: string?
   networkInterfaces: {
-    deleteOption: ('Delete' | 'Detach')?
-    dnsServers: string[]?
-    dscpConfiguration: resourceReference?
-    isAcceleratedNetworkingEnabled: bool?
-    isFpgaNetworkingEnabled: bool?
-    isIpForwardingEnabled: bool?
-    isPrimary: bool?
-    isTcpStateTrackingEnabled: bool?
-    ipConfigurations: {
-      applicationGateways: {
-        backEndAddressPoolNames: string[]
-        name: string
-        resourceGroupName: string?
-      }[]?
-      applicationSecurityGroups: resourceReference[]?
+    *: {
+      deleteOption: ('Delete' | 'Detach')?
+      dnsServers: string[]?
+      dscpConfiguration: resourceReference?
+      isAcceleratedNetworkingEnabled: bool?
+      isExisting: bool?
+      isFpgaNetworkingEnabled: bool?
+      isIpForwardingEnabled: bool?
       isPrimary: bool?
-      loadBalancers: {
-        backEndAddressPoolNames: string[]
-        name: string
-        resourceGroupName: string?
-      }[]?
-      name: string?
-      privateIpAddress: {
-        subnet: subnetReference
-        version: ('IPv4' | 'IPv6')?
-      }
-      publicIpAddress: {
-        allocationMethod: ('Dynamic' | 'Static')?
-        domainNameLabel: string?
-        idleTimeoutInMinutes: int?
-        sku: resourceSku?
-        version: ('IPv4' | 'IPv6')?
+      isTcpStateTrackingEnabled: bool?
+      ipConfigurations: {
+        *: {
+          applicationGateways: {
+            *: {
+              backEndAddressPoolNames: string[]
+              resourceGroupName: string?
+            }
+          }?
+          applicationSecurityGroups: {
+            *: {
+              resourceGroupName: string?
+            }
+          }?
+          isPrimary: bool?
+          loadBalancers: {
+            *: {
+              backEndAddressPoolNames: string[]
+              resourceGroupName: string?
+            }
+          }?
+          privateIpAddress: {
+            subnet: subnetReference
+            version: ('IPv4' | 'IPv6')?
+          }
+          publicIpAddress: {
+            allocationMethod: ('Dynamic' | 'Static')?
+            domainNameLabel: string?
+            idleTimeoutInMinutes: int?
+            sku: resourceSku?
+            version: ('IPv4' | 'IPv6')?
+          }?
+        }
       }?
-    }[]?
-    name: string?
-    networkSecurityGroup: resourceReference?
-    resourceGroupName: string?
-    subscriptionId: string?
-  }[]
+      networkSecurityGroup: resourceReference?
+      resourceGroupName: string?
+      subscriptionId: string?
+    }
+  }
   operatingSystem: {
     administrator: {
       name: string?
@@ -354,20 +371,21 @@ type virtualMachine = {
   proximityPlacementGroup: resourceReference?
   roleAssignments: array?
   scripts: {
-    blobPath: string?
-    containerName: string?
-    errorBlobPath: string?
-    errorBlobUri: string?
-    name: string?
-    outputBlobPath: string?
-    outputBlobUri: string?
-    parameters: object?
-    storageAccount: resourceReference?
-    tags: object?
-    timeoutInSeconds: int?
-    uri: string?
-    value: string?
-  }[]?
+    *: {
+      blobPath: string?
+      containerName: string?
+      errorBlobPath: string?
+      errorBlobUri: string?
+      outputBlobPath: string?
+      outputBlobUri: string?
+      parameters: object?
+      storageAccount: resourceReference?
+      tags: object?
+      timeoutInSeconds: int?
+      uri: string?
+      value: string?
+    }
+  }?
   sku: resourceSku
   spotSettings: {
     evictionPolicy: ('Deallocate' | 'Delete')
@@ -668,6 +686,7 @@ module virtualMachines 'br/bytrc:microsoft/compute/virtual-machines:0.0.0' = [fo
     computeGalleries
     diskEncryptionSets
     keyVaults
+    natGateways
     networkInterfaces
     networkSecurityGroups
     proximityPlacementGroups

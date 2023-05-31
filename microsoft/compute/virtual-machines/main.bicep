@@ -10,7 +10,8 @@ var administrator = {
   name: (properties.operatingSystem.?administrator.?name ?? uniqueString(toLower(name)))
   password: (properties.operatingSystem.?administrator.?password ?? '${guid}|${utcNow}!')
 }
-var certificates = items(properties.?certificates ?? {})
+var certificates = sort(items(properties.?certificates ?? {}), (x, y) => (x.key < y.key))
+var dataDisks = sort(items(properties.?dataDisks ?? {}), (x, y) => (x.key < y.key))
 var identity = (properties.?identity ?? {})
 var isAgentPlatformUpdateEnabled = ('automaticbyplatform' == toLower(operatingSystemPatchSettings.patchMode))
 var isAutomaticShutdownNotEmpty = !empty(properties.?automaticShutdown ?? {})
@@ -32,32 +33,30 @@ var isUserAssignedIdentitiesNotEmpty = !empty(userAssignedIdentities)
 var isVirtualMachineScaleSetNotEmpty = !empty(properties.?virtualMachineScaleSet ?? {})
 var isVirtualTrustedPlatformModuleEnabled = (properties.?isVirtualTrustedPlatformModuleEnabled ?? true)
 var isWindows = ('windows' == toLower(properties.operatingSystem.type))
+var networkInterfaces = sort(items(properties.networkInterfaces), (x, y) => (x.key < y.key))
 var operatingSystemPatchSettings = {
   assessmentMode: (properties.operatingSystem.?patchSettings.?assessmentMode ?? 'AutomaticByPlatform')
   patchMode: (properties.operatingSystem.?patchSettings.?patchMode ?? 'AutomaticByPlatform')
 }
 var resourceGroupName = resourceGroup().name
-var scripts = sort(map(range(0, length(properties.?scripts ?? [])), index => {
-  blobPath: (properties.scripts[index].?blobPath ?? '')
-  containerName: (properties.scripts[index].?containerName ?? null)
-  errorBlobPath: (properties.scripts[index].?errorBlobPath ?? '')
-  errorBlobUri: (properties.scripts[index].?errorBlobUri ?? null)
-  index: index
-  name: (properties.scripts[index].?name ?? index)
-  outputBlobPath: (properties.scripts[index].?outputBlobPath ?? '')
-  outputBlobUri: (properties.scripts[index].?outputBlobUri ?? null)
-  parameters: map(items(properties.scripts[index].?parameters ?? {}), parameter => {
+var scripts = sort(map(items(properties.?scripts ?? {}), script => {
+  blobPath: (script.value.?blobPath ?? '')
+  containerName: (script.value.?containerName ?? null)
+  errorBlobPath: (script.value.?errorBlobPath ?? '')
+  errorBlobUri: (script.value.?errorBlobUri ?? null)
+  key: script.key
+  outputBlobPath: (script.value.?outputBlobPath ?? '')
+  outputBlobUri: (script.value.?outputBlobUri ?? null)
+  parameters: map(items(script.value.?parameters ?? {}), parameter => {
     name: parameter.key
     value: parameter.value
   })
-  storageAccount: (contains(properties.scripts[index], 'storageAccount') ? union({
-    id: resourceId('Microsoft.Storage/storageAccounts', properties.scripts[index].storageAccount.name)
-  }, properties.scripts[index].storageAccount) : {})
-  tags: (properties.scripts[index].?tags ?? tags)
-  timeoutInSeconds: (properties.scripts[index].?timeoutInSeconds ?? null)
-  uri: (properties.scripts[index].?uri ?? null)
-  value: (properties.scripts[index].?value ?? null)
-}), (x, y) => (x.index < y.index))
+  storageAccount: (script.value.?storageAccount ?? {})
+  tags: (script.value.?tags ?? tags)
+  timeoutInSeconds: (script.value.?timeoutInSeconds ?? null)
+  uri: (script.value.?uri ?? null)
+  value: (script.value.?value ?? null)
+}), (x, y) => (x.key < y.key))
 var subscriptionId = subscription().subscriptionId
 var userAssignedIdentities = sort(map(range(0, length(identity.?userAssignedIdentities ?? [])), index => {
   id: resourceId((identity.userAssignedIdentities[index].?subscriptionId ?? subscriptionId), (identity.userAssignedIdentities[index].?resourceGroupName ?? resourceGroupName), 'Microsoft.ManagedIdentity/userAssignedIdentities', identity.userAssignedIdentities[index].name)
@@ -152,9 +151,9 @@ resource keyVaultIntegration 'Microsoft.Compute/virtualMachines/extensions@2023-
   }
   tags: tags
 }
-resource networkInterfacesRef 'Microsoft.Network/networkInterfaces@2022-11-01' existing = [for interface in properties.networkInterfaces: {
-  name: interface.name
-  scope: resourceGroup((interface.?subscriptionId ?? subscriptionId), (interface.?resourceGroupName ?? resourceGroupName))
+resource networkInterfacesRef 'Microsoft.Network/networkInterfaces@2022-11-01' existing = [for interface in networkInterfaces: {
+  name: interface.key
+  scope: resourceGroup((interface.value.?subscriptionId ?? subscriptionId), (interface.value.?resourceGroupName ?? resourceGroupName))
 }]
 resource proximityPlacementGroupRef 'Microsoft.Compute/proximityPlacementGroups@2023-03-01' existing = if (isProximityPlacementGroupNotEmpty) {
   name: properties.proximityPlacementGroup.name
@@ -174,17 +173,17 @@ resource roleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = 
   scope: virtualMachine
 }]
 @batchSize(1)
-resource runCommands 'Microsoft.Compute/virtualMachines/runCommands@2023-03-01' = [for script in scripts: {
+resource runCommands 'Microsoft.Compute/virtualMachines/runCommands@2023-03-01' = [for (script, index) in scripts: {
   dependsOn: [
     guestAttestation
     keyVaultIntegration
   ]
   location: location
-  name: script.name
+  name: script.key
   parent: virtualMachine
   properties: {
     asyncExecution: false
-    errorBlobUri: (empty(script.errorBlobPath) ? script.errorBlobUri : format('{0}{1}/{2}?{3}', reference(script.storageAccount.id, '2022-09-01').primaryEndpoints.blob, script.containerName, script.errorBlobPath, listAccountSAS(script.storageAccount.id, '2022-09-01', {
+    errorBlobUri: (empty(script.errorBlobPath) ? script.errorBlobUri : format('{0}{1}/{2}?{3}', scriptStorageAccountsRef[index].properties.primaryEndpoints.blob, script.containerName, script.errorBlobPath, listAccountSAS(script.storageAccount.id, '2022-09-01', {
       canonicalizedResource: '/blob/${script.storageAccount.name}/${script.containerName}/${script.errorBlobPath}'
       signedExpiry: dateTimeAdd(utcNow, 'PT3H')
       signedPermission: 'rwacu'
@@ -192,7 +191,7 @@ resource runCommands 'Microsoft.Compute/virtualMachines/runCommands@2023-03-01' 
       signedResourceTypes: 'o'
       signedServices: 'b'
     }).accountSasToken))
-    outputBlobUri: (empty(script.outputBlobPath) ? script.outputBlobUri : format('{0}{1}/{2}?{3}', reference(script.storageAccount.id, '2022-09-01').primaryEndpoints.blob, script.containerName, script.outputBlobPath, listAccountSAS(script.storageAccount.id, '2022-09-01', {
+    outputBlobUri: (empty(script.outputBlobPath) ? script.outputBlobUri : format('{0}{1}/{2}?{3}', scriptStorageAccountsRef[index].properties.primaryEndpoints.blob, script.containerName, script.outputBlobPath, listAccountSAS(script.storageAccount.id, '2022-09-01', {
       canonicalizedResource: '/blob/${script.storageAccount.name}/${script.containerName}/${script.outputBlobPath}'
       signedExpiry: dateTimeAdd(utcNow, 'PT3H')
       signedPermission: 'rwacu'
@@ -205,7 +204,7 @@ resource runCommands 'Microsoft.Compute/virtualMachines/runCommands@2023-03-01' 
     runAsUser: administrator.name
     source: {
       script: script.value
-      scriptUri: (empty(script.blobPath) ? script.uri : format('{0}{1}/{2}?{3}', reference(script.storageAccount.id, '2022-09-01').primaryEndpoints.blob, script.containerName, script.blobPath, listAccountSAS(script.storageAccount.id, '2022-09-01', {
+      scriptUri: (empty(script.blobPath) ? script.uri : format('{0}{1}/{2}?{3}', scriptStorageAccountsRef[index].properties.primaryEndpoints.blob, script.containerName, script.blobPath, listAccountSAS(script.storageAccount.id, '2022-09-01', {
         canonicalizedResource: '/blob/${script.storageAccount.name}/${script.containerName}/${script.blobPath}'
         signedExpiry: dateTimeAdd(utcNow, 'PT3H')
         signedPermission: 'r'
@@ -218,6 +217,10 @@ resource runCommands 'Microsoft.Compute/virtualMachines/runCommands@2023-03-01' 
     treatFailureAsDeploymentFailure: true
   }
   tags: script.tags
+}]
+resource scriptStorageAccountsRef 'Microsoft.Storage/storageAccounts@2022-09-01' existing = [for script in scripts: if (!empty(script.storageAccount)) {
+  name: script.storageAccount.name
+  scope: resourceGroup((script.storageAccount.?subscriptionId ?? subscriptionId), (script.storageAccount.?resourceGroupName ?? resourceGroupName))
 }]
 resource systemAssignedIdentityRef 'Microsoft.ManagedIdentity/identities@2023-01-31' existing = if (isSystemAssignedIdentityEnabled) {
   name: 'default'
@@ -257,62 +260,62 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
     }
     licenseType: (properties.?licenseType ?? null)
     networkProfile: {
-      networkApiVersion: ((0 != length(filter(properties.networkInterfaces, interface => !contains(interface, 'name')))) ? '2020-11-01' : null)
-      networkInterfaceConfigurations: [for (interface, index) in filter(properties.networkInterfaces, interface => !contains(interface, 'name')): {
-        name: '${name}-Nic-${padLeft(index, 5, '0')}'
+      networkApiVersion: ((0 != length(filter(networkInterfaces, interface => !contains(interface.value, 'isExisting')))) ? '2020-11-01' : null)
+      networkInterfaceConfigurations: [for (interface, index) in filter(networkInterfaces, interface => !contains(interface.value, 'isExisting')): {
+        name: interface.key
         properties: {
           deleteOption: 'Delete'
-          disableTcpStateTracking: !(interface.?isTcpStateTrackingEnabled ?? true)
+          disableTcpStateTracking: !(interface.value.?isTcpStateTrackingEnabled ?? true)
           dnsSettings: {
-            dnsServers: (interface.?dnsServers ?? [])
+            dnsServers: (interface.value.?dnsServers ?? [])
           }
           dscpConfiguration: (contains(interface, 'dscpConfiguration') ? {
-            id: resourceId((interface.dscpConfiguration.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/dscpConfigurations', interface.dscpConfiguration.name)
+            id: resourceId((interface.value.dscpConfiguration.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/dscpConfigurations', interface.value.dscpConfiguration.name)
           } : null)
-          enableAcceleratedNetworking: (interface.?isAcceleratedNetworkingEnabled ?? true)
-          enableFpga: (interface.?isFpgaNetworkingEnabled ?? null)
-          enableIPForwarding: (interface.?isIpForwardingEnabled ?? false)
-          ipConfigurations: map(range(0, length(interface.ipConfigurations)), index => {
-            name: (interface.ipConfigurations[index].?name ?? index)
+          enableAcceleratedNetworking: (interface.value.?isAcceleratedNetworkingEnabled ?? true)
+          enableFpga: (interface.value.?isFpgaNetworkingEnabled ?? null)
+          enableIPForwarding: (interface.value.?isIpForwardingEnabled ?? false)
+          ipConfigurations: map(items(interface.value.ipConfigurations), configuration => {
+            name: configuration.key
             properties: {
-              applicationGatewayBackendAddressPools: flatten(map((interface.ipConfigurations[index].?applicationGateways ?? []), gateway => map(gateway.backEndAddressPoolNames, name => {
-                id: resourceId((gateway.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/applicationGateways/backendAddressPools', gateway.name, name)
+              applicationGatewayBackendAddressPools: flatten(map(items(configuration.value.?applicationGateways ?? {}), gateway => map(gateway.value.backEndAddressPoolNames, name => {
+                id: resourceId((gateway.value.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/applicationGateways/backendAddressPools', gateway.key, name)
               })))
-              applicationSecurityGroups: map((interface.ipConfigurations[index].?applicationSecurityGroups ?? []), group => {
-                id: resourceId((group.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/applicationSecurityGroups', group.name)
+              applicationSecurityGroups: map(items(configuration.value.?applicationSecurityGroups ?? {}), group => {
+                id: resourceId((group.value.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/applicationSecurityGroups', group.key)
               })
-              loadBalancerBackendAddressPools: flatten(map((interface.ipConfigurations[index].?loadBalancers ?? []), loadBalancer => map(loadBalancer.backEndAddressPoolNames, name => {
-                id: resourceId((loadBalancer.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/loadBalancers/backendAddressPools', loadBalancer.name, name)
+              loadBalancerBackendAddressPools: flatten(map(items(configuration.value.?loadBalancers ?? {}), loadBalancer => map(loadBalancer.value.backEndAddressPoolNames, name => {
+                id: resourceId((loadBalancer.value.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/loadBalancers/backendAddressPools', loadBalancer.key, name)
               })))
-              primary: (interface.ipConfigurations[index].?isPrimary ?? ((0 == index) && (0 == length(filter(interface.ipConfigurations, configuration => contains(configuration, 'isPrimary'))))))
-              privateIPAddressVersion: (interface.ipConfigurations[index].privateIpAddress.?version ?? 'IPv4')
-              publicIPAddressConfiguration: (contains(interface.ipConfigurations[index], 'publicIpAddress') ? {
-                name: '${name}-Pip-${padLeft(index, 5, '0')}'
+              primary: (configuration.value.?isPrimary ?? (1 == length(interface.value.ipConfigurations)))
+              privateIPAddressVersion: (configuration.value.privateIpAddress.?version ?? 'IPv4')
+              publicIPAddressConfiguration: (contains(configuration.value, 'publicIpAddress') ? {
+                name: configuration.value.publicIpAddress.name
                 properties: {
                   deleteOption: 'Delete'
-                  dnsSettings: (contains(interface.ipConfigurations[index].publicIpAddress, 'domainNameLabel') ? {
-                    domainNameLabel: interface.ipConfigurations[index].publicIpAddress.domainNameLabel
+                  dnsSettings: (contains(configuration.value.publicIpAddress, 'domainNameLabel') ? {
+                    domainNameLabel: configuration.value.publicIpAddress.domainNameLabel
                   } : null)
-                  idleTimeoutInMinutes: (interface.ipConfigurations[index].publicIpAddress.?idleTimeoutInMinutes ?? null)
-                  publicIPAddressVersion: (interface.ipConfigurations[index].publicIpAddress.?version ?? 'IPv4')
-                  publicIPAllocationMethod: (interface.ipConfigurations[index].publicIpAddress.?allocationMethod ?? 'Static')
+                  idleTimeoutInMinutes: (configuration.value.publicIpAddress.?idleTimeoutInMinutes ?? null)
+                  publicIPAddressVersion: (configuration.value.publicIpAddress.?version ?? 'IPv4')
+                  publicIPAllocationMethod: (configuration.value.publicIpAddress.?allocationMethod ?? 'Static')
                 }
-                sku: (interface.ipConfigurations[index].publicIpAddress.?sku ?? { name: 'Standard' })
+                sku: (configuration.value.publicIpAddress.?sku ?? { name: 'Standard' })
               } : null)
-              subnet: { id: resourceId((interface.ipConfigurations[index].privateIpAddress.subnet.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/virtualNetworks/subnets', interface.ipConfigurations[index].privateIpAddress.subnet.virtualNetworkName, interface.ipConfigurations[index].privateIpAddress.subnet.name) }
+              subnet: { id: resourceId((configuration.value.privateIpAddress.subnet.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/virtualNetworks/subnets', configuration.value.privateIpAddress.subnet.virtualNetworkName, configuration.value.privateIpAddress.subnet.name) }
             }
           })
           networkSecurityGroup: (contains(interface, 'networkSecurityGroup') ? {
-            id: resourceId((interface.networkSecurityGroup.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/networkSecurityGroups', interface.networkSecurityGroup.name)
+            id: resourceId((interface.value.networkSecurityGroup.?resourceGroupName ?? resourceGroupName), 'Microsoft.Network/networkSecurityGroups', interface.value.networkSecurityGroup.name)
           } : null)
-          primary: (interface.?isPrimary ?? ((0 == index) && (0 == length(filter(properties.networkInterfaces, interface => contains(interface, 'isPrimary'))))))
+          primary: (interface.value.?isPrimary ?? (1 == length(networkInterfaces)))
         }
       }]
-      networkInterfaces: [for (interface, index) in filter(properties.networkInterfaces, interface => contains(interface, 'name')): {
+      networkInterfaces: [for (interface, index) in filter(networkInterfaces, interface => contains(interface.value, 'isExisting')): {
         id: networkInterfacesRef[index].id
         properties: {
-          deleteOption: (interface.?deleteOption ?? 'Detach')
-          primary: (interface.?isPrimary ?? ((0 == index) && (0 == length(filter(properties.networkInterfaces, interface => contains(interface, 'isPrimary'))))))
+          deleteOption: (interface.value.?deleteOption ?? 'Detach')
+          primary: (interface.value.?isPrimary ?? (1 == length(networkInterfaces)))
         }
       }]
     }
@@ -352,18 +355,18 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
       } : null)
     }
     storageProfile: {
-      dataDisks: [for (disk, index) in (properties.?dataDisks ?? []): {
-        caching: (disk.?cachingMode ?? 'None')
-        createOption: (disk.?createOption ?? 'Empty')
-        deleteOption: (disk.?deleteOption ?? 'Delete')
-        diskSizeGB: disk.sizeInGigabytes
+      dataDisks: [for (disk, index) in dataDisks: {
+        caching: (disk.value.?cachingMode ?? 'None')
+        createOption: (disk.value.?createOption ?? 'Empty')
+        deleteOption: (disk.value.?deleteOption ?? 'Delete')
+        diskSizeGB: disk.value.sizeInGigabytes
         lun: index
         managedDisk: {
           diskEncryptionSet: (isDiskEncryptionSetNotEmpty ? { id: diskEncryptionSetRef.id } : null)
-          storageAccountType: (disk.?storageAccountType ?? 'Standard_LRS')
+          storageAccountType: (disk.value.?storageAccountType ?? 'Standard_LRS')
         }
-        name: (disk.?name ?? '${name}-Disk-${padLeft((index + 1), 5, '0')}')
-        writeAcceleratorEnabled: (disk.?isWriteAcceleratorEnabled ?? null)
+        name: disk.key
+        writeAcceleratorEnabled: (disk.value.?isWriteAcceleratorEnabled ?? null)
       }]
       imageReference: (isComputeGalleryNotEmpty ? { id: computeGalleryImageRef.id } : (properties.?imageReference ?? null))
       osDisk: {
@@ -384,12 +387,12 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
         writeAcceleratorEnabled: (properties.operatingSystem.?disk.?isWriteAcceleratorEnabled ?? null)
       }
     }
-    virtualMachineScaleSet: (isVirtualMachineScaleSetNotEmpty ? { id: virtualMachineScaleSet.id } : null)
+    virtualMachineScaleSet: (isVirtualMachineScaleSetNotEmpty ? { id: virtualMachineScaleSetRef.id } : null)
   }
   tags: tags
   zones: (properties.?availabilityZones ?? null)
 }
-resource virtualMachineScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2023-03-01' existing = if (isVirtualMachineScaleSetNotEmpty) {
+resource virtualMachineScaleSetRef 'Microsoft.Compute/virtualMachineScaleSets@2023-03-01' existing = if (isVirtualMachineScaleSetNotEmpty) {
   name: properties.virtualMachineScaleSet.name
   scope: resourceGroup((properties.virtualMachineScaleSet.?subscriptionId ?? subscriptionId), (properties.virtualMachineScaleSet.?resourceGroupName ?? resourceGroupName))
 }

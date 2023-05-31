@@ -44,13 +44,12 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
   params: {
     exclude: [
       'dnsResolvers'
-      'virtualMachines'
     ]
     properties: {
       computeGalleries: {
         byteterrace: {
-          imageDefinitions: [
-            {
+          imageDefinitions: {
+            '2022-Datacenter-DevOpsAgent': {
               architecture: 'x64'
               generation: 'V2'
               identifier: {
@@ -60,20 +59,19 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
               }
               isAcceleratedNetworkingSupported: true
               isHibernateSupported: false
-              name: '2022-Datacenter-DevOpsAgent'
               operatingSystem: {
                 state: 'Generalized'
                 type: 'Windows'
               }
               securityType: 'Standard'
             }
-          ]
+          }
         }
       }
       dnsResolvers: {
         byteterrace: {
-          inboundEndpoints: [
-            {
+          inboundEndpoints: {
+            default: {
               privateIpAddress: {
                 subnet: {
                   name: dnsResolversSubnet.name
@@ -81,8 +79,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
                 value: '172.16.128.5'
               }
             }
-          ]
-          outboundEndpoints: []
+          }
           virtualNetwork: virtualNetwork
         }
       }
@@ -96,8 +93,8 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
       }
       networkInterfaces: {
         '${networkInterface.name}': {
-          ipConfigurations: [
-            {
+          ipConfigurations: {
+            default: {
               privateIpAddress: {
                 subnet: virtualMachinesSubnet
               }
@@ -105,28 +102,27 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
                 name: 'byteterrace-vm'
               }
             }
-          ]
+          }
           isAcceleratedNetworkingEnabled: true
         }
       }
       networkSecurityGroups: {
         '${networkSecurityGroup.name}': {
-          securityRules: [
-            {
+          securityRules: {
+            AllowRdpInbound: {
               access: 'Allow'
               destination: {
                 addressPrefixes: [ 'VirtualNetwork' ]
                 ports: [ '3389' ]
               }
               direction: 'Inbound'
-              name: 'AllowRdpInbound'
               protocol: 'Tcp'
               source: {
                 addressPrefixes: [ allowedRdpIpAddress ]
                 ports: [ '*' ]
               }
             }
-          ]
+          }
         }
       }
       proximityPlacementGroups: {
@@ -167,9 +163,10 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
         byteterrace: {
           identity: identity
           imageReference: {
-            offer: 'WindowsServer'
-            publisher: 'MicrosoftWindowsServer'
-            sku: '2022-datacenter-smalldisk-g2'
+            gallery: {
+              name: 'byteterrace'
+            }
+            name: '2022-Datacenter-DevOpsAgent'
             version: 'latest'
           }
           isEncryptionAtHostEnabled: true
@@ -179,7 +176,11 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
           isUltraSsdEnabled: false
           isVirtualTrustedPlatformModuleEnabled: false
           licenseType: 'Windows_Server'
-          networkInterfaces: [ networkInterface ]
+          networkInterfaces: {
+            '${networkInterface.name}': {
+              isExisting: true
+            }
+          }
           operatingSystem: {
             administrator: operatingSystemAdministrator
             disk: {

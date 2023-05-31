@@ -8,13 +8,13 @@ resource routeTable 'Microsoft.Network/routeTables@2022-11-01' = {
   location: location
   name: name
   properties: {
-    routes: [for route in (properties.?routes ?? []): {
-      name: route.name
+    routes: [for route in sort(items(properties.?routes ?? {}), (x, y) => (x.key < y.key)): {
+      name: route.key
       properties: {
-        addressPrefix: route.addressPrefix
+        addressPrefix: route.value.addressPrefix
         hasBgpOverride: null
-        nextHopType: route.nextHopType
-        nextHopIpAddress: (route.?nextHopIpAddress ?? null)
+        nextHopType: route.value.nextHopType
+        nextHopIpAddress: (route.value.?nextHopIpAddress ?? null)
       }
     }]
   }

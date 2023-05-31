@@ -23,14 +23,14 @@ resource diskEncryptionSet 'Microsoft.Compute/diskEncryptionSets@2022-07-02' = {
   name: name
   properties: {
     activeKey: {
-      keyUrl: key.properties.keyUriWithVersion
+      keyUrl: keyRef.properties.keyUriWithVersion
     }
     encryptionType: properties.encryptionType
     rotationToLatestKeyVersionEnabled: true
   }
   tags: tags
 }
-resource key 'Microsoft.KeyVault/vaults/keys@2023-02-01' existing = {
+resource keyRef 'Microsoft.KeyVault/vaults/keys@2023-02-01' existing = {
   name: '${properties.keyVault.name}/${properties.keyName}'
   scope: resourceGroup((properties.keyVault.?subscriptionId ?? subscriptionId), (properties.keyVault.?resourceGroupName ?? resourceGroupName))
 }

@@ -10,11 +10,11 @@ resource capacityReservationGroup 'Microsoft.Compute/capacityReservationGroups@2
   tags: tags
   zones: (properties.?availabilityZones ?? null)
 }
-resource capacityReservations 'Microsoft.Compute/capacityReservationGroups/capacityReservations@2023-03-01' = [for reservation in (properties.?reservations ?? []): {
+resource capacityReservations 'Microsoft.Compute/capacityReservationGroups/capacityReservations@2023-03-01' = [for reservation in sort(items(properties.?reservations ?? {}), (x, y) => (x.key < y.key)): {
   location: location
-  name: reservation.name
+  name: reservation.key
   parent: capacityReservationGroup
-  sku: reservation.sku
-  tags: (reservation.?tags ?? tags)
-  zones: (reservation.?availabilityZones ?? null)
+  sku: reservation.value.sku
+  tags: (reservation.value.?tags ?? tags)
+  zones: (reservation.value.?availabilityZones ?? null)
 }]
