@@ -42,7 +42,10 @@ var virtualNetwork = {
 module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
   name: '${deployment().name}-main'
   params: {
-    exclude: [ 'dnsResolvers' ]
+    exclude: [
+      'dnsResolvers'
+      'virtualMachines'
+    ]
     properties: {
       computeGalleries: {
         byteterrace: {

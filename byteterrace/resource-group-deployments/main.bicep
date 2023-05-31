@@ -571,6 +571,7 @@ module networkInterfaces 'br/bytrc:microsoft/network/network-interfaces:0.0.0' =
     networkSecurityGroups
     publicIpAddresses
     publicIpPrefixes
+    virtualNetworks
   ]
   name: '${deployment.name}-nic-${padLeft(index, 3, '0')}'
   params: {
