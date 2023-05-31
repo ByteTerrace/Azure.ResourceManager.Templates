@@ -1,2 +1,5 @@
+# Bicep Parameters
+*.parameters.json
+
 # Visual Studio 2015, 2017, and 2019 cache/options directory
 .vs/

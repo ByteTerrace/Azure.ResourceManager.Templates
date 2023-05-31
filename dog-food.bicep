@@ -1,4 +1,5 @@
-param ipAddress string
+param allowedRdpIpAddress string
+param operatingSystemAdministrator object
 
 var dnsResolversSubnet = {
   name: 'DnsResolvers'
@@ -109,11 +110,16 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
               name: 'AllowRdpInbound'
               protocol: 'Tcp'
               source: {
-                addressPrefixes: [ ipAddress ]
+                addressPrefixes: [ allowedRdpIpAddress ]
                 ports: [ '*' ]
               }
             }
           ]
+        }
+      ]
+      proximityPlacementGroups: [
+        {
+          name: proximityPlacementGroup.name
         }
       ]
       publicIpAddresses: [
@@ -136,11 +142,6 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
           version: 'IPv4'
         }
       ]
-      proximityPlacementGroups: [
-        {
-          name: proximityPlacementGroup.name
-        }
-      ]
       routeTables: [
         {
           name: routeTable.name
@@ -153,7 +154,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
       ]
       virtualMachines: [
         {
-          identity: union({ type: 'SystemAssigned, UserAssigned' }, identity)
+          identity: identity
           imageReference: {
             offer: 'WindowsServer'
             publisher: 'MicrosoftWindowsServer'
@@ -170,6 +171,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
           name: 'byteterracex'
           networkInterfaces: [ networkInterface ]
           operatingSystem: {
+            administrator: operatingSystemAdministrator
             disk: {
               sizeInGigabytes: 96
             }
