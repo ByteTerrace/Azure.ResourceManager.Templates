@@ -138,8 +138,8 @@ resource keyVaultIntegration 'Microsoft.Compute/virtualMachines/extensions@2023-
         linkOnRenewal: (isWindows ? true : null)
         observedCertificates: [for (certificate, index) in certificates: (isWindows ? {
           accounts: (certificate.value.?accounts ?? null)
-          certificateStoreLocation: (certificate.value.?location ?? 'CurrentUser')
-          certificateStoreName: (certificate.value.?name ?? 'MY')
+          certificateStoreLocation: (certificate.value.?storeLocation ?? 'CurrentUser')
+          certificateStoreName: (certificate.value.?storeName ?? 'MY')
           keyExportable: (certificate.value.?isExportable ?? false)
           url: certificatesRef[index].properties.secretUri
         } : certificatesRef[index].properties.secretUri)]

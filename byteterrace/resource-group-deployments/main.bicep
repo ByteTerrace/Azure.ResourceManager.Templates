@@ -259,7 +259,12 @@ type virtualMachine = {
     storageAccount: resourceReference
   }?
   capacityReservationGroup: resourceReference?
-  certificates: object?
+  certificates: {
+    *: {
+      isExportable: bool?
+      keyVault: resourceReference
+    }
+  }?
   dataDisks: {
     cachingMode: ('None' | 'ReadOnly' | 'ReadWrite')?
     createOption: ('Attach' | 'Empty' | 'FromImage')?
