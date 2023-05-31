@@ -43,8 +43,8 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
   name: '${deployment().name}-main'
   params: {
     properties: {
-      computeGalleries: [
-        {
+      computeGalleries: {
+        byteterrace: {
           imageDefinitions: [
             {
               architecture: 'x64'
@@ -64,11 +64,10 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
               securityType: 'Standard'
             }
           ]
-          name: 'byteterrace'
         }
-      ]
-      dnsResolvers: [
-        {
+      }
+      dnsResolvers: {
+        byteterrace: {
           inboundEndpoints: [
             {
               privateIpAddress: {
@@ -79,13 +78,12 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
               }
             }
           ]
-          name: 'byteterrace'
           outboundEndpoints: []
           virtualNetwork: virtualNetwork
         }
-      ]
-      networkInterfaces: [
-        {
+      }
+      networkInterfaces: {
+        '${networkInterface.name}': {
           ipConfigurations: [
             {
               privateIpAddress: {
@@ -95,12 +93,10 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
             }
           ]
           isAcceleratedNetworkingEnabled: true
-          name: networkInterface.name
         }
-      ]
-      networkSecurityGroups: [
-        {
-          name: networkSecurityGroup.name
+      }
+      networkSecurityGroups: {
+        '${networkSecurityGroup.name}': {
           securityRules: [
             {
               access: 'Allow'
@@ -118,44 +114,36 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
             }
           ]
         }
-      ]
-      proximityPlacementGroups: [
-        {
-          name: proximityPlacementGroup.name
-        }
-      ]
-      publicIpAddresses: [
-        {
-          name: publicIpAddress.name
+      }
+      proximityPlacementGroups: {
+        '${proximityPlacementGroup.name}': {}
+      }
+      publicIpAddresses: {
+        '${publicIpAddress.name}': {
           prefix: publicIpAddressPrefix
           sku: {
             name: 'Standard'
           }
           version: 'IPv4'
         }
-      ]
-      publicIpPrefixes: [
-        {
+      }
+      publicIpPrefixes: {
+        '${publicIpAddressPrefix.name}': {
           length: 31
-          name: publicIpAddressPrefix.name
           sku: {
             name: 'Standard'
           }
           version: 'IPv4'
         }
-      ]
-      routeTables: [
-        {
-          name: routeTable.name
-        }
-      ]
-      userManagedIdentities: [
-        {
-          name: userManagedIdentity.name
-        }
-      ]
-      virtualMachines: [
-        {
+      }
+      routeTables: {
+        '${routeTable.name}': {}
+      }
+      userManagedIdentities: {
+        '${userManagedIdentity.name}': {}
+      }
+      virtualMachines: {
+        byteterrace: {
           identity: identity
           imageReference: {
             offer: 'WindowsServer'
@@ -170,7 +158,6 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
           isUltraSsdEnabled: false
           isVirtualTrustedPlatformModuleEnabled: false
           licenseType: 'Windows_Server'
-          name: 'byteterracex'
           networkInterfaces: [ networkInterface ]
           operatingSystem: {
             administrator: operatingSystemAdministrator
@@ -192,9 +179,9 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
             evictionPolicy: 'Delete'
           }
         }
-      ]
-      virtualNetworks: [
-        {
+      }
+      virtualNetworks: {
+        '${virtualNetwork.name}': {
           addressPrefixes: [
             '10.128.0.0/20'
             '172.16.128.0/20'
@@ -214,7 +201,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
             }
           ]
         }
-      ]
+      }
     }
   }
 }

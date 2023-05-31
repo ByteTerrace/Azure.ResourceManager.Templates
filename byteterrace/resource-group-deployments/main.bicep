@@ -159,23 +159,23 @@ type networkSecurityGroup = {
   tags: object?
 }
 type propertiesInfo = {
-  applicationSecurityGroups: applicationSecurityGroup[]?
-  availabilitySets: availabilitySet[]?
-  capacityReservationGroups: capacityReservationGroup[]?
-  computeGalleries: computeGallery[]?
-  containerRegistries: containerRegistry[]?
-  diskEncryptionSets: diskEncryptionSet[]?
-  dnsResolvers: dnsResolver[]?
-  keyVaults: keyVault[]?
-  networkInterfaces: networkInterface[]?
-  networkSecurityGroups: networkSecurityGroup[]?
-  proximityPlacementGroups: proximityPlacementGroup[]?
-  publicIpAddresses: publicIpAddress[]?
-  publicIpPrefixes: publicIpPrefix[]?
-  routeTables: routeTable[]?
-  userManagedIdentities: userManagedIdentity[]?
-  virtualMachines: virtualMachine[]?
-  virtualNetworks: virtualNetwork[]?
+  applicationSecurityGroups: { *: applicationSecurityGroup }?
+  availabilitySets: { *: availabilitySet }?
+  capacityReservationGroups: { *: capacityReservationGroup }?
+  computeGalleries: { *: computeGallery }?
+  containerRegistries: { *: containerRegistry }?
+  diskEncryptionSets: { *: diskEncryptionSet }?
+  dnsResolvers: { *: dnsResolver }?
+  keyVaults: { *: keyVault }?
+  networkInterfaces: { *: networkInterface }?
+  networkSecurityGroups: { *: networkSecurityGroup }?
+  proximityPlacementGroups: { *: proximityPlacementGroup }?
+  publicIpAddresses: { *: publicIpAddress }?
+  publicIpPrefixes: { *: publicIpPrefix }?
+  routeTables: { *: routeTable }?
+  userManagedIdentities: { *: userManagedIdentity }?
+  virtualMachines: { *: virtualMachine }?
+  virtualNetworks: { *: virtualNetwork }?
 }
 type proximityPlacementGroup = {
   location: string?
@@ -425,133 +425,133 @@ var deployment = {
   name: az.deployment().name
 }
 
-module applicationSecurityGroups 'br/bytrc:microsoft/network/application-security-groups:0.0.0' = [for (group, index) in (properties.?applicationSecurityGroups ?? []): if (!contains(exclude, 'applicationSecurityGroups') && (empty(include) || contains(include, 'applicationSecurityGroups'))) {
+module applicationSecurityGroups 'br/bytrc:microsoft/network/application-security-groups:0.0.0' = [for (group, index) in items(properties.?applicationSecurityGroups ?? {}): if (!contains(exclude, 'applicationSecurityGroups') && (empty(include) || contains(include, 'applicationSecurityGroups'))) {
   name: '${deployment.name}-asg-${padLeft(index, 3, '0')}'
   params: {
-    location: (group.?location ?? deployment.location)
-    name: (group.?name ?? 'asg${padLeft(index, 5, '0')}')
-    tags: (group.?tags ?? tags)
+    location: (group.value.?location ?? deployment.location)
+    name: group.key
+    tags: (group.value.?tags ?? tags)
   }
 }]
-module availabilitySets 'br/bytrc:microsoft/compute/availability-sets:0.0.0' = [for (set, index) in (properties.?availabilitySets ?? []): if (!contains(exclude, 'availabilitySets') && (empty(include) || contains(include, 'availabilitySets'))) {
+module availabilitySets 'br/bytrc:microsoft/compute/availability-sets:0.0.0' = [for (set, index) in items(properties.?availabilitySets ?? {}): if (!contains(exclude, 'availabilitySets') && (empty(include) || contains(include, 'availabilitySets'))) {
   dependsOn: [ proximityPlacementGroups ]
   name: '${deployment.name}-as-${padLeft(index, 3, '0')}'
   params: {
-    location: (set.?location ?? deployment.location)
-    name: (set.?name ?? 'as${padLeft(index, 5, '0')}')
+    location: (set.value.?location ?? deployment.location)
+    name: set.key
     properties: {
-      faultDomainCount: set.faultDomainCount
-      proximityPlacementGroup: (set.?proximityPlacementGroup ?? null)
-      updateDomainCount: set.updateDomainCount
+      faultDomainCount: set.value.faultDomainCount
+      proximityPlacementGroup: (set.value.?proximityPlacementGroup ?? null)
+      updateDomainCount: set.value.updateDomainCount
     }
-    tags: (set.?tags ?? tags)
+    tags: (set.value.?tags ?? tags)
   }
 }]
-module capacityReservationGroups 'br/bytrc:microsoft/compute/capacity-reservation-groups:0.0.0' = [for (group, index) in (properties.?capacityReservationGroups ?? []): if (!contains(exclude, 'capacityReservationGroups') && (empty(include) || contains(include, 'capacityReservationGroups'))) {
+module capacityReservationGroups 'br/bytrc:microsoft/compute/capacity-reservation-groups:0.0.0' = [for (group, index) in items(properties.?capacityReservationGroups ?? {}): if (!contains(exclude, 'capacityReservationGroups') && (empty(include) || contains(include, 'capacityReservationGroups'))) {
   name: '${deployment.name}-crg-${padLeft(index, 3, '0')}'
   params: {
-    location: (group.?location ?? deployment.location)
-    name: (group.?name ?? 'crg${padLeft(index, 5, '0')}')
+    location: (group.value.?location ?? deployment.location)
+    name: group.key
     properties: {
-      availabilityZones: (group.?availabilityZones ?? null)
-      reservations: (group.?reservations ?? null)
+      availabilityZones: (group.value.?availabilityZones ?? null)
+      reservations: (group.value.?reservations ?? null)
     }
-    tags: (group.?tags ?? tags)
+    tags: (group.value.?tags ?? tags)
   }
 }]
-module computeGalleries 'br/bytrc:microsoft/compute/galleries:0.0.0' = [for (gallery, index) in (properties.?computeGalleries ?? []): if (!contains(exclude, 'computeGalleries') && (empty(include) || contains(include, 'computeGalleries'))) {
+module computeGalleries 'br/bytrc:microsoft/compute/galleries:0.0.0' = [for (gallery, index) in items(properties.?computeGalleries ?? {}): if (!contains(exclude, 'computeGalleries') && (empty(include) || contains(include, 'computeGalleries'))) {
   name: '${deployment.name}-cg-${padLeft(index, 3, '0')}'
   params: {
-    location: (gallery.?location ?? deployment.location)
-    name: (gallery.?name ?? 'cg${padLeft(index, 5, '0')}')
+    location: (gallery.value.?location ?? deployment.location)
+    name: gallery.key
     properties: {
-      description: (gallery.?description ?? null)
-      imageDefinitions: (gallery.?imageDefinitions ?? null)
+      description: (gallery.value.?description ?? null)
+      imageDefinitions: (gallery.value.?imageDefinitions ?? null)
     }
-    tags: (gallery.?tags ?? tags)
+    tags: (gallery.value.?tags ?? tags)
   }
 }]
-module containerRegistries 'br/bytrc:microsoft/container-registry/registries:0.0.0' = [for (registry, index) in (properties.?containerRegistries ?? []): if (!contains(exclude, 'containerRegistries') && (empty(include) || contains(include, 'containerRegistries'))) {
+module containerRegistries 'br/bytrc:microsoft/container-registry/registries:0.0.0' = [for (registry, index) in items(properties.?containerRegistries ?? {}): if (!contains(exclude, 'containerRegistries') && (empty(include) || contains(include, 'containerRegistries'))) {
   dependsOn: [
     keyVaults
     userManagedIdentities
   ]
   name: '${deployment.name}-cr-${padLeft(index, 3, '0')}'
   params: {
-    location: (registry.?location ?? deployment.location)
-    name: (registry.?name ?? 'cr${padLeft(index, 5, '0')}')
+    location: (registry.value.?location ?? deployment.location)
+    name: registry.key
     properties: {
-      firewallRules: (registry.?firewallRules ?? null)
-      identity: (registry.?identity ?? null)
-      isAllowTrustedMicrosoftServicesEnabled: (registry.?isAllowTrustedMicrosoftServicesEnabled ?? null)
-      isAnonymousPullEnabled: (registry.?isAnonymousPullEnabled ?? null)
-      isContentTrustPolicyEnabled: (registry.?isContentTrustPolicyEnabled ?? null)
-      isDedicatedDataEndpointEnabled: (registry.?isDedicatedDataEndpointEnabled ?? null)
-      isExportPolicyEnabled: (registry.?isExportPolicyEnabled ?? null)
-      isPublicNetworkAccessEnabled: (registry.?isPublicNetworkAccessEnabled ?? null)
-      isQuarantinePolicyEnabled: (registry.?isQuarantinePolicyEnabled ?? null)
-      isZoneRedundancyEnabled: (registry.?isZoneRedundancyEnabled ?? null)
-      roleAssignments: (registry.?roleAssignments ?? null)
-      sku: registry.sku
+      firewallRules: (registry.value.?firewallRules ?? null)
+      identity: (registry.value.?identity ?? null)
+      isAllowTrustedMicrosoftServicesEnabled: (registry.value.?isAllowTrustedMicrosoftServicesEnabled ?? null)
+      isAnonymousPullEnabled: (registry.value.?isAnonymousPullEnabled ?? null)
+      isContentTrustPolicyEnabled: (registry.value.?isContentTrustPolicyEnabled ?? null)
+      isDedicatedDataEndpointEnabled: (registry.value.?isDedicatedDataEndpointEnabled ?? null)
+      isExportPolicyEnabled: (registry.value.?isExportPolicyEnabled ?? null)
+      isPublicNetworkAccessEnabled: (registry.value.?isPublicNetworkAccessEnabled ?? null)
+      isQuarantinePolicyEnabled: (registry.value.?isQuarantinePolicyEnabled ?? null)
+      isZoneRedundancyEnabled: (registry.value.?isZoneRedundancyEnabled ?? null)
+      roleAssignments: (registry.value.?roleAssignments ?? null)
+      sku: registry.value.sku
     }
-    tags: (registry.?tags ?? tags)
+    tags: (registry.value.?tags ?? tags)
   }
 }]
-module diskEncryptionSets 'br/bytrc:microsoft/compute/disk-encryption-sets:0.0.0' = [for (set, index) in (properties.?diskEncryptionSets ?? []): if (!contains(exclude, 'diskEncryptionSets') && (empty(include) || contains(include, 'diskEncryptionSets'))) {
+module diskEncryptionSets 'br/bytrc:microsoft/compute/disk-encryption-sets:0.0.0' = [for (set, index) in items(properties.?diskEncryptionSets ?? {}): if (!contains(exclude, 'diskEncryptionSets') && (empty(include) || contains(include, 'diskEncryptionSets'))) {
   dependsOn: [
     keyVaults
     userManagedIdentities
   ]
   name: '${deployment.name}-des-${padLeft(index, 3, '0')}'
   params: {
-    location: (set.?location ?? deployment.location)
-    name: (set.?name ?? 'des${padLeft(index, 5, '0')}')
+    location: (set.value.?location ?? deployment.location)
+    name: set.key
     properties: {
-      encryptionType: set.encryptionType
-      identity: (set.?identity ?? null)
-      keyName: set.keyName
-      keyVault: set.keyVault
+      encryptionType: set.value.encryptionType
+      identity: (set.value.?identity ?? null)
+      keyName: set.value.keyName
+      keyVault: set.value.keyVault
     }
-    tags: (set.?tags ?? tags)
+    tags: (set.value.?tags ?? tags)
   }
 }]
-module dnsResolvers 'br/bytrc:microsoft/network/dns-resolvers:0.0.0' = [for (resolver, index) in (properties.?dnsResolvers ?? []): if (!contains(exclude, 'dnsResolvers') && (empty(include) || contains(include, 'dnsResolvers'))) {
+module dnsResolvers 'br/bytrc:microsoft/network/dns-resolvers:0.0.0' = [for (resolver, index) in items(properties.?dnsResolvers ?? {}): if (!contains(exclude, 'dnsResolvers') && (empty(include) || contains(include, 'dnsResolvers'))) {
   dependsOn: [ virtualNetworks ]
   name: '${deployment.name}-dnsr-${padLeft(index, 3, '0')}'
   params: {
-    location: (resolver.?location ?? deployment.location)
-    name: (resolver.?name ?? 'dnsr${padLeft(index, 5, '0')}')
+    location: (resolver.value.?location ?? deployment.location)
+    name: resolver.key
     properties: {
-      inboundEndpoints: resolver.inboundEndpoints
-      outboundEndpoints: resolver.outboundEndpoints
-      virtualNetwork: resolver.virtualNetwork
+      inboundEndpoints: resolver.value.inboundEndpoints
+      outboundEndpoints: resolver.value.outboundEndpoints
+      virtualNetwork: resolver.value.virtualNetwork
     }
-    tags: (resolver.?tags ?? tags)
+    tags: (resolver.value.?tags ?? tags)
   }
 }]
-module keyVaults 'br/bytrc:microsoft/key-vault/vaults:0.0.0' = [for (vault, index) in (properties.?keyVaults ?? []): if (!contains(exclude, 'keyVaults') && (empty(include) || contains(include, 'keyVaults'))) {
+module keyVaults 'br/bytrc:microsoft/key-vault/vaults:0.0.0' = [for (vault, index) in items(properties.?keyVaults ?? {}): if (!contains(exclude, 'keyVaults') && (empty(include) || contains(include, 'keyVaults'))) {
   name: '${deployment.name}-kv-${padLeft(index, 3, '0')}'
   params: {
-    location: (vault.?location ?? deployment.location)
-    name: (vault.?name ?? 'kv${padLeft(index, 5, '0')}')
+    location: (vault.value.?location ?? deployment.location)
+    name: vault.key
     properties: {
-      firewallRules: (vault.?firewallRules ?? null)
-      isAllowTrustedMicrosoftServicesEnabled: (vault.?isAllowTrustedMicrosoftServicesEnabled ?? null)
-      isDiskEncryptionEnabled: (vault.?isDiskEncryptionEnabled ?? null)
-      isPublicNetworkAccessEnabled: (vault.?isPublicNetworkAccessEnabled ?? null)
-      isPurgeProtectionEnabled: (vault.?isPurgeProtectionEnabled ?? null)
-      isTemplateDeploymentEnabled: (vault.?isTemplateDeploymentEnabled ?? null)
-      isVirtualMachineDeploymentEnabled: (vault.?isVirtualMachineDeploymentEnabled ?? null)
-      roleAssignments: (vault.?roleAssignments ?? null)
-      sku: vault.sku
-      softDeleteRetentionInDays: (vault.?softDeleteRetentionInDays ?? null)
-      tenantId: (vault.?tenantId ?? null)
-      virtualNetworkRules: (vault.?virtualNetworkRules ?? null)
+      firewallRules: (vault.value.?firewallRules ?? null)
+      isAllowTrustedMicrosoftServicesEnabled: (vault.value.?isAllowTrustedMicrosoftServicesEnabled ?? null)
+      isDiskEncryptionEnabled: (vault.value.?isDiskEncryptionEnabled ?? null)
+      isPublicNetworkAccessEnabled: (vault.value.?isPublicNetworkAccessEnabled ?? null)
+      isPurgeProtectionEnabled: (vault.value.?isPurgeProtectionEnabled ?? null)
+      isTemplateDeploymentEnabled: (vault.value.?isTemplateDeploymentEnabled ?? null)
+      isVirtualMachineDeploymentEnabled: (vault.value.?isVirtualMachineDeploymentEnabled ?? null)
+      roleAssignments: (vault.value.?roleAssignments ?? null)
+      sku: vault.value.sku
+      softDeleteRetentionInDays: (vault.value.?softDeleteRetentionInDays ?? null)
+      tenantId: (vault.value.?tenantId ?? null)
+      virtualNetworkRules: (vault.value.?virtualNetworkRules ?? null)
     }
-    tags: (vault.?tags ?? tags)
+    tags: (vault.value.?tags ?? tags)
   }
 }]
-module networkInterfaces 'br/bytrc:microsoft/network/network-interfaces:0.0.0' = [for (interface, index) in (properties.?networkInterfaces ?? []): if (!contains(exclude, 'networkInterfaces') && (empty(include) || contains(include, 'networkInterfaces'))) {
+module networkInterfaces 'br/bytrc:microsoft/network/network-interfaces:0.0.0' = [for (interface, index) in items(properties.?networkInterfaces ?? {}): if (!contains(exclude, 'networkInterfaces') && (empty(include) || contains(include, 'networkInterfaces'))) {
   dependsOn: [
     applicationSecurityGroups
     networkSecurityGroups
@@ -560,91 +560,91 @@ module networkInterfaces 'br/bytrc:microsoft/network/network-interfaces:0.0.0' =
   ]
   name: '${deployment.name}-nic-${padLeft(index, 3, '0')}'
   params: {
-    location: (interface.?location ?? deployment.location)
-    name: (interface.?name ?? 'nic${padLeft(index, 5, '0')}')
+    location: (interface.value.?location ?? deployment.location)
+    name: interface.key
     properties: {
-      dnsServers: (interface.?dnsServers ?? null)
-      ipConfigurations: interface.ipConfigurations
-      isAcceleratedNetworkingEnabled: (interface.?isAcceleratedNetworkingEnabled ?? null)
-      isIpForwardingEnabled: (interface.?isIpForwardingEnabled ?? null)
-      isTcpStateTrackingEnabled: (interface.?isTcpStateTrackingEnabled ?? null)
-      networkSecurityGroup: (interface.?networkSecurityGroup ?? null)
-      publicIpAddress: (interface.?publicIpAddress ?? null)
+      dnsServers: (interface.value.?dnsServers ?? null)
+      ipConfigurations: interface.value.ipConfigurations
+      isAcceleratedNetworkingEnabled: (interface.value.?isAcceleratedNetworkingEnabled ?? null)
+      isIpForwardingEnabled: (interface.value.?isIpForwardingEnabled ?? null)
+      isTcpStateTrackingEnabled: (interface.value.?isTcpStateTrackingEnabled ?? null)
+      networkSecurityGroup: (interface.value.?networkSecurityGroup ?? null)
+      publicIpAddress: (interface.value.?publicIpAddress ?? null)
     }
-    tags: (interface.?tags ?? tags)
+    tags: (interface.value.?tags ?? tags)
   }
 }]
-module networkSecurityGroups 'br/bytrc:microsoft/network/network-security-groups:0.0.0' = [for (group, index) in (properties.?networkSecurityGroups ?? []): if (!contains(exclude, 'networkSecurityGroups') && (empty(include) || contains(include, 'networkSecurityGroups'))) {
+module networkSecurityGroups 'br/bytrc:microsoft/network/network-security-groups:0.0.0' = [for (group, index) in items(properties.?networkSecurityGroups ?? {}): if (!contains(exclude, 'networkSecurityGroups') && (empty(include) || contains(include, 'networkSecurityGroups'))) {
   name: '${deployment.name}-nsg-${padLeft(index, 3, '0')}'
   params: {
-    location: (group.?location ?? deployment.location)
-    name: (group.?name ?? 'nsg${padLeft(index, 5, '0')}')
+    location: (group.value.?location ?? deployment.location)
+    name: group.key
     properties: {
-      securityRules: (group.?securityRules ?? null)
+      securityRules: (group.value.?securityRules ?? null)
     }
-    tags: (group.?tags ?? tags)
+    tags: (group.value.?tags ?? tags)
   }
 }]
-module proximityPlacementGroups 'br/bytrc:microsoft/compute/proximity-placement-groups:0.0.0' = [for (group, index) in (properties.?proximityPlacementGroups ?? []): if (!contains(exclude, 'proximityPlacementGroups') && (empty(include) || contains(include, 'proximityPlacementGroups'))) {
+module proximityPlacementGroups 'br/bytrc:microsoft/compute/proximity-placement-groups:0.0.0' = [for (group, index) in items(properties.?proximityPlacementGroups ?? {}): if (!contains(exclude, 'proximityPlacementGroups') && (empty(include) || contains(include, 'proximityPlacementGroups'))) {
   name: '${deployment.name}-ppg-${padLeft(index, 3, '0')}'
   params: {
-    location: (group.?location ?? deployment.location)
-    name: (group.?name ?? 'ppg${padLeft(index, 5, '0')}')
-    tags: (group.?tags ?? tags)
+    location: (group.value.?location ?? deployment.location)
+    name: group.key
+    tags: (group.value.?tags ?? tags)
   }
 }]
-module publicIpAddresses 'br/bytrc:microsoft/network/public-ip-addresses:0.0.0' = [for (address, index) in (properties.?publicIpAddresses ?? []): if (!contains(exclude, 'publicIpAddresses') && (empty(include) || contains(include, 'publicIpAddresses'))) {
+module publicIpAddresses 'br/bytrc:microsoft/network/public-ip-addresses:0.0.0' = [for (address, index) in items(properties.?publicIpAddresses ?? {}): if (!contains(exclude, 'publicIpAddresses') && (empty(include) || contains(include, 'publicIpAddresses'))) {
   dependsOn: [ publicIpPrefixes ]
   name: '${deployment.name}-pipa-${padLeft(index, 3, '0')}'
   params: {
-    location: (address.?location ?? deployment.location)
-    name: (address.?name ?? 'pipa${padLeft(index, 5, '0')}')
+    location: (address.value.?location ?? deployment.location)
+    name: address.key
     properties: {
-      allocationMethod: (address.?allocationMethod ?? null)
-      deleteOption: (address.?deleteOption ?? null)
-      idleTimeoutInMinutes: (address.?idleTimeoutInMinutes ?? null)
-      prefix: (address.?prefix ?? null)
-      sku: address.sku
-      version: (address.?version ?? null)
+      allocationMethod: (address.value.?allocationMethod ?? null)
+      deleteOption: (address.value.?deleteOption ?? null)
+      idleTimeoutInMinutes: (address.value.?idleTimeoutInMinutes ?? null)
+      prefix: (address.value.?prefix ?? null)
+      sku: address.value.sku
+      version: (address.value.?version ?? null)
     }
-    tags: (address.?tags ?? tags)
+    tags: (address.value.?tags ?? tags)
   }
 }]
-module publicIpPrefixes 'br/bytrc:microsoft/network/public-ip-prefixes:0.0.0' = [for (prefix, index) in (properties.?publicIpPrefixes ?? []): if (!contains(exclude, 'publicIpPrefixes') && (empty(include) || contains(include, 'publicIpPrefixes'))) {
+module publicIpPrefixes 'br/bytrc:microsoft/network/public-ip-prefixes:0.0.0' = [for (prefix, index) in items(properties.?publicIpPrefixes ?? {}): if (!contains(exclude, 'publicIpPrefixes') && (empty(include) || contains(include, 'publicIpPrefixes'))) {
   name: '${deployment.name}-pipp-${padLeft(index, 3, '0')}'
   params: {
-    location: (prefix.?location ?? deployment.location)
-    name: (prefix.?name ?? 'pipp${padLeft(index, 5, '0')}')
+    location: (prefix.value.?location ?? deployment.location)
+    name: prefix.key
     properties: {
-      customPrefix: (prefix.?customPrefix ?? null)
-      length: prefix.length
-      natGateway: (prefix.?natGateway ?? null)
-      sku: prefix.sku
-      version: (prefix.?version ?? null)
+      customPrefix: (prefix.value.?customPrefix ?? null)
+      length: prefix.value.length
+      natGateway: (prefix.value.?natGateway ?? null)
+      sku: prefix.value.sku
+      version: (prefix.value.?version ?? null)
     }
-    tags: (prefix.?tags ?? tags)
+    tags: (prefix.value.?tags ?? tags)
   }
 }]
-module routeTables 'br/bytrc:microsoft/network/route-tables:0.0.0' = [for (table, index) in (properties.?routeTables ?? []): if (!contains(exclude, 'routeTables') && (empty(include) || contains(include, 'routeTables'))) {
+module routeTables 'br/bytrc:microsoft/network/route-tables:0.0.0' = [for (table, index) in items(properties.?routeTables ?? {}): if (!contains(exclude, 'routeTables') && (empty(include) || contains(include, 'routeTables'))) {
   name: '${deployment.name}-rt-${padLeft(index, 3, '0')}'
   params: {
-    location: (table.?location ?? deployment.location)
-    name: (table.?name ?? 'rt${padLeft(index, 5, '0')}')
+    location: (table.value.?location ?? deployment.location)
+    name: table.key
     properties: {
-      routes: (table.?routes ?? null)
+      routes: (table.value.?routes ?? null)
     }
-    tags: (table.?tags ?? tags)
+    tags: (table.value.?tags ?? tags)
   }
 }]
-module userManagedIdentities 'br/bytrc:microsoft/managed-identity/user-assigned-identities:0.0.0' = [for (identity, index) in (properties.?userManagedIdentities ?? []): if (!contains(exclude, 'userManagedIdentities') && (empty(include) || contains(include, 'userManagedIdentities'))) {
+module userManagedIdentities 'br/bytrc:microsoft/managed-identity/user-assigned-identities:0.0.0' = [for (identity, index) in items(properties.?userManagedIdentities ?? {}): if (!contains(exclude, 'userManagedIdentities') && (empty(include) || contains(include, 'userManagedIdentities'))) {
   name: '${deployment.name}-umi-${padLeft(index, 3, '0')}'
   params: {
-    location: (identity.?location ?? deployment.location)
-    name: (identity.?name ?? 'umi${padLeft(index, 5, '0')}')
-    tags: (identity.?tags ?? tags)
+    location: (identity.value.?location ?? deployment.location)
+    name: identity.key
+    tags: (identity.value.?tags ?? tags)
   }
 }]
-module virtualMachines 'br/bytrc:microsoft/compute/virtual-machines:0.0.0' = [for (machine, index) in (properties.?virtualMachines ?? []): if (!contains(exclude, 'virtualMachines') && (empty(include) || contains(include, 'virtualMachines'))) {
+module virtualMachines 'br/bytrc:microsoft/compute/virtual-machines:0.0.0' = [for (machine, index) in items(properties.?virtualMachines ?? {}): if (!contains(exclude, 'virtualMachines') && (empty(include) || contains(include, 'virtualMachines'))) {
   dependsOn: [
     applicationSecurityGroups
     availabilitySets
@@ -663,38 +663,38 @@ module virtualMachines 'br/bytrc:microsoft/compute/virtual-machines:0.0.0' = [fo
   ]
   name: '${deployment.name}-vm-${padLeft(index, 3, '0')}'
   params: {
-    location: (machine.?location ?? deployment.location)
-    name: (machine.?name ?? 'vm${padLeft(index, 5, '0')}')
+    location: (machine.value.?location ?? deployment.location)
+    name: machine.key
     properties: {
-      automaticShutdown: (machine.?automaticShutdown ?? null)
-      availabilitySet: (machine.?availabilitySet ?? null)
-      bootDiagnostics: (machine.?bootDiagnostics ?? null)
-      capacityReservationGroup: (machine.?capacityReservationGroup ?? null)
-      certificates: (machine.?certificates ?? null)
-      dataDisks: (machine.?dataDisks ?? null)
-      diskEncryptionSet: (machine.?diskEncryptionSet ?? null)
-      identity: (machine.?identity ?? null)
-      imageReference: (machine.?imageReference ?? null)
-      isEncryptionAtHostEnabled: (machine.?isEncryptionAtHostEnabled ?? null)
-      isGuestAgentEnabled: (machine.?isGuestAgentEnabled ?? null)
-      isHibernationEnabled: (machine.?isHibernationEnabled ?? null)
-      isSecureBootEnabled: (machine.?isSecureBootEnabled ?? null)
-      isUltraSsdEnabled: (machine.?isUltraSsdEnabled ?? null)
-      isVirtualTrustedPlatformModuleEnabled: (machine.?isVirtualTrustedPlatformModuleEnabled ?? null)
-      licenseType: (machine.?licenseType ?? null)
-      networkInterfaces: machine.networkInterfaces
-      operatingSystem: machine.operatingSystem
-      proximityPlacementGroup: (machine.?proximityPlacementGroup ?? null)
-      roleAssignments: (machine.?roleAssignments ?? null)
-      scripts: (machine.?scripts ?? null)
-      sku: machine.sku
-      spotSettings: (machine.?spotSettings ?? null)
-      virtualMachineScaleSet: (machine.?virtualMachineScaleSet ?? null)
+      automaticShutdown: (machine.value.?automaticShutdown ?? null)
+      availabilitySet: (machine.value.?availabilitySet ?? null)
+      bootDiagnostics: (machine.value.?bootDiagnostics ?? null)
+      capacityReservationGroup: (machine.value.?capacityReservationGroup ?? null)
+      certificates: (machine.value.?certificates ?? null)
+      dataDisks: (machine.value.?dataDisks ?? null)
+      diskEncryptionSet: (machine.value.?diskEncryptionSet ?? null)
+      identity: (machine.value.?identity ?? null)
+      imageReference: (machine.value.?imageReference ?? null)
+      isEncryptionAtHostEnabled: (machine.value.?isEncryptionAtHostEnabled ?? null)
+      isGuestAgentEnabled: (machine.value.?isGuestAgentEnabled ?? null)
+      isHibernationEnabled: (machine.value.?isHibernationEnabled ?? null)
+      isSecureBootEnabled: (machine.value.?isSecureBootEnabled ?? null)
+      isUltraSsdEnabled: (machine.value.?isUltraSsdEnabled ?? null)
+      isVirtualTrustedPlatformModuleEnabled: (machine.value.?isVirtualTrustedPlatformModuleEnabled ?? null)
+      licenseType: (machine.value.?licenseType ?? null)
+      networkInterfaces: machine.value.networkInterfaces
+      operatingSystem: machine.value.operatingSystem
+      proximityPlacementGroup: (machine.value.?proximityPlacementGroup ?? null)
+      roleAssignments: (machine.value.?roleAssignments ?? null)
+      scripts: (machine.value.?scripts ?? null)
+      sku: machine.value.sku
+      spotSettings: (machine.value.?spotSettings ?? null)
+      virtualMachineScaleSet: (machine.value.?virtualMachineScaleSet ?? null)
     }
-    tags: (machine.?tags ?? tags)
+    tags: (machine.value.?tags ?? tags)
   }
 }]
-module virtualNetworks 'br/bytrc:microsoft/network/virtual-networks:0.0.0' = [for (network, index) in (properties.?virtualNetworks ?? []): if (!contains(exclude, 'virtualNetworks') && (empty(include) || contains(include, 'virtualNetworks'))) {
+module virtualNetworks 'br/bytrc:microsoft/network/virtual-networks:0.0.0' = [for (network, index) in items(properties.?virtualNetworks ?? {}): if (!contains(exclude, 'virtualNetworks') && (empty(include) || contains(include, 'virtualNetworks'))) {
   dependsOn: [
     applicationSecurityGroups
     networkSecurityGroups
@@ -702,14 +702,14 @@ module virtualNetworks 'br/bytrc:microsoft/network/virtual-networks:0.0.0' = [fo
   ]
   name: '${deployment.name}-vnet-${padLeft(index, 3, '0')}'
   params: {
-    location: (network.?location ?? deployment.location)
-    name: (network.?name ?? 'vnet${padLeft(index, 5, '0')}')
+    location: (network.value.?location ?? deployment.location)
+    name: network.key
     properties: {
-      addressPrefixes: network.addressPrefixes
-      ddosProtectionPlan: (network.?ddosProtectionPlan ?? null)
-      dnsServers: (network.?dnsServers ?? null)
-      subnets: network.subnets
+      addressPrefixes: network.value.addressPrefixes
+      ddosProtectionPlan: (network.value.?ddosProtectionPlan ?? null)
+      dnsServers: (network.value.?dnsServers ?? null)
+      subnets: network.value.subnets
     }
-    tags: (network.?tags ?? tags)
+    tags: (network.value.?tags ?? tags)
   }
 }]
