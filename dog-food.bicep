@@ -1,4 +1,6 @@
+@secure()
 param allowedRdpIpAddress string
+@secure()
 param operatingSystemAdministrator object
 
 var dnsResolversSubnet = {
