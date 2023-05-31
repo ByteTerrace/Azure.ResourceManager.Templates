@@ -10,6 +10,9 @@ var dnsResolversSubnet = {
 var identity = {
   userAssignedIdentities: [ userManagedIdentity ]
 }
+var natGateway = {
+  name: 'byteterrace'
+}
 var networkInterface = {
   name: 'byteterrace'
 }
@@ -17,9 +20,6 @@ var networkSecurityGroup = {
   name: 'byteterrace'
 }
 var proximityPlacementGroup = {
-  name: 'byteterrace'
-}
-var publicIpAddress = {
   name: 'byteterrace'
 }
 var publicIpAddressPrefix = {
@@ -42,6 +42,7 @@ var virtualNetwork = {
 module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
   name: '${deployment().name}-main'
   params: {
+    exclude: [ 'virtualMachines' ]
     properties: {
       computeGalleries: {
         byteterrace: {
@@ -82,6 +83,14 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
           virtualNetwork: virtualNetwork
         }
       }
+      natGateways: {
+        '${natGateway.name}': {
+          publicIpAddresses: { 'byteterrace-nat': {} }
+          sku: {
+            name: 'Standard'
+          }
+        }
+      }
       networkInterfaces: {
         '${networkInterface.name}': {
           ipConfigurations: [
@@ -89,7 +98,9 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
               privateIpAddress: {
                 subnet: virtualMachinesSubnet
               }
-              publicIpAddress: publicIpAddress
+              publicIpAddress: {
+                name: 'byteterrace-vm'
+              }
             }
           ]
           isAcceleratedNetworkingEnabled: true
@@ -119,7 +130,14 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
         '${proximityPlacementGroup.name}': {}
       }
       publicIpAddresses: {
-        '${publicIpAddress.name}': {
+        'byteterrace-nat': {
+          prefix: publicIpAddressPrefix
+          sku: {
+            name: 'Standard'
+          }
+          version: 'IPv4'
+        }
+        'byteterrace-vm': {
           prefix: publicIpAddressPrefix
           sku: {
             name: 'Standard'
@@ -186,7 +204,6 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
             '10.128.0.0/20'
             '172.16.128.0/20'
           ]
-          name: virtualNetwork.name
           subnets: [
             {
               addressPrefixes: [ '172.16.128.0/28' ]
@@ -196,6 +213,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
             {
               addressPrefixes: [ '10.128.0.0/24' ]
               name: virtualMachinesSubnet.name
+              natGateway: natGateway
               networkSecurityGroup: networkSecurityGroup
               routeTable: routeTable
             }

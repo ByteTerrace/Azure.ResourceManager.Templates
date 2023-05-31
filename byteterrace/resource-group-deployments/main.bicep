@@ -1,12 +1,10 @@
 type applicationSecurityGroup = {
   location: string?
-  name: string?
   tags: object?
 }
 type availabilitySet = {
   faultDomainCount: int
   location: string?
-  name: string?
   proximityPlacementGroup: resourceReference?
   tags: object?
   updateDomainCount: int
@@ -14,7 +12,6 @@ type availabilitySet = {
 type capacityReservationGroup = {
   availabilityZones: string[]?
   location: string?
-  name: string?
   reservations: {
     availabilityZones: string[]?
     name: string?
@@ -45,7 +42,6 @@ type computeGallery = {
     tags: object?
   }[]?
   location: string?
-  name: string?
   tags: object?
 }
 type containerRegistry = {
@@ -60,7 +56,6 @@ type containerRegistry = {
   isQuarantinePolicyEnabled: bool?
   isZoneRedundancyEnabled: bool?
   location: string?
-  name: string?
   roleAssignments: array?
   sku: resourceSku
   tags: object?
@@ -71,7 +66,6 @@ type diskEncryptionSet = {
   keyName: string
   keyVault: resourceReference?
   location: string?
-  name: string?
   tags: object?
 }
 type dnsResolver = {
@@ -86,7 +80,6 @@ type dnsResolver = {
     tags: object?
   }[]?
   location: string?
-  name: string?
   outboundEndpoints: {
     name: string?
     subnet: {
@@ -106,7 +99,6 @@ type keyVault = {
   isTemplateDeploymentEnabled: bool?
   isVirtualMachineDeploymentEnabled: bool?
   location: string?
-  name: string?
   roleAssignments: array?
   sku: resourceSku
   softDeleteRetentionInDays: int?
@@ -115,6 +107,14 @@ type keyVault = {
   virtualNetworkRules: virtualNetworkRule[]?
 }
 type managedDiskStorageAccountType = ('Premium_LRS' | 'Premium_ZRS' | 'PremiumV2_LRS' | 'Standard_LRS' | 'StandardSSD_LRS' | 'StandardSSD_ZRS' | 'UltraSSD_LRS')
+type natGateway = {
+  idleTimeoutInMinutes: int?
+  location: string?
+  publicIpAddresses: { *: resourceReference }?
+  publicIpPrefixes: { *: resourceReference }?
+  sku: resourceSku
+  tags: object?
+}
 type networkInterface = {
   dnsServers: string[]?
   ipConfigurations: {
@@ -131,14 +131,12 @@ type networkInterface = {
   isIpForwardingEnabled: bool?
   isTcpStateTrackingEnabled: bool?
   location: string?
-  name: string?
   networkSecurityGroup: resourceReference?
   publicIpAddress: resourceReference?
   tags: object?
 }
 type networkSecurityGroup = {
   location: string?
-  name: string?
   securityRules: {
     access: ('Allow' | 'Deny')
     description: string?
@@ -167,6 +165,7 @@ type propertiesInfo = {
   diskEncryptionSets: { *: diskEncryptionSet }?
   dnsResolvers: { *: dnsResolver }?
   keyVaults: { *: keyVault }?
+  natGateways: { *: natGateway }?
   networkInterfaces: { *: networkInterface }?
   networkSecurityGroups: { *: networkSecurityGroup }?
   proximityPlacementGroups: { *: proximityPlacementGroup }?
@@ -179,7 +178,6 @@ type propertiesInfo = {
 }
 type proximityPlacementGroup = {
   location: string?
-  name: string?
   tags: object?
 }
 type publicIpAddress = {
@@ -187,7 +185,6 @@ type publicIpAddress = {
   deleteOption: ('Delete' | 'Detach')?
   idleTimeoutInMinutes: int?
   location: string?
-  name: string?
   prefix: resourceReference?
   sku: resourceSku
   tags: object?
@@ -197,7 +194,6 @@ type publicIpPrefix = {
   customPrefix: resourceReference?
   length: int
   location: string?
-  name: string?
   natGateway: resourceReference?
   sku: resourceSku
   tags: object?
@@ -208,7 +204,7 @@ type resourceIdentity = {
   userAssignedIdentities: resourceReference[]?
 }
 type resourceReference = {
-  name: string
+  name: string?
   resourceGroupName: string?
   subscriptionId: string?
 }
@@ -219,7 +215,6 @@ type resourceSku = {
 }
 type routeTable = {
   location: string?
-  name: string?
   routes: {
     addressPrefix: string
     name: string
@@ -292,7 +287,6 @@ type virtualMachine = {
   isVirtualTrustedPlatformModuleEnabled: bool?
   licenseType: string?
   location: string?
-  name: string?
   networkInterfaces: {
     deleteOption: ('Delete' | 'Detach')?
     dnsServers: string[]?
@@ -387,7 +381,6 @@ type virtualNetwork = {
   ddosProtectionPlan: resourceReference?
   dnsServers: string[]?
   location: string?
-  name: string?
   subnets: {
     addressPrefixes: string[]
     delegations: string[]?
@@ -410,12 +403,10 @@ type virtualNetwork = {
   tags: object?
 }
 type virtualNetworkRule = {
-  name: string?
   subnet: subnetReference
 }
 type userManagedIdentity = {
   location: string?
-  name: string?
   tags: object?
 }
 
@@ -556,6 +547,24 @@ module keyVaults 'br/bytrc:microsoft/key-vault/vaults:0.0.0' = [for (vault, inde
     tags: (vault.value.?tags ?? tags)
   }
 }]
+module natGateways 'br/bytrc:microsoft/network/nat-gateways:0.0.0' = [for (gateway, index) in items(properties.?natGateways ?? {}): if (!contains(exclude, 'natGateways') && (empty(include) || contains(include, 'natGateways'))) {
+  dependsOn: [
+    publicIpAddresses
+    publicIpPrefixes
+  ]
+  name: '${deployment.name}-nat-${padLeft(index, 3, '0')}'
+  params: {
+    location: (gateway.value.?location ?? deployment.location)
+    name: gateway.key
+    properties: {
+      idleTimeoutInMinutes: (gateway.value.?idleTimeoutInMinutes ?? null)
+      publicIpAddresses: (gateway.value.?publicIpAddresses ?? null)
+      publicIpPrefixes: (gateway.value.?publicIpPrefixes ?? null)
+      sku: gateway.value.sku
+    }
+    tags: (gateway.value.?tags ?? tags)
+  }
+}]
 module networkInterfaces 'br/bytrc:microsoft/network/network-interfaces:0.0.0' = [for (interface, index) in items(properties.?networkInterfaces ?? {}): if (!contains(exclude, 'networkInterfaces') && (empty(include) || contains(include, 'networkInterfaces'))) {
   dependsOn: [
     applicationSecurityGroups
@@ -623,7 +632,6 @@ module publicIpPrefixes 'br/bytrc:microsoft/network/public-ip-prefixes:0.0.0' = 
     properties: {
       customPrefix: (prefix.value.?customPrefix ?? null)
       length: prefix.value.length
-      natGateway: (prefix.value.?natGateway ?? null)
       sku: prefix.value.sku
       version: (prefix.value.?version ?? null)
     }
@@ -702,6 +710,7 @@ module virtualMachines 'br/bytrc:microsoft/compute/virtual-machines:0.0.0' = [fo
 module virtualNetworks 'br/bytrc:microsoft/network/virtual-networks:0.0.0' = [for (network, index) in items(properties.?virtualNetworks ?? {}): if (!contains(exclude, 'virtualNetworks') && (empty(include) || contains(include, 'virtualNetworks'))) {
   dependsOn: [
     applicationSecurityGroups
+    natGateways
     networkSecurityGroups
     routeTables
   ]
