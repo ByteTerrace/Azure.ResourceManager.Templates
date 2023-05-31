@@ -7,10 +7,19 @@ var dnsResolversSubnet = {
 var identity = {
   userAssignedIdentities: [ userManagedIdentity ]
 }
+var networkInterface = {
+  name: 'byteterrace'
+}
 var networkSecurityGroup = {
   name: 'byteterrace'
 }
 var proximityPlacementGroup = {
+  name: 'byteterrace'
+}
+var publicIpAddress = {
+  name: 'byteterrace'
+}
+var publicIpAddressPrefix = {
   name: 'byteterrace'
 }
 var routeTable = {
@@ -72,6 +81,20 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
           virtualNetwork: virtualNetwork
         }
       ]
+      networkInterfaces: [
+        {
+          ipConfigurations: [
+            {
+              privateIpAddress: {
+                subnet: virtualMachinesSubnet
+              }
+              publicIpAddress: publicIpAddress
+            }
+          ]
+          isAcceleratedNetworkingEnabled: true
+          name: networkInterface.name
+        }
+      ]
       networkSecurityGroups: [
         {
           name: networkSecurityGroup.name
@@ -93,6 +116,26 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
           ]
         }
       ]
+      publicIpAddresses: [
+        {
+          name: publicIpAddress.name
+          prefix: publicIpAddressPrefix
+          sku: {
+            name: 'Standard'
+          }
+          version: 'IPv4'
+        }
+      ]
+      publicIpPrefixes: [
+        {
+          length: 31
+          name: publicIpAddressPrefix.name
+          sku: {
+            name: 'Standard'
+          }
+          version: 'IPv4'
+        }
+      ]
       proximityPlacementGroups: [
         {
           name: proximityPlacementGroup.name
@@ -112,10 +155,9 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
         {
           identity: union({ type: 'SystemAssigned, UserAssigned' }, identity)
           imageReference: {
-            gallery: {
-              name: 'byteterrace'
-            }
-            name: '2022-Datacenter-DevOpsAgent'
+            offer: 'WindowsServer'
+            publisher: 'MicrosoftWindowsServer'
+            sku: '2022-datacenter-smalldisk-g2'
             version: 'latest'
           }
           isEncryptionAtHostEnabled: true
@@ -125,24 +167,11 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
           isUltraSsdEnabled: false
           isVirtualTrustedPlatformModuleEnabled: false
           licenseType: 'Windows_Server'
-          name: 'byteterrace'
-          networkInterfaces: [
-            {
-              ipConfigurations: [
-                {
-                  privateIpAddress: {
-                    subnet: virtualMachinesSubnet
-                  }
-                  publicIpAddress: {}
-                }
-              ]
-            }
-          ]
+          name: 'byteterracex'
+          networkInterfaces: [ networkInterface ]
           operatingSystem: {
             disk: {
-              cachingMode: 'ReadOnly'
-              ephemeralPlacement: 'ResourceDisk'
-              sizeInGigabytes: 300
+              sizeInGigabytes: 96
             }
             patchSettings: {
               assessmentMode: 'ImageDefault'
@@ -153,7 +182,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
           }
           proximityPlacementGroup: proximityPlacementGroup
           sku: {
-            name: 'Standard_D8ds_v5'
+            name: 'Standard_D2ds_v5'
           }
           spotSettings: {
             evictionPolicy: 'Delete'

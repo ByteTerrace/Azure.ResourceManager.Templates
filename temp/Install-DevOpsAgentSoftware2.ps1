@@ -177,6 +177,30 @@ function Install-MozillaFirefox {
             -Force `
             -Path $installerFilePath;
     }
+
+    $basePath = "${Env:ProgramFiles}/Mozilla Firefox";
+
+    New-Item `
+        -Force `
+        -ItemType 'File' `
+        -Name 'mozilla.cfg' `
+        -Path $basePath `
+        -Value @'
+//
+pref("app.update.enabled", false);
+pref("browser.shell.checkDefaultBrowser", false);
+'@ |
+        Out-Null;
+    New-Item `
+        -Force `
+        -ItemType 'File' `
+        -Name 'local-settings.js' `
+        -Path ([IO.Path]::Combine($basePath, 'defaults/pref')) `
+        -Value @'
+pref("general.config.filename", "mozilla.cfg");
+pref("general.config.obscure_value", 0);
+'@ |
+        Out-Null;
 }
 function Install-VisualStudioExtension {
     param(

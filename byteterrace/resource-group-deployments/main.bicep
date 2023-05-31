@@ -115,6 +115,27 @@ type keyVault = {
   virtualNetworkRules: virtualNetworkRule[]?
 }
 type managedDiskStorageAccountType = ('Premium_LRS' | 'Premium_ZRS' | 'PremiumV2_LRS' | 'Standard_LRS' | 'StandardSSD_LRS' | 'StandardSSD_ZRS' | 'UltraSSD_LRS')
+type networkInterface = {
+  dnsServers: string[]?
+  ipConfigurations: {
+    isPrimary: bool?
+    name: string?
+    privateIpAddress: {
+      subnet: subnetReference
+      value: string?
+      version: ('IPv4' | 'IPv6')?
+    }
+    publicIpAddress: resourceReference?
+  }[]
+  isAcceleratedNetworkingEnabled: bool?
+  isIpForwardingEnabled: bool?
+  isTcpStateTrackingEnabled: bool?
+  location: string?
+  name: string?
+  networkSecurityGroup: resourceReference?
+  publicIpAddress: resourceReference?
+  tags: object?
+}
 type networkSecurityGroup = {
   location: string?
   name: string?
@@ -146,8 +167,11 @@ type propertiesInfo = {
   diskEncryptionSets: diskEncryptionSet[]?
   dnsResolvers: dnsResolver[]?
   keyVaults: keyVault[]?
+  networkInterfaces: networkInterface[]?
   networkSecurityGroups: networkSecurityGroup[]?
   proximityPlacementGroups: proximityPlacementGroup[]?
+  publicIpAddresses: publicIpAddress[]?
+  publicIpPrefixes: publicIpPrefix[]?
   routeTables: routeTable[]?
   userManagedIdentities: userManagedIdentity[]?
   virtualMachines: virtualMachine[]?
@@ -157,6 +181,27 @@ type proximityPlacementGroup = {
   location: string?
   name: string?
   tags: object?
+}
+type publicIpAddress = {
+  allocationMethod: ('Dynamic' | 'Static')?
+  deleteOption: ('Delete' | 'Detach')?
+  idleTimeoutInMinutes: int?
+  location: string?
+  name: string?
+  prefix: resourceReference?
+  sku: resourceSku
+  tags: object?
+  version: ('IPv4' | 'IPV6')?
+}
+type publicIpPrefix = {
+  customPrefix: resourceReference?
+  length: int
+  location: string?
+  name: string?
+  natGateway: resourceReference?
+  sku: resourceSku
+  tags: object?
+  version: ('IPv4' | 'IPV6')?
 }
 type resourceIdentity = {
   type: string?
@@ -380,6 +425,14 @@ var deployment = {
   name: az.deployment().name
 }
 
+module applicationSecurityGroups 'br/bytrc:microsoft/network/application-security-groups:0.0.0' = [for (group, index) in (properties.?applicationSecurityGroups ?? []): if (!contains(exclude, 'applicationSecurityGroups') && (empty(include) || contains(include, 'applicationSecurityGroups'))) {
+  name: '${deployment.name}-asg-${padLeft(index, 3, '0')}'
+  params: {
+    location: (group.?location ?? deployment.location)
+    name: (group.?name ?? 'asg${padLeft(index, 5, '0')}')
+    tags: (group.?tags ?? tags)
+  }
+}]
 module availabilitySets 'br/bytrc:microsoft/compute/availability-sets:0.0.0' = [for (set, index) in (properties.?availabilitySets ?? []): if (!contains(exclude, 'availabilitySets') && (empty(include) || contains(include, 'availabilitySets'))) {
   dependsOn: [ proximityPlacementGroups ]
   name: '${deployment.name}-as-${padLeft(index, 3, '0')}'
@@ -392,14 +445,6 @@ module availabilitySets 'br/bytrc:microsoft/compute/availability-sets:0.0.0' = [
       updateDomainCount: set.updateDomainCount
     }
     tags: (set.?tags ?? tags)
-  }
-}]
-module applicationSecurityGroups 'br/bytrc:microsoft/network/application-security-groups:0.0.0' = [for (group, index) in (properties.?applicationSecurityGroups ?? []): if (!contains(exclude, 'applicationSecurityGroups') && (empty(include) || contains(include, 'applicationSecurityGroups'))) {
-  name: '${deployment.name}-asg-${padLeft(index, 3, '0')}'
-  params: {
-    location: (group.?location ?? deployment.location)
-    name: (group.?name ?? 'asg${padLeft(index, 5, '0')}')
-    tags: (group.?tags ?? tags)
   }
 }]
 module capacityReservationGroups 'br/bytrc:microsoft/compute/capacity-reservation-groups:0.0.0' = [for (group, index) in (properties.?capacityReservationGroups ?? []): if (!contains(exclude, 'capacityReservationGroups') && (empty(include) || contains(include, 'capacityReservationGroups'))) {
@@ -506,6 +551,29 @@ module keyVaults 'br/bytrc:microsoft/key-vault/vaults:0.0.0' = [for (vault, inde
     tags: (vault.?tags ?? tags)
   }
 }]
+module networkInterfaces 'br/bytrc:microsoft/network/network-interfaces:0.0.0' = [for (interface, index) in (properties.?networkInterfaces ?? []): if (!contains(exclude, 'networkInterfaces') && (empty(include) || contains(include, 'networkInterfaces'))) {
+  dependsOn: [
+    applicationSecurityGroups
+    networkSecurityGroups
+    publicIpAddresses
+    publicIpPrefixes
+  ]
+  name: '${deployment.name}-nic-${padLeft(index, 3, '0')}'
+  params: {
+    location: (interface.?location ?? deployment.location)
+    name: (interface.?name ?? 'nic${padLeft(index, 5, '0')}')
+    properties: {
+      dnsServers: (interface.?dnsServers ?? null)
+      ipConfigurations: interface.ipConfigurations
+      isAcceleratedNetworkingEnabled: (interface.?isAcceleratedNetworkingEnabled ?? null)
+      isIpForwardingEnabled: (interface.?isIpForwardingEnabled ?? null)
+      isTcpStateTrackingEnabled: (interface.?isTcpStateTrackingEnabled ?? null)
+      networkSecurityGroup: (interface.?networkSecurityGroup ?? null)
+      publicIpAddress: (interface.?publicIpAddress ?? null)
+    }
+    tags: (interface.?tags ?? tags)
+  }
+}]
 module networkSecurityGroups 'br/bytrc:microsoft/network/network-security-groups:0.0.0' = [for (group, index) in (properties.?networkSecurityGroups ?? []): if (!contains(exclude, 'networkSecurityGroups') && (empty(include) || contains(include, 'networkSecurityGroups'))) {
   name: '${deployment.name}-nsg-${padLeft(index, 3, '0')}'
   params: {
@@ -523,6 +591,38 @@ module proximityPlacementGroups 'br/bytrc:microsoft/compute/proximity-placement-
     location: (group.?location ?? deployment.location)
     name: (group.?name ?? 'ppg${padLeft(index, 5, '0')}')
     tags: (group.?tags ?? tags)
+  }
+}]
+module publicIpAddresses 'br/bytrc:microsoft/network/public-ip-addresses:0.0.0' = [for (address, index) in (properties.?publicIpAddresses ?? []): if (!contains(exclude, 'publicIpAddresses') && (empty(include) || contains(include, 'publicIpAddresses'))) {
+  dependsOn: [ publicIpPrefixes ]
+  name: '${deployment.name}-pipa-${padLeft(index, 3, '0')}'
+  params: {
+    location: (address.?location ?? deployment.location)
+    name: (address.?name ?? 'pipa${padLeft(index, 5, '0')}')
+    properties: {
+      allocationMethod: (address.?allocationMethod ?? null)
+      deleteOption: (address.?deleteOption ?? null)
+      idleTimeoutInMinutes: (address.?idleTimeoutInMinutes ?? null)
+      prefix: (address.?prefix ?? null)
+      sku: address.sku
+      version: (address.?version ?? null)
+    }
+    tags: (address.?tags ?? tags)
+  }
+}]
+module publicIpPrefixes 'br/bytrc:microsoft/network/public-ip-prefixes:0.0.0' = [for (prefix, index) in (properties.?publicIpPrefixes ?? []): if (!contains(exclude, 'publicIpPrefixes') && (empty(include) || contains(include, 'publicIpPrefixes'))) {
+  name: '${deployment.name}-pipp-${padLeft(index, 3, '0')}'
+  params: {
+    location: (prefix.?location ?? deployment.location)
+    name: (prefix.?name ?? 'pipp${padLeft(index, 5, '0')}')
+    properties: {
+      customPrefix: (prefix.?customPrefix ?? null)
+      length: prefix.length
+      natGateway: (prefix.?natGateway ?? null)
+      sku: prefix.sku
+      version: (prefix.?version ?? null)
+    }
+    tags: (prefix.?tags ?? tags)
   }
 }]
 module routeTables 'br/bytrc:microsoft/network/route-tables:0.0.0' = [for (table, index) in (properties.?routeTables ?? []): if (!contains(exclude, 'routeTables') && (empty(include) || contains(include, 'routeTables'))) {
@@ -552,8 +652,11 @@ module virtualMachines 'br/bytrc:microsoft/compute/virtual-machines:0.0.0' = [fo
     computeGalleries
     diskEncryptionSets
     keyVaults
+    networkInterfaces
     networkSecurityGroups
     proximityPlacementGroups
+    publicIpAddresses
+    publicIpPrefixes
     routeTables
     userManagedIdentities
     virtualNetworks

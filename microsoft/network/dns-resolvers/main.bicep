@@ -11,9 +11,7 @@ resource dnsResolver 'Microsoft.Network/dnsResolvers@2022-07-01' = {
   location: location
   name: name
   properties: {
-    virtualNetwork: {
-      id: virtualNetworkRef.id
-    }
+    virtualNetwork: { id: virtualNetworkRef.id }
   }
   tags: tags
 }
@@ -26,9 +24,7 @@ resource inboundEndpoints 'Microsoft.Network/dnsResolvers/inboundEndpoints@2022-
       {
         privateIpAddress: (endpoint.privateIpAddress.?value ?? null)
         privateIpAllocationMethod: (contains(endpoint.privateIpAddress, 'value') ? 'Static' : 'Dynamic')
-        subnet: {
-          id: inboundSubnetsRef[index].id
-        }
+        subnet: { id: inboundSubnetsRef[index].id }
       }
     ]
   }
@@ -43,9 +39,7 @@ resource outboundEndpoints 'Microsoft.Network/dnsResolvers/outboundEndpoints@202
   name: (endpoint.?name ?? index)
   parent: dnsResolver
   properties: {
-    subnet: {
-      id: outboundSubnetsRef[index].id
-    }
+    subnet: { id: outboundSubnetsRef[index].id }
   }
   tags: (endpoint.?tags ?? tags)
 }]
