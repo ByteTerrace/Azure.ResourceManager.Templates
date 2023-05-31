@@ -20,7 +20,7 @@ var subnets = sort(map(items(properties.?subnets ?? {}), subnet => {
     isEnabled: (subnet.value.?privateLinkServiceNetworkPolicies.?isEnabled ?? true)
   }
   routeTable: (subnet.value.?routeTable ?? {})
-  serviceEndpoints: (subnet.value.?serviceEndpoints ?? [])
+  serviceEndpoints: (subnet.value.?serviceEndpoints ?? {})
 }), (x, y) => (x.name < y.name))
 var subscriptionId = subscription().subscriptionId
 
