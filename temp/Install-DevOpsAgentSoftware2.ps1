@@ -270,7 +270,6 @@ try {
     $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
 
     @(
-        'azure-batch-cli-extensions',
         'azure-cli-ml',
         'azure-devops',
         'front-door',

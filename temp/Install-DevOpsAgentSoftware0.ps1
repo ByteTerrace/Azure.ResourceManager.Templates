@@ -3,6 +3,36 @@ param(
     [string]$LogFilePath
 );
 
+function Disable-Debuggers {
+    New-ItemProperty `
+        -Force `
+        -Name 'Debugger' `
+        -Path 'HKLM:/SOFTWARE/Microsoft/Windows NT/CurrentVersion/AeDebug' `
+        -Type 'String' `
+        -Value '-' |
+        Out-Null;
+    New-ItemProperty `
+        -Force `
+        -Name 'Debugger' `
+        -Path 'HKLM:/SOFTWARE/WOW6432Node/Microsoft/Windows NT/CurrentVersion/AeDebug' `
+        -Type 'String' `
+        -Value '-' |
+        Out-Null;
+    New-ItemProperty `
+        -Force `
+        -Name 'DbgManagedDebugger' `
+        -Path "HKLM:/SOFTWARE/Microsoft/.NETFramework" `
+        -Type 'String' `
+        -Value '-' |
+        Out-Null;
+    New-ItemProperty `
+        -Force `
+        -Name 'DbgManagedDebugger' `
+        -Path "HKLM:/SOFTWARE/WOW6432Node/Microsoft/.NETFramework" `
+        -Type 'String' `
+        -Value '-' |
+        Out-Null;
+}
 function Disable-NetworkDiscoverabilityPopup {
     New-Item `
         -Force `
@@ -64,11 +94,6 @@ function Enable-RootHypervisorScheduler {
     # https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/manage/manage-hyper-v-scheduler-types#the-root-scheduler
 
     bcdedit.exe /set hypervisorschedulertype root | Out-Null;
-}
-function Enable-TestSignedDriverLoad {
-    # https://learn.microsoft.com/en-us/windows-hardware/drivers/install/the-testsigning-boot-configuration-option#enable-or-disable-use-of-test-signed-code
-
-    bcdedit.exe /set TESTSIGNING ON | Out-Null;
 }
 function Get-File {
     param(
@@ -269,6 +294,24 @@ function Install-GoogleCloudCli {
             -Path $installerFilePath;
     }
 }
+function Install-NuGetPackageProvider {
+    param(
+        [string]$LogFilePath
+    );
+
+    Write-Log `
+        -Message 'Installing NuGet package provider.' `
+        -Path $LogFilePath;
+
+    Install-PackageProvider `
+        -Force `
+        -MinimumVersion '2.8.5.208' `
+        -Name 'NuGet' |
+        Out-Null;
+    Set-PSRepository `
+        -InstallationPolicy 'Trusted' `
+        -Name 'PSGallery';
+}
 function Install-PowerShell {
     param(
         [string]$LogFilePath,
@@ -343,6 +386,40 @@ function Install-WindowsOptionalFeatures {
             Out-Null;
     }
 }
+function Install-7Zip {
+    param(
+        [string]$LogFilePath,
+        [string]$Version
+    );
+
+    $installerFileName = "7z$($Version.Replace('.', ''))-x64.exe";
+    $installerFilePath = Get-File `
+        -LogFilePath $LogFilePath `
+        -SourceUri "https://www.7-zip.org/a/${installerFileName}" `
+        -TargetPath ([IO.Path]::Combine((Get-Location), $installerFileName));
+
+    Write-Log `
+        -Message "Installing 7-Zip ${Version}." `
+        -Path $LogFilePath;
+
+    $process = Start-Process `
+        -ArgumentList @( '/S' ) `
+        -FilePath $installerFilePath `
+        -PassThru `
+        -Wait;
+
+    if (0 -ne $process.ExitCode) {
+        throw "Non-zero exit code returned by the process: $($process.ExitCode).";
+    }
+
+    Start-Sleep -Seconds 3;
+
+    if (Test-Path -Path $installerFilePath) {
+        Remove-Item `
+            -Force `
+            -Path $installerFilePath;
+    }
+}
 function Resize-SystemDrive {
     param(
         [string]$LogFilePath,
@@ -366,6 +443,10 @@ function Resize-SystemDrive {
     }
 }
 function Set-WindowsDefenderConfiguration {
+    param(
+        [string]$LogFilePath
+    );
+
     $advancedthreatProtectionKey = 'HKLM:/SOFTWARE/Policies/Microsoft/Windows Advanced Threat Protection'
     $preferences = @{
         DisableArchiveScanning = $true;
@@ -404,6 +485,37 @@ function Set-WindowsDefenderConfiguration {
             -Value '1';
     }
 }
+function Set-WindowsErrorReportingConfiguration {
+    param(
+        [string]$LogFilePath
+    );
+
+    Write-Log `
+        -Message "Configuring Windows Error Reporting." `
+        -Path $LogFilePath;
+
+    New-ItemProperty `
+        -Force `
+        -Name 'DontShowUI' `
+        -Path 'HKLM:/SOFTWARE/Microsoft/Windows/Windows Error Reporting' `
+        -Type 'DWORD' `
+        -Value 1 |
+        Out-Null;
+    New-ItemProperty `
+        -Force `
+        -Name 'ForceQueue' `
+        -Path 'HKLM:/SOFTWARE/Microsoft/Windows/Windows Error Reporting' `
+        -Type 'DWORD' `
+        -Value 1 |
+        Out-Null;
+    New-ItemProperty `
+        -Force `
+        -Name 'DefaultConsent' `
+        -Path 'HKLM:/SOFTWARE/Microsoft/Windows/Windows Error Reporting/Consent' `
+        -Type 'DWORD' `
+        -Value 1 |
+        Out-Null;
+}
 function Write-Log {
     param(
         [string]$Message,
@@ -441,13 +553,14 @@ try {
         ((Get-Item -Path $AgentToolsDirectoryPath).FullName), `
         [System.EnvironmentVariableTarget]::Machine `
     );
+    Disable-Debuggers;
     Disable-NetworkDiscoverabilityPopup;
     Disable-ServerManagerPopup;
     Disable-UserAccessControl;
     Enable-LongPathBehavior;
     Enable-RootHypervisorScheduler;
-    Enable-TestSignedDriverLoad;
     Set-WindowsDefenderConfiguration -LogFilePath $LogFilePath;
+    Set-WindowsErrorReportingConfiguration -LogFilePath $LogFilePath;
     Resize-SystemDrive `
         -LogFilePath $LogFilePath `
         -MaximumSize 0;
@@ -479,9 +592,13 @@ try {
     Install-AzureCli -LogFilePath $LogFilePath;
     Install-GitHubCli -LogFilePath $LogFilePath;
     Install-GoogleCloudCli -LogFilePath $LogFilePath;
+    Install-NuGetPackageProvider -LogFilePath $LogFilePath;
     Install-PowerShell `
         -LogFilePath $LogFilePath `
         -Version 'latest';
+    Install-7Zip `
+        -LogFilePath $LogFilePath `
+        -Version '22.01';
     Write-Log `
         -Message 'Complete!' `
         -Path $LogFilePath;
