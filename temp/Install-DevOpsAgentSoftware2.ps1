@@ -40,6 +40,20 @@ function Get-File {
 function Get-TimeMarker {
     return Get-Date -Format 'yyyyMMddTHH:mm:ssK';
 }
+function Install-AzureCliExtension {
+    param(
+        [string]$LogFilePath,
+        [string]$Name
+    );
+
+    Write-Log `
+        -Message "Installing Azure CLI extension: ${Name}." `
+        -Path $LogFilePath;
+
+    az extension add `
+        --name $Name `
+        --yes;
+}
 function Install-GoogleChrome {
     param(
         [string]$LogFilePath
@@ -255,7 +269,22 @@ try {
     $ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
     $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
 
-    $visualStudioExtensions = @(
+    @(
+        'azure-batch-cli-extensions',
+        'azure-cli-ml',
+        'azure-devops',
+        'front-door',
+        'k8s-configuration',
+        'k8s-extension',
+        'resource-graph'
+    ) | ForEach-Object {
+        $extension = $_;
+
+        Install-AzureCliExtension `
+            -LogFilePath $LogFilePath `
+            -Name $extension;
+    }
+    @(
         @{
             Name = 'MicrosoftAnalysisServicesModelingProjects2022';
             Publisher = 'ProBITools';
@@ -276,9 +305,7 @@ try {
             Publisher = 'WixToolset';
             Version = '1.0.0.22';
         }
-    );
-
-    $visualStudioExtensions | ForEach-Object {
+    ) | ForEach-Object {
         $extension = $_;
 
         Install-VisualStudioExtension `
@@ -286,8 +313,7 @@ try {
             -Name $extension.Name `
             -Publisher $extension.Publisher `
             -Version $extension.Version;
-    };
-
+    }
     Install-GoogleChrome -LogFilePath $LogFilePath;
     Install-MozillaFirefox `
         -LogFilePath $LogFilePath `
