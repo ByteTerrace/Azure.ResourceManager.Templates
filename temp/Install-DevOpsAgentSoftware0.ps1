@@ -1,5 +1,8 @@
+[CmdletBinding()]
 param(
+    [Parameter(Mandatory = $true)]
     [string]$AgentToolsDirectoryPath,
+    [Parameter(Mandatory = $true)]
     [string]$LogFilePath
 );
 
@@ -57,6 +60,21 @@ function Disable-UserAccessControl {
             -Type 'DWORD' `
             -Value 0;
     }
+}
+function Enable-DeveloperMode {
+    $path = 'HKLM:/SOFTWARE/Microsoft/Windows/CurrentVersion/AppModelUnlock';
+
+    New-Item `
+        -Force `
+        -ItemType 'Directory' `
+        -Path $path |
+        Out-Null;
+    New-ItemProperty `
+        -Name 'AllowDevelopmentWithoutDevLicense' `
+        -Path $path `
+        -Type 'DWORD' `
+        -Value 1 |
+        Out-Null;
 }
 function Enable-DotNetStrongCrypto {
     $path = 'HKLM:/SOFTWARE/Microsoft/.NETFramework/v4.0.30319';
@@ -205,7 +223,7 @@ function Install-AzureCli {
         -PassThru `
         -Wait;
 
-    if ((0 -ne $process.ExitCode) -and (3010 -ne $process.ExitCode)) {
+    if (0 -ne $process.ExitCode) {
         throw "Non-zero exit code returned by the process: $($process.ExitCode).";
     }
 
@@ -442,6 +460,27 @@ function Resize-SystemDrive {
             -Size $MaximumSize;
     }
 }
+function Set-WindowsGraphicsDeviceInterfaceConfiguration {
+    param(
+        [string]$LogFilePath
+    );
+
+    $processHandleQuota = 20480;
+
+    Write-Log `
+        -Message "Configuring Windows Graphics Device Interface." `
+        -Path $LogFilePath;
+    Set-ItemProperty `
+        -Name 'GDIProcessHandleQuota' `
+        -Path 'HKLM:/SOFTWARE/Microsoft/Windows NT/CurrentVersion/Windows' `
+        -Type 'DWORD' `
+        -Value $processHandleQuota;
+    Set-ItemProperty `
+        -Name 'GDIProcessHandleQuota' `
+        -Path 'HKLM:/SOFTWARE/WOW6432Node/Microsoft/Windows NT/CurrentVersion/Windows' `
+        -Type 'DWORD' `
+        -Value $processHandleQuota;
+}
 function Set-WindowsDefenderConfiguration {
     param(
         [string]$LogFilePath
@@ -493,7 +532,6 @@ function Set-WindowsErrorReportingConfiguration {
     Write-Log `
         -Message "Configuring Windows Error Reporting." `
         -Path $LogFilePath;
-
     New-ItemProperty `
         -Force `
         -Name 'DontShowUI' `
@@ -532,6 +570,7 @@ try {
     $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12;
 
+    Set-StrictMode -Version 'Latest';
     New-Item `
         -Force `
         -ItemType 'Directory' `
@@ -557,10 +596,12 @@ try {
     Disable-NetworkDiscoverabilityPopup;
     Disable-ServerManagerPopup;
     Disable-UserAccessControl;
+    Enable-DeveloperMode;
     Enable-LongPathBehavior;
     Enable-RootHypervisorScheduler;
     Set-WindowsDefenderConfiguration -LogFilePath $LogFilePath;
     Set-WindowsErrorReportingConfiguration -LogFilePath $LogFilePath;
+    Set-WindowsGraphicsDeviceInterfaceConfiguration -LogFilePath $LogFilePath;
     Resize-SystemDrive `
         -LogFilePath $LogFilePath `
         -MaximumSize 0;

@@ -1,4 +1,6 @@
+[CmdletBinding()]
 param(
+    [Parameter(Mandatory = $true)]
     [string]$LogFilePath
 );
 
@@ -268,6 +270,10 @@ function Write-Log {
 try {
     $ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
     $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
+    [Net.ServicePointManager]::SecurityProtocol = (
+        [Net.SecurityProtocolType]::Tls12 -bor `
+        [Net.SecurityProtocolType]::Tls13
+    );
 
     @(
         'azure-cli-ml',
