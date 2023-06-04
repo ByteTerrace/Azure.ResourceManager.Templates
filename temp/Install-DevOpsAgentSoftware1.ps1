@@ -219,6 +219,23 @@ function Install-GitHubActionsTool {
             -Path $installerFilePath;
     }
 }
+function Install-Go {
+    param(
+        [string]$Architecture,
+        [BaseHttpClient]$GitActionsContentService,
+        [string]$LogFilePath,
+        [string]$Platform,
+        [string]$Version
+    );
+
+    Install-GitHubActionsTool `
+        -Architecture $Architecture `
+        -GitActionsContentService $GitActionsContentService `
+        -LogFilePath $LogFilePath `
+        -Platform $Platform `
+        -ToolName 'go' `
+        -Version $Version;
+}
 function Install-Node {
     param(
         [string]$Architecture,
@@ -323,6 +340,18 @@ try {
     Add-Content `
         -Path ($profile.AllUsersAllHosts) `
         -Value '$ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;';
+    @(
+        '1.18.*',
+        '1.19.*',
+        '1.20.*'
+    ) | ForEach-Object {
+        Install-Node `
+            -Architecture 'x64' `
+            -GitActionsContentService $gitActionsContentService `
+            -LogFilePath $LogFilePath `
+            -Platform 'win32' `
+            -Version $_;
+    }
     @(
         '14.*',
         '16.*',
