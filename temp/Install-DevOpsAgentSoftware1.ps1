@@ -205,7 +205,7 @@ function Install-GitHubActionsTool {
     Push-Location -Path $installerFolderPath;
 
     try {
-        Invoke-Expression ./setup.ps1;
+        Invoke-Expression ./setup.ps1 | Out-Null;
     }
     finally {
         Pop-Location;
@@ -345,7 +345,7 @@ try {
         '1.19.*',
         '1.20.*'
     ) | ForEach-Object {
-        Install-Node `
+        Install-Go `
             -Architecture 'x64' `
             -GitActionsContentService $gitActionsContentService `
             -LogFilePath $LogFilePath `
