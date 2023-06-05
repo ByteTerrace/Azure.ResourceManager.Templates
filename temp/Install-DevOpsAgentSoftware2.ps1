@@ -4,72 +4,365 @@ param(
     [string]$LogFilePath
 );
 
-function Get-File {
-    param(
-        [hashtable]$Headers,
-        [string]$LogFilePath,
-        [string]$SourceUri,
-        [string]$TargetPath
-    );
+class GitHubActionsReleaseFile {
+    [Text.Json.Serialization.JsonPropertyName('arch')]
+    [string]$Architecture;
+    [Text.Json.Serialization.JsonPropertyName('download_url')]
+    [string]$DownloadUri;
+    [Text.Json.Serialization.JsonPropertyName('filename')]
+    [string]$FileName;
+    [string]$Platform;
+    [Text.Json.Serialization.JsonPropertyName('platform_version')]
+    [string]$PlatformVersion;
+}
+class GitHubActionsVersionsManifest {
+    [GitHubActionsReleaseFile[]]$Files;
+    [Text.Json.Serialization.JsonPropertyName('stable')]
+    [bool]$IsStable
+    [Text.Json.Serialization.JsonPropertyName('release_url')]
+    [string]$ReleaseUri;
+    [string]$Version;
+}
+class HttpService {
+    [Net.Http.HttpClient]$HttpClient;
 
-    $webClient = $null;
+    HttpService([Net.Http.HttpClient]$httpClient) {
+        $this.HttpClient = $httpClient;
+    }
 
-    try {
-        Write-Log `
-            -Message "Downloading file from '${SourceUri}' to '${TargetPath}'." `
-            -Path $LogFilePath;
+    hidden [Net.Http.HttpResponseMessage] SendRequest(
+        [Net.Http.HttpContent]$content,
+        [Net.Http.HttpMethod]$method,
+        [string]$uri
+    ) {
+        [Net.Http.HttpRequestMessage]$requestMessage = $null;
 
-        $webClient = [Net.WebClient]::new();
+        try {
+            $requestMessage = [Net.Http.HttpRequestMessage]::new();
+            $requestMessage.Method = $method;
+            $requestMessage.RequestUri = $uri;
 
-        if ($null -ne $Headers) {
-            foreach ($header in $Headers.GetEnumerator()) {
-                $webClient.Headers.Add($header.Key, $header.Value);
+            if ($null -ne $content) {
+                $requestMessage.Content = $content;
+            }
+
+            return $this.HttpClient.Send(
+                $requestMessage,
+                [Net.Http.HttpCompletionOption]::ResponseContentRead,
+                [Threading.CancellationToken]::None
+            );
+        }
+        finally {
+            if ($null -ne $requestMessage) {
+                $requestMessage.Dispose();
             }
         }
-
-        $webClient.DownloadFile($SourceUri, $TargetPath);
-
-        return $TargetPath;
     }
-    finally {
-        if ($null -ne $webClient) {
-            $webClient.Dispose();
+
+    [string] DownloadFile(
+        [string]$filePath,
+        [string]$uri
+    ) {
+        $this.Get(
+            [Action[Net.Http.HttpResponseMessage]] {
+                param([Net.Http.HttpResponseMessage]$responseMessage);
+
+                [IO.FileStream]$fileStream = $null;
+
+                try {
+                    $fileStream = [IO.FileStream]::new(
+                        $filePath,
+                        [IO.FileMode]::CreateNew,
+                        [IO.FileAccess]::Write,
+                        [IO.FileShare]::None,
+                        0,
+                        [IO.FileOptions]::None
+                    );
+
+                    $responseMessage.Content.CopyTo(
+                        $fileStream,
+                        $null,
+                        [Threading.CancellationToken]::None
+                    );
+                }
+                finally {
+                    if ($null -ne $fileStream) {
+                        $fileStream.Dispose();
+                    }
+                }
+            },
+            $uri
+        );
+
+        return $filePath;
+    }
+    [void] Get(
+        [Action[Net.Http.HttpResponseMessage]]$handler,
+        [string]$uri
+    ) {
+        [Net.Http.HttpResponseMessage]$responseMessage = $null;
+
+        try {
+            $responseMessage = $this.SendRequest(
+                $null,
+                [Net.Http.HttpMethod]::Get,
+                $uri
+            );
+
+            $handler.Invoke($responseMessage);
+        }
+        finally {
+            if ($null -ne $responseMessage) {
+                $responseMessage.Dispose();
+            }
         }
     }
+    [object] GetJsonAsT(
+        [Text.Json.JsonSerializerOptions]$jsonSerializerOptions,
+        [Type]$type,
+        [string]$uri
+    ) {
+        if ($null -eq $jsonSerializerOptions) {
+            $jsonSerializerOptions = [Text.Json.JsonSerializerOptions]::new();
+            $jsonSerializerOptions.PropertyNamingPolicy = [Text.Json.JsonNamingPolicy]::CamelCase;
+        }
 
-    return $null;
+        $result = $null;
+
+        $this.Get(
+            [Action[Net.Http.HttpResponseMessage]] {
+                param([Net.Http.HttpResponseMessage]$responseMessage);
+
+                ([ref]$result).Value = [Text.Json.JsonSerializer]::Deserialize(
+                    $responseMessage.Content.ReadAsStream(),
+                    $type,
+                    $jsonSerializerOptions
+                );
+            },
+            $uri
+        );
+
+        return $result;
+    }
 }
-function Get-TimeMarker {
-    return Get-Date -Format 'yyyyMMddTHH:mm:ssK';
+class MozillaFirefoxVersionsManifest {
+    [Text.Json.Serialization.JsonPropertyName('LATEST_FIREFOX_VERSION')]
+    [string]$LatestVersion;
+}
+class NodeJsVersionsManifest {
+    [string[]]$Files;
+    [Text.Json.Serialization.JsonPropertyName('lts')]
+    [object]$LongTermSupport;
+    [string]$Version;
+}
+
+function Add-MachinePath {
+    param (
+        [string]$Path
+    )
+
+    Set-MachineVariable `
+        -Name 'Path' `
+        -Path "$([Environment]::GetEnvironmentVariable('Path', [EnvironmentVariableTarget]::Machine));$((Get-Item -Path $Path).FullName)";
+}
+function Get-GitHubActionsToolPath {
+    param(
+        [string]$Architecture,
+        [string]$ToolName,
+        [string]$Version
+    );
+
+    return [IO.Path]::Combine(
+            (Get-Item -Path ([IO.Path]::Combine(
+                [IO.Path]::Combine(
+                    [Environment]::GetEnvironmentVariable(
+                        'AGENT_TOOLSDIRECTORY',
+                        [EnvironmentVariableTarget]::Machine
+                    ),
+                    $ToolName
+                ),
+                $Version
+            )) |
+            Sort-Object -Descending { ([version]$_.name); } |
+            Select-Object -First 1).FullName,
+            $Architecture
+        );
+}
+function Get-GitHubActionsVersionsManifest {
+    param(
+        [string]$Architecture,
+        [HttpService]$HttpService,
+        [string]$LogFilePath,
+        [string]$Platform,
+        [string]$ToolName,
+        [string]$Version
+    );
+
+    return $HttpService.GetJsonAsT(
+            $null,
+            [GitHubActionsVersionsManifest[]],
+            "https://raw.githubusercontent.com/actions/${ToolName}-versions/main/versions-manifest.json"
+        ) |
+        Where-Object { (
+            $_.IsStable -and
+            ($_.Version -like $Version)
+        ); } |
+        Select-Object -ExpandProperty 'Files' |
+        Where-Object { (
+            ($Architecture -eq $_.Architecture) -and
+            ($Platform -eq $_.Platform)
+        ); } |
+        Sort-Object { ([version]$_.Version); } |
+        Select-Object -First 1;
 }
 function Install-AzureCliExtension {
     param(
-        [string]$LogFilePath,
         [string]$Name
     );
-
-    Write-Log `
-        -Message "Installing Azure CLI extension: ${Name}." `
-        -Path $LogFilePath;
 
     az extension add `
         --name $Name `
         --yes;
 }
+function Install-GitHubActionsTool {
+    param(
+        [string]$Architecture,
+        [HttpService]$HttpService,
+        [string]$Platform,
+        [string]$ToolName,
+        [string]$Version
+    );
+
+    $installerData = Get-GitHubActionsVersionsManifest `
+        -Architecture $Architecture `
+        -HttpService $HttpService `
+        -LogFilePath $LogFilePath `
+        -Platform $Platform `
+        -ToolName $ToolName `
+        -Version $Version;
+    $installerFilePath = $HttpService.DownloadFile(
+            ([IO.Path]::Combine((Get-Location), $installerData.FileName)),
+            $installerData.DownloadUri
+        );
+    $installerFolderPath = [IO.Path]::Combine([IO.Path]::GetTempPath(), [IO.Path]::GetFileNameWithoutExtension($installerData.FileName));
+
+    & "${Env:ProgramFiles}/7-Zip/7z.exe" `
+        x $installerFilePath `
+        "-o${installerFolderPath}" `
+        -y |
+        Out-Null;
+
+    Push-Location -Path $installerFolderPath;
+
+    try {
+        Invoke-Expression ./setup.ps1 | Out-Null;
+    }
+    finally {
+        Pop-Location;
+    }
+
+    Start-Sleep -Seconds 3;
+
+    if (Test-Path -Path $installerFilePath) {
+        Remove-Item `
+            -Force `
+            -Path $installerFilePath;
+    }
+}
+function Install-GitHubActionsTools {
+    $gitHubActionsTools = @(
+        @{
+            Architectures = @( 'x64' );
+            Name = 'Go';
+            Versions = @(
+                '1.18.*',
+                '1.19.*',
+                '1.20.*'
+            );
+        },
+        @{
+            Architectures = @( 'x64' );
+            Name = 'Node';
+            Versions = @(
+                '14.*',
+                '16.*',
+                '18.*'
+            );
+        },
+        @{
+            Architectures = @(
+                'x64',
+                'x86'
+            );
+            DefaultArchitecture = 'x86';
+            Name = 'Python';
+            Versions = @(
+                '3.7.*',
+                '3.8.*',
+                '3.9.*',
+                '3.10.*'
+                '3.11.*'
+            );
+        }
+    );
+
+    $gitHubActionsTools |
+        ForEach-Object {
+            $tool = $_;
+
+            foreach ($architecture in $tool.Architectures) {
+                foreach ($version in $tool.Versions) {
+                    Install-GitHubActionsTool `
+                        -Architecture $architecture `
+                        -HttpService $httpService `
+                        -Platform 'win32' `
+                        -ToolName $tool.Name `
+                        -Version $version;
+                }
+            }
+        }
+    $gitHubActionsTools |
+        ForEach-Object {
+            $architecture = $_.DefaultArchitecture;
+            $toolName = $_.Name;
+            $version = $_.DefaultVersion;
+
+            if ($null -eq $architecture) {
+                $architecture = 'x64';
+            }
+
+            if ($null -eq $version) {
+                $version = $_.Versions |
+                    Sort-Object -Descending { ([version]$_.Replace('*', '0')); } |
+                    Select-Object -First 1;
+            }
+
+            $toolPath = Get-GitHubActionsToolPath `
+                -Architecture $architecture `
+                -ToolName $toolName `
+                -Version $version;
+
+            if ('Go' -eq $toolName) {
+                Add-MachinePath -Path "${toolPath}/bin";
+            }
+
+            if ('Python' -eq $toolName) {
+                Add-MachinePath -Path $toolPath;
+                Add-MachinePath -Path "${toolPath}/Scripts";
+            }
+        }
+    Update-EnvironmentVariables;
+}
 function Install-GoogleChrome {
     param(
-        [string]$LogFilePath
+        [HttpService]$HttpService
     );
 
     $installerFileName = 'googlechromestandaloneenterprise64.msi';
-    $installerFilePath = Get-File `
-        -LogFilePath $LogFilePath `
-        -SourceUri "https://dl.google.com/tag/s/dl/chrome/install/${installerFileName}" `
-        -TargetPath ([IO.Path]::Combine((Get-Location), $installerFileName));
-
-    Write-Log `
-        -Message 'Installing Google Chrome.' `
-        -Path $LogFilePath;
+    $installerFilePath = $HttpService.DownloadFile(
+            ([IO.Path]::Combine((Get-Location), $installerFileName)),
+            "https://dl.google.com/tag/s/dl/chrome/install/${installerFileName}"
+        );
 
     $process = Start-Process `
         -ArgumentList @(
@@ -152,26 +445,23 @@ function Install-GoogleChrome {
 }
 function Install-MozillaFirefox {
     param(
-        [string]$LogFilePath,
+        [HttpService]$HttpService,
         [string]$Version
     );
 
     if ([string]::IsNullOrEmpty($Version) -or ('latest' -eq $Version)) {
-        $Version = (Invoke-WebRequest `
-            -Uri 'https://product-details.mozilla.org/1.0/firefox_versions.json' `
-            -UseBasicParsing |
-            ConvertFrom-Json).LATEST_FIREFOX_VERSION;
+        $Version = $HttpService.GetJsonAsT(
+                $null,
+                [MozillaFirefoxVersionsManifest],
+                'https://product-details.mozilla.org/1.0/firefox_versions.json'
+            ).LatestVersion;
     }
 
-    $installerFileName = "Firefox_Windows_Amd64.exe";
-    $installerFilePath = Get-File `
-        -LogFilePath $LogFilePath `
-        -SourceUri "https://download.mozilla.org/?lang=en-US&product=firefox-${Version}&os=win64" `
-        -TargetPath ([IO.Path]::Combine((Get-Location), $installerFileName));
-
-    Write-Log `
-        -Message "Installing Mozilla Firefox ${Version}." `
-        -Path $LogFilePath;
+    $installerFileName = "Firefox_Windows_x64.exe";
+    $installerFilePath = $HttpService.DownloadFile(
+            ([IO.Path]::Combine((Get-Location), $installerFileName)),
+            "https://download.mozilla.org/?lang=en-US&product=firefox-${Version}&os=win64"
+        );
 
     $process = Start-Process `
         -ArgumentList @(
@@ -218,23 +508,111 @@ pref("general.config.obscure_value", 0);
 '@ |
         Out-Null;
 }
+function Install-NodeJs {
+    param(
+        [HttpService]$HttpService,
+        [string]$Version
+    );
+
+    if ([string]::IsNullOrEmpty($Version) -or ('latest' -eq $Version)) {
+        $Version = ($HttpService.GetJsonAsT(
+                $null,
+                [NodeJsVersionsManifest[]],
+                'https://nodejs.org/download/release/index.json'
+            ) |
+            Where-Object { (($_.LongTermSupport -as [string]) -ne 'false'); } |
+            Sort-Object -Descending { ([version]$_.Version.Substring(1)); } |
+            Select-Object -First 1).Version.Substring(1);
+    }
+
+    $cachePath = 'C:/npm/cache';
+    $prefixPath = 'C:/npm/prefix';
+
+    New-Item `
+        -Force `
+        -ItemType 'Directory' `
+        -Path $cachePath |
+        Out-Null;
+    New-Item `
+        -Force `
+        -ItemType 'Directory' `
+        -Path $prefixPath |
+        Out-Null;
+
+    $installerFileName = 'NodeJs_Windows_x64.msi';
+    $installerFilePath = $HttpService.DownloadFile(
+            ([IO.Path]::Combine((Get-Location), $installerFileName)),
+            "https://nodejs.org/dist/v${Version}/node-v${Version}-x64.msi"
+        );
+
+    $process = Start-Process `
+        -ArgumentList @(
+            '/i', "`"$installerFilePath`""
+            '/quiet'
+        ) `
+        -FilePath 'msiexec.exe' `
+        -PassThru `
+        -Wait;
+
+    if (0 -ne $process.ExitCode) {
+        throw "Non-zero exit code returned by the process: $($process.ExitCode).";
+    }
+
+    Start-Sleep -Seconds 3;
+
+    if (Test-Path -Path $installerFilePath) {
+        Remove-Item `
+            -Force `
+            -Path $installerFilePath;
+    }
+
+    Add-MachinePath -Path $prefixPath;
+    Set-MachineVariable `
+        -Name 'NPM_CONFIG_PREFIX' `
+        -Value $prefixPath;
+    Update-EnvironmentVariables;
+
+    npm config set cache $cachePath --global;
+    npm config set registry https://registry.npmjs.org/;
+}
+function Install-Pipx {
+    $pipxBin = "${Env:ProgramFiles(x86)}/pipx_bin";
+    $pipxHome = "${Env:ProgramFiles(x86)}/pipx";
+
+    New-Item `
+        -Force `
+        -ItemType 'Directory' `
+        -Path $pipxBin |
+        Out-Null;
+    New-Item `
+        -Force `
+        -ItemType 'Directory' `
+        -Path $pipxHome |
+        Out-Null;
+    Set-MachineVariable `
+        -Name 'PIPX_BIN_DIR' `
+        -Value $pipxBin;
+    Set-MachineVariable `
+        -Name 'PIPX_HOME' `
+        -Value $pipxHome;
+
+    pip install pipx;
+
+    Add-MachinePath -Path $pipxBin;
+    Update-EnvironmentVariables;
+}
 function Install-VisualStudioExtension {
     param(
-        [string]$LogFilePath,
+        [HttpService]$HttpService,
         [string]$Name,
         [string]$Publisher,
         [string]$Version
     );
 
-    $extensionFilePath = Get-File `
-        -LogFilePath $LogFilePath `
-        -SourceUri "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/${Publisher}/vsextensions/${Name}/${Version}/vspackage" `
-        -TargetPath ([IO.Path]::Combine((Get-Location), "${Name}.vsix"));
-
-    Write-Log `
-        -Message "Installing Visual Studio extension '${Publisher}-${Name} ${Version}'." `
-        -Path $LogFilePath;
-
+    $extensionFilePath = $HttpService.DownloadFile(
+            ([IO.Path]::Combine((Get-Location), "${Name}.vsix")),
+            "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/${Publisher}/vsextensions/${Name}/${Version}/vspackage"
+        );
     $process = Start-Process `
         -ArgumentList @(
             '/quiet',
@@ -256,16 +634,107 @@ function Install-VisualStudioExtension {
             -Path $extensionFilePath;
     }
 }
-function Write-Log {
+function Set-MachineVariable {
     param(
-        [string]$Message,
-        [string]$Path
+        [string]$Name,
+        [string]$Value
     );
 
-    Add-Content `
-        -Path $Path `
-        -Value "[Install-DevOpsAgentSoftware2.ps1@$(Get-TimeMarker)] - ${Message}";
+    [Environment]::SetEnvironmentVariable(
+            $Name,
+            ((Get-Item -Path $Value).FullName),
+            [EnvironmentVariableTarget]::Machine
+        );
 }
+function Update-EnvironmentVariables {
+    $originalArchitecture = ${Env:PROCESSOR_ARCHITECTURE};
+    $originalPsModulePath = ${Env:PSModulePath};
+    $originalUserName = ${Env:USERNAME};
+    $pathEntries = ([string[]]@());
+
+    # 0) process
+    Get-ChildItem `
+        -Path 'Env:\' |
+        Select-Object `
+            -ExpandProperty 'Key' |
+            ForEach-Object {
+                Set-Item `
+                    -Path ('Env:{0}' -f $_) `
+                    -Value ([Environment]::GetEnvironmentVariable($_, [EnvironmentVariableTarget]::Process));
+            };
+
+    # 1) machine
+    $machineEnvironmentRegistryKey = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey('SYSTEM\CurrentControlSet\Control\Session Manager\Environment\');
+
+    if ($null -ne $machineEnvironmentRegistryKey) {
+        try {
+            Get-Item `
+                -Path 'HKLM:/SYSTEM/CurrentControlSet/Control/Session Manager/Environment' |
+                Select-Object `
+                    -ExpandProperty 'Property' |
+                    ForEach-Object {
+                        $value =  $machineEnvironmentRegistryKey.GetValue(
+                                $_,
+                                [string]::Empty,
+                                [Microsoft.Win32.RegistryValueOptions]::None
+                            );
+
+                        Set-Item `
+                            -Path ('Env:{0}' -f $_) `
+                            -Value $value;
+
+                        if ('Path' -eq $_) {
+                            $pathEntries += $value.Split(';');
+                        }
+                    };
+        }
+        finally {
+            $machineEnvironmentRegistryKey.Close();
+        }
+    }
+
+    # 2) user
+    if ($originalUserName -notin @('SYSTEM', ('{0}$' -f ${Env:COMPUTERNAME}))) {
+        $userEnvironmentRegistryKey = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Environment');
+
+        if ($null -ne $userEnvironmentRegistryKey) {
+            try {
+                Get-Item `
+                    -Path 'HKCU:/Environment' |
+                    Select-Object `
+                        -ExpandProperty 'Property' |
+                        ForEach-Object {
+                            $value =  $userEnvironmentRegistryKey.GetValue(
+                                    $_,
+                                    [string]::Empty,
+                                    [Microsoft.Win32.RegistryValueOptions]::None
+                                );
+
+                            Set-Item `
+                                -Path ('Env:{0}' -f $_) `
+                                -Value $value;
+
+                            if ('Path' -eq $_) {
+                                $pathEntries += $value.Split(';');
+                            }
+                        };
+            }
+            catch {
+                $userEnvironmentRegistryKey.Close();
+            }
+        }
+    }
+
+    ${Env:Path} = (($pathEntries | Select-Object -Unique) -Join ';');
+    ${Env:PROCESSOR_ARCHITECTURE} = $originalArchitecture;
+    ${Env:PSModulePath} = $originalPsModulePath;
+
+    if ($originalUserName) {
+        ${Env:USERNAME} = $originalUserName;
+    }
+}
+
+[Net.Http.HttpClient]$httpClient = $null;
 
 try {
     $ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
@@ -275,6 +744,10 @@ try {
         [Net.SecurityProtocolType]::Tls13
     );
 
+    $httpClient = [Net.Http.HttpClient]::new();
+    $httpClient.BaseAddress = $null;
+    $httpService = [HttpService]::new($httpClient);
+
     @(
         'azure-cli-ml',
         'azure-devops',
@@ -282,13 +755,12 @@ try {
         'k8s-configuration',
         'k8s-extension',
         'resource-graph'
-    ) | ForEach-Object {
-        $extension = $_;
+    ) |
+        ForEach-Object {
+            $extension = $_;
 
-        Install-AzureCliExtension `
-            -LogFilePath $LogFilePath `
-            -Name $extension;
-    }
+            Install-AzureCliExtension -Name $extension;
+        }
     @(
         @{
             Name = 'MicrosoftAnalysisServicesModelingProjects2022';
@@ -310,30 +782,29 @@ try {
             Publisher = 'WixToolset';
             Version = '1.0.0.22';
         }
-    ) | ForEach-Object {
-        $extension = $_;
+    ) |
+        ForEach-Object {
+            $extension = $_;
 
-        Install-VisualStudioExtension `
-            -LogFilePath $LogFilePath `
-            -Name $extension.Name `
-            -Publisher $extension.Publisher `
-            -Version $extension.Version;
-    }
-    Install-GoogleChrome -LogFilePath $LogFilePath;
+            Install-VisualStudioExtension `
+                -HttpService $httpService `
+                -Name $extension.Name `
+                -Publisher $extension.Publisher `
+                -Version $extension.Version;
+        }
+    Install-GitHubActionsTools;
+    Install-GoogleChrome -HttpService $httpService;
     Install-MozillaFirefox `
-        -LogFilePath $LogFilePath `
+        -HttpService $httpService `
         -Version 'latest';
-    Write-Log `
-        -Message 'Complete!' `
-        -Path $LogFilePath;
+    Install-NodeJs `
+        -HttpService $httpService `
+        -Version 'latest';
 }
 catch {
-    Write-Log `
-        -Message $_ `
-        -Path $LogFilePath;
-    Write-Log `
-        -Message 'Failed!' `
-        -Path $LogFilePath;
+    if ($null -ne $httpClient) {
+        $httpClient.Dispose();
+    }
 
     throw;
 }

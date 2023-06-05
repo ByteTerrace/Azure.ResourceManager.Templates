@@ -207,11 +207,11 @@ function Install-AzureCli {
         -ItemType 'Directory' `
         -Path $extensionsPath |
         Out-Null;
-    [Environment]::SetEnvironmentVariable( `
-        'AZURE_EXTENSION_DIR', `
-        $extensionsPath, `
-        [System.EnvironmentVariableTarget]::Machine `
-    );
+    [Environment]::SetEnvironmentVariable(
+            'AZURE_EXTENSION_DIR',
+            $extensionsPath,
+            [EnvironmentVariableTarget]::Machine
+        );
 
     $process = Start-Process `
         -ArgumentList @(
@@ -587,11 +587,11 @@ try {
     Add-Content `
         -Path ($profile.AllUsersAllHosts) `
         -Value '$ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;';
-    [Environment]::SetEnvironmentVariable( `
-        'AGENT_TOOLSDIRECTORY', `
-        ((Get-Item -Path $AgentToolsDirectoryPath).FullName), `
-        [System.EnvironmentVariableTarget]::Machine `
-    );
+    [Environment]::SetEnvironmentVariable(
+            'AGENT_TOOLSDIRECTORY',
+            ((Get-Item -Path $AgentToolsDirectoryPath).FullName),
+            [EnvironmentVariableTarget]::Machine
+        );
     Disable-Debuggers;
     Disable-NetworkDiscoverabilityPopup;
     Disable-ServerManagerPopup;
