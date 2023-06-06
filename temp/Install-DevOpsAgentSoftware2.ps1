@@ -122,6 +122,7 @@ class HttpService {
                 $uri
             );
 
+            $responseMessage.EnsureSuccessStatusCode();
             $handler.Invoke($responseMessage);
         }
         finally {
