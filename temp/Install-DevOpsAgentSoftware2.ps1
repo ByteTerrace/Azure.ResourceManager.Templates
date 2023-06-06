@@ -268,8 +268,10 @@ function Install-DotNetSdk {
     param(
         [string]$Architecture,
         [HttpService]$HttpService,
+        [string]$InstallerFilePath,
         [Text.Json.JsonSerializerOptions]$JsonSerializerOptions,
         [string]$ReleaseType,
+        [string]$SdkDirectoryPath,
         [string]$Version
     );
 
@@ -285,16 +287,11 @@ function Install-DotNetSdk {
             -Version $Version).LatestSdkVersion;
     }
 
-    $installerFileName = 'dotnet-install.ps1';
-    $installerFilePath = $HttpService.DownloadFile(
-            ([IO.Path]::Combine((Get-Location), $installerFileName)),
-            "https://dot.net/v1/${installerFileName}"
-        );
-
-    & $installerFilePath `
+    & $InstallerFilePath `
         -Architecture $Architecture `
-        -InstallDir ([IO.Path]::Combine(${Env:ProgramFiles}, 'dotnet')) `
-        -Version $Version;
+        -InstallDir $SdkDirectoryPath `
+        -Version $Version |
+        Out-Null;
 }
 function Install-DotNetSdks {
     param(
@@ -312,6 +309,13 @@ function Install-DotNetSdks {
         -Name 'DOTNET_SKIP_FIRST_TIME_EXPERIENCE' `
         -Value '1';
 
+    $installerFileName = 'dotnet-install.ps1';
+    $installerFilePath = $HttpService.DownloadFile(
+            ([IO.Path]::Combine((Get-Location), $installerFileName)),
+            "https://dot.net/v1/${installerFileName}"
+        );
+    $sdkDirectoryPath = ([IO.Path]::Combine(${Env:ProgramFiles}, 'dotnet'));
+
     @(
         '3.1.*',
         '6.0.*'
@@ -319,7 +323,9 @@ function Install-DotNetSdks {
         ForEach-Object {
             Install-DotNetSdk `
                 -HttpService $HttpService `
+                -InstallerFilePath $installerFilePath `
                 -JsonSerializerOptions $JsonSerializerOptions `
+                -SdkDirectoryPath $sdkDirectoryPath `
                 -Version $_;
         }
 }
