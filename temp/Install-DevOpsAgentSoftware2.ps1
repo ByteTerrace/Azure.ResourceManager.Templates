@@ -4,6 +4,19 @@ param(
     [string]$LogFilePath
 );
 
+class DotNetSdkVersionsManifest {
+    [Text.Json.Serialization.JsonPropertyName('latest-release')]
+    [string]$LatestReleaseVersion;
+    [Text.Json.Serialization.JsonPropertyName('latest-sdk')]
+    [string]$LatestSdkVersion;
+    [string]$Product;
+    [Text.Json.Serialization.JsonPropertyName('release-type')]
+    [string]$ReleaseType;
+    [Text.Json.Serialization.JsonPropertyName('releases.json')]
+    [string]$ReleasesUri;
+    [Text.Json.Serialization.JsonPropertyName('support-phase')]
+    [string]$SupportPhase;
+}
 class GitHubActionsReleaseFile {
     [Text.Json.Serialization.JsonPropertyName('arch')]
     [string]$Architecture;
@@ -159,11 +172,36 @@ class NodeJsVersionsManifest {
 function Add-MachinePath {
     param (
         [string]$Path
-    )
+    );
 
     Set-MachineVariable `
         -Name 'Path' `
-        -Path "$([Environment]::GetEnvironmentVariable('Path', [EnvironmentVariableTarget]::Machine));$((Get-Item -Path $Path).FullName)";
+        -Value "$([Environment]::GetEnvironmentVariable('Path', [EnvironmentVariableTarget]::Machine));$((Get-Item -Path $Path).FullName)";
+}
+function Get-DotNetSdkVersionsManifest {
+    param(
+        [HttpService]$HttpService,
+        [Text.Json.JsonSerializerOptions]$JsonSerializerOptions,
+        [string]$ReleaseType,
+        [string]$Version
+    );
+
+    [Text.Json.JsonSerializer]::Deserialize(
+            ($HttpService.GetJsonAsT(
+                    $JsonSerializerOptions,
+                    [Collections.Generic.Dictionary[string,Text.Json.JsonElement]],
+                    'https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/releases-index.json'
+                ))['releases-index'],
+            [DotNetSdkVersionsManifest[]],
+            $JsonSerializerOptions
+        ) |
+        Where-Object {
+            ('preview' -ne $_.SupportPhase) -and
+            ([string]::IsNullOrEmpty($ReleaseType) -or ($_.ReleaseType -eq $ReleaseType)) -and
+            ([string]::IsNullOrEmpty($Version) -or ($_.LatestSdkVersion -like $Version));
+        } |
+        Sort-Object -Descending { ([version]$_.LatestSdkVersion); } |
+        Select-Object -First 1;
 }
 function Get-GitHubActionsToolPath {
     param(
@@ -192,6 +230,7 @@ function Get-GitHubActionsVersionsManifest {
     param(
         [string]$Architecture,
         [HttpService]$HttpService,
+        [Text.Json.JsonSerializerOptions]$JsonSerializerOptions,
         [string]$LogFilePath,
         [string]$Platform,
         [string]$ToolName,
@@ -199,7 +238,7 @@ function Get-GitHubActionsVersionsManifest {
     );
 
     return $HttpService.GetJsonAsT(
-            $null,
+            $JsonSerializerOptions,
             [GitHubActionsVersionsManifest[]],
             "https://raw.githubusercontent.com/actions/${ToolName}-versions/main/versions-manifest.json"
         ) |
@@ -223,6 +262,65 @@ function Install-AzureCliExtension {
     az extension add `
         --name $Name `
         --yes;
+}
+function Install-DotNetSdk {
+    param(
+        [string]$Architecture,
+        [HttpService]$HttpService,
+        [Text.Json.JsonSerializerOptions]$JsonSerializerOptions,
+        [string]$ReleaseType,
+        [string]$Version
+    );
+
+    if ([string]::IsNullOrEmpty($Architecture)) {
+        $Architecture = 'x64';
+    }
+
+    if ([string]::IsNullOrEmpty($Version) -or $Version.Contains('*')) {
+        $Version = (Get-DotNetSdkVersionsManifest `
+            -HttpService $httpService `
+            -JsonSerializerOptions $JsonSerializerOptions `
+            -ReleaseType $ReleaseType `
+            -Version $Version).LatestSdkVersion;
+    }
+
+    $installerFileName = 'dotnet-install.ps1';
+    $installerFilePath = $HttpService.DownloadFile(
+            ([IO.Path]::Combine((Get-Location), $installerFileName)),
+            "https://dot.net/v1/${installerFileName}"
+        );
+
+    & $installerFilePath `
+        -Architecture $Architecture `
+        -InstallDir ([IO.Path]::Combine(${Env:ProgramFiles}, 'dotnet')) `
+        -Version $Version;
+}
+function Install-DotNetSdks {
+    param(
+        [HttpService]$HttpService,
+        [Text.Json.JsonSerializerOptions]$JsonSerializerOptions
+    );
+
+    Set-MachineVariable `
+        -Name 'DOTNET_MULTILEVEL_LOOKUP' `
+        -Value '0';
+    Set-MachineVariable `
+        -Name 'DOTNET_NOLOGO' `
+        -Value '1';
+    Set-MachineVariable `
+        -Name 'DOTNET_SKIP_FIRST_TIME_EXPERIENCE' `
+        -Value '1';
+
+    @(
+        '3.1.*',
+        '6.0.*'
+    ) |
+        ForEach-Object {
+            Install-DotNetSdk `
+                -HttpService $HttpService `
+                -JsonSerializerOptions $JsonSerializerOptions `
+                -Version $_;
+        }
 }
 function Install-GitHubActionsTool {
     param(
@@ -331,16 +429,13 @@ function Install-GitHubActionsTools {
                 $architecture = 'x64';
             }
 
-            if ($null -eq $version) {
-                $version = $_.Versions |
-                    Sort-Object -Descending { ([version]$_.Replace('*', '0')); } |
-                    Select-Object -First 1;
-            }
-
             $toolPath = Get-GitHubActionsToolPath `
                 -Architecture $architecture `
                 -ToolName $toolName `
-                -Version $version;
+                -Version ($_.Versions |
+                    Where-Object { ([string]::IsNullOrEmpty($version) -or ($_ -like $version)); } |
+                    Sort-Object -Descending { ([version]$_.Replace('*', '0')); } |
+                    Select-Object -First 1);
 
             if ('Go' -eq $toolName) {
                 Add-MachinePath -Path "${toolPath}/bin";
@@ -446,12 +541,13 @@ function Install-GoogleChrome {
 function Install-MozillaFirefox {
     param(
         [HttpService]$HttpService,
+        [Text.Json.JsonSerializerOptions]$JsonSerializerOptions,
         [string]$Version
     );
 
     if ([string]::IsNullOrEmpty($Version) -or ('latest' -eq $Version)) {
         $Version = $HttpService.GetJsonAsT(
-                $null,
+                $JsonSerializerOptions,
                 [MozillaFirefoxVersionsManifest],
                 'https://product-details.mozilla.org/1.0/firefox_versions.json'
             ).LatestVersion;
@@ -511,12 +607,13 @@ pref("general.config.obscure_value", 0);
 function Install-NodeJs {
     param(
         [HttpService]$HttpService,
+        [Text.Json.JsonSerializerOptions]$JsonSerializerOptions,
         [string]$Version
     );
 
     if ([string]::IsNullOrEmpty($Version) -or ('latest' -eq $Version)) {
         $Version = ($HttpService.GetJsonAsT(
-                $null,
+                $JsonSerializerOptions,
                 [NodeJsVersionsManifest[]],
                 'https://nodejs.org/download/release/index.json'
             ) |
@@ -642,7 +739,7 @@ function Set-MachineVariable {
 
     [Environment]::SetEnvironmentVariable(
             $Name,
-            ((Get-Item -Path $Value).FullName),
+            $Value,
             [EnvironmentVariableTarget]::Machine
         );
 }
@@ -747,6 +844,8 @@ try {
     $httpClient = [Net.Http.HttpClient]::new();
     $httpClient.BaseAddress = $null;
     $httpService = [HttpService]::new($httpClient);
+    $jsonSerializerOptions = [Text.Json.JsonSerializerOptions]::new();
+    $jsonSerializerOptions.PropertyNamingPolicy = [Text.Json.JsonNamingPolicy]::CamelCase;
 
     @(
         'azure-cli-ml',
@@ -792,6 +891,9 @@ try {
                 -Publisher $extension.Publisher `
                 -Version $extension.Version;
         }
+    Install-DotNetSdks `
+        -HttpService $httpService `
+        -JsonSerializerOptions $jsonSerializerOptions;
     Install-GitHubActionsTools;
     Install-GoogleChrome -HttpService $httpService;
     Install-MozillaFirefox `
@@ -800,6 +902,7 @@ try {
     Install-NodeJs `
         -HttpService $httpService `
         -Version 'latest';
+    Install-Pipx;
 }
 catch {
     if ($null -ne $httpClient) {
