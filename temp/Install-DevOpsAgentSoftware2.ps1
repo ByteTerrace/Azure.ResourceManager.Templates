@@ -212,7 +212,7 @@ function Get-GitHubActionsToolPath {
     );
 
     return [IO.Path]::Combine(
-            (Get-Item -Path ([IO.Path]::Combine([IO.Path]::Combine((Get-MachineVariable -Name 'AGENT_TOOLSDIRECTORY'), $ToolName), $Version)) |
+            (Get-Item -Path ([IO.Path]::Combine([IO.Path]::Combine((Get-WindowsMachineVariable -Expand -Name 'AGENT_TOOLSDIRECTORY'), $ToolName), $Version)) |
                 Sort-Object -Descending { ([version]$_.name); } |
                 Select-Object -First 1).FullName,
             $Architecture
@@ -321,7 +321,7 @@ function Install-AzureCopy {
         [HttpService]$HttpService
     );
 
-    $azCopyPath = [IO.Path]::Combine((Get-MachineVariable -Name 'AGENT_TOOLSDIRECTORY'), 'azcopy');
+    $azCopyPath = [IO.Path]::Combine((Get-WindowsMachineVariable -Expand -Name 'AGENT_TOOLSDIRECTORY'), 'azcopy');
     $installerFileName = "azcopy_windows_amd64.zip";
     $installerFilePath = $HttpService.DownloadFile(
             ([IO.Path]::Combine((Get-Location), $installerFileName)),
@@ -917,12 +917,13 @@ function Update-WindowsVariables {
                     -Expand `
                     -Name $_;
 
-                Set-WindowsProcessVariable `
-                    -Name $_ `
-                    -Value $value;
-
                 if ('Path' -eq $_) {
                     $pathEntries += $value.Split(';');
+                }
+                else {
+                    Set-WindowsProcessVariable `
+                        -Name $_ `
+                        -Value $value;
                 }
             }
 
@@ -935,13 +936,14 @@ function Update-WindowsVariables {
                         -Expand `
                         -Name $_;
 
-                    Set-WindowsProcessVariable `
-                        -Name $_ `
-                        -Value $value;
-
-                    if ('Path' -eq $_) {
-                        $pathEntries += $value.Split(';');
-                    }
+                        if ('Path' -eq $_) {
+                            $pathEntries += $value.Split(';');
+                        }
+                        else {
+                            Set-WindowsProcessVariable `
+                                -Name $_ `
+                                -Value $value;
+                        }
                 }
     }
 
