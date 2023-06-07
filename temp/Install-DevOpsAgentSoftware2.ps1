@@ -776,6 +776,60 @@ function Install-Pipx {
     Add-WindowsMachinePath -Path $pipxBin;
     Update-WindowsVariables;
 }
+function Install-PostgresSql {
+    param(
+        [HttpService]$HttpService,
+        [string]$Version
+    );
+
+    $installerFileName = "postgresql-${Version}-windows-x64.exe";
+    $installerFilePath = $HttpService.DownloadFile(
+            ([IO.Path]::Combine((Get-Location), $installerFileName)),
+            "https://get.enterprisedb.com/postgresql/${installerFileName}"
+        );
+
+    $process = Start-Process `
+        -ArgumentList @(
+            '--enable_acledit', '1',
+            '--install_runtimes', 'no',
+            '--mode', 'unattended',
+            '--unattendedmodeui', 'none'
+        ) `
+        -FilePath $installerFilePath `
+        -PassThru `
+        -Wait;
+
+    if (0 -ne $process.ExitCode) {
+        throw "Non-zero exit code returned by the process: $($process.ExitCode).";
+    }
+
+    Start-Sleep -Seconds 3;
+
+    if (Test-Path -Path $installerFilePath) {
+        Remove-Item `
+            -Force `
+            -Path $installerFilePath;
+    }
+
+    $pgSqlRoot = [IO.DirectoryInfo]::new((Get-CimInstance `
+        -ClassName 'Win32_Service' `
+        -Filter "Name LIKE 'postgresql-%'").PathName.Split('"')[5]).Parent.FullName;
+
+    Set-WindowsMachineVariable `
+        -Name 'PGBIN' `
+        -Value ([IO.Path]::Combine($pgSqlRoot, 'bin'));
+    Set-WindowsMachineVariable `
+        -Name 'PGDATA' `
+        -Value ([IO.Path]::Combine($pgSqlRoot, 'data'));
+    Set-WindowsMachineVariable `
+        -Name 'PGROOT' `
+        -Value $pgSqlRoot;
+
+    $service = Get-Service -Name 'postgresql*';
+    $service | Set-Service -StartupType ([ServiceProcess.ServiceStartMode]::Disabled);
+    $service | Stop-Service;
+    $service.WaitForStatus('Stopped', '00:00:53');
+}
 function Install-PowerShellModules {
     @(
         'Az',
@@ -982,6 +1036,9 @@ try {
     Install-MozillaFirefox `
         -HttpService $httpService `
         -Version 'latest';
+    Install-PostgresSql `
+        -HttpService $httpService `
+        -Version '15.3-1';
     Install-PowerShellModules;
     Install-NodeJs `
         -HttpService $httpService `
