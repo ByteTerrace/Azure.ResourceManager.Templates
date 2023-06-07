@@ -253,7 +253,7 @@ function Get-WindowsMachineVariable {
     );
 
     Get-WindowsVariable `
-        -Expand $Expand `
+        -Expand:$Expand `
         -Name $Name `
         -Path 'HKLM:/SYSTEM/CurrentControlSet/Control/Session Manager/Environment';
 }
@@ -264,7 +264,7 @@ function Get-WindowsUserVariable {
     );
 
     Get-WindowsVariable `
-        -Expand $Expand `
+        -Expand:$Expand `
         -Name $Name `
         -Path 'HKCU:/Environment';
 }
@@ -525,7 +525,7 @@ function Install-GitHubActionsTools {
                     Select-Object -First 1);
 
             if ('Go' -eq $toolName) {
-                Add-WindowsMachinePathAdd-WindowsMachinePath -Path "${toolPath}/bin";
+                Add-WindowsMachinePath -Path "${toolPath}/bin";
             }
 
             if ('Python' -eq $toolName) {
