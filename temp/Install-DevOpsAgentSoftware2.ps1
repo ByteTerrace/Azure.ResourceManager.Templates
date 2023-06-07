@@ -253,16 +253,22 @@ function Get-MachineVariable {
 
     return [Environment]::GetEnvironmentVariable($Name, [EnvironmentVariableTarget]::Machine);
 }
-function Install-AzureCliExtension {
-    param(
-        [string]$Name
-    );
-
-    az extension add `
-        --name $Name `
-        --yes;
+function Install-AzureCliExtensions {
+    @(
+        'azure-cli-ml',
+        'azure-devops',
+        'front-door',
+        'k8s-configuration',
+        'k8s-extension',
+        'resource-graph'
+    ) |
+        ForEach-Object {
+            az extension add `
+                --name $_ `
+                --yes;
+        }
 }
-function Install-AzCopy {
+function Install-AzureCopy {
     param(
         [HttpService]$HttpService
     );
@@ -731,6 +737,26 @@ function Install-Pipx {
     Add-MachinePath -Path $pipxBin;
     Update-EnvironmentVariables;
 }
+function Install-PowerShellModules {
+    @(
+        'Az',
+        'DockerMsftProvider',
+        'MarkdownPS',
+        'Microsoft.Graph',
+        'Pester',
+        'PowerShellGet',
+        'PSScriptAnalyzer',
+        'SqlServer'
+    ) |
+        ForEach-Object {
+            Install-Module `
+                -AllowClobber `
+                -Force `
+                -Name $_ `
+                -Repository 'PSGallery' `
+                -Scope 'AllUsers';
+        }
+}
 function Install-VisualStudioExtension {
     param(
         [HttpService]$HttpService,
@@ -763,6 +789,37 @@ function Install-VisualStudioExtension {
             -Force `
             -Path $extensionFilePath;
     }
+}
+function Install-VisualStudioExtensions {
+    @(
+        @{
+            Name = 'MicrosoftAnalysisServicesModelingProjects2022';
+            Publisher = 'ProBITools';
+            Version = '3.0.10';
+        },
+        @{
+            Name = 'MicrosoftReportProjectsforVisualStudio2022';
+            Publisher = 'ProBITools';
+            Version = '3.0.7';
+        },
+        @{
+            Name = 'MicrosoftVisualStudio2022InstallerProjects';
+            Publisher = 'VisualStudioClient';
+            Version = '2.0.0';
+        },
+        @{
+            Name = 'WixToolsetVisualStudio2022Extension';
+            Publisher = 'WixToolset';
+            Version = '1.0.0.22';
+        }
+    ) |
+        ForEach-Object {
+            Install-VisualStudioExtension `
+                -HttpService $httpService `
+                -Name $_.Name `
+                -Publisher $_.Publisher `
+                -Version $_.Version;
+        }
 }
 function Set-MachineVariable {
     param(
@@ -880,51 +937,8 @@ try {
     $jsonSerializerOptions = [Text.Json.JsonSerializerOptions]::new();
     $jsonSerializerOptions.PropertyNamingPolicy = [Text.Json.JsonNamingPolicy]::CamelCase;
 
-    @(
-        'azure-cli-ml',
-        'azure-devops',
-        'front-door',
-        'k8s-configuration',
-        'k8s-extension',
-        'resource-graph'
-    ) |
-        ForEach-Object {
-            $extension = $_;
-
-            Install-AzureCliExtension -Name $extension;
-        }
-    @(
-        @{
-            Name = 'MicrosoftAnalysisServicesModelingProjects2022';
-            Publisher = 'ProBITools';
-            Version = '3.0.10';
-        },
-        @{
-            Name = 'MicrosoftReportProjectsforVisualStudio2022';
-            Publisher = 'ProBITools';
-            Version = '3.0.7';
-        },
-        @{
-            Name = 'MicrosoftVisualStudio2022InstallerProjects';
-            Publisher = 'VisualStudioClient';
-            Version = '2.0.0';
-        },
-        @{
-            Name = 'WixToolsetVisualStudio2022Extension';
-            Publisher = 'WixToolset';
-            Version = '1.0.0.22';
-        }
-    ) |
-        ForEach-Object {
-            $extension = $_;
-
-            Install-VisualStudioExtension `
-                -HttpService $httpService `
-                -Name $extension.Name `
-                -Publisher $extension.Publisher `
-                -Version $extension.Version;
-        }
-    Install-AzCopy -HttpService $httpService;
+    Install-AzureCliExtensions;
+    Install-AzureCopy -HttpService $httpService;
     Install-DotNetSdks `
         -HttpService $httpService `
         -JsonSerializerOptions $jsonSerializerOptions;
@@ -933,10 +947,12 @@ try {
     Install-MozillaFirefox `
         -HttpService $httpService `
         -Version 'latest';
+    Install-PowerShellModules;
     Install-NodeJs `
         -HttpService $httpService `
         -Version 'latest';
     Install-Pipx;
+    Install-VisualStudioExtensions;
 }
 catch {
     if ($null -ne $httpClient) {
