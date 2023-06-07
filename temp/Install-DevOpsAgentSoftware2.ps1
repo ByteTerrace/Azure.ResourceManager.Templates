@@ -252,7 +252,7 @@ function Get-MachineVariable {
     );
 
     return (Get-Item -Path 'HKLM:/SYSTEM/CurrentControlSet/Control/Session Manager/Environment').GetValue(
-            'Path',
+            $Name,
             '',
             [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames
         );
@@ -665,20 +665,6 @@ function Install-NodeJs {
             Select-Object -First 1).Version.Substring(1);
     }
 
-    $cachePath = 'C:/npm/cache';
-    $prefixPath = 'C:/npm/prefix';
-
-    New-Item `
-        -Force `
-        -ItemType 'Directory' `
-        -Path $cachePath |
-        Out-Null;
-    New-Item `
-        -Force `
-        -ItemType 'Directory' `
-        -Path $prefixPath |
-        Out-Null;
-
     $installerFileName = 'NodeJs_Windows_x64.msi';
     $installerFilePath = $HttpService.DownloadFile(
             ([IO.Path]::Combine((Get-Location), $installerFileName)),
@@ -706,6 +692,15 @@ function Install-NodeJs {
             -Path $installerFilePath;
     }
 
+    $cachePath = (New-Item `
+        -Force `
+        -ItemType 'Directory' `
+        -Path 'C:/npm/cache').FullName;
+    $prefixPath = (New-Item `
+        -Force `
+        -ItemType 'Directory' `
+        -Path 'C:/npm/prefix').FullName;
+
     Add-MachinePath -Path $prefixPath;
     Set-MachineVariable `
         -Name 'NPM_CONFIG_PREFIX' `
@@ -716,19 +711,15 @@ function Install-NodeJs {
     npm config set registry https://registry.npmjs.org/;
 }
 function Install-Pipx {
-    $pipxBin = "${Env:ProgramFiles(x86)}/pipx_bin";
-    $pipxHome = "${Env:ProgramFiles(x86)}/pipx";
+    $pipxBin = (New-Item `
+        -Force `
+        -ItemType 'Directory' `
+        -Path ([IO.Path]::Combine(${Env:ProgramFiles(x86)}, 'pipx_bin'))).FullName;
+    $pipxHome = (New-Item `
+        -Force `
+        -ItemType 'Directory' `
+        -Path ([IO.Path]::Combine(${Env:ProgramFiles(x86)}, 'pipx'))).FullName;
 
-    New-Item `
-        -Force `
-        -ItemType 'Directory' `
-        -Path $pipxBin |
-        Out-Null;
-    New-Item `
-        -Force `
-        -ItemType 'Directory' `
-        -Path $pipxHome |
-        Out-Null;
     Set-MachineVariable `
         -Name 'PIPX_BIN_DIR' `
         -Value $pipxBin;
