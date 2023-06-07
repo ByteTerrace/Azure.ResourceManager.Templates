@@ -251,7 +251,11 @@ function Get-MachineVariable {
         [string]$Name
     );
 
-    return [Environment]::GetEnvironmentVariable($Name, [EnvironmentVariableTarget]::Machine);
+    return (Get-Item -Path 'HKLM:/SYSTEM/CurrentControlSet/Control/Session Manager/Environment').GetValue(
+            'Path',
+            '',
+            [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames
+        );
 }
 function Install-AzureCliExtensions {
     @(
