@@ -177,7 +177,7 @@ function Add-MachinePath {
 
     Set-MachineVariable `
         -Name 'Path' `
-        -Value "$([Environment]::GetEnvironmentVariable('Path', [EnvironmentVariableTarget]::Machine));$((Get-Item -Path $Path).FullName)";
+        -Value "$(Get-MachineVariable -Name 'Path');$((Get-Item -Path $Path).FullName)";
 }
 function Get-DotNetSdkVersionsManifest {
     param(
@@ -212,18 +212,9 @@ function Get-GitHubActionsToolPath {
     );
 
     return [IO.Path]::Combine(
-            (Get-Item -Path ([IO.Path]::Combine(
-                [IO.Path]::Combine(
-                    [Environment]::GetEnvironmentVariable(
-                        'AGENT_TOOLSDIRECTORY',
-                        [EnvironmentVariableTarget]::Machine
-                    ),
-                    $ToolName
-                ),
-                $Version
-            )) |
-            Sort-Object -Descending { ([version]$_.name); } |
-            Select-Object -First 1).FullName,
+            (Get-Item -Path ([IO.Path]::Combine([IO.Path]::Combine((Get-MachineVariable -Name 'AGENT_TOOLSDIRECTORY'), $ToolName), $Version)) |
+                Sort-Object -Descending { ([version]$_.name); } |
+                Select-Object -First 1).FullName,
             $Architecture
         );
 }
@@ -255,6 +246,13 @@ function Get-GitHubActionsVersionsManifest {
         Sort-Object { ([version]$_.Version); } |
         Select-Object -First 1;
 }
+function Get-MachineVariable {
+    param(
+        [string]$Name
+    );
+
+    return [Environment]::GetEnvironmentVariable($Name, [EnvironmentVariableTarget]::Machine);
+}
 function Install-AzureCliExtension {
     param(
         [string]$Name
@@ -263,6 +261,34 @@ function Install-AzureCliExtension {
     az extension add `
         --name $Name `
         --yes;
+}
+function Install-AzCopy {
+    param(
+        [HttpService]$HttpService
+    );
+
+    $azCopyPath = [IO.Path]::Combine((Get-MachineVariable -Name 'AGENT_TOOLSDIRECTORY'), 'azcopy');
+    $installerFileName = "azcopy_windows_amd64.zip";
+    $installerFilePath = $HttpService.DownloadFile(
+            ([IO.Path]::Combine((Get-Location), $installerFileName)),
+            'https://aka.ms/downloadazcopy-v10-windows'
+        );
+
+    & "${Env:ProgramFiles}/7-Zip/7z.exe" `
+        x $installerFilePath `
+        "-o${azCopyPath}" `
+        -y |
+        Out-Null;
+
+    Start-Sleep -Seconds 3;
+
+    if (Test-Path -Path $installerFilePath) {
+        Remove-Item `
+            -Force `
+            -Path $installerFilePath;
+    }
+
+    Add-MachinePath -Path ((Get-ChildItem -Path "${azCopyPath}/*" | Select-Object -First 1).FullName);
 }
 function Install-DotNetSdk {
     param(
@@ -898,6 +924,7 @@ try {
                 -Publisher $extension.Publisher `
                 -Version $extension.Version;
         }
+    Install-AzCopy -HttpService $httpService;
     Install-DotNetSdks `
         -HttpService $httpService `
         -JsonSerializerOptions $jsonSerializerOptions;
