@@ -170,14 +170,14 @@ class NodeJsVersionsManifest {
     [string]$Version;
 }
 
-function Add-MachinePath {
+function Add-WindowsMachinePath {
     param (
         [string]$Path
     );
 
-    Set-MachineVariable `
+    Set-WindowsMachineVariable `
         -Name 'Path' `
-        -Value "$(Get-MachineVariable -Name 'Path');$((Get-Item -Path $Path).FullName)";
+        -Value "$(Get-WindowsMachineVariable -Name 'Path');$((Get-Item -Path $Path).FullName)";
 }
 function Get-DotNetSdkVersionsManifest {
     param(
@@ -246,16 +246,60 @@ function Get-GitHubActionsVersionsManifest {
         Sort-Object { ([version]$_.Version); } |
         Select-Object -First 1;
 }
-function Get-MachineVariable {
+function Get-WindowsMachineVariable {
     param(
+        [switch]$Expand,
         [string]$Name
     );
 
-    return (Get-Item -Path 'HKLM:/SYSTEM/CurrentControlSet/Control/Session Manager/Environment').GetValue(
-            $Name,
-            '',
-            [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames
-        );
+    Get-WindowsVariable `
+        -Expand $Expand `
+        -Name $Name `
+        -Path 'HKLM:/SYSTEM/CurrentControlSet/Control/Session Manager/Environment';
+}
+function Get-WindowsUserVariable {
+    param(
+        [switch]$Expand,
+        [string]$Name
+    );
+
+    Get-WindowsVariable `
+        -Expand $Expand `
+        -Name $Name `
+        -Path 'HKCU:/Environment';
+}
+function Get-WindowsVariable {
+    param(
+        [switch]$Expand,
+        [string]$Name,
+        [string]$Path
+    );
+
+    $options = [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames;
+
+    if ($Expand) {
+        $options = [Microsoft.Win32.RegistryValueOptions]::None;
+    }
+
+    if ('Env:' -eq $Path) {
+        return [Linq.Enumerable]::Single(
+            (Get-ChildItem -Path 'Env:'),
+            [Func[object, bool]] {
+                param(
+                    [Collections.DictionaryEntry]$entry
+                );
+
+                return ($Name -eq $entry.Key);
+            }
+        ).Value;
+    }
+    else {
+        return (Get-Item -Path $Path).GetValue(
+                $Name,
+                '',
+                $options
+            );
+    }
 }
 function Install-AzureCliExtensions {
     @(
@@ -298,7 +342,7 @@ function Install-AzureCopy {
             -Path $installerFilePath;
     }
 
-    Add-MachinePath -Path ((Get-ChildItem -Path "${azCopyPath}/*" | Select-Object -First 1).FullName);
+    Add-WindowsMachinePath -Path ((Get-ChildItem -Path "${azCopyPath}/*" | Select-Object -First 1).FullName);
 }
 function Install-DotNetSdk {
     param(
@@ -335,13 +379,13 @@ function Install-DotNetSdks {
         [Text.Json.JsonSerializerOptions]$JsonSerializerOptions
     );
 
-    Set-MachineVariable `
+    Set-WindowsMachineVariable `
         -Name 'DOTNET_MULTILEVEL_LOOKUP' `
         -Value '0';
-    Set-MachineVariable `
+    Set-WindowsMachineVariable `
         -Name 'DOTNET_NOLOGO' `
         -Value '1';
-    Set-MachineVariable `
+    Set-WindowsMachineVariable `
         -Name 'DOTNET_SKIP_FIRST_TIME_EXPERIENCE' `
         -Value '1';
 
@@ -481,15 +525,15 @@ function Install-GitHubActionsTools {
                     Select-Object -First 1);
 
             if ('Go' -eq $toolName) {
-                Add-MachinePath -Path "${toolPath}/bin";
+                Add-WindowsMachinePathAdd-WindowsMachinePath -Path "${toolPath}/bin";
             }
 
             if ('Python' -eq $toolName) {
-                Add-MachinePath -Path $toolPath;
-                Add-MachinePath -Path "${toolPath}/Scripts";
+                Add-WindowsMachinePath -Path $toolPath;
+                Add-WindowsMachinePath -Path "${toolPath}/Scripts";
             }
         }
-    Update-EnvironmentVariables;
+    Update-WindowsVariables;
 }
 function Install-GoogleChrome {
     param(
@@ -701,11 +745,11 @@ function Install-NodeJs {
         -ItemType 'Directory' `
         -Path 'C:/npm/prefix').FullName;
 
-    Add-MachinePath -Path $prefixPath;
-    Set-MachineVariable `
+    Add-WindowsMachinePath -Path $prefixPath;
+    Set-WindowsMachineVariable `
         -Name 'NPM_CONFIG_PREFIX' `
         -Value $prefixPath;
-    Update-EnvironmentVariables;
+    Update-WindowsVariables;
 
     npm config set cache $cachePath --global;
     npm config set registry https://registry.npmjs.org/;
@@ -720,17 +764,17 @@ function Install-Pipx {
         -ItemType 'Directory' `
         -Path ([IO.Path]::Combine(${Env:ProgramFiles(x86)}, 'pipx'))).FullName;
 
-    Set-MachineVariable `
+    Set-WindowsMachineVariable `
         -Name 'PIPX_BIN_DIR' `
         -Value $pipxBin;
-    Set-MachineVariable `
+    Set-WindowsMachineVariable `
         -Name 'PIPX_HOME' `
         -Value $pipxHome;
 
     pip install pipx;
 
-    Add-MachinePath -Path $pipxBin;
-    Update-EnvironmentVariables;
+    Add-WindowsMachinePath -Path $pipxBin;
+    Update-WindowsVariables;
 }
 function Install-PowerShellModules {
     @(
@@ -816,98 +860,92 @@ function Install-VisualStudioExtensions {
                 -Version $_.Version;
         }
 }
-function Set-MachineVariable {
+function Set-WindowsMachineVariable {
+    param(
+        [string]$Name,
+        [string]$Type,
+        [string]$Value
+    );
+
+    $arguments = @{
+        Force = $true;
+        Name = $Name;
+        Path = 'HKLM:/SYSTEM/CurrentControlSet/Control/Session Manager/Environment';
+        Value = $Value;
+    };
+
+    if (-not [string]::IsNullOrEmpty($Type)) {
+        $arguments.PropertyType = $type;
+    }
+
+    New-ItemProperty @arguments | Out-Null;
+}
+function Set-WindowsProcessVariable {
     param(
         [string]$Name,
         [string]$Value
     );
 
-    [Environment]::SetEnvironmentVariable(
-            $Name,
-            $Value,
-            [EnvironmentVariableTarget]::Machine
-        );
+    $arguments = @{
+        Force = $true;
+        Path = "Env:${Name}";
+        Value = $Value;
+    };
+
+    Set-Item @arguments | Out-Null;
 }
-function Update-EnvironmentVariables {
+function Update-WindowsVariables {
     $originalArchitecture = ${Env:PROCESSOR_ARCHITECTURE};
     $originalPsModulePath = ${Env:PSModulePath};
     $originalUserName = ${Env:USERNAME};
     $pathEntries = ([string[]]@());
 
     # 0) process
-    Get-ChildItem `
-        -Path 'Env:\' |
-        Select-Object `
-            -ExpandProperty 'Key' |
+    Get-ChildItem -Path 'Env:' |
+        Select-Object -ExpandProperty 'Key' |
             ForEach-Object {
-                Set-Item `
-                    -Path ('Env:{0}' -f $_) `
+                Set-WindowsProcessVariable `
+                    -Name $_ `
                     -Value ([Environment]::GetEnvironmentVariable($_, [EnvironmentVariableTarget]::Process));
-            };
+            }
 
     # 1) machine
-    $machineEnvironmentRegistryKey = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey('SYSTEM\CurrentControlSet\Control\Session Manager\Environment\');
+    Get-Item -Path 'HKLM:/SYSTEM/CurrentControlSet/Control/Session Manager/Environment' |
+        Select-Object -ExpandProperty 'Property' |
+            ForEach-Object {
+                $value = Get-WindowsMachineVariable `
+                    -Expand `
+                    -Name $_;
 
-    if ($null -ne $machineEnvironmentRegistryKey) {
-        try {
-            Get-Item `
-                -Path 'HKLM:/SYSTEM/CurrentControlSet/Control/Session Manager/Environment' |
-                Select-Object `
-                    -ExpandProperty 'Property' |
-                    ForEach-Object {
-                        $value =  $machineEnvironmentRegistryKey.GetValue(
-                                $_,
-                                [string]::Empty,
-                                [Microsoft.Win32.RegistryValueOptions]::None
-                            );
+                Set-WindowsProcessVariable `
+                    -Name $_ `
+                    -Value $value;
 
-                        Set-Item `
-                            -Path ('Env:{0}' -f $_) `
-                            -Value $value;
-
-                        if ('Path' -eq $_) {
-                            $pathEntries += $value.Split(';');
-                        }
-                    };
-        }
-        finally {
-            $machineEnvironmentRegistryKey.Close();
-        }
-    }
+                if ('Path' -eq $_) {
+                    $pathEntries += $value.Split(';');
+                }
+            }
 
     # 2) user
     if ($originalUserName -notin @('SYSTEM', ('{0}$' -f ${Env:COMPUTERNAME}))) {
-        $userEnvironmentRegistryKey = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Environment');
+        Get-Item -Path 'HKCU:/Environment' |
+            Select-Object -ExpandProperty 'Property' |
+                ForEach-Object {
+                    $value = Get-WindowsUserVariable `
+                        -Expand `
+                        -Name $_;
 
-        if ($null -ne $userEnvironmentRegistryKey) {
-            try {
-                Get-Item `
-                    -Path 'HKCU:/Environment' |
-                    Select-Object `
-                        -ExpandProperty 'Property' |
-                        ForEach-Object {
-                            $value =  $userEnvironmentRegistryKey.GetValue(
-                                    $_,
-                                    [string]::Empty,
-                                    [Microsoft.Win32.RegistryValueOptions]::None
-                                );
+                    Set-WindowsProcessVariable `
+                        -Name $_ `
+                        -Value $value;
 
-                            Set-Item `
-                                -Path ('Env:{0}' -f $_) `
-                                -Value $value;
-
-                            if ('Path' -eq $_) {
-                                $pathEntries += $value.Split(';');
-                            }
-                        };
-            }
-            catch {
-                $userEnvironmentRegistryKey.Close();
-            }
-        }
+                    if ('Path' -eq $_) {
+                        $pathEntries += $value.Split(';');
+                    }
+                }
     }
 
-    ${Env:Path} = (($pathEntries | Select-Object -Unique) -Join ';');
+    ${Env:Path} = (($pathEntries | Select-Object -Unique) -join ';');
     ${Env:PROCESSOR_ARCHITECTURE} = $originalArchitecture;
     ${Env:PSModulePath} = $originalPsModulePath;
 
