@@ -159,6 +159,11 @@ class HttpService {
         return $result;
     }
 }
+class MobyReleasesManifest {
+    [string]$Name;
+    [Text.Json.Serialization.JsonPropertyName('tag_name')]
+    [string]$TagName;
+}
 class MozillaFirefoxVersionsManifest {
     [Text.Json.Serialization.JsonPropertyName('LATEST_FIREFOX_VERSION')]
     [string]$LatestVersion;
@@ -343,6 +348,66 @@ function Install-AzureCopy {
     }
 
     Add-WindowsMachinePath -Path ((Get-ChildItem -Path "${azCopyPath}/*" | Select-Object -First 1).FullName);
+}
+function Install-Docker {
+    param(
+        [HttpService]$HttpService,
+        [string]$Version
+    );
+
+    if ([string]::IsNullOrEmpty($Version)) {
+        $Version = $HttpService.GetJsonAsT(
+                $JsonSerializerOptions,
+                [MobyReleasesManifest],
+                'https://api.github.com/repos/moby/moby/releases/latest'
+            ).TagName.Substring(1);
+    }
+
+    $installerFileName = "docker-${Version}.zip";
+    $installerFilePath = $HttpService.DownloadFile(
+            ([IO.Path]::Combine((Get-Location), $installerFileName)),
+            "https://download.docker.com/win/static/stable/x86_64/${installerFileName}"
+        );
+        $installerFolderPath = [IO.Path]::Combine([IO.Path]::GetTempPath(), [IO.Path]::GetFileNameWithoutExtension($installerFilePath));
+
+    & "${Env:ProgramFiles}/7-Zip/7z.exe" `
+        x $installerFilePath `
+        "-o${installerFolderPath}" `
+        -y |
+        Out-Null;
+
+    Start-Sleep -Seconds 3;
+
+    if (Test-Path -Path $installerFilePath) {
+        Remove-Item `
+            -Force `
+            -Path $installerFilePath;
+    }
+
+    $installerFileName = "install-docker-ce.ps1";
+    $installerFilePath = $HttpService.DownloadFile(
+            ([IO.Path]::Combine((Get-Location), $installerFileName)),
+            "https://raw.githubusercontent.com/microsoft/Windows-Containers/Main/helpful_tools/Install-DockerCE/${installerFileName}"
+        );
+
+    & $installerFilePath `
+        -DockerDPath ((Get-Item -Path "${installerFolderPath}\docker\dockerd.exe").FullName) `
+        -DockerPath ((Get-Item -Path "${installerFolderPath}\docker\docker.exe").FullName) |
+        Out-Null;
+
+    Start-Sleep -Seconds 3;
+
+    if (Test-Path -Path $installerFilePath) {
+        Remove-Item `
+            -Force `
+            -Path $installerFilePath;
+    }
+
+    New-Item `
+        -ItemType 'SymbolicLink' `
+        -Path "${Env:SystemRoot}/SysWOW64/docker.exe" `
+        -Target "${Env:SystemRoot}/System32/docker.exe" |
+        Out-Null;
 }
 function Install-DotNetSdk {
     param(
@@ -1022,12 +1087,16 @@ try {
 
     $httpClient = [Net.Http.HttpClient]::new();
     $httpClient.BaseAddress = $null;
+    $httpClient.DefaultRequestHeaders.Add('User-Agent', 'bytrc-automation');
     $httpService = [HttpService]::new($httpClient);
     $jsonSerializerOptions = [Text.Json.JsonSerializerOptions]::new();
     $jsonSerializerOptions.PropertyNamingPolicy = [Text.Json.JsonNamingPolicy]::CamelCase;
 
     Install-AzureCliExtensions;
     Install-AzureCopy -HttpService $httpService;
+    Install-Docker `
+        -HttpService $httpService `
+        -JsonSerializerOptions $jsonSerializerOptions;
     Install-DotNetSdks `
         -HttpService $httpService `
         -JsonSerializerOptions $jsonSerializerOptions;
