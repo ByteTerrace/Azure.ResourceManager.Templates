@@ -2,6 +2,25 @@ type applicationSecurityGroup = {
   location: string?
   tags: object?
 }
+type applicationServiceEnvironment = {
+  isInternalEncryptionEnabled: bool?
+  isMinimalSslCipherSuiteConfigurationEnabled: bool?
+  isZoneRedundancyEnabled: bool?
+  location: string?
+  roleAssignments: array?
+  subnet: subnetReference
+  tags: object?
+}
+type applicationServicePlan = {
+  isPerSiteScalingEnabled: bool?
+  isZoneRedundancyEnabled: bool?
+  location: string?
+  operatingSystemName: ('Linux' | 'Windows')
+  roleAssignments: array?
+  serviceEnvironment: resourceReference?
+  sku: resourceSku
+  tags: object?
+}
 type availabilitySet = {
   faultDomainCount: int
   location: string?
@@ -164,6 +183,8 @@ type networkSecurityGroup = {
 }
 type propertiesInfo = {
   applicationSecurityGroups: { *: applicationSecurityGroup }?
+  applicationServiceEnvironments: { *: applicationServiceEnvironment }?
+  applicationServicePlans: { *: applicationServicePlan }?
   availabilitySets: { *: availabilitySet }?
   capacityReservationGroups: { *: capacityReservationGroup }?
   computeGalleries: { *: computeGallery }?
@@ -180,7 +201,9 @@ type propertiesInfo = {
   routeTables: { *: routeTable }?
   userManagedIdentities: { *: userManagedIdentity }?
   virtualMachines: { *: virtualMachine }?
+  virtualMachineScaleSets: { *: virtualMachineScaleSet }?
   virtualNetworks: { *: virtualNetwork }?
+  webApplications: { *: webApplication }?
 }
 type proximityPlacementGroup = {
   location: string?
@@ -394,6 +417,120 @@ type virtualMachine = {
   tags: object?
   virtualMachineScaleSet: resourceReference?
 }
+type virtualMachineScaleSet = {
+  availabilityZones: string[]?
+  bootDiagnostics: {
+    isEnabled: bool?
+    storageAccount: resourceReference
+  }?
+  capacityReservationGroup: resourceReference?
+  dataDisks: {
+    *: {
+      cachingMode: ('None' | 'ReadOnly' | 'ReadWrite')?
+      createOption: ('Attach' | 'Empty' | 'FromImage')?
+      deleteOption: ('Delete' | 'Detach')?
+      isWriteAcceleratorEnabled: bool?
+      sizeInGigabytes: int
+      storageAccountType: managedDiskStorageAccountType?
+    }
+  }?
+  diskEncryptionSet: resourceReference?
+  identity: resourceIdentity?
+  imageReference: {
+    gallery: resourceReference?
+    name: string?
+    offer: string?
+    publisher: string?
+    sku: string?
+    version: string?
+  }?
+  isEncryptionAtHostEnabled: bool?
+  isGuestAgentEnabled: bool?
+  isHibernationEnabled: bool?
+  isSecureBootEnabled: bool?
+  isUltraSsdEnabled: bool?
+  isVirtualTrustedPlatformModuleEnabled: bool?
+  licenseType: string?
+  location: string?
+  networkInterfaces: {
+    *: {
+      deleteOption: ('Delete' | 'Detach')?
+      dnsServers: string[]?
+      dscpConfiguration: resourceReference?
+      isAcceleratedNetworkingEnabled: bool?
+      isFpgaNetworkingEnabled: bool?
+      isIpForwardingEnabled: bool?
+      isPrimary: bool?
+      isTcpStateTrackingEnabled: bool?
+      ipConfigurations: {
+        *: {
+          applicationGateways: {
+            *: {
+              backEndAddressPoolNames: string[]
+              resourceGroupName: string?
+            }
+          }?
+          applicationSecurityGroups: {
+            *: {
+              resourceGroupName: string?
+            }
+          }?
+          isPrimary: bool?
+          loadBalancers: {
+            *: {
+              backEndAddressPoolNames: string[]
+              resourceGroupName: string?
+            }
+          }?
+          privateIpAddress: {
+            subnet: subnetReference
+            version: ('IPv4' | 'IPv6')?
+          }
+          publicIpAddress: {
+            allocationMethod: ('Dynamic' | 'Static')?
+            domainNameLabel: string?
+            idleTimeoutInMinutes: int?
+            sku: resourceSku?
+            version: ('IPv4' | 'IPv6')?
+          }?
+        }
+      }?
+      networkSecurityGroup: resourceReference?
+    }
+  }
+  operatingSystem: {
+    administrator: {
+      name: string?
+      password: string?
+    }?
+    computerName: string?
+    disk: {
+      cachingMode: ('None' | 'ReadOnly' | 'ReadWrite')?
+      createOption: ('Attach' | 'Empty' | 'FromImage')?
+      deleteOption: ('Delete' | 'Detach')?
+      ephemeralPlacement: ('CacheDisk' | 'ResourceDisk')?
+      isWriteAcceleratorEnabled: bool?
+      name: string?
+      sizeInGigabytes: int?
+      storageAccountType: managedDiskStorageAccountType?
+    }?
+    patchSettings: {
+      assessmentMode: ('AutomaticByPlatform' | 'ImageDefault')?
+      isHotPatchingEnabled: bool?
+      patchMode: ('AutomaticByOS' | 'AutomaticByPlatform' | 'Manual')?
+    }?
+    timeZone: string?
+    type: ('Linux' | 'Windows')
+  }
+  proximityPlacementGroup: resourceReference?
+  roleAssignments: array?
+  sku: resourceSku
+  spotSettings: {
+    evictionPolicy: ('Deallocate' | 'Delete')
+    maximumPrice: int?
+  }?
+  tags: object?
+}
 type virtualNetwork = {
   addressPrefixes: string[]
   ddosProtectionPlan: resourceReference?
@@ -429,6 +566,42 @@ type userManagedIdentity = {
   location: string?
   tags: object?
 }
+type webApplication = {
+  applicationInsights: resourceReference?
+  applicationSettings: object?
+  connectionStrings: object?
+  crossOriginResourceSharing: {
+    allowedOrigins: string[]?
+    isCredentialSupportEnabled: bool?
+  }?
+  frameworkVersion: ('DOTNET|4.8' | 'DOTNET|6.0' | 'DOTNET|7.0' | 'NODE|14' | 'NODE|16' | 'NODE|18')
+  functionExtension: {
+    storageAccount: resourceReference
+  }?
+  healthCheck: {
+    isEnabled: bool?
+    path: string?
+  }?
+  identity: resourceIdentity?
+  isAlwaysOnEnabled: bool?
+  isClientAffinityEnabled: bool?
+  isHttp20SupportEnabled: bool?
+  isPublicNetworkAccessEnabled: bool?
+  isRemoteDebuggingEnabled: bool?
+  isWebSocketSupportEnabled: bool?
+  is32BitModeEnabled: bool?
+  location: string?
+  servicePlan: resourceReference?
+  slotName: string?
+  subnet: subnetReference?
+  tags: object?
+  virtualApplications: {
+    isPreloadEnabled: bool?
+    physicalPath: string
+    virtualDirectories: object[]?
+    virtualPath: string
+  }[]?
+}
 
 param exclude array = []
 param include array = []
@@ -447,6 +620,40 @@ module applicationSecurityGroups 'br/bytrc:microsoft/network/application-securit
     location: (group.value.?location ?? deployment.location)
     name: group.key
     tags: (group.value.?tags ?? tags)
+  }
+}]
+module applicationServiceEnvironments 'br/bytrc:microsoft/web/hosting-environments:0.0.0' = [for (environment, index) in items(properties.?applicationServiceEnvironments ?? {}): if (!contains(exclude, 'applicationServiceEnvironments') && (empty(include) || contains(include, 'applicationServiceEnvironments'))) {
+  dependsOn: [ virtualNetworks ]
+  name: '${deployment.name}-ase-${padLeft(index, 3, '0')}'
+  params: {
+    location: (environment.value.?location ?? deployment.location)
+    name: environment.key
+    properties: {
+      isInternalEncryptionEnabled: (environment.value.?isInternalEncryptionEnabled ?? null)
+      isMinimalSslCipherSuiteConfigurationEnabled: (environment.value.?isMinimalSslCipherSuiteConfigurationEnabled ?? null)
+      isZoneRedundancyEnabled: (environment.value.?isZoneRedundancyEnabled ?? null)
+      subnet: environment.value.subnet
+    }
+    tags: (environment.value.?tags ?? tags)
+  }
+}]
+module applicationServicePlans 'br/bytrc:microsoft/web/server-farms:0.0.0' = [for (farm, index) in items(properties.?applicationServicePlans ?? {}): if (!contains(exclude, 'applicationServicePlans') && (empty(include) || contains(include, 'applicationServicePlans'))) {
+  dependsOn: [
+    applicationServiceEnvironments
+    virtualNetworks
+  ]
+  name: '${deployment.name}-asp-${padLeft(index, 3, '0')}'
+  params: {
+    location: (farm.value.?location ?? deployment.location)
+    name: farm.key
+    properties: {
+      isPerSiteScalingEnabled: (farm.value.?isPerSiteScalingEnabled ?? null)
+      isZoneRedundancyEnabled: (farm.value.?isZoneRedundancyEnabled ?? null)
+      operatingSystemName: farm.value.operatingSystemName
+      serviceEnvironment: (farm.value.?serviceEnvironment ?? null)
+      sku: farm.value.sku
+    }
+    tags: (farm.value.?tags ?? tags)
   }
 }]
 module availabilitySets 'br/bytrc:microsoft/compute/availability-sets:0.0.0' = [for (set, index) in items(properties.?availabilitySets ?? {}): if (!contains(exclude, 'availabilitySets') && (empty(include) || contains(include, 'availabilitySets'))) {
@@ -694,6 +901,7 @@ module virtualMachines 'br/bytrc:microsoft/compute/virtual-machines:0.0.0' = [fo
     publicIpPrefixes
     routeTables
     userManagedIdentities
+    virtualMachineScaleSets
     virtualNetworks
   ]
   name: '${deployment.name}-vm-${padLeft(index, 3, '0')}'
@@ -729,6 +937,52 @@ module virtualMachines 'br/bytrc:microsoft/compute/virtual-machines:0.0.0' = [fo
     tags: (machine.value.?tags ?? tags)
   }
 }]
+module virtualMachineScaleSets 'br/bytrc:microsoft/compute/virtual-machine-scale-sets:0.0.0' = [for (set, index) in items(properties.?virtualMachineScaleSets ?? {}): if (!contains(exclude, 'virtualMachineScaleSets') && (empty(include) || contains(include, 'virtualMachineScaleSets'))) {
+  dependsOn: [
+    applicationSecurityGroups
+    availabilitySets
+    capacityReservationGroups
+    computeGalleries
+    diskEncryptionSets
+    keyVaults
+    natGateways
+    networkInterfaces
+    networkSecurityGroups
+    proximityPlacementGroups
+    publicIpAddresses
+    publicIpPrefixes
+    routeTables
+    userManagedIdentities
+    virtualNetworks
+  ]
+  name: '${deployment.name}-vmss-${padLeft(index, 3, '0')}'
+  params: {
+    location: (set.value.?location ?? deployment.location)
+    name: set.key
+    properties: {
+      bootDiagnostics: (set.value.?bootDiagnostics ?? null)
+      capacityReservationGroup: (set.value.?capacityReservationGroup ?? null)
+      dataDisks: (set.value.?dataDisks ?? null)
+      diskEncryptionSet: (set.value.?diskEncryptionSet ?? null)
+      identity: (set.value.?identity ?? null)
+      imageReference: (set.value.?imageReference ?? null)
+      isEncryptionAtHostEnabled: (set.value.?isEncryptionAtHostEnabled ?? null)
+      isGuestAgentEnabled: (set.value.?isGuestAgentEnabled ?? null)
+      isHibernationEnabled: (set.value.?isHibernationEnabled ?? null)
+      isSecureBootEnabled: (set.value.?isSecureBootEnabled ?? null)
+      isUltraSsdEnabled: (set.value.?isUltraSsdEnabled ?? null)
+      isVirtualTrustedPlatformModuleEnabled: (set.value.?isVirtualTrustedPlatformModuleEnabled ?? null)
+      licenseType: (set.value.?licenseType ?? null)
+      networkInterfaces: set.value.networkInterfaces
+      operatingSystem: set.value.operatingSystem
+      proximityPlacementGroup: (set.value.?proximityPlacementGroup ?? null)
+      roleAssignments: (set.value.?roleAssignments ?? null)
+      sku: set.value.sku
+      spotSettings: (set.value.?spotSettings ?? null)
+    }
+    tags: (set.value.?tags ?? tags)
+  }
+}]
 module virtualNetworks 'br/bytrc:microsoft/network/virtual-networks:0.0.0' = [for (network, index) in items(properties.?virtualNetworks ?? {}): if (!contains(exclude, 'virtualNetworks') && (empty(include) || contains(include, 'virtualNetworks'))) {
   dependsOn: [
     applicationSecurityGroups
@@ -747,5 +1001,40 @@ module virtualNetworks 'br/bytrc:microsoft/network/virtual-networks:0.0.0' = [fo
       subnets: network.value.subnets
     }
     tags: (network.value.?tags ?? tags)
+  }
+}]
+module webApplications 'br/bytrc:microsoft/web/sites:0.0.0' = [for (application, index) in items(properties.?webApplications ?? {}): if (!contains(exclude, 'webApplications') && (empty(include) || contains(include, 'webApplications'))) {
+  dependsOn: [
+    applicationServicePlans
+    keyVaults
+    userManagedIdentities
+    virtualNetworks
+  ]
+  name: '${deployment.name}-asg-${padLeft(index, 3, '0')}'
+  params: {
+    location: (application.value.?location ?? deployment.location)
+    name: application.key
+    properties: {
+      applicationInsights: (application.value.?applicationInsights ?? null)
+      applicationSettings: (application.value.?applicationSettings ?? null)
+      connectionStrings: (application.value.?connectionStrings ?? null)
+      crossOriginResourceSharing: (application.value.?crossOriginResourceSharing ?? null)
+      frameworkVersion: application.value.frameworkVersion
+      functionExtension: (application.value.?functionExtension ?? null)
+      healthCheck: (application.value.?healthCheck ?? null)
+      identity: (application.value.?identity ?? null)
+      isAlwaysOnEnabled: (application.value.?isAlwaysOnEnabled ?? null)
+      isClientAffinityEnabled: (application.value.?isClientAffinityEnabled ?? null)
+      isHttp20SupportEnabled: (application.value.?isHttp20SupportEnabled ?? null)
+      isPublicNetworkAccessEnabled: (application.value.?isPublicNetworkAccessEnabled ?? null)
+      isRemoteDebuggingEnabled: (application.value.?isRemoteDebuggingEnabled ?? null)
+      isWebSocketSupportEnabled: (application.value.?isWebSocketSupportEnabled ?? null)
+      is32BitModeEnabled: (application.value.?is32BitModeEnabled ?? null)
+      servicePlan: application.value.servicePlan
+      slotName: (application.value.?slotName ?? null)
+      subnet: (application.value.?subnet ?? null)
+      virtualApplications: (application.value.?virtualApplications ?? null)
+    }
+    tags: (application.value.?tags ?? tags)
   }
 }]

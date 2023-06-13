@@ -243,6 +243,9 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
       ultraSSDEnabled: (properties.?isUltraSsdEnabled ?? null)
     }
     availabilitySet: (isAvailabilitySetNotEmpty ? { id: availabilitySetRef.id } : null)
+    billingProfile: (isSpotSettingsNotEmpty ? {
+      maxPrice: (properties.spotSettings.?maximumPrice ?? -1)
+    } : null)
     capacityReservation: (isCapacityReservationGroupNotEmpty ? { capacityReservationGroup: { id: capacityReservationGroupRef.id } } : null)
     diagnosticsProfile: {
       bootDiagnostics: {
@@ -251,9 +254,6 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
       }
     }
     evictionPolicy: (isSpotSettingsNotEmpty ? properties.spotSettings.evictionPolicy : null)
-    billingProfile: (isSpotSettingsNotEmpty ? {
-      maxPrice: (properties.spotSettings.?maximumPrice ?? -1)
-    } : null)
     extensionsTimeBudget: 'PT47M'
     hardwareProfile: {
       vmSize: properties.sku.name

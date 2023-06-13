@@ -520,6 +520,10 @@ function Install-GitHubActionsTool {
     }
 }
 function Install-GitHubActionsTools {
+    param(
+        [HttpService]$HttpService
+    );
+
     $gitHubActionsTools = @(
         @{
             Architectures = @( 'x64' );
@@ -564,7 +568,7 @@ function Install-GitHubActionsTools {
                 foreach ($version in $tool.Versions) {
                     Install-GitHubActionsTool `
                         -Architecture $architecture `
-                        -HttpService $httpService `
+                        -HttpService $HttpService `
                         -Platform 'win32' `
                         -ToolName $tool.Name `
                         -Version $version;
@@ -949,6 +953,10 @@ function Install-VisualStudioExtension {
     }
 }
 function Install-VisualStudioExtensions {
+    param(
+        [HttpService]$HttpService
+    );
+
     @(
         @{
             Name = 'MicrosoftAnalysisServicesModelingProjects2022';
@@ -973,7 +981,7 @@ function Install-VisualStudioExtensions {
     ) |
         ForEach-Object {
             Install-VisualStudioExtension `
-                -HttpService $httpService `
+                -HttpService $HttpService `
                 -Name $_.Name `
                 -Publisher $_.Publisher `
                 -Version $_.Version;
@@ -1005,13 +1013,11 @@ function Set-WindowsProcessVariable {
         [string]$Value
     );
 
-    $arguments = @{
-        Force = $true;
-        Path = "Env:${Name}";
-        Value = $Value;
-    };
-
-    Set-Item @arguments | Out-Null;
+    Set-Item `
+        -Force `
+        -Path "Env:${Name}" `
+        -Value $Value |
+        Out-Null;
 }
 function Update-WindowsVariables {
     $originalArchitecture = ${Env:PROCESSOR_ARCHITECTURE};
@@ -1047,7 +1053,7 @@ function Update-WindowsVariables {
             }
 
     # 2) user
-    if ($originalUserName -notin @('SYSTEM', ('{0}$' -f ${Env:COMPUTERNAME}))) {
+    if ($originalUserName -notin @('SYSTEM', "${Env:COMPUTERNAME}$")) {
         Get-Item -Path 'HKCU:/Environment' |
             Select-Object -ExpandProperty 'Property' |
                 ForEach-Object {
@@ -1100,7 +1106,7 @@ try {
     Install-DotNetSdks `
         -HttpService $httpService `
         -JsonSerializerOptions $jsonSerializerOptions;
-    Install-GitHubActionsTools;
+    Install-GitHubActionsTools -HttpService $httpService;
     Install-GoogleChrome -HttpService $httpService;
     Install-MozillaFirefox `
         -HttpService $httpService `
@@ -1113,7 +1119,7 @@ try {
         -HttpService $httpService `
         -Version 'latest';
     Install-Pipx;
-    Install-VisualStudioExtensions;
+    Install-VisualStudioExtensions -HttpService $httpService;
 }
 catch {
     if ($null -ne $httpClient) {

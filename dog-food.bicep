@@ -2,7 +2,14 @@
 param allowedRdpIpAddress string
 @secure()
 param operatingSystemAdministrator object
+param projectName string
 
+var computeGallery = {
+  name: projectName
+}
+var dnsResolver = {
+  name: projectName
+}
 var dnsResolversSubnet = {
   name: 'DnsResolvers'
   virtualNetworkName: virtualNetwork.name
@@ -11,32 +18,35 @@ var identity = {
   userAssignedIdentities: [ userManagedIdentity ]
 }
 var natGateway = {
-  name: 'byteterrace'
+  name: projectName
 }
 var networkInterface = {
-  name: 'byteterrace'
+  name: projectName
 }
 var networkSecurityGroup = {
-  name: 'byteterrace'
+  name: projectName
 }
 var proximityPlacementGroup = {
-  name: 'byteterrace'
+  name: projectName
 }
 var publicIpAddressPrefix = {
-  name: 'byteterrace'
+  name: projectName
 }
 var routeTable = {
-  name: 'byteterrace'
+  name: projectName
 }
 var userManagedIdentity = {
-  name: 'byteterrace'
+  name: projectName
 }
 var virtualMachinesSubnet = {
   name: 'VirtualMachines'
   virtualNetworkName: virtualNetwork.name
 }
+var virtualMachine = {
+  name: projectName
+}
 var virtualNetwork = {
-  name: 'byteterrace'
+  name: projectName
 }
 
 module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
@@ -47,7 +57,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
     ]
     properties: {
       computeGalleries: {
-        byteterrace: {
+        '${computeGallery.name}': {
           imageDefinitions: {
             '2022-Datacenter-DevOpsAgent': {
               architecture: 'x64'
@@ -69,7 +79,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
         }
       }
       dnsResolvers: {
-        byteterrace: {
+        '${dnsResolver.name}': {
           inboundEndpoints: {
             default: {
               privateIpAddress: {
@@ -85,7 +95,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
       }
       natGateways: {
         '${natGateway.name}': {
-          publicIpAddresses: { 'byteterrace-nat': {} }
+          publicIpAddresses: { '${projectName}-nat': {} }
           sku: {
             name: 'Standard'
           }
@@ -99,7 +109,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
                 subnet: virtualMachinesSubnet
               }
               publicIpAddress: {
-                name: 'byteterrace-vm'
+                name: '${projectName}-vm'
               }
             }
           }
@@ -129,14 +139,14 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
         '${proximityPlacementGroup.name}': {}
       }
       publicIpAddresses: {
-        'byteterrace-nat': {
+        '${projectName}-nat': {
           prefix: publicIpAddressPrefix
           sku: {
             name: 'Standard'
           }
           version: 'IPv4'
         }
-        'byteterrace-vm': {
+        '${projectName}-vm': {
           prefix: publicIpAddressPrefix
           sku: {
             name: 'Standard'
@@ -160,13 +170,14 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
         '${userManagedIdentity.name}': {}
       }
       virtualMachines: {
-        byteterrace: {
+        '${virtualMachine.name}': {
           identity: identity
           imageReference: {
-            gallery: {
-              name: 'byteterrace'
-            }
+            gallery: computeGallery
             name: '2022-Datacenter-DevOpsAgent'
+            //offer: 'WindowsServer'
+            //publisher: 'MicrosoftWindowsServer'
+            //sku: '2022-datacenter-smalldisk-g2'
             version: 'latest'
           }
           isEncryptionAtHostEnabled: true
@@ -195,7 +206,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
           }
           proximityPlacementGroup: proximityPlacementGroup
           sku: {
-            name: 'Standard_D2ds_v5'
+            name: 'Standard_D16ds_v5'
           }
           spotSettings: {
             evictionPolicy: 'Delete'
