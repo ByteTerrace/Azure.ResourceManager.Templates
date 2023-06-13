@@ -21,6 +21,10 @@ var isSubnetNotEmpty = !empty(properties.?subnet ?? {})
 var isUserAssignedIdentitiesNotEmpty = !empty(userAssignedIdentities)
 var operatingSystemType = servicePlanRef.kind
 var resourceGroupName = resourceGroup().name
+var siteIdentity = (isIdentityNotEmpty ? {
+  type: ((isUserAssignedIdentitiesNotEmpty && !contains(identity, 'type')) ? 'UserAssigned' : identity.type)
+  userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty ? toObject(userAssignedIdentities, identity => identity.id, identity => {}) : null)
+} : null)
 var siteKind = '${(isFunctionApplication ? 'function' : '')}app'
 var siteProperties = {
   clientAffinityEnabled: (properties.?isClientAffinityEnabled ?? false)
@@ -114,10 +118,7 @@ resource servicePlanRef 'Microsoft.Web/serverfarms@2022-09-01' existing = {
   scope: resourceGroup((properties.servicePlan.?subscriptionId ?? subscription().subscriptionId), (properties.servicePlan.?resourceGroupName ?? resourceGroup().name))
 }
 resource site 'Microsoft.Web/sites@2022-09-01' = if (!isSlotNameNotEmpty) {
-  identity: (isIdentityNotEmpty ? {
-    type: ((isUserAssignedIdentitiesNotEmpty && !contains(identity, 'type')) ? 'UserAssigned' : identity.type)
-    userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty ? toObject(userAssignedIdentities, identity => identity.id, identity => {}) : null)
-  } : null)
+  identity: siteIdentity
   kind: siteKind
   location: location
   name: name
@@ -125,16 +126,27 @@ resource site 'Microsoft.Web/sites@2022-09-01' = if (!isSlotNameNotEmpty) {
   tags: siteTags
 }
 resource slot 'Microsoft.Web/sites/slots@2022-09-01' = if (isSlotNameNotEmpty) {
-  identity: (isIdentityNotEmpty ? {
-    type: ((isUserAssignedIdentitiesNotEmpty && !contains(identity, 'type')) ? 'UserAssigned' : identity.type)
-    userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty ? toObject(userAssignedIdentities, identity => identity.id, identity => {}) : null)
-  } : null)
+  identity: siteIdentity
   kind: siteKind
   location: location
-  name: properties.slotName
+  name: (properties.?slotName ?? 'default')
   parent: parentSite
   properties: siteProperties
   tags: siteTags
+}
+resource slotWebConfig 'Microsoft.Web/sites/slots/config@2022-09-01' = if (isSlotNameNotEmpty) {
+  name: 'web'
+  parent: slot
+  properties: {
+    healthCheckPath: (isHealthCheckEnabled ? (healthCheck.?path ?? '/health-check') : '')
+    minTlsVersion: '1.2'
+    virtualApplications: (empty(virtualApplications) ? null : map(virtualApplications, application => {
+      physicalPath: application.physicalPath
+      preloadEnabled: (application.?isPreloadEnabled ?? null)
+      virtualDirectories: (application.?virtualDirectories ?? null)
+      virtualPath: application.virtualPath
+    }))
+  }
 }
 resource webConfig 'Microsoft.Web/sites/config@2022-09-01' = {
   name: 'web'

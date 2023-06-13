@@ -1010,7 +1010,7 @@ module webApplications 'br/bytrc:microsoft/web/sites:0.0.0' = [for (application,
     userManagedIdentities
     virtualNetworks
   ]
-  name: '${deployment.name}-asg-${padLeft(index, 3, '0')}'
+  name: '${deployment.name}-web-${padLeft(index, 3, '0')}'
   params: {
     location: (application.value.?location ?? deployment.location)
     name: application.key
