@@ -6,6 +6,16 @@ param tags object = {}
 var isNetworkSecurityGroupNotEmpty = !empty(properties.?networkInterface ?? {})
 var ipConfigurations = sort(items(properties.ipConfigurations), (x, y) => (x.key < y.key))
 var resourceGroupName = resourceGroup().name
+var roleAssignmentsTransform = map((properties.?roleAssignments ?? []), assignment => {
+  description: (assignment.?description ?? 'Created via automation.')
+  principalId: assignment.principalId
+  resource: (empty(assignment.resource) ? null : {
+    apiVersion: assignment.resource.apiVersion
+    id: '/subscriptions/${(assignment.resource.?subscriptionId ?? subscriptionId)}/resourceGroups/${(assignment.resource.?resourceGroupName ?? resourceGroupName)}/providers/${assignment.resource.type}/${assignment.resource.path}'
+    type: assignment.resource.type
+  })
+  roleDefinitionId: assignment.roleDefinitionId
+})
 var subscriptionId = subscription().subscriptionId
 
 resource networkInterface 'Microsoft.Network/networkInterfaces@2022-11-01' = {
@@ -41,6 +51,15 @@ resource networkSecurityGroupRef 'Microsoft.Compute/availabilitySets@2023-03-01'
 resource publicIpAddressesRef 'Microsoft.Network/publicIPAddresses@2022-11-01' existing = [for configuration in ipConfigurations: {
   name: configuration.value.publicIpAddress.name
   scope: resourceGroup((configuration.value.publicIpAddress.?subscriptionId ?? subscriptionId), (configuration.value.publicIpAddress.?resourceGroupName ?? resourceGroupName))
+}]
+resource roleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in roleAssignmentsTransform: {
+  name: sys.guid(networkInterface.id, assignment.roleDefinitionId, (empty(assignment.principalId) ? any(assignment.resource).id : assignment.principalId))
+  properties: {
+    description: assignment.description
+    principalId: (empty(assignment.principalId) ? reference(any(assignment.resource).id, any(assignment.resource).apiVersion, 'Full')[(('microsoft.managedidentity/userassignedidentities' == toLower(any(assignment.resource).type)) ? 'properties' : 'identity')].principalId : assignment.principalId)
+    roleDefinitionId: assignment.roleDefinitionId
+  }
+  scope: networkInterface
 }]
 resource subnetsRef 'Microsoft.Network/virtualNetworks/subnets@2022-11-01' existing = [for configuration in ipConfigurations: {
   name: '${configuration.value.privateIpAddress.subnet.virtualNetworkName}/${configuration.value.privateIpAddress.subnet.name}'

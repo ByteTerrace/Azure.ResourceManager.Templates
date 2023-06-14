@@ -168,6 +168,20 @@ class MozillaFirefoxVersionsManifest {
     [Text.Json.Serialization.JsonPropertyName('LATEST_FIREFOX_VERSION')]
     [string]$LatestVersion;
 }
+class OpenSslReleaseFile {
+    [Text.Json.Serialization.JsonPropertyName('arch')]
+    [string]$Architecture
+    [int]$Bits
+    [Text.Json.Serialization.JsonPropertyName('installer')]
+    [string]$InstallerType
+    [Text.Json.Serialization.JsonPropertyName('url')]
+    [string]$Uri
+    [Text.Json.Serialization.JsonPropertyName('base_ver')]
+    [string]$Version
+}
+class OpenSslReleaseManifest {
+    [Collections.Generic.Dictionary[string,[OpenSslReleaseFile]]]$Files
+}
 class NodeJsVersionsManifest {
     [string[]]$Files;
     [Text.Json.Serialization.JsonPropertyName('lts')]
@@ -823,6 +837,21 @@ function Install-NodeJs {
     npm config set cache $cachePath --global;
     npm config set registry https://registry.npmjs.org/;
 }
+function Install-OpenSsl {
+    param(
+        [HttpService]$HttpService,
+        [Text.Json.JsonSerializerOptions]$JsonSerializerOptions,
+        [string]$Version
+    );
+
+    if ([string]::IsNullOrEmpty($Version) -or ('latest' -eq $Version)) {
+        $HttpService.GetJsonAsT(
+                $JsonSerializerOptions,
+                [OpenSslReleaseManifest],
+                'https://raw.githubusercontent.com/slproweb/opensslhashes/master/win32_openssl_hashes.json'
+            ).Files;
+    }
+}
 function Install-Pipx {
     $pipxBin = (New-Item `
         -Force `
@@ -1098,7 +1127,7 @@ try {
     $jsonSerializerOptions = [Text.Json.JsonSerializerOptions]::new();
     $jsonSerializerOptions.PropertyNamingPolicy = [Text.Json.JsonNamingPolicy]::CamelCase;
 
-    Install-AzureCliExtensions;
+    <#Install-AzureCliExtensions;
     Install-AzureCopy -HttpService $httpService;
     Install-Docker `
         -HttpService $httpService `
@@ -1119,7 +1148,9 @@ try {
         -HttpService $httpService `
         -Version 'latest';
     Install-Pipx;
-    Install-VisualStudioExtensions -HttpService $httpService;
+    Install-VisualStudioExtensions -HttpService $httpService;#>
+
+    Install-OpenSsl -HttpService $httpService;
 }
 catch {
     if ($null -ne $httpClient) {

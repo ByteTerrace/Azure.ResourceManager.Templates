@@ -6,6 +6,16 @@ param tags object = {}
 
 var isDdosProtectionPlanNotEmpty = !empty(properties.?ddosProtectionPlan ?? {})
 var resourceGroupName = resourceGroup().name
+var roleAssignmentsTransform = map((properties.?roleAssignments ?? []), assignment => {
+  description: (assignment.?description ?? 'Created via automation.')
+  principalId: assignment.principalId
+  resource: (empty(assignment.resource) ? null : {
+    apiVersion: assignment.resource.apiVersion
+    id: '/subscriptions/${(assignment.resource.?subscriptionId ?? subscriptionId)}/resourceGroups/${(assignment.resource.?resourceGroupName ?? resourceGroupName)}/providers/${assignment.resource.type}/${assignment.resource.path}'
+    type: assignment.resource.type
+  })
+  roleDefinitionId: assignment.roleDefinitionId
+})
 var subnets = sort(map(items(properties.?subnets ?? {}), subnet => {
   addressPrefixes: subnet.value.addressPrefixes
   delegations: (subnet.value.?delegations ?? [])
@@ -35,6 +45,15 @@ resource natGateways 'Microsoft.Network/natGateways@2022-11-01' existing = [for 
 resource networkSecurityGroups 'Microsoft.Network/networkSecurityGroups@2022-11-01' existing = [for subnet in any(subnets): if (!empty(subnet.networkSecurityGroup)) {
   name: subnet.networkSecurityGroup.name
   scope: resourceGroup((subnet.networkSecurityGroup.?subscriptionId ?? subscriptionId), (subnet.networkSecurityGroup.?resourceGroupName ?? resourceGroupName))
+}]
+resource roleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in roleAssignmentsTransform: {
+  name: sys.guid(virtualNetwork.id, assignment.roleDefinitionId, (empty(assignment.principalId) ? any(assignment.resource).id : assignment.principalId))
+  properties: {
+    description: assignment.description
+    principalId: (empty(assignment.principalId) ? reference(any(assignment.resource).id, any(assignment.resource).apiVersion, 'Full')[(('microsoft.managedidentity/userassignedidentities' == toLower(any(assignment.resource).type)) ? 'properties' : 'identity')].principalId : assignment.principalId)
+    roleDefinitionId: assignment.roleDefinitionId
+  }
+  scope: virtualNetwork
 }]
 resource routeTables 'Microsoft.Network/routeTables@2022-11-01' existing = [for subnet in any(subnets): if (!empty(subnet.routeTable)) {
   name: subnet.routeTable.name

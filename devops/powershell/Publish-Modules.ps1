@@ -30,10 +30,3 @@ $modules |
             --file ($_.FilePath) `
             --target "br:${ContainerRegistryName}.azurecr.io/${basePath}/$($_.ModulePath):${Tag}";
     };
-
-<#
-    az bicep publish `
-        --file 'C:\ByteTerrace\Source Code\Azure\ResourceManager.Templates\byteterrace\resource-group-deployments\main.bicep' `
-        --force `
-        --target 'br:byteterrace.azurecr.io/byteterrace/resource-group-deployments:0.0.0';
-#>

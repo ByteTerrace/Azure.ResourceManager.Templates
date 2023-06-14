@@ -21,6 +21,16 @@ var isSubnetNotEmpty = !empty(properties.?subnet ?? {})
 var isUserAssignedIdentitiesNotEmpty = !empty(userAssignedIdentities)
 var operatingSystemType = servicePlanRef.kind
 var resourceGroupName = resourceGroup().name
+var roleAssignmentsTransform = map((properties.?roleAssignments ?? []), assignment => {
+  description: (assignment.?description ?? 'Created via automation.')
+  principalId: assignment.principalId
+  resource: (empty(assignment.resource) ? null : {
+    apiVersion: assignment.resource.apiVersion
+    id: '/subscriptions/${(assignment.resource.?subscriptionId ?? subscriptionId)}/resourceGroups/${(assignment.resource.?resourceGroupName ?? resourceGroupName)}/providers/${assignment.resource.type}/${assignment.resource.path}'
+    type: assignment.resource.type
+  })
+  roleDefinitionId: assignment.roleDefinitionId
+})
 var siteIdentity = (isIdentityNotEmpty ? {
   type: ((isUserAssignedIdentitiesNotEmpty && !contains(identity, 'type')) ? 'UserAssigned' : identity.type)
   userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty ? toObject(userAssignedIdentities, identity => identity.id, identity => {}) : null)
@@ -113,6 +123,15 @@ resource functionStorageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' e
 resource parentSite 'Microsoft.Web/sites@2022-09-01' existing = if (isSlotNameNotEmpty) {
   name: name
 }
+resource roleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in roleAssignmentsTransform: {
+  name: sys.guid(site.id, assignment.roleDefinitionId, (empty(assignment.principalId) ? any(assignment.resource).id : assignment.principalId))
+  properties: {
+    description: assignment.description
+    principalId: (empty(assignment.principalId) ? reference(any(assignment.resource).id, any(assignment.resource).apiVersion, 'Full')[(('microsoft.managedidentity/userassignedidentities' == toLower(any(assignment.resource).type)) ? 'properties' : 'identity')].principalId : assignment.principalId)
+    roleDefinitionId: assignment.roleDefinitionId
+  }
+  scope: site
+}]
 resource servicePlanRef 'Microsoft.Web/serverfarms@2022-09-01' existing = {
   name: properties.servicePlan.name
   scope: resourceGroup((properties.servicePlan.?subscriptionId ?? subscription().subscriptionId), (properties.servicePlan.?resourceGroupName ?? resourceGroup().name))

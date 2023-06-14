@@ -63,6 +63,7 @@ type computeGallery = {
     }
   }?
   location: string?
+  roleAssignments: roleAssignment[]?
   tags: object?
 }
 type containerRegistry = {
@@ -157,10 +158,12 @@ type networkInterface = {
   location: string?
   networkSecurityGroup: resourceReference?
   publicIpAddress: resourceReference?
+  roleAssignments: roleAssignment[]?
   tags: object?
 }
 type networkSecurityGroup = {
   location: string?
+  roleAssignments: roleAssignment[]?
   securityRules: {
     *: {
       access: ('Allow' | 'Deny')
@@ -215,6 +218,7 @@ type publicIpAddress = {
   idleTimeoutInMinutes: int?
   location: string?
   prefix: resourceReference?
+  roleAssignments: roleAssignment[]?
   sku: resourceSku
   tags: object?
   version: ('IPv4' | 'IPV6')?
@@ -223,6 +227,7 @@ type publicIpPrefix = {
   customPrefix: resourceReference?
   length: int
   location: string?
+  roleAssignments: roleAssignment[]?
   sku: resourceSku
   tags: object?
   version: ('IPv4' | 'IPV6')?
@@ -255,6 +260,7 @@ type resourceSku = {
 }
 type routeTable = {
   location: string?
+  roleAssignments: roleAssignment[]?
   routes: {
     *: {
       addressPrefix: string
@@ -548,6 +554,7 @@ type virtualNetwork = {
   ddosProtectionPlan: resourceReference?
   dnsServers: string[]?
   location: string?
+  roleAssignments: roleAssignment[]?
   subnets: {
     *: {
       addressPrefixes: string[]
@@ -603,6 +610,7 @@ type webApplication = {
   isWebSocketSupportEnabled: bool?
   is32BitModeEnabled: bool?
   location: string?
+  roleAssignments: roleAssignment[]?
   servicePlan: resourceReference?
   subnet: subnetReference?
   tags: object?
@@ -712,6 +720,11 @@ module computeGalleries 'br/bytrc:microsoft/compute/galleries:0.0.0' = [for (gal
     properties: {
       description: (gallery.value.?description ?? null)
       imageDefinitions: (gallery.value.?imageDefinitions ?? null)
+      roleAssignments: [for assignment in (gallery.value.?roleAssignments ?? []): {
+        principalId: (assignment.?principalId ?? '')
+        resource: (assignment.?resource ?? {})
+        roleDefinitionId: roleMap[assignment.roleDefinitionName]
+      }]
     }
     tags: (gallery.value.?tags ?? tags)
   }
@@ -842,6 +855,11 @@ module networkInterfaces 'br/bytrc:microsoft/network/network-interfaces:0.0.0' =
       isTcpStateTrackingEnabled: (interface.value.?isTcpStateTrackingEnabled ?? null)
       networkSecurityGroup: (interface.value.?networkSecurityGroup ?? null)
       publicIpAddress: (interface.value.?publicIpAddress ?? null)
+      roleAssignments: [for assignment in (interface.value.?roleAssignments ?? []): {
+        principalId: (assignment.?principalId ?? '')
+        resource: (assignment.?resource ?? {})
+        roleDefinitionId: roleMap[assignment.roleDefinitionName]
+      }]
     }
     tags: (interface.value.?tags ?? tags)
   }
@@ -852,6 +870,11 @@ module networkSecurityGroups 'br/bytrc:microsoft/network/network-security-groups
     location: (group.value.?location ?? deployment.location)
     name: group.key
     properties: {
+      roleAssignments: [for assignment in (group.value.?roleAssignments ?? []): {
+        principalId: (assignment.?principalId ?? '')
+        resource: (assignment.?resource ?? {})
+        roleDefinitionId: roleMap[assignment.roleDefinitionName]
+      }]
       securityRules: (group.value.?securityRules ?? null)
     }
     tags: (group.value.?tags ?? tags)
@@ -876,6 +899,11 @@ module publicIpAddresses 'br/bytrc:microsoft/network/public-ip-addresses:0.0.0' 
       deleteOption: (address.value.?deleteOption ?? null)
       idleTimeoutInMinutes: (address.value.?idleTimeoutInMinutes ?? null)
       prefix: (address.value.?prefix ?? null)
+      roleAssignments: [for assignment in (address.value.?roleAssignments ?? []): {
+        principalId: (assignment.?principalId ?? '')
+        resource: (assignment.?resource ?? {})
+        roleDefinitionId: roleMap[assignment.roleDefinitionName]
+      }]
       sku: address.value.sku
       version: (address.value.?version ?? null)
     }
@@ -890,6 +918,11 @@ module publicIpPrefixes 'br/bytrc:microsoft/network/public-ip-prefixes:0.0.0' = 
     properties: {
       customPrefix: (prefix.value.?customPrefix ?? null)
       length: prefix.value.length
+      roleAssignments: [for assignment in (prefix.value.?roleAssignments ?? []): {
+        principalId: (assignment.?principalId ?? '')
+        resource: (assignment.?resource ?? {})
+        roleDefinitionId: roleMap[assignment.roleDefinitionName]
+      }]
       sku: prefix.value.sku
       version: (prefix.value.?version ?? null)
     }
@@ -902,6 +935,11 @@ module routeTables 'br/bytrc:microsoft/network/route-tables:0.0.0' = [for (table
     location: (table.value.?location ?? deployment.location)
     name: table.key
     properties: {
+      roleAssignments: [for assignment in (table.value.?roleAssignments ?? []): {
+        principalId: (assignment.?principalId ?? '')
+        resource: (assignment.?resource ?? {})
+        roleDefinitionId: roleMap[assignment.roleDefinitionName]
+      }]
       routes: (table.value.?routes ?? null)
     }
     tags: (table.value.?tags ?? tags)
@@ -1036,6 +1074,11 @@ module virtualNetworks 'br/bytrc:microsoft/network/virtual-networks:0.0.0' = [fo
       addressPrefixes: network.value.addressPrefixes
       ddosProtectionPlan: (network.value.?ddosProtectionPlan ?? null)
       dnsServers: (network.value.?dnsServers ?? null)
+      roleAssignments: [for assignment in (network.value.?roleAssignments ?? []): {
+        principalId: (assignment.?principalId ?? '')
+        resource: (assignment.?resource ?? {})
+        roleDefinitionId: roleMap[assignment.roleDefinitionName]
+      }]
       subnets: network.value.subnets
     }
     tags: (network.value.?tags ?? tags)
@@ -1068,6 +1111,11 @@ module webApplications 'br/bytrc:microsoft/web/sites:0.0.0' = [for (application,
       isRemoteDebuggingEnabled: (application.value.?isRemoteDebuggingEnabled ?? null)
       isWebSocketSupportEnabled: (application.value.?isWebSocketSupportEnabled ?? null)
       is32BitModeEnabled: (application.value.?is32BitModeEnabled ?? null)
+      roleAssignments: [for assignment in (application.value.?roleAssignments ?? []): {
+        principalId: (assignment.?principalId ?? '')
+        resource: (assignment.?resource ?? {})
+        roleDefinitionId: roleMap[assignment.roleDefinitionName]
+      }]
       servicePlan: application.value.servicePlan
       slotName: (contains(application.key, '/') ? last(split(application.key, '/')) : null)
       subnet: (application.value.?subnet ?? null)
@@ -1104,6 +1152,11 @@ module webApplicationSlots 'br/bytrc:microsoft/web/sites:0.0.0' = [for (applicat
       isRemoteDebuggingEnabled: (application.value.?isRemoteDebuggingEnabled ?? null)
       isWebSocketSupportEnabled: (application.value.?isWebSocketSupportEnabled ?? null)
       is32BitModeEnabled: (application.value.?is32BitModeEnabled ?? null)
+      roleAssignments: [for assignment in (application.value.?roleAssignments ?? []): {
+        principalId: (assignment.?principalId ?? '')
+        resource: (assignment.?resource ?? {})
+        roleDefinitionId: roleMap[assignment.roleDefinitionName]
+      }]
       servicePlan: application.value.servicePlan
       slotName: (contains(application.key, '/') ? last(split(application.key, '/')) : null)
       subnet: (application.value.?subnet ?? null)
