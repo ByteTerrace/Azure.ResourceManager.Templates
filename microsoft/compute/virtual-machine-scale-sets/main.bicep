@@ -32,6 +32,16 @@ var operatingSystemPatchSettings = {
   patchMode: (properties.operatingSystem.?patchSettings.?patchMode ?? 'AutomaticByPlatform')
 }
 var resourceGroupName = resourceGroup().name
+var roleAssignmentsTransform = map((properties.?roleAssignments ?? []), assignment => {
+  description: (assignment.?description ?? 'Created via automation.')
+  principalId: assignment.principalId
+  resource: (empty(assignment.resource) ? null : {
+    apiVersion: assignment.resource.apiVersion
+    id: '/subscriptions/${(assignment.resource.?subscriptionId ?? subscriptionId)}/resourceGroups/${(assignment.resource.?resourceGroupName ?? resourceGroupName)}/providers/${assignment.resource.type}/${assignment.resource.path}'
+    type: assignment.resource.type
+  })
+  roleDefinitionId: assignment.roleDefinitionId
+})
 var subscriptionId = subscription().subscriptionId
 var userAssignedIdentities = sort(map(range(0, length(identity.?userAssignedIdentities ?? [])), index => {
   id: resourceId((identity.userAssignedIdentities[index].?subscriptionId ?? subscriptionId), (identity.userAssignedIdentities[index].?resourceGroupName ?? resourceGroupName), 'Microsoft.ManagedIdentity/userAssignedIdentities', identity.userAssignedIdentities[index].name)
@@ -59,16 +69,12 @@ resource proximityPlacementGroupRef 'Microsoft.Compute/proximityPlacementGroups@
   name: properties.proximityPlacementGroup.name
   scope: resourceGroup((properties.proximityPlacementGroup.?subscriptionId ?? subscriptionId), (properties.proximityPlacementGroup.?resourceGroupName ?? resourceGroupName))
 }
-resource roleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in map((properties.?roleAssignments ?? []), assignment => {
-  description: (assignment.?description ?? 'Created via automation.')
-  principalId: assignment.principalId
-  roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', assignment.roleDefinitionId)
-}): {
-  name: sys.guid(virtualMachineScaleSet.id, assignment.roleDefinitionId, assignment.principalId)
+resource roleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in roleAssignmentsTransform: {
+  name: sys.guid(virtualMachineScaleSet.id, assignment.roleDefinitionId, (empty(assignment.principalId) ? any(assignment.resource).id : assignment.principalId))
   properties: {
     description: assignment.description
-    principalId: assignment.principalId
-    roleDefinitionId: any(assignment.roleDefinitionId)
+    principalId: (empty(assignment.principalId) ? reference(any(assignment.resource).id, any(assignment.resource).apiVersion, 'Full')[(('microsoft.managedidentity/userassignedidentities' == toLower(any(assignment.resource).type)) ? 'properties' : 'identity')].principalId : assignment.principalId)
+    roleDefinitionId: assignment.roleDefinitionId
   }
   scope: virtualMachineScaleSet
 }]

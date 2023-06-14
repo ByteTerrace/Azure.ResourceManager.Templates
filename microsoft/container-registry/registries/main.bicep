@@ -12,6 +12,16 @@ var isPremiumSku = ('premium' == toLower(properties.sku.name))
 var isPublicNetworkAccessEnabled = (properties.?isPublicNetworkAccessEnabled ?? false)
 var isUserAssignedIdentitiesNotEmpty = !empty(userAssignedIdentities)
 var resourceGroupName = resourceGroup().name
+var roleAssignmentsTransform = map((properties.?roleAssignments ?? []), assignment => {
+  description: (assignment.?description ?? 'Created via automation.')
+  principalId: assignment.principalId
+  resource: (empty(assignment.resource) ? null : {
+    apiVersion: assignment.resource.apiVersion
+    id: '/subscriptions/${(assignment.resource.?subscriptionId ?? subscriptionId)}/resourceGroups/${(assignment.resource.?resourceGroupName ?? resourceGroupName)}/providers/${assignment.resource.type}/${assignment.resource.path}'
+    type: assignment.resource.type
+  })
+  roleDefinitionId: assignment.roleDefinitionId
+})
 var subscriptionId = subscription().subscriptionId
 var userAssignedIdentities = sort(map(range(0, length(identity.?userAssignedIdentities ?? [])), index => {
   id: resourceId((identity.userAssignedIdentities[index].?subscriptionId ?? subscriptionId), (identity.userAssignedIdentities[index].?resourceGroupName ?? resourceGroupName), 'Microsoft.ManagedIdentity/userAssignedIdentities', identity.userAssignedIdentities[index].name)
@@ -58,16 +68,12 @@ resource registry 'Microsoft.ContainerRegistry/registries@2022-12-01' = {
   sku: properties.sku
   tags: tags
 }
-resource roleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in map((properties.?roleAssignments ?? []), assignment => {
-  description: (assignment.?description ?? 'Created via automation.')
-  principalId: assignment.principalId
-  roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', assignment.roleDefinitionId)
-}): {
-  name: guid(registry.id, assignment.roleDefinitionId, assignment.principalId)
+resource roleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in roleAssignmentsTransform: {
+  name: sys.guid(registry.id, assignment.roleDefinitionId, (empty(assignment.principalId) ? any(assignment.resource).id : assignment.principalId))
   properties: {
     description: assignment.description
-    principalId: assignment.principalId
-    roleDefinitionId: any(assignment.roleDefinitionId)
+    principalId: (empty(assignment.principalId) ? reference(any(assignment.resource).id, any(assignment.resource).apiVersion, 'Full')[(('microsoft.managedidentity/userassignedidentities' == toLower(any(assignment.resource).type)) ? 'properties' : 'identity')].principalId : assignment.principalId)
+    roleDefinitionId: assignment.roleDefinitionId
   }
   scope: registry
 }]

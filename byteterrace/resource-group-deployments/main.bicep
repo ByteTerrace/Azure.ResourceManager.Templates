@@ -7,7 +7,7 @@ type applicationServiceEnvironment = {
   isMinimalSslCipherSuiteConfigurationEnabled: bool?
   isZoneRedundancyEnabled: bool?
   location: string?
-  roleAssignments: array?
+  roleAssignments: roleAssignment[]?
   subnet: subnetReference
   tags: object?
 }
@@ -16,7 +16,7 @@ type applicationServicePlan = {
   isZoneRedundancyEnabled: bool?
   location: string?
   operatingSystemName: ('Linux' | 'Windows')
-  roleAssignments: array?
+  roleAssignments: roleAssignment[]?
   serviceEnvironment: resourceReference?
   sku: resourceSku
   tags: object?
@@ -77,7 +77,7 @@ type containerRegistry = {
   isQuarantinePolicyEnabled: bool?
   isZoneRedundancyEnabled: bool?
   location: string?
-  roleAssignments: array?
+  roleAssignments: roleAssignment[]?
   sku: resourceSku
   tags: object?
 }
@@ -122,7 +122,7 @@ type keyVault = {
   isTemplateDeploymentEnabled: bool?
   isVirtualMachineDeploymentEnabled: bool?
   location: string?
-  roleAssignments: array?
+  roleAssignments: roleAssignment[]?
   sku: resourceSku
   softDeleteRetentionInDays: int?
   tags: object?
@@ -226,6 +226,18 @@ type publicIpPrefix = {
   sku: resourceSku
   tags: object?
   version: ('IPv4' | 'IPV6')?
+}
+type roleAssignment = {
+  description: string?
+  principalId: string?
+  resource: {
+    apiVersion: string
+    path: string
+    resourceGroupName: string?
+    subscriptionId: string?
+    type: string
+  }?
+  roleDefinitionName: string
 }
 type resourceIdentity = {
   type: string?
@@ -392,7 +404,7 @@ type virtualMachine = {
     type: ('Linux' | 'Windows')
   }
   proximityPlacementGroup: resourceReference?
-  roleAssignments: array?
+  roleAssignments: roleAssignment[]?
   scripts: {
     *: {
       blobPath: string?
@@ -523,7 +535,7 @@ type virtualMachineScaleSet = {
     type: ('Linux' | 'Windows')
   }
   proximityPlacementGroup: resourceReference?
-  roleAssignments: array?
+  roleAssignments: roleAssignment[]?
   sku: resourceSku
   spotSettings: {
     evictionPolicy: ('Deallocate' | 'Delete')
@@ -592,7 +604,6 @@ type webApplication = {
   is32BitModeEnabled: bool?
   location: string?
   servicePlan: resourceReference?
-  slotName: string?
   subnet: subnetReference?
   tags: object?
   virtualApplications: {
@@ -613,6 +624,7 @@ var deployment = {
   location: location
   name: az.deployment().name
 }
+var roleMap = toObject(items(loadJsonContent('../../roleMap.json')), role => role.key, role => subscriptionResourceId('Microsoft.Authorization/roleDefinitions', role.value))
 
 module applicationSecurityGroups 'br/bytrc:microsoft/network/application-security-groups:0.0.0' = [for (group, index) in items(properties.?applicationSecurityGroups ?? {}): if (!contains(exclude, 'applicationSecurityGroups') && (empty(include) || contains(include, 'applicationSecurityGroups'))) {
   name: '${deployment.name}-asg-${padLeft(index, 3, '0')}'
@@ -632,6 +644,11 @@ module applicationServiceEnvironments 'br/bytrc:microsoft/web/hosting-environmen
       isInternalEncryptionEnabled: (environment.value.?isInternalEncryptionEnabled ?? null)
       isMinimalSslCipherSuiteConfigurationEnabled: (environment.value.?isMinimalSslCipherSuiteConfigurationEnabled ?? null)
       isZoneRedundancyEnabled: (environment.value.?isZoneRedundancyEnabled ?? null)
+      roleAssignments: [for assignment in (environment.value.?roleAssignments ?? []): {
+        principalId: (assignment.?principalId ?? '')
+        resource: (assignment.?resource ?? {})
+        roleDefinitionId: roleMap[assignment.roleDefinitionName]
+      }]
       subnet: environment.value.subnet
     }
     tags: (environment.value.?tags ?? tags)
@@ -650,6 +667,11 @@ module applicationServicePlans 'br/bytrc:microsoft/web/server-farms:0.0.0' = [fo
       isPerSiteScalingEnabled: (farm.value.?isPerSiteScalingEnabled ?? null)
       isZoneRedundancyEnabled: (farm.value.?isZoneRedundancyEnabled ?? null)
       operatingSystemName: farm.value.operatingSystemName
+      roleAssignments: [for assignment in (farm.value.?roleAssignments ?? []): {
+        principalId: (assignment.?principalId ?? '')
+        resource: (assignment.?resource ?? {})
+        roleDefinitionId: roleMap[assignment.roleDefinitionName]
+      }]
       serviceEnvironment: (farm.value.?serviceEnvironment ?? null)
       sku: farm.value.sku
     }
@@ -714,7 +736,11 @@ module containerRegistries 'br/bytrc:microsoft/container-registry/registries:0.0
       isPublicNetworkAccessEnabled: (registry.value.?isPublicNetworkAccessEnabled ?? null)
       isQuarantinePolicyEnabled: (registry.value.?isQuarantinePolicyEnabled ?? null)
       isZoneRedundancyEnabled: (registry.value.?isZoneRedundancyEnabled ?? null)
-      roleAssignments: (registry.value.?roleAssignments ?? null)
+      roleAssignments: [for assignment in (registry.value.?roleAssignments ?? []): {
+        principalId: (assignment.?principalId ?? '')
+        resource: (assignment.?resource ?? {})
+        roleDefinitionId: roleMap[assignment.roleDefinitionName]
+      }]
       sku: registry.value.sku
     }
     tags: (registry.value.?tags ?? tags)
@@ -765,7 +791,11 @@ module keyVaults 'br/bytrc:microsoft/key-vault/vaults:0.0.0' = [for (vault, inde
       isPurgeProtectionEnabled: (vault.value.?isPurgeProtectionEnabled ?? null)
       isTemplateDeploymentEnabled: (vault.value.?isTemplateDeploymentEnabled ?? null)
       isVirtualMachineDeploymentEnabled: (vault.value.?isVirtualMachineDeploymentEnabled ?? null)
-      roleAssignments: (vault.value.?roleAssignments ?? null)
+      roleAssignments: [for assignment in (vault.value.?roleAssignments ?? []): {
+        principalId: (assignment.?principalId ?? '')
+        resource: (assignment.?resource ?? {})
+        roleDefinitionId: roleMap[assignment.roleDefinitionName]
+      }]
       sku: vault.value.sku
       softDeleteRetentionInDays: (vault.value.?softDeleteRetentionInDays ?? null)
       tenantId: (vault.value.?tenantId ?? null)
@@ -928,7 +958,11 @@ module virtualMachines 'br/bytrc:microsoft/compute/virtual-machines:0.0.0' = [fo
       networkInterfaces: machine.value.networkInterfaces
       operatingSystem: machine.value.operatingSystem
       proximityPlacementGroup: (machine.value.?proximityPlacementGroup ?? null)
-      roleAssignments: (machine.value.?roleAssignments ?? null)
+      roleAssignments: [for assignment in (machine.value.?roleAssignments ?? []): {
+        principalId: (assignment.?principalId ?? '')
+        resource: (assignment.?resource ?? {})
+        roleDefinitionId: roleMap[assignment.roleDefinitionName]
+      }]
       scripts: (machine.value.?scripts ?? null)
       sku: machine.value.sku
       spotSettings: (machine.value.?spotSettings ?? null)
@@ -976,7 +1010,11 @@ module virtualMachineScaleSets 'br/bytrc:microsoft/compute/virtual-machine-scale
       networkInterfaces: set.value.networkInterfaces
       operatingSystem: set.value.operatingSystem
       proximityPlacementGroup: (set.value.?proximityPlacementGroup ?? null)
-      roleAssignments: (set.value.?roleAssignments ?? null)
+      roleAssignments: [for assignment in (set.value.?roleAssignments ?? []): {
+        principalId: (assignment.?principalId ?? '')
+        resource: (assignment.?resource ?? {})
+        roleDefinitionId: roleMap[assignment.roleDefinitionName]
+      }]
       sku: set.value.sku
       spotSettings: (set.value.?spotSettings ?? null)
     }
@@ -1003,7 +1041,7 @@ module virtualNetworks 'br/bytrc:microsoft/network/virtual-networks:0.0.0' = [fo
     tags: (network.value.?tags ?? tags)
   }
 }]
-module webApplications 'br/bytrc:microsoft/web/sites:0.0.0' = [for (application, index) in items(properties.?webApplications ?? {}): if (!contains(exclude, 'webApplications') && (empty(include) || contains(include, 'webApplications'))) {
+module webApplications 'br/bytrc:microsoft/web/sites:0.0.0' = [for (application, index) in filter(items(properties.?webApplications ?? {}), application => !contains(application.key, '/')): if (!contains(exclude, 'webApplications') && (empty(include) || contains(include, 'webApplications'))) {
   dependsOn: [
     applicationServicePlans
     keyVaults
@@ -1013,7 +1051,7 @@ module webApplications 'br/bytrc:microsoft/web/sites:0.0.0' = [for (application,
   name: '${deployment.name}-web-${padLeft(index, 3, '0')}'
   params: {
     location: (application.value.?location ?? deployment.location)
-    name: application.key
+    name: first(split(application.key, '/'))
     properties: {
       applicationInsights: (application.value.?applicationInsights ?? null)
       applicationSettings: (application.value.?applicationSettings ?? null)
@@ -1031,7 +1069,43 @@ module webApplications 'br/bytrc:microsoft/web/sites:0.0.0' = [for (application,
       isWebSocketSupportEnabled: (application.value.?isWebSocketSupportEnabled ?? null)
       is32BitModeEnabled: (application.value.?is32BitModeEnabled ?? null)
       servicePlan: application.value.servicePlan
-      slotName: (application.value.?slotName ?? null)
+      slotName: (contains(application.key, '/') ? last(split(application.key, '/')) : null)
+      subnet: (application.value.?subnet ?? null)
+      virtualApplications: (application.value.?virtualApplications ?? null)
+    }
+    tags: (application.value.?tags ?? tags)
+  }
+}]
+module webApplicationSlots 'br/bytrc:microsoft/web/sites:0.0.0' = [for (application, index) in filter(items(properties.?webApplications ?? {}), application => contains(application.key, '/')): if (!contains(exclude, 'webApplications') && (empty(include) || contains(include, 'webApplications'))) {
+  dependsOn: [
+    applicationServicePlans
+    keyVaults
+    userManagedIdentities
+    virtualNetworks
+    webApplications
+  ]
+  name: '${deployment.name}-web-slot-${padLeft(index, 3, '0')}'
+  params: {
+    location: (application.value.?location ?? deployment.location)
+    name: first(split(application.key, '/'))
+    properties: {
+      applicationInsights: (application.value.?applicationInsights ?? null)
+      applicationSettings: (application.value.?applicationSettings ?? null)
+      connectionStrings: (application.value.?connectionStrings ?? null)
+      crossOriginResourceSharing: (application.value.?crossOriginResourceSharing ?? null)
+      frameworkVersion: application.value.frameworkVersion
+      functionExtension: (application.value.?functionExtension ?? null)
+      healthCheck: (application.value.?healthCheck ?? null)
+      identity: (application.value.?identity ?? null)
+      isAlwaysOnEnabled: (application.value.?isAlwaysOnEnabled ?? null)
+      isClientAffinityEnabled: (application.value.?isClientAffinityEnabled ?? null)
+      isHttp20SupportEnabled: (application.value.?isHttp20SupportEnabled ?? null)
+      isPublicNetworkAccessEnabled: (application.value.?isPublicNetworkAccessEnabled ?? null)
+      isRemoteDebuggingEnabled: (application.value.?isRemoteDebuggingEnabled ?? null)
+      isWebSocketSupportEnabled: (application.value.?isWebSocketSupportEnabled ?? null)
+      is32BitModeEnabled: (application.value.?is32BitModeEnabled ?? null)
+      servicePlan: application.value.servicePlan
+      slotName: (contains(application.key, '/') ? last(split(application.key, '/')) : null)
       subnet: (application.value.?subnet ?? null)
       virtualApplications: (application.value.?virtualApplications ?? null)
     }
