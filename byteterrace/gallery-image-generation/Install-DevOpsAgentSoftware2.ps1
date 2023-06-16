@@ -36,6 +36,14 @@ class GitHubActionsVersionsManifest {
     [string]$ReleaseUri;
     [string]$Version;
 }
+class GitHubReleasesAsset {
+    [string]$Name;
+    [Text.Json.Serialization.JsonPropertyName('browser_download_url')]
+    [string]$BrowserDownloadUrl;
+}
+class GitHubReleasesManifest {
+    [GitHubReleasesAsset[]]$Assets;
+}
 class HttpService {
     [Net.Http.HttpClient]$HttpClient;
 
@@ -528,6 +536,69 @@ function Install-DotNetTools {
                 -Version $_;
         };
 }
+function Install-GitForWindows {
+    param(
+        [HttpService]$HttpService,
+        [Text.Json.JsonSerializerOptions]$JsonSerializerOptions
+    );
+
+    $installerData = [Linq.Enumerable]::Single(
+            $HttpService.GetJsonAsT(
+                $JsonSerializerOptions,
+                [GitHubReleasesManifest],
+                'https://api.github.com/repos/git-for-windows/git/releases/latest'
+            ).Assets,
+            [Func[object, bool]] {
+                param(
+                    [GitHubReleasesAsset]$asset
+                );
+
+                return $asset.Name.EndsWith('64-bit.exe');
+            }
+        );
+    $installerFilePath = $HttpService.DownloadFile(
+            ([IO.Path]::Combine((Get-Location), $installerData.Name)),
+            $installerData.BrowserDownloadUrl
+        );
+    $installerOutputPath = [IO.Path]::Combine(${Env:ProgramFiles}, 'Git');
+    $process = Start-Process `
+        -ArgumentList @(
+            '/CLOSEAPPLICATIONS',
+            '/COMPONENTS=gitlfs',
+            "/DIR=`"${installerOutputPath}`"",
+            '/NOCANCEL',
+            '/NORESTART',
+            '/RESTARTAPPLICATIONS',
+            '/SP-',
+            '/VERYSILENT',
+            '/o:BashTerminalOption=ConHost',
+            '/o:EnableSymlinks=Enabled',
+            '/o:PathOption=CmdTools'
+        ) `
+        -FilePath $installerFilePath `
+        -PassThru `
+        -Wait;
+
+    if (0 -ne $process.ExitCode) {
+        throw "Non-zero exit code returned by the process: $($process.ExitCode).";
+    }
+
+    Start-Sleep -Seconds 3;
+
+    if (Test-Path -Path $installerFilePath) {
+        Remove-Item `
+            -Force `
+            -Path $installerFilePath;
+    }
+
+    Set-WindowsMachineVariable `
+        -Name 'GCM_INTERACTIVE' `
+        -Value 'Never';
+    Update-WindowsVariables;
+    git config --system --add safe.directory "*";
+    ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> "${installerOutputPath}/etc/ssh/ssh_known_hosts";
+    ssh-keyscan -t rsa ssh.dev.azure.com >> "${installerOutputPath}/etc/ssh/ssh_known_hosts";
+}
 function Install-GitHubActionsTool {
     param(
         [string]$Architecture,
@@ -902,11 +973,11 @@ function Install-OpenSsl {
             ([IO.Path]::Combine((Get-Location), $installerData.Key)),
             $installerData.Value.Uri
         );
-    $openSslPath = [IO.Path]::Combine(${Env:ProgramFiles}, 'OpenSSL');
+    $installerOutputPath = [IO.Path]::Combine(${Env:ProgramFiles}, 'OpenSSL');
     $process = Start-Process `
         -ArgumentList @(
             '/ALLUSERS',
-            "/DIR=`"${openSslPath}`"",
+            "/DIR=`"${installerOutputPath}`"",
             '/NORESTART',
             '/SP-',
             '/SUPPRESSMSGBOXES',
@@ -928,7 +999,8 @@ function Install-OpenSsl {
             -Path $installerFilePath;
     }
 
-    Add-WindowsMachinePath -Path ([IO.Path]::Combine($openSslPath, 'bin'));
+    Add-WindowsMachinePath -Path ([IO.Path]::Combine($installerOutputPath, 'bin'));
+    Update-WindowsVariables;
 }
 function Install-Pipx {
     $pipxBin = (New-Item `
@@ -1224,6 +1296,7 @@ try {
     Install-OpenSsl `
         -HttpService $httpService `
         -JsonSerializerOptions $jsonSerializerOptions;
+    Install-GitForWindows -HttpService $httpService;
     Install-PostgresSql `
         -HttpService $httpService `
         -Version '15.3-1';
