@@ -390,13 +390,72 @@ function Install-BicepCli {
         Out-Null;
     Add-WindowsMachinePath -Path $bicepPath;
 }
-function Install-Docker {
+function Install-DockerCompose {
     param(
         [HttpService]$HttpService,
+        [Text.Json.JsonSerializerOptions]$JsonSerializerOptions
+    );
+
+    $cliPluginsPath = (New-Item `
+        -Force `
+        -ItemType 'Directory' `
+        -Path "${Env:ProgramData}/docker/cli-plugins").FullName;
+    $installerData = [Linq.Enumerable]::Single(
+            $HttpService.GetJsonAsT(
+                $JsonSerializerOptions,
+                [GitHubReleasesManifest],
+                'https://api.github.com/repos/docker/compose/releases/latest'
+            ).Assets,
+            [Func[object, bool]] {
+                param(
+                    [GitHubReleasesAsset]$asset
+                );
+
+                return $asset.Name.EndsWith('windows-x86_64.exe');
+            }
+        );
+
+    $HttpService.DownloadFile(
+            ([IO.Path]::Combine($cliPluginsPath, 'docker-compose.exe')),
+            $installerData.BrowserDownloadUrl
+        ) |
+        Out-Null;
+}
+function Install-DockerCredentialHelpers {
+    param(
+        [HttpService]$HttpService,
+        [Text.Json.JsonSerializerOptions]$JsonSerializerOptions
+    );
+
+    $installerData = [Linq.Enumerable]::Single(
+            $HttpService.GetJsonAsT(
+                $JsonSerializerOptions,
+                [GitHubReleasesManifest],
+                'https://api.github.com/repos/docker/docker-credential-helpers/releases/latest'
+            ).Assets,
+            [Func[object, bool]] {
+                param(
+                    [GitHubReleasesAsset]$asset
+                );
+
+                return $asset.Name.EndsWith('windows-amd64.exe');
+            }
+        );
+
+    $HttpService.DownloadFile(
+            ([IO.Path]::Combine("${Env:SystemRoot}/System32", 'docker-credential-wincred.exe')),
+            $installerData.BrowserDownloadUrl
+        ) |
+        Out-Null;
+}
+function Install-DockerTools {
+    param(
+        [HttpService]$HttpService,
+        [Text.Json.JsonSerializerOptions]$JsonSerializerOptions,
         [string]$Version
     );
 
-    if ([string]::IsNullOrEmpty($Version)) {
+    if ([string]::IsNullOrEmpty($Version) -or ('latest' -eq $Version)) {
         $Version = $HttpService.GetJsonAsT(
                 $JsonSerializerOptions,
                 [MobyReleasesManifest],
@@ -432,8 +491,8 @@ function Install-Docker {
         );
 
     & $installerFilePath `
-        -DockerDPath ((Get-Item -Path "${installerFolderPath}\docker\dockerd.exe").FullName) `
-        -DockerPath ((Get-Item -Path "${installerFolderPath}\docker\docker.exe").FullName) |
+        -DockerDPath ((Get-Item -Path "${installerFolderPath}/docker/dockerd.exe").FullName) `
+        -DockerPath ((Get-Item -Path "${installerFolderPath}/docker/docker.exe").FullName) |
         Out-Null;
 
     Start-Sleep -Seconds 3;
@@ -449,6 +508,23 @@ function Install-Docker {
         -Path "${Env:SystemRoot}/SysWOW64/docker.exe" `
         -Target "${Env:SystemRoot}/System32/docker.exe" |
         Out-Null;
+
+    Install-DockerCompose `
+        -HttpService $httpService `
+        -JsonSerializerOptions $jsonSerializerOptions;
+    Install-DockerCredentialHelpers `
+        -HttpService $httpService `
+        -JsonSerializerOptions $jsonSerializerOptions;
+    Update-WindowsVariables;
+    @(
+        'mcr.microsoft.com/dotnet/framework/aspnet:4.8-windowsservercore-ltsc2022',
+        'mcr.microsoft.com/dotnet/framework/runtime:4.8-windowsservercore-ltsc2022',
+        'mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2022',
+        'mcr.microsoft.com/windows/nanoserver:ltsc2022',
+        'mcr.microsoft.com/windows/servercore:ltsc2022'
+    ) | ForEach-Object {
+            docker pull $_;
+        }
 }
 function Install-DotNetSdk {
     param(
@@ -1279,9 +1355,10 @@ try {
     Install-AzureCliExtensions;
     Install-AzureCopy -HttpService $httpService;
     Install-BicepCli -HttpService $httpService;
-    Install-Docker `
+    Install-DockerTools `
         -HttpService $httpService `
-        -JsonSerializerOptions $jsonSerializerOptions;
+        -JsonSerializerOptions $jsonSerializerOptions `
+        -Version 'latest';
     Install-DotNetTools `
         -HttpService $httpService `
         -JsonSerializerOptions $jsonSerializerOptions;

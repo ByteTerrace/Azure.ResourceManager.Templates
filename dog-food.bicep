@@ -207,7 +207,7 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
           operatingSystem: {
             administrator: operatingSystemAdministrator
             disk: {
-              sizeInGigabytes: 96
+              sizeInGigabytes: 150
             }
             patchSettings: {
               assessmentMode: 'ImageDefault'
