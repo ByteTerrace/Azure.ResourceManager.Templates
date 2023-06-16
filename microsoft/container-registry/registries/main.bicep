@@ -11,6 +11,7 @@ var isIdentityNotEmpty = !empty(identity)
 var isPremiumSku = ('premium' == toLower(properties.sku.name))
 var isPublicNetworkAccessEnabled = (properties.?isPublicNetworkAccessEnabled ?? false)
 var isUserAssignedIdentitiesNotEmpty = !empty(userAssignedIdentities)
+var privateEndpoints = items(properties.?privateEndpoints ?? {})
 var resourceGroupName = resourceGroup().name
 var roleAssignmentsTransform = map((properties.?roleAssignments ?? []), assignment => {
   description: (assignment.?description ?? 'Created via automation.')
@@ -29,6 +30,10 @@ var userAssignedIdentities = sort(map(range(0, length(identity.?userAssignedIden
   value: identity.userAssignedIdentities[index]
 }), (x, y) => (x.index < y.index))
 
+resource privateEndpointsSubnetsRef 'Microsoft.Network/virtualNetworks/subnets@2022-11-01' existing = [for endpoint in privateEndpoints: {
+  name: '${endpoint.value.subnet.virtualNetworkName}/${endpoint.value.subnet.name}'
+  scope: resourceGroup((endpoint.value.subnet.?subscriptionId ?? subscription().subscriptionId), (endpoint.value.subnet.?resourceGroupName ?? resourceGroup().name))
+}]
 resource registry 'Microsoft.ContainerRegistry/registries@2022-12-01' = {
   identity: (isIdentityNotEmpty ? {
     type: ((isUserAssignedIdentitiesNotEmpty && !contains(identity, 'type')) ? 'UserAssigned' : identity.type)
@@ -68,7 +73,21 @@ resource registry 'Microsoft.ContainerRegistry/registries@2022-12-01' = {
   sku: properties.sku
   tags: tags
 }
-resource roleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in roleAssignmentsTransform: {
+resource registryPrivateEndpoints 'Microsoft.Network/privateEndpoints@2022-11-01' = [for (endpoint, index) in privateEndpoints: {
+  name: endpoint.key
+  properties: {
+    privateLinkServiceConnections: [{
+      name: endpoint.key
+      properties: {
+        groupIds: [ 'registry' ]
+        privateLinkServiceId: registry.id
+      }
+    }]
+    subnet: { id: privateEndpointsSubnetsRef[index].id }
+  }
+  tags: tags
+}]
+resource registryRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in roleAssignmentsTransform: {
   name: sys.guid(registry.id, assignment.roleDefinitionId, (empty(assignment.principalId) ? any(assignment.resource).id : assignment.principalId))
   properties: {
     description: assignment.description

@@ -363,6 +363,23 @@ function Install-AzureCopy {
 
     Add-WindowsMachinePath -Path ((Get-ChildItem -Path "${azCopyPath}/*" | Select-Object -First 1).FullName);
 }
+function Install-BicepCli {
+    param(
+        [HttpService]$HttpService
+    );
+
+    $bicepPath = (New-Item `
+        -Force `
+        -ItemType 'Directory' `
+        -Path ([IO.Path]::Combine((Get-WindowsMachineVariable -Expand -Name 'AGENT_TOOLSDIRECTORY'), 'bicep'))).FullName;
+
+    $HttpService.DownloadFile(
+            ([IO.Path]::Combine($bicepPath, 'bicep.exe')),
+            'https://github.com/Azure/bicep/releases/latest/download/bicep-win-x64.exe'
+        ) |
+        Out-Null;
+    Add-WindowsMachinePath -Path $bicepPath;
+}
 function Install-Docker {
     param(
         [HttpService]$HttpService,
@@ -458,6 +475,15 @@ function Install-DotNetSdks {
         [Text.Json.JsonSerializerOptions]$JsonSerializerOptions
     );
 
+    $dotNetToolsPath = (New-Item `
+        -Force `
+        -ItemType 'Directory' `
+        -Path ([IO.Path]::Combine((Get-WindowsMachineVariable -Expand -Name 'AGENT_TOOLSDIRECTORY'), 'dotnet'))).FullName;
+
+    Add-WindowsMachinePath -Path $dotNetToolsPath;
+    Set-WindowsMachineVariable `
+        -Name 'DOTNET_CLI_TELEMETRY_OPTOUT ' `
+        -Value '1';
     Set-WindowsMachineVariable `
         -Name 'DOTNET_MULTILEVEL_LOOKUP' `
         -Value '0';
@@ -467,6 +493,8 @@ function Install-DotNetSdks {
     Set-WindowsMachineVariable `
         -Name 'DOTNET_SKIP_FIRST_TIME_EXPERIENCE' `
         -Value '1';
+    Update-WindowsVariables;
+    dotnet tool install 'Azure.Bicep.RegistryModuleTool' --tool-path $dotNetToolsPath;
 
     $installerFileName = 'dotnet-install.ps1';
     $installerFilePath = $HttpService.DownloadFile(
@@ -837,21 +865,6 @@ function Install-NodeJs {
     npm config set cache $cachePath --global;
     npm config set registry https://registry.npmjs.org/;
 }
-function Install-OpenSsl {
-    param(
-        [HttpService]$HttpService,
-        [Text.Json.JsonSerializerOptions]$JsonSerializerOptions,
-        [string]$Version
-    );
-
-    if ([string]::IsNullOrEmpty($Version) -or ('latest' -eq $Version)) {
-        $HttpService.GetJsonAsT(
-                $JsonSerializerOptions,
-                [OpenSslReleaseManifest],
-                'https://raw.githubusercontent.com/slproweb/opensslhashes/master/win32_openssl_hashes.json'
-            ).Files;
-    }
-}
 function Install-Pipx {
     $pipxBin = (New-Item `
         -Force `
@@ -1127,8 +1140,9 @@ try {
     $jsonSerializerOptions = [Text.Json.JsonSerializerOptions]::new();
     $jsonSerializerOptions.PropertyNamingPolicy = [Text.Json.JsonNamingPolicy]::CamelCase;
 
-    <#Install-AzureCliExtensions;
+    Install-AzureCliExtensions;
     Install-AzureCopy -HttpService $httpService;
+    Install-BicepCli -HttpService $httpService;
     Install-Docker `
         -HttpService $httpService `
         -JsonSerializerOptions $jsonSerializerOptions;
@@ -1148,9 +1162,7 @@ try {
         -HttpService $httpService `
         -Version 'latest';
     Install-Pipx;
-    Install-VisualStudioExtensions -HttpService $httpService;#>
-
-    Install-OpenSsl -HttpService $httpService;
+    Install-VisualStudioExtensions -HttpService $httpService;
 }
 catch {
     if ($null -ne $httpClient) {

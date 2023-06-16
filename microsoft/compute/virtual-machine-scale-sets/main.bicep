@@ -91,7 +91,11 @@ resource virtualMachineScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2023-
       ultraSSDEnabled: (properties.?isUltraSsdEnabled ?? null)
     }
     orchestrationMode: 'Uniform'
+    overprovision: (properties.?isOverprovisioningEnabled ?? null)
     proximityPlacementGroup: (isProximityPlacementGroupNotEmpty ? { id: proximityPlacementGroupRef.id } : null)
+    upgradePolicy: {
+      mode: 'Manual'
+    }
     virtualMachineProfile: {
       billingProfile: (isSpotSettingsNotEmpty ? {
         maxPrice: (properties.spotSettings.?maximumPrice ?? -1)
@@ -109,11 +113,9 @@ resource virtualMachineScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2023-
       }
       licenseType: (properties.?licenseType ?? null)
       networkProfile: {
-        networkApiVersion: '2020-11-01'
         networkInterfaceConfigurations: [for (interface, index) in networkInterfaces: {
           name: interface.key
           properties: {
-            deleteOption: 'Delete'
             disableTcpStateTracking: !(interface.value.?isTcpStateTrackingEnabled ?? true)
             dnsSettings: {
               dnsServers: (interface.value.?dnsServers ?? [])
@@ -136,15 +138,13 @@ resource virtualMachineScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2023-
                 primary: (configuration.value.?isPrimary ?? (1 == length(interface.value.ipConfigurations)))
                 privateIPAddressVersion: (configuration.value.privateIpAddress.?version ?? 'IPv4')
                 publicIPAddressConfiguration: (contains(configuration.value, 'publicIpAddress') ? {
-                  name: configuration.value.publicIpAddress.name
+                  name: 'default'
                   properties: {
-                    deleteOption: 'Delete'
                     dnsSettings: (contains(configuration.value.publicIpAddress, 'domainNameLabel') ? {
                       domainNameLabel: configuration.value.publicIpAddress.domainNameLabel
                     } : null)
                     idleTimeoutInMinutes: (configuration.value.publicIpAddress.?idleTimeoutInMinutes ?? null)
                     publicIPAddressVersion: (configuration.value.publicIpAddress.?version ?? 'IPv4')
-                    publicIPAllocationMethod: (configuration.value.publicIpAddress.?allocationMethod ?? 'Static')
                   }
                   sku: (configuration.value.publicIpAddress.?sku ?? { name: 'Standard' })
                 } : null)
@@ -163,6 +163,7 @@ resource virtualMachineScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2023-
         adminPassword: administrator.password
         adminUsername: administrator.name
         allowExtensionOperations: true
+        computerNamePrefix: (properties.operatingSystem.?computerNamePrefix ?? toUpper(take(uniqueString(subscriptionId, resourceGroupName, name), 9)))
         linuxConfiguration: (isLinux ? {
           enableVMAgentPlatformUpdates: isAgentPlatformUpdateEnabled
           patchSettings: {
@@ -209,7 +210,6 @@ resource virtualMachineScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2023-
         osDisk: {
           caching: (properties.operatingSystem.?disk.?cachingMode ?? 'ReadWrite')
           createOption: (properties.operatingSystem.?disk.?createOption ?? 'FromImage')
-          deleteOption: (properties.operatingSystem.?disk.?deleteOption ?? 'Delete')
           diffDiskSettings: (contains((properties.operatingSystem.?disk ?? {}), 'ephemeralPlacement') ? {
             option: 'Local'
             placement: properties.operatingSystem.disk.ephemeralPlacement
@@ -219,7 +219,6 @@ resource virtualMachineScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2023-
             diskEncryptionSet: (isDiskEncryptionSetNotEmpty ? { id: diskEncryptionSetRef.id } : null)
             storageAccountType: (properties.operatingSystem.?disk.?storageAccountType ?? 'Standard_LRS')
           }
-          name: (properties.operatingSystem.?disk.?name ?? '${name}-Disk-00000')
           osType: properties.operatingSystem.type
           writeAcceleratorEnabled: (properties.operatingSystem.?disk.?isWriteAcceleratorEnabled ?? null)
         }

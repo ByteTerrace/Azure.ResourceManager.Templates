@@ -35,6 +35,9 @@ var publicIpAddressPrefix = {
 var routeTable = {
   name: projectName
 }
+var storageAccount = {
+  name: projectName
+}
 var userManagedIdentity = {
   name: projectName
 }
@@ -43,6 +46,9 @@ var virtualMachinesSubnet = {
   virtualNetworkName: virtualNetwork.name
 }
 var virtualMachine = {
+  name: projectName
+}
+var virtualMachineScaleSet = {
   name: projectName
 }
 var virtualNetwork = {
@@ -166,6 +172,14 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
       routeTables: {
         '${routeTable.name}': {}
       }
+      storageAccounts: {
+        '${storageAccount.name}': {
+          accessTier: 'Hot'
+          sku: {
+            name: 'Standard_LRS'
+          }
+        }
+      }
       userManagedIdentities: {
         '${userManagedIdentity.name}': {}
       }
@@ -173,11 +187,9 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
         '${virtualMachine.name}': {
           identity: identity
           imageReference: {
-            gallery: computeGallery
-            name: '2022-Datacenter-DevOpsAgent'
-            //offer: 'WindowsServer'
-            //publisher: 'MicrosoftWindowsServer'
-            //sku: '2022-datacenter-smalldisk-g2'
+            offer: 'WindowsServer'
+            publisher: 'MicrosoftWindowsServer'
+            sku: '2022-datacenter-smalldisk-g2'
             version: 'latest'
           }
           isEncryptionAtHostEnabled: true
@@ -206,7 +218,60 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
           }
           proximityPlacementGroup: proximityPlacementGroup
           sku: {
-            name: 'Standard_D16ds_v5'
+            name: 'Standard_D8ds_v5'
+          }
+          spotSettings: {
+            evictionPolicy: 'Delete'
+          }
+        }
+      }
+      virtualMachineScaleSets: {
+        '${virtualMachineScaleSet.name}': {
+          identity: identity
+          imageReference: {
+            gallery: computeGallery
+            name: '2022-Datacenter-DevOpsAgent'
+            version: 'latest'
+          }
+          isEncryptionAtHostEnabled: true
+          isGuestAgentEnabled: true
+          isHibernationEnabled: false
+          isOverprovisioningEnabled: false
+          isSecureBootEnabled: false
+          isUltraSsdEnabled: false
+          isVirtualTrustedPlatformModuleEnabled: false
+          licenseType: 'Windows_Server'
+          networkInterfaces: {
+            '${networkInterface.name}': {
+              ipConfigurations: {
+                default: {
+                  privateIpAddress: {
+                    subnet: virtualMachinesSubnet
+                  }
+                  publicIpAddress: {
+                    name: virtualMachineScaleSet.name
+                  }
+                }
+              }
+            }
+          }
+          operatingSystem: {
+            administrator: operatingSystemAdministrator
+            disk: {
+              cachingMode: 'ReadOnly'
+              ephemeralPlacement: 'ResourceDisk'
+              sizeInGigabytes: 150
+            }
+            patchSettings: {
+              assessmentMode: 'ImageDefault'
+              isHotPatchingEnabled: false
+              patchMode: 'Manual'
+            }
+            type: 'Windows'
+          }
+          proximityPlacementGroup: proximityPlacementGroup
+          sku: {
+            name: 'Standard_D4ds_v5'
           }
           spotSettings: {
             evictionPolicy: 'Delete'

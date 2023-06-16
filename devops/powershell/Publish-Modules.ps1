@@ -1,32 +1,49 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$ContainerRegistryName,
     [Parameter(Mandatory = $false)]
     [string[]]$Filter = $null,
     [Parameter(Mandatory = $true)]
-    [string]$ModuleDirectoryPath,
-    [Parameter(Mandatory = $true)]
-    [version]$Tag
+    [version]$Version
 );
 
-$basePath = (Get-Item -Path $ModuleDirectoryPath).Name;
+$basePath = (Get-Item -Path "$PSScriptRoot/../../microsoft");
+$jsonDocumentOptions = [Text.Json.JsonDocumentOptions]::new();
+$jsonDocumentOptions.CommentHandling = [Text.Json.JsonCommentHandling]::Skip;
 $modules = Get-ChildItem `
-    -Path "$ModuleDirectoryPath/**/main.bicep" `
+    -Path "$($basePath.FullName)/**/main.bicep" `
     -Recurse |
     Select-Object -Property @(
         @{n='FilePath';e={$_.FullName;};},
         @{n='ModulePath';e={"$($_.Directory.Parent.Name)/$($_.Directory.Name)";};}
     );
+$registryName = [Text.Json.JsonDocument]::Parse(
+        (Get-Content -Path "$PSScriptRoot/../../bicepconfig.json"),
+        $jsonDocumentOptions
+    ).
+    RootElement.
+    GetProperty('moduleAliases').
+    GetProperty('br').
+    GetProperty('bytrc').
+    GetProperty('registry').
+    GetString().
+    Replace('.azurecr.io', '');
 
 if (($null -ne $Filter) -or (0 -lt $Filter.Length)) {
     $modules = $modules | Where-Object { $Filter.Contains($_.ModulePath); };
 }
 
-$modules |
-    ForEach-Object {
-        az bicep publish `
+$modules | ForEach-Object `
+    -Parallel {
+        $basePath = $using:basePath;
+        $registryName = $using:registryName;
+        $tag = $using:Version;
+        $target = "br:${registryName}.azurecr.io/$($basePath.Name)/$($_.ModulePath):${tag}";
+
+        Write-Host "Publishing ${target}...";
+
+        bicep publish `
+            ($_.FilePath) `
             --force `
-            --file ($_.FilePath) `
-            --target "br:${ContainerRegistryName}.azurecr.io/${basePath}/$($_.ModulePath):${Tag}";
-    };
+            --target $target;
+    } `
+    -ThrottleLimit 7;

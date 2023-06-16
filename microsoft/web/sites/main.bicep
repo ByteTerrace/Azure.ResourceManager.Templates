@@ -20,6 +20,7 @@ var isSlotNameNotEmpty = !empty(properties.?slotName ?? '')
 var isSubnetNotEmpty = !empty(properties.?subnet ?? {})
 var isUserAssignedIdentitiesNotEmpty = !empty(userAssignedIdentities)
 var operatingSystemType = servicePlanRef.kind
+var privateEndpoints = items(properties.?privateEndpoints ?? {})
 var resourceGroupName = resourceGroup().name
 var roleAssignmentsTransform = map((properties.?roleAssignments ?? []), assignment => {
   description: (assignment.?description ?? 'Created via automation.')
@@ -116,21 +117,13 @@ resource applicationInsightsRef 'Microsoft.Insights/components@2020-02-02' exist
   name: properties.applicationInsights.name
   scope: resourceGroup((properties.applicationInsights.?subscriptionId ?? subscriptionId), (properties.applicationInsights.?resourceGroupName ?? resourceGroupName))
 }
-resource functionStorageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' existing = if (false) {
+resource functionStorageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' existing = if (isFunctionApplication) {
   name: properties.functionExtension.storageAccount.name
   scope: resourceGroup((properties.functionExtension.?storageAccount.?subscriptionId ?? subscription().subscriptionId), (properties.functionExtension.?storageAccount.?resourceGroupName ?? resourceGroup().name))
 }
-resource parentSite 'Microsoft.Web/sites@2022-09-01' existing = if (isSlotNameNotEmpty) {
-  name: name
-}
-resource roleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in roleAssignmentsTransform: {
-  name: sys.guid(site.id, assignment.roleDefinitionId, (empty(assignment.principalId) ? any(assignment.resource).id : assignment.principalId))
-  properties: {
-    description: assignment.description
-    principalId: (empty(assignment.principalId) ? reference(any(assignment.resource).id, any(assignment.resource).apiVersion, 'Full')[(('microsoft.managedidentity/userassignedidentities' == toLower(any(assignment.resource).type)) ? 'properties' : 'identity')].principalId : assignment.principalId)
-    roleDefinitionId: assignment.roleDefinitionId
-  }
-  scope: site
+resource privateEndpointsSubnetsRef 'Microsoft.Network/virtualNetworks/subnets@2022-11-01' existing = [for endpoint in privateEndpoints: {
+  name: '${endpoint.value.subnet.virtualNetworkName}/${endpoint.value.subnet.name}'
+  scope: resourceGroup((endpoint.value.subnet.?subscriptionId ?? subscription().subscriptionId), (endpoint.value.subnet.?resourceGroupName ?? resourceGroup().name))
 }]
 resource servicePlanRef 'Microsoft.Web/serverfarms@2022-09-01' existing = {
   name: properties.servicePlan.name
@@ -144,18 +137,32 @@ resource site 'Microsoft.Web/sites@2022-09-01' = if (!isSlotNameNotEmpty) {
   properties: siteProperties
   tags: siteTags
 }
-resource slot 'Microsoft.Web/sites/slots@2022-09-01' = if (isSlotNameNotEmpty) {
-  identity: siteIdentity
-  kind: siteKind
-  location: location
-  name: (properties.?slotName ?? 'default')
-  parent: parentSite
-  properties: siteProperties
-  tags: siteTags
-}
-resource slotWebConfig 'Microsoft.Web/sites/slots/config@2022-09-01' = if (isSlotNameNotEmpty) {
+resource sitePrivateEndpoints 'Microsoft.Network/privateEndpoints@2022-11-01' = [for (endpoint, index) in privateEndpoints: if (!isSlotNameNotEmpty) {
+  name: endpoint.key
+  properties: {
+    privateLinkServiceConnections: [{
+      name: endpoint.key
+      properties: {
+        groupIds: [ 'sites' ]
+        privateLinkServiceId: site.id
+      }
+    }]
+    subnet: { id: privateEndpointsSubnetsRef[index].id }
+  }
+  tags: tags
+}]
+resource siteRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in roleAssignmentsTransform: if (!isSlotNameNotEmpty) {
+  name: sys.guid(site.id, assignment.roleDefinitionId, (empty(assignment.principalId) ? any(assignment.resource).id : assignment.principalId))
+  properties: {
+    description: assignment.description
+    principalId: (empty(assignment.principalId) ? reference(any(assignment.resource).id, any(assignment.resource).apiVersion, 'Full')[(('microsoft.managedidentity/userassignedidentities' == toLower(any(assignment.resource).type)) ? 'properties' : 'identity')].principalId : assignment.principalId)
+    roleDefinitionId: assignment.roleDefinitionId
+  }
+  scope: site
+}]
+resource siteWebConfig 'Microsoft.Web/sites/config@2022-09-01' = if (!isSlotNameNotEmpty) {
   name: 'web'
-  parent: slot
+  parent: site
   properties: {
     healthCheckPath: (isHealthCheckEnabled ? (healthCheck.?path ?? '/health-check') : '')
     minTlsVersion: '1.2'
@@ -167,9 +174,44 @@ resource slotWebConfig 'Microsoft.Web/sites/slots/config@2022-09-01' = if (isSlo
     }))
   }
 }
-resource webConfig 'Microsoft.Web/sites/config@2022-09-01' = {
+resource slot 'Microsoft.Web/sites/slots@2022-09-01' = if (isSlotNameNotEmpty) {
+  identity: siteIdentity
+  kind: siteKind
+  location: location
+  name: (properties.?slotName ?? 'default')
+  parent: slotSite
+  properties: siteProperties
+  tags: siteTags
+}
+resource slotPrivateEndpoints 'Microsoft.Network/privateEndpoints@2022-11-01' = [for (endpoint, index) in privateEndpoints: if (isSlotNameNotEmpty) {
+  name: endpoint.key
+  properties: {
+    privateLinkServiceConnections: [{
+      name: endpoint.key
+      properties: {
+        groupIds: [ 'sites-${site.name}' ]
+        privateLinkServiceId: site.id
+      }
+    }]
+    subnet: { id: privateEndpointsSubnetsRef[index].id }
+  }
+  tags: tags
+}]
+resource slotRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in roleAssignmentsTransform: if (isSlotNameNotEmpty) {
+  name: sys.guid(slot.id, assignment.roleDefinitionId, (empty(assignment.principalId) ? any(assignment.resource).id : assignment.principalId))
+  properties: {
+    description: assignment.description
+    principalId: (empty(assignment.principalId) ? reference(any(assignment.resource).id, any(assignment.resource).apiVersion, 'Full')[(('microsoft.managedidentity/userassignedidentities' == toLower(any(assignment.resource).type)) ? 'properties' : 'identity')].principalId : assignment.principalId)
+    roleDefinitionId: assignment.roleDefinitionId
+  }
+  scope: slot
+}]
+resource slotSite 'Microsoft.Web/sites@2022-09-01' existing = if (isSlotNameNotEmpty) {
+  name: name
+}
+resource slotWebConfig 'Microsoft.Web/sites/slots/config@2022-09-01' = if (isSlotNameNotEmpty) {
   name: 'web'
-  parent: site
+  parent: slot
   properties: {
     healthCheckPath: (isHealthCheckEnabled ? (healthCheck.?path ?? '/health-check') : '')
     minTlsVersion: '1.2'

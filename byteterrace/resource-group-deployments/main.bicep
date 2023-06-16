@@ -184,6 +184,9 @@ type networkSecurityGroup = {
   }?
   tags: object?
 }
+type privateEndpoint = {
+  subnet: subnetReference
+}
 type propertiesInfo = {
   applicationSecurityGroups: { *: applicationSecurityGroup }?
   applicationServiceEnvironments: { *: applicationServiceEnvironment }?
@@ -202,6 +205,7 @@ type propertiesInfo = {
   publicIpAddresses: { *: publicIpAddress }?
   publicIpPrefixes: { *: publicIpPrefix }?
   routeTables: { *: routeTable }?
+  storageAccounts: { *: storageAccount }?
   userManagedIdentities: { *: userManagedIdentity }?
   virtualMachines: { *: virtualMachine }?
   virtualMachineScaleSets: { *: virtualMachineScaleSet }?
@@ -269,6 +273,38 @@ type routeTable = {
     }
   }?
   tags: object?
+}
+type storageAccount = {
+  accessTier: ('Cool' | 'Hot' | 'Premium')
+  blobServices: {
+    isAnonymousAccessEnabled: bool?
+    privateEndpoints: { *: privateEndpoint }?
+  }?
+  fileServices: {
+    privateEndpoints: { *: privateEndpoint }?
+  }?
+  firewallRules: string[]?
+  identity: resourceIdentity?
+  isAllowTrustedMicrosoftServicesEnabled: bool?
+  isHierarchicalNamespaceEnabled: bool?
+  isHttpsOnlyModeEnabled: bool?
+  isNetworkFileSystemV3Enabled: bool?
+  isPublicNetworkAccessEnabled: bool?
+  isSecureFileTransferProtocolEnabled: bool?
+  isSharedKeyAccessEnabled: bool?
+  location: string?
+  queueServices: {
+    encryptionServiceKeyType: string?
+    privateEndpoints: { *: privateEndpoint }?
+  }?
+  roleAssignments: roleAssignment[]?
+  sku: resourceSku
+  tableServices: {
+    encryptionServiceKeyType: string?
+    privateEndpoints: { *: privateEndpoint }?
+  }?
+  tags: object?
+  virtualNetworkRules: virtualNetworkRule[]?
 }
 type subnetReference = {
   name: string
@@ -465,6 +501,7 @@ type virtualMachineScaleSet = {
   isEncryptionAtHostEnabled: bool?
   isGuestAgentEnabled: bool?
   isHibernationEnabled: bool?
+  isOverprovisioningEnabled: bool?
   isSecureBootEnabled: bool?
   isUltraSsdEnabled: bool?
   isVirtualTrustedPlatformModuleEnabled: bool?
@@ -508,6 +545,7 @@ type virtualMachineScaleSet = {
             allocationMethod: ('Dynamic' | 'Static')?
             domainNameLabel: string?
             idleTimeoutInMinutes: int?
+            name: string
             sku: resourceSku?
             version: ('IPv4' | 'IPv6')?
           }?
@@ -610,6 +648,7 @@ type webApplication = {
   isWebSocketSupportEnabled: bool?
   is32BitModeEnabled: bool?
   location: string?
+  privateEndpoints: { *: privateEndpoint }?
   roleAssignments: roleAssignment[]?
   servicePlan: resourceReference?
   subnet: subnetReference?
@@ -945,6 +984,42 @@ module routeTables 'br/bytrc:microsoft/network/route-tables:0.0.0' = [for (table
     tags: (table.value.?tags ?? tags)
   }
 }]
+module storageAccounts 'br/bytrc:microsoft/storage/accounts:0.0.0' = [for (account, index) in items(properties.?storageAccounts ?? {}): if (!contains(exclude, 'storageAccounts') && (empty(include) || contains(include, 'storageAccounts'))) {
+  dependsOn: [
+    keyVaults
+    userManagedIdentities
+    virtualNetworks
+  ]
+  name: '${deployment.name}-data-${padLeft(index, 3, '0')}'
+  params: {
+    location: (account.value.?location ?? deployment.location)
+    name: account.key
+    properties: {
+      accessTier: account.value.accessTier
+      blobServices: (account.value.?blobServices ?? null)
+      fileServices: (account.value.?fileServices ?? null)
+      firewallRules: (account.value.?firewallRules ?? null)
+      identity: (account.value.?identity ?? null)
+      isAllowTrustedMicrosoftServicesEnabled: (account.value.?isAllowTrustedMicrosoftServicesEnabled ?? null)
+      isHierarchicalNamespaceEnabled: (account.value.?isHierarchicalNamespaceEnabled ?? null)
+      isHttpsOnlyModeEnabled: (account.value.?isHttpsOnlyModeEnabled ?? null)
+      isNetworkFileSystemV3Enabled: (account.value.?isNetworkFileSystemV3Enabled ?? null)
+      isPublicNetworkAccessEnabled: (account.value.?isPublicNetworkAccessEnabled ?? null)
+      isSecureFileTransferProtocolEnabled: (account.value.?isSecureFileTransferProtocolEnabled ?? null)
+      isSharedKeyAccessEnabled: (account.value.?isSharedKeyAccessEnabled ?? null)
+      queueServices: (account.value.?queueServices ?? null)
+      roleAssignments: [for assignment in (account.value.?roleAssignments ?? []): {
+        principalId: (assignment.?principalId ?? '')
+        resource: (assignment.?resource ?? {})
+        roleDefinitionId: roleMap[assignment.roleDefinitionName]
+      }]
+      sku: account.value.sku
+      tableServices: (account.value.?tableServices ?? null)
+      virtualNetworkRules: (account.value.?virtualNetworkRules ?? null)
+    }
+    tags: (account.value.?tags ?? tags)
+  }
+}]
 module userManagedIdentities 'br/bytrc:microsoft/managed-identity/user-assigned-identities:0.0.0' = [for (identity, index) in items(properties.?userManagedIdentities ?? {}): if (!contains(exclude, 'userManagedIdentities') && (empty(include) || contains(include, 'userManagedIdentities'))) {
   name: '${deployment.name}-umi-${padLeft(index, 3, '0')}'
   params: {
@@ -1041,6 +1116,7 @@ module virtualMachineScaleSets 'br/bytrc:microsoft/compute/virtual-machine-scale
       isEncryptionAtHostEnabled: (set.value.?isEncryptionAtHostEnabled ?? null)
       isGuestAgentEnabled: (set.value.?isGuestAgentEnabled ?? null)
       isHibernationEnabled: (set.value.?isHibernationEnabled ?? null)
+      isOverprovisioningEnabled: (set.value.?isOverprovisioningEnabled ?? null)
       isSecureBootEnabled: (set.value.?isSecureBootEnabled ?? null)
       isUltraSsdEnabled: (set.value.?isUltraSsdEnabled ?? null)
       isVirtualTrustedPlatformModuleEnabled: (set.value.?isVirtualTrustedPlatformModuleEnabled ?? null)
@@ -1111,6 +1187,7 @@ module webApplications 'br/bytrc:microsoft/web/sites:0.0.0' = [for (application,
       isRemoteDebuggingEnabled: (application.value.?isRemoteDebuggingEnabled ?? null)
       isWebSocketSupportEnabled: (application.value.?isWebSocketSupportEnabled ?? null)
       is32BitModeEnabled: (application.value.?is32BitModeEnabled ?? null)
+      privateEndpoints: (application.value.?privateEndpoints ?? null)
       roleAssignments: [for assignment in (application.value.?roleAssignments ?? []): {
         principalId: (assignment.?principalId ?? '')
         resource: (assignment.?resource ?? {})
@@ -1152,6 +1229,7 @@ module webApplicationSlots 'br/bytrc:microsoft/web/sites:0.0.0' = [for (applicat
       isRemoteDebuggingEnabled: (application.value.?isRemoteDebuggingEnabled ?? null)
       isWebSocketSupportEnabled: (application.value.?isWebSocketSupportEnabled ?? null)
       is32BitModeEnabled: (application.value.?is32BitModeEnabled ?? null)
+      privateEndpoints: (application.value.?privateEndpoints ?? null)
       roleAssignments: [for assignment in (application.value.?roleAssignments ?? []): {
         principalId: (assignment.?principalId ?? '')
         resource: (assignment.?resource ?? {})

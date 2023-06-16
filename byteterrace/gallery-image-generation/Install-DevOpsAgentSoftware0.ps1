@@ -193,7 +193,7 @@ function Install-AzureCli {
         [string]$LogFilePath
     );
 
-    $extensionsPath = ([IO.Path]::Combine(${Env:CommonProgramFiles}, 'AzureCliExtensions'));;
+    $extensionsPath = ([IO.Path]::Combine(${Env:CommonProgramFiles}, 'AzureCliExtensions'));
     $installerFilePath = Get-File `
         -LogFilePath $LogFilePath `
         -SourceUri 'https://aka.ms/installazurecliwindows' `
@@ -212,6 +212,18 @@ function Install-AzureCli {
             $extensionsPath,
             [EnvironmentVariableTarget]::Machine
         );
+
+    $extensionsPathAcl = Get-Acl -Path $extensionsPath;
+    $extensionsPathAcl.SetAccessRule([Security.AccessControl.FileSystemAccessRule]::new(
+            'Users',
+            ([Security.AccessControl.FileSystemRights]::FullControl),
+            ([Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [Security.AccessControl.InheritanceFlags]::ObjectInherit),
+            ([Security.AccessControl.PropagationFlags]::None),
+            ([Security.AccessControl.AccessControlType]::Allow)
+        ));
+    Set-Acl `
+        -AclObject $extensionsPathAcl `
+        -Path $extensionsPath;
 
     $process = Start-Process `
         -ArgumentList @(
