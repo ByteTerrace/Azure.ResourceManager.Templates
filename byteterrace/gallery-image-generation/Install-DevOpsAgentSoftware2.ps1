@@ -902,10 +902,11 @@ function Install-OpenSsl {
             ([IO.Path]::Combine((Get-Location), $installerData.Key)),
             $installerData.Value.Uri
         );
-
+    $openSslPath = [IO.Path]::Combine(${Env:ProgramFiles}, 'OpenSSL');
     $process = Start-Process `
         -ArgumentList @(
             '/ALLUSERS',
+            "/DIR=`"${openSslPath}`"",
             '/NORESTART',
             '/SP-',
             '/SUPPRESSMSGBOXES',
@@ -926,6 +927,8 @@ function Install-OpenSsl {
             -Force `
             -Path $installerFilePath;
     }
+
+    Add-WindowsMachinePath -Path ([IO.Path]::Combine($openSslPath, 'bin'));
 }
 function Install-Pipx {
     $pipxBin = (New-Item `
@@ -960,7 +963,6 @@ function Install-PostgresSql {
             ([IO.Path]::Combine((Get-Location), $installerFileName)),
             "https://get.enterprisedb.com/postgresql/${installerFileName}"
         );
-
     $process = Start-Process `
         -ArgumentList @(
             '--enable_acledit', '1',
