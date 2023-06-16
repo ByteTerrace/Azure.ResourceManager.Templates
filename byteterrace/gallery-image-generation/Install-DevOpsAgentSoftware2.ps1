@@ -170,17 +170,19 @@ class MozillaFirefoxVersionsManifest {
 }
 class OpenSslReleaseFile {
     [Text.Json.Serialization.JsonPropertyName('arch')]
-    [string]$Architecture
-    [int]$Bits
+    [string]$Architecture;
+    [int]$Bits;
     [Text.Json.Serialization.JsonPropertyName('installer')]
-    [string]$InstallerType
+    [string]$InstallerType;
+    [Text.Json.Serialization.JsonPropertyName('light')]
+    [bool]$IsLight;
     [Text.Json.Serialization.JsonPropertyName('url')]
-    [string]$Uri
-    [Text.Json.Serialization.JsonPropertyName('base_ver')]
-    [string]$Version
+    [string]$Uri;
+    [Text.Json.Serialization.JsonPropertyName('basever')]
+    [string]$Version;
 }
 class OpenSslReleaseManifest {
-    [Collections.Generic.Dictionary[string,[OpenSslReleaseFile]]]$Files
+    [Collections.Generic.Dictionary[string,[OpenSslReleaseFile]]]$Files;
 }
 class NodeJsVersionsManifest {
     [string[]]$Files;
@@ -469,7 +471,7 @@ function Install-DotNetSdk {
         -Version $Version |
         Out-Null;
 }
-function Install-DotNetSdks {
+function Install-DotNetTools {
     param(
         [HttpService]$HttpService,
         [Text.Json.JsonSerializerOptions]$JsonSerializerOptions
@@ -479,8 +481,17 @@ function Install-DotNetSdks {
         -Force `
         -ItemType 'Directory' `
         -Path ([IO.Path]::Combine((Get-WindowsMachineVariable -Expand -Name 'AGENT_TOOLSDIRECTORY'), 'dotnet'))).FullName;
+    $installerFileName = 'dotnet-install.ps1';
+    $installerFilePath = $HttpService.DownloadFile(
+            ([IO.Path]::Combine((Get-Location), $installerFileName)),
+            "https://dot.net/v1/${installerFileName}"
+        );
+    $sdkDirectoryPath = ([IO.Path]::Combine(${Env:ProgramFiles}, 'dotnet'));
 
     Add-WindowsMachinePath -Path $dotNetToolsPath;
+    Set-WindowsMachineVariable `
+        -Name 'DOTNET_ADD_GLOBAL_TOOLS_TO_PATH ' `
+        -Value '0';
     Set-WindowsMachineVariable `
         -Name 'DOTNET_CLI_TELEMETRY_OPTOUT ' `
         -Value '1';
@@ -494,27 +505,28 @@ function Install-DotNetSdks {
         -Name 'DOTNET_SKIP_FIRST_TIME_EXPERIENCE' `
         -Value '1';
     Update-WindowsVariables;
-    dotnet tool install 'Azure.Bicep.RegistryModuleTool' --tool-path $dotNetToolsPath;
-
-    $installerFileName = 'dotnet-install.ps1';
-    $installerFilePath = $HttpService.DownloadFile(
-            ([IO.Path]::Combine((Get-Location), $installerFileName)),
-            "https://dot.net/v1/${installerFileName}"
-        );
-    $sdkDirectoryPath = ([IO.Path]::Combine(${Env:ProgramFiles}, 'dotnet'));
-
+    @(
+        'Azure.Bicep.RegistryModuleTool',
+        'dotnet-coverage',
+        'dotnet-ef',
+        'dotnet-format',
+        'dotnet-sonarscanner',
+        'Microsoft.Playwright.CLI',
+        'nbgv'
+    ) | ForEach-Object {
+            dotnet tool install $_ --tool-path $dotNetToolsPath;
+        };
     @(
         '3.1.*',
         '6.0.*'
-    ) |
-        ForEach-Object {
+    ) | ForEach-Object {
             Install-DotNetSdk `
                 -HttpService $HttpService `
                 -InstallerFilePath $installerFilePath `
                 -JsonSerializerOptions $JsonSerializerOptions `
                 -SdkDirectoryPath $sdkDirectoryPath `
                 -Version $_;
-        }
+        };
 }
 function Install-GitHubActionsTool {
     param(
@@ -865,6 +877,56 @@ function Install-NodeJs {
     npm config set cache $cachePath --global;
     npm config set registry https://registry.npmjs.org/;
 }
+function Install-OpenSsl {
+    param(
+        [HttpService]$HttpService,
+        [Text.Json.JsonSerializerOptions]$JsonSerializerOptions
+    );
+
+    $installerData = $HttpService.GetJsonAsT(
+            $JsonSerializerOptions,
+            [OpenSslReleaseManifest],
+            'https://raw.githubusercontent.com/slproweb/opensslhashes/master/win32_openssl_hashes.json'
+        ).
+        Files.
+        GetEnumerator() |
+        Where-Object {
+            ('INTEL' -eq $_.Value.Architecture) -and
+            (64 -eq $_.Value.Bits) -and
+            ('exe' -eq $_.Value.InstallerType) -and
+            ($false -eq $_.Value.IsLight)
+        } |
+        Sort-Object -Descending { $_.Value.Version } |
+        Select-Object -First 1;
+    $installerFilePath = $HttpService.DownloadFile(
+            ([IO.Path]::Combine((Get-Location), $installerData.Key)),
+            $installerData.Value.Uri
+        );
+
+    $process = Start-Process `
+        -ArgumentList @(
+            '/ALLUSERS',
+            '/NORESTART',
+            '/SP-',
+            '/SUPPRESSMSGBOXES',
+            '/VERYSILENT'
+        ) `
+        -FilePath $installerFilePath `
+        -PassThru `
+        -Wait;
+
+    if (0 -ne $process.ExitCode) {
+        throw "Non-zero exit code returned by the process: $($process.ExitCode).";
+    }
+
+    Start-Sleep -Seconds 3;
+
+    if (Test-Path -Path $installerFilePath) {
+        Remove-Item `
+            -Force `
+            -Path $installerFilePath;
+    }
+}
 function Install-Pipx {
     $pipxBin = (New-Item `
         -Force `
@@ -1129,9 +1191,9 @@ try {
     $ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
     $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
     [Net.ServicePointManager]::SecurityProtocol = (
-        [Net.SecurityProtocolType]::Tls12 -bor `
-        [Net.SecurityProtocolType]::Tls13
-    );
+            [Net.SecurityProtocolType]::Tls12 -bor `
+            [Net.SecurityProtocolType]::Tls13
+        );
 
     $httpClient = [Net.Http.HttpClient]::new();
     $httpClient.BaseAddress = $null;
@@ -1146,7 +1208,7 @@ try {
     Install-Docker `
         -HttpService $httpService `
         -JsonSerializerOptions $jsonSerializerOptions;
-    Install-DotNetSdks `
+    Install-DotNetTools `
         -HttpService $httpService `
         -JsonSerializerOptions $jsonSerializerOptions;
     Install-GitHubActionsTools -HttpService $httpService;
@@ -1154,13 +1216,16 @@ try {
     Install-MozillaFirefox `
         -HttpService $httpService `
         -Version 'latest';
+    Install-NodeJs `
+        -HttpService $httpService `
+        -Version 'latest';
+    Install-OpenSsl `
+        -HttpService $httpService `
+        -JsonSerializerOptions $jsonSerializerOptions;
     Install-PostgresSql `
         -HttpService $httpService `
         -Version '15.3-1';
     Install-PowerShellModules;
-    Install-NodeJs `
-        -HttpService $httpService `
-        -Version 'latest';
     Install-Pipx;
     Install-VisualStudioExtensions -HttpService $httpService;
 }
