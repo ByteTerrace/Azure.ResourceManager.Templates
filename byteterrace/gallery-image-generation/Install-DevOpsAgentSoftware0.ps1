@@ -1,11 +1,24 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [string]$AgentToolsDirectoryPath,
-    [Parameter(Mandatory = $true)]
-    [string]$LogFilePath
+    [string]$AgentToolsDirectoryPath
 );
 
+function Add-BillOfMaterialsEntry {
+    param(
+        [string]$AgentToolsDirectoryPath,
+        [string]$Name,
+        [string]$Publisher,
+        [string]$SourceUri,
+        [string]$Version
+    );
+
+    $rs = [char]::ConvertFromUtf32(30);
+
+    Add-Content `
+        -Path ([IO.Path]::Combine(${AgentToolsDirectoryPath}, 'BillOfMaterials.log')) `
+        -Value "${Name}${rs}${Publisher}${rs}${SourceUri}${rs}${Version}";
+}
 function Disable-Debuggers {
     New-ItemProperty `
         -Force `
@@ -116,7 +129,6 @@ function Enable-RootHypervisorScheduler {
 function Get-File {
     param(
         [hashtable]$Headers,
-        [string]$LogFilePath,
         [string]$SourceUri,
         [string]$TargetPath
     );
@@ -124,10 +136,6 @@ function Get-File {
     $webClient = $null;
 
     try {
-        Write-Log `
-            -Message "Downloading file from '${SourceUri}' to '${TargetPath}'." `
-            -Path $LogFilePath;
-
         $webClient = [Net.WebClient]::new();
 
         if ($null -ne $Headers) {
@@ -153,18 +161,22 @@ function Get-TimeMarker {
 }
 function Install-AmazonWebServicesCli {
     param(
-        [string]$LogFilePath
+        [string]$AgentToolsDirectoryPath
     );
 
-    $installerFileName = 'AWSCLIV2.msi';
-    $installerFilePath = Get-File `
-        -LogFilePath $LogFilePath `
-        -SourceUri "https://awscli.amazonaws.com/${installerFileName}" `
-        -TargetPath ([IO.Path]::Combine((Get-Location), $installerFileName));
+    $sourceFileName = 'AWSCLIV2.msi';
+    $sourceUri = "https://awscli.amazonaws.com/${sourceFileName}";
 
-    Write-Log `
-        -Message "Installing Amazon Web Services CLI." `
-        -Path $LogFilePath;
+    Add-BillOfMaterialsEntry `
+        -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
+        -Name 'Amazon Web Services CLI' `
+        -Publisher 'Amazon' `
+        -SourceUri $sourceUri `
+        -Version 'Latest';
+
+    $installerFilePath = Get-File `
+        -SourceUri $sourceUri `
+        -TargetPath ([IO.Path]::Combine((Get-Location), $sourceFileName));
 
     $process = Start-Process `
         -ArgumentList @(
@@ -190,18 +202,23 @@ function Install-AmazonWebServicesCli {
 }
 function Install-AzureCli {
     param(
-        [string]$LogFilePath
+        [string]$AgentToolsDirectoryPath
     );
 
     $extensionsPath = ([IO.Path]::Combine(${Env:CommonProgramFiles}, 'AzureCliExtensions'));
+    $sourceUri = 'https://aka.ms/installazurecliwindows';
+
+    Add-BillOfMaterialsEntry `
+        -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
+        -Name 'Azure CLI' `
+        -Publisher 'Microsoft' `
+        -SourceUri $sourceUri `
+        -Version 'Latest';
+
     $installerFilePath = Get-File `
-        -LogFilePath $LogFilePath `
-        -SourceUri 'https://aka.ms/installazurecliwindows' `
+        -SourceUri $sourceUri `
         -TargetPath ([IO.Path]::Combine((Get-Location), 'azure-cli.msi'));
 
-    Write-Log `
-        -Message 'Installing Azure CLI.' `
-        -Path $LogFilePath;
     New-Item `
         -Force `
         -ItemType 'Directory' `
@@ -249,22 +266,25 @@ function Install-AzureCli {
 }
 function Install-GitHubCli {
     param(
-        [string]$LogFilePath
+        [string]$AgentToolsDirectoryPath
     );
 
-    $installerFileName = 'GitHubCli_Windows_Amd64.msi';
+    $sourceUri = 'https://api.github.com/repos/cli/cli/releases/latest';
+
+    Add-BillOfMaterialsEntry `
+        -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
+        -Name 'GitHub CLI' `
+        -Publisher 'GitHub' `
+        -SourceUri $sourceUri `
+        -Version 'Latest';
+
     $installerFilePath = Get-File `
-        -LogFilePath $LogFilePath `
         -SourceUri ((Invoke-RestMethod `
             -Method 'GET' `
-            -Uri 'https://api.github.com/repos/cli/cli/releases/latest' `
+            -Uri $sourceUri `
             -UseBasicParsing).assets.browser_download_url -match 'windows_amd64.msi' |
             Select-Object -First 1) `
-        -TargetPath ([IO.Path]::Combine((Get-Location), $installerFileName));
-
-    Write-Log `
-        -Message 'Installing GitHub CLI.' `
-        -Path $LogFilePath;
+        -TargetPath ([IO.Path]::Combine((Get-Location), 'GitHubCli_Windows_Amd64.msi'));
 
     $process = Start-Process `
         -ArgumentList @(
@@ -289,18 +309,22 @@ function Install-GitHubCli {
 }
 function Install-GoogleCloudCli {
     param(
-        [string]$LogFilePath
+        [string]$AgentToolsDirectoryPath
     );
 
-    $installerFileName = 'GoogleCloudSDKInstaller.exe';
-    $installerFilePath = Get-File `
-        -LogFilePath $LogFilePath `
-        -SourceUri "https://dl.google.com/dl/cloudsdk/channels/rapid/${installerFileName}" `
-        -TargetPath ([IO.Path]::Combine((Get-Location), $installerFileName));
+    $sourceFileName = 'GoogleCloudSDKInstaller.exe';
+    $sourceUri = "https://dl.google.com/dl/cloudsdk/channels/rapid/${sourceFileName}";
 
-    Write-Log `
-        -Message 'Installing Google Cloud CLI.' `
-        -Path $LogFilePath;
+    Add-BillOfMaterialsEntry `
+        -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
+        -Name 'Google Cloud CLI' `
+        -Publisher 'Google' `
+        -SourceUri $sourceUri `
+        -Version 'Latest';
+
+    $installerFilePath = Get-File `
+        -SourceUri $sourceUri `
+        -TargetPath ([IO.Path]::Combine((Get-Location), $sourceFileName));
 
     $process = Start-Process `
         -ArgumentList @(
@@ -326,12 +350,8 @@ function Install-GoogleCloudCli {
 }
 function Install-NuGetPackageProvider {
     param(
-        [string]$LogFilePath
+        [string]$AgentToolsDirectoryPath
     );
-
-    Write-Log `
-        -Message 'Installing NuGet package provider.' `
-        -Path $LogFilePath;
 
     Install-PackageProvider `
         -Force `
@@ -344,7 +364,7 @@ function Install-NuGetPackageProvider {
 }
 function Install-PowerShell {
     param(
-        [string]$LogFilePath,
+        [string]$AgentToolsDirectoryPath,
         [string]$Version
     );
 
@@ -355,15 +375,19 @@ function Install-PowerShell {
             ConvertFrom-Json).LTSReleaseTag.Substring(1);
     }
 
-    $installerFileName = "PowerShell-${Version}-win-x64.msi";
-    $installerFilePath = Get-File `
-        -LogFilePath $LogFilePath `
-        -SourceUri "https://github.com/PowerShell/PowerShell/releases/download/v${Version}/${installerFileName}" `
-        -TargetPath ([IO.Path]::Combine((Get-Location), $installerFileName));
+    $sourceFileName = "PowerShell-${Version}-win-x64.msi";
+    $sourceUri = "https://github.com/PowerShell/PowerShell/releases/download/v${Version}/${sourceFileName}";
 
-    Write-Log `
-        -Message "Installing PowerShell ${Version}." `
-        -Path $LogFilePath;
+    Add-BillOfMaterialsEntry `
+        -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
+        -Name 'PowerShell' `
+        -Publisher 'Microsoft' `
+        -SourceUri $sourceUri `
+        -Version $Version;
+
+    $installerFilePath = Get-File `
+        -SourceUri $sourceUri `
+        -TargetPath ([IO.Path]::Combine((Get-Location), $sourceFileName));
 
     $process = Start-Process `
         -ArgumentList @(
@@ -388,27 +412,27 @@ function Install-PowerShell {
 }
 function Install-WindowsFeatures {
     param (
-        [hashtable[]]$Features,
-        [string]$LogFilePath
+        [string]$AgentToolsDirectoryPath,
+        [hashtable[]]$Features
     );
 
     foreach ($feature in $Features) {
         Write-Log `
-            -Message "Installing Windows feature '$($feature.Name)'." `
-            -Path $LogFilePath;
+            -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
+            -Message "Installing Windows feature '$($feature.Name)'.";
         Install-WindowsFeature @feature | Out-Null;
     }
 }
 function Install-WindowsOptionalFeatures {
     param (
-        [string[]]$FeatureNames,
-        [string]$LogFilePath
+        [string]$AgentToolsDirectoryPath,
+        [string[]]$FeatureNames
     );
 
     foreach ($name in $FeatureNames) {
         Write-Log `
-            -Message "Enabling Windows optional feature '${name}'." `
-            -Path $LogFilePath;
+            -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
+            -Message "Enabling Windows optional feature '${name}'.";
         Enable-WindowsOptionalFeature `
             -FeatureName $name `
             -NoRestart `
@@ -418,19 +442,23 @@ function Install-WindowsOptionalFeatures {
 }
 function Install-7Zip {
     param(
-        [string]$LogFilePath,
+        [string]$AgentToolsDirectoryPath,
         [string]$Version
     );
 
-    $installerFileName = "7z$($Version.Replace('.', ''))-x64.exe";
-    $installerFilePath = Get-File `
-        -LogFilePath $LogFilePath `
-        -SourceUri "https://www.7-zip.org/a/${installerFileName}" `
-        -TargetPath ([IO.Path]::Combine((Get-Location), $installerFileName));
+    $sourceFileName = "7z$($Version.Replace('.', ''))-x64.exe";
+    $sourceUri = "https://www.7-zip.org/a/${sourceFileName}";
 
-    Write-Log `
-        -Message "Installing 7-Zip ${Version}." `
-        -Path $LogFilePath;
+    Add-BillOfMaterialsEntry `
+        -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
+        -Name '7-Zip' `
+        -Publisher 'Igor Pavlov' `
+        -SourceUri $sourceUri `
+        -Version $Version;
+
+    $installerFilePath = Get-File `
+        -SourceUri $sourceUri `
+        -TargetPath ([IO.Path]::Combine((Get-Location), $sourceFileName));
 
     $process = Start-Process `
         -ArgumentList @( '/S' ) `
@@ -452,7 +480,7 @@ function Install-7Zip {
 }
 function Resize-SystemDrive {
     param(
-        [string]$LogFilePath,
+        [string]$AgentToolsDirectoryPath,
         [long]$MaximumSize
     );
 
@@ -463,8 +491,8 @@ function Resize-SystemDrive {
     }
 
     Write-Log `
-        -Message "Ensuring that system drive '${driveLetter}' size matches requested size of ${MaximumSize} bytes." `
-        -Path $LogFilePath;
+        -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
+        -Message "Ensuring that system drive '${driveLetter}' size matches requested size of ${MaximumSize} bytes.";
 
     if ($MaximumSize -gt (Get-Partition -DriveLetter $driveLetter).Size) {
         Resize-Partition `
@@ -474,14 +502,14 @@ function Resize-SystemDrive {
 }
 function Set-WindowsGraphicsDeviceInterfaceConfiguration {
     param(
-        [string]$LogFilePath
+        [string]$AgentToolsDirectoryPath
     );
 
     $processHandleQuota = 20480;
 
     Write-Log `
-        -Message "Configuring Windows Graphics Device Interface." `
-        -Path $LogFilePath;
+        -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
+        -Message "Configuring Windows Graphics Device Interface.";
     Set-ItemProperty `
         -Name 'GDIProcessHandleQuota' `
         -Path 'HKLM:/SOFTWARE/Microsoft/Windows NT/CurrentVersion/Windows' `
@@ -495,7 +523,7 @@ function Set-WindowsGraphicsDeviceInterfaceConfiguration {
 }
 function Set-WindowsDefenderConfiguration {
     param(
-        [string]$LogFilePath
+        [string]$AgentToolsDirectoryPath
     );
 
     $advancedthreatProtectionKey = 'HKLM:/SOFTWARE/Policies/Microsoft/Windows Advanced Threat Protection'
@@ -522,8 +550,8 @@ function Set-WindowsDefenderConfiguration {
     };
 
     Write-Log `
-        -Message "Configuring Windows Defender." `
-        -Path $LogFilePath;
+        -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
+        -Message "Configuring Windows Defender.";
 
     Set-MpPreference @preferences | Out-Null;
     Get-ScheduledTask -TaskPath '\Microsoft\Windows\Windows Defender\' | Disable-ScheduledTask | Out-Null;
@@ -538,12 +566,12 @@ function Set-WindowsDefenderConfiguration {
 }
 function Set-WindowsErrorReportingConfiguration {
     param(
-        [string]$LogFilePath
+        [string]$AgentToolsDirectoryPath
     );
 
     Write-Log `
-        -Message "Configuring Windows Error Reporting." `
-        -Path $LogFilePath;
+        -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
+        -Message "Configuring Windows Error Reporting.";
     New-ItemProperty `
         -Force `
         -Name 'DontShowUI' `
@@ -568,31 +596,25 @@ function Set-WindowsErrorReportingConfiguration {
 }
 function Write-Log {
     param(
-        [string]$Message,
-        [string]$Path
+        [string]$AgentToolsDirectoryPath,
+        [string]$Message
     );
 
     Add-Content `
-        -Path $Path `
+        -Path ([IO.Path]::Combine(${AgentToolsDirectoryPath}, 'Install-DevOpsAgentSoftware.log')) `
         -Value "[Install-DevOpsAgentSoftware0.ps1@$(Get-TimeMarker)] - ${Message}";
 }
 
 try {
+    $AgentToolsDirectoryPath = (New-Item `
+        -Force `
+        -ItemType 'Directory' `
+        -Path $AgentToolsDirectoryPath).FullName;
     $ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
     $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12;
 
     Set-StrictMode -Version 'Latest';
-    New-Item `
-        -Force `
-        -ItemType 'Directory' `
-        -Path $AgentToolsDirectoryPath |
-        Out-Null;
-    New-Item `
-        -Force `
-        -ItemType 'Directory' `
-        -Path ([IO.Path]::GetDirectoryName($LogFilePath)) |
-        Out-Null;
     Add-Content `
         -Path ($profile.AllUsersAllHosts) `
         -Value '$ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;';
@@ -601,7 +623,7 @@ try {
         -Value '$ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;';
     [Environment]::SetEnvironmentVariable(
             'AGENT_TOOLSDIRECTORY',
-            ((Get-Item -Path $AgentToolsDirectoryPath).FullName),
+            $AgentToolsDirectoryPath,
             [EnvironmentVariableTarget]::Machine
         );
     Disable-Debuggers;
@@ -611,13 +633,14 @@ try {
     Enable-DeveloperMode;
     Enable-LongPathBehavior;
     Enable-RootHypervisorScheduler;
-    Set-WindowsDefenderConfiguration -LogFilePath $LogFilePath;
-    Set-WindowsErrorReportingConfiguration -LogFilePath $LogFilePath;
-    Set-WindowsGraphicsDeviceInterfaceConfiguration -LogFilePath $LogFilePath;
+    Set-WindowsDefenderConfiguration -AgentToolsDirectoryPath $AgentToolsDirectoryPath;
+    Set-WindowsErrorReportingConfiguration -AgentToolsDirectoryPath $AgentToolsDirectoryPath;
+    Set-WindowsGraphicsDeviceInterfaceConfiguration -AgentToolsDirectoryPath $AgentToolsDirectoryPath;
     Resize-SystemDrive `
-        -LogFilePath $LogFilePath `
+        -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
         -MaximumSize 0;
     Install-WindowsFeatures `
+        -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
         -Features @(
             @{
                 Name = 'Containers';
@@ -630,39 +653,38 @@ try {
                 IncludeAllSubFeature = $true;
                 Name = 'NET-Framework-45-Features';
             }
-        ) `
-        -LogFilePath $LogFilePath;
+        );
     Install-WindowsOptionalFeatures `
+        -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
         -FeatureNames @(
             'Client-ProjFS',
             'HypervisorPlatform',
             'Microsoft-Windows-Subsystem-Linux',
             'VirtualMachinePlatform'
-        ) `
-        -LogFilePath $LogFilePath;
+        );
     Enable-DotNetStrongCrypto;
-    Install-AmazonWebServicesCli -LogFilePath $LogFilePath;
-    Install-AzureCli -LogFilePath $LogFilePath;
-    Install-GitHubCli -LogFilePath $LogFilePath;
-    Install-GoogleCloudCli -LogFilePath $LogFilePath;
-    Install-NuGetPackageProvider -LogFilePath $LogFilePath;
+    Install-AmazonWebServicesCli -AgentToolsDirectoryPath $AgentToolsDirectoryPath;
+    Install-AzureCli -AgentToolsDirectoryPath $AgentToolsDirectoryPath;
+    Install-GitHubCli -AgentToolsDirectoryPath $AgentToolsDirectoryPath;
+    Install-GoogleCloudCli -AgentToolsDirectoryPath $AgentToolsDirectoryPath;
+    Install-NuGetPackageProvider -AgentToolsDirectoryPath $AgentToolsDirectoryPath;
     Install-PowerShell `
-        -LogFilePath $LogFilePath `
+        -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
         -Version 'latest';
     Install-7Zip `
-        -LogFilePath $LogFilePath `
+        -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
         -Version '22.01';
     Write-Log `
-        -Message 'Complete!' `
-        -Path $LogFilePath;
+        -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
+        -Message 'Complete!';
 }
 catch {
     Write-Log `
-        -Message $_ `
-        -Path $LogFilePath;
+        -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
+        -Message $_;
     Write-Log `
-        -Message 'Failed!' `
-        -Path $LogFilePath;
+        -AgentToolsDirectoryPath $AgentToolsDirectoryPath `
+        -Message 'Failed!';
 
     throw;
 }
