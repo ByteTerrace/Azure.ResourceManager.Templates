@@ -1,5 +1,7 @@
 @secure()
 param allowedRdpIpAddress string
+param exclude array = []
+param include array = []
 @secure()
 param operatingSystemAdministrator object
 param projectName string
@@ -58,9 +60,8 @@ var virtualNetwork = {
 module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
   name: '${deployment().name}-main'
   params: {
-    exclude: [
-      'dnsResolvers'
-    ]
+    exclude: exclude
+    include: include
     properties: {
       computeGalleries: {
         '${computeGallery.name}': {

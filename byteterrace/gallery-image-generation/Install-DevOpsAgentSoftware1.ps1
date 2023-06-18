@@ -1,24 +1,32 @@
 [CmdletBinding()]
-param(
-    [Parameter(Mandatory = $true)]
-    [string]$LogFilePath
-);
+param();
 
+function Add-BillOfMaterialsEntry {
+    param(
+        [string]$Name,
+        [string]$Publisher,
+        [string]$SourceUri,
+        [string]$ValidationScript,
+        [string]$Version
+    );
+
+    $rs = [char]::ConvertFromUtf32(30);
+
+    Add-Content `
+        -Path ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, 'BillOfMaterials.log')) `
+        -Value "${Name}${rs}${Publisher}${rs}${SourceUri}${rs}${ValidationScript}${rs}${Version}";
+}
 function Get-File {
     param(
         [hashtable]$Headers,
-        [string]$LogFilePath,
         [string]$SourceUri,
-        [string]$TargetPath
+        [string]$TargetFileName
     );
 
     $webClient = $null;
 
     try {
-        Write-Log `
-            -Message "Downloading file from '${SourceUri}' to '${TargetPath}'." `
-            -Path $LogFilePath;
-
+        $targetPath = ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, $TargetFileName));
         $webClient = [Net.WebClient]::new();
 
         if ($null -ne $Headers) {
@@ -27,9 +35,9 @@ function Get-File {
             }
         }
 
-        $webClient.DownloadFile($SourceUri, $TargetPath);
+        $webClient.DownloadFile($SourceUri, $targetPath);
 
-        return $TargetPath;
+        return $targetPath;
     }
     finally {
         if ($null -ne $webClient) {
@@ -39,42 +47,42 @@ function Get-File {
 
     return $null;
 }
-function Get-TimeMarker {
-    return Get-Date -Format 'yyyyMMddTHH:mm:ssK';
-}
 function Install-VisualStudio {
     param(
         [string[]]$Components,
         [string]$Edition,
-        [string]$LogFilePath,
         [string]$Version
     );
 
-    $bootstrapperArgumentList = @(
-        '--addProductLang', 'en-US',
-        '--includeRecommended',
-        '--nickname', 'DevOps',
-        '--norestart',
-        '--quiet'
-    );
-    $bootstrapperFileName = "vs_${Edition}.exe";
-    $bootstrapperFilePath = Get-File `
-        -LogFilePath $LogFilePath `
-        -SourceUri "https://aka.ms/vs/${Version}/release/${bootstrapperFileName}" `
-        -TargetPath ([IO.Path]::Combine((Get-Location), $bootstrapperFileName));
+    $sourceFileName = "vs_${Edition}.exe";
+    $sourceUri = "https://aka.ms/vs/${Version}/release/${sourceFileName}";
+
+    Add-BillOfMaterialsEntry `
+        -Name "Visual Studio ${Edition}" `
+        -Publisher 'Microsoft' `
+        -SourceUri $sourceUri `
+        -ValidationScript '([version](& "${Env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe" -latest -property catalog_productDisplayVersion)).Major;' `
+        -Version $Version;
+
+    $installerArgumentList = @(
+            '--addProductLang', 'en-US',
+            '--includeRecommended',
+            '--nickname', 'DevOps',
+            '--norestart',
+            '--quiet'
+        );
+    $installerFilePath = Get-File `
+        -SourceUri $sourceUri `
+        -TargetFileName $sourceFileName;
 
     $Components | ForEach-Object {
-        $bootstrapperArgumentList += '--add';
-        $bootstrapperArgumentList += $_;
+        $installerArgumentList += '--add';
+        $installerArgumentList += $_;
     }
 
-    Write-Log `
-        -Message "Installing Visual Studio ${Edition}." `
-        -Path $LogFilePath;
-
     $process = Start-Process `
-        -ArgumentList $bootstrapperArgumentList `
-        -FilePath $bootstrapperFilePath `
+        -ArgumentList $installerArgumentList `
+        -FilePath $installerFilePath `
         -PassThru `
         -Wait;
 
@@ -84,100 +92,75 @@ function Install-VisualStudio {
 
     Start-Sleep -Seconds 3;
 
-    if (Test-Path -Path $bootstrapperFilePath) {
+    if (Test-Path -Path $installerFilePath) {
         Remove-Item `
             -Force `
-            -Path $bootstrapperFilePath;
+            -Path $installerFilePath;
     }
 }
-function Write-Log {
-    param(
-        [string]$Message,
-        [string]$Path
-    );
 
-    Add-Content `
-        -Path $Path `
-        -Value "[Install-DevOpsAgentSoftware1.ps1@$(Get-TimeMarker)] - ${Message}";
-}
-
-try {
-    $ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
-    $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
-    [Net.ServicePointManager]::SecurityProtocol = (
+$ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
+$ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
+[Net.ServicePointManager]::SecurityProtocol = (
         [Net.SecurityProtocolType]::Tls12 -bor `
         [Net.SecurityProtocolType]::Tls13
     );
 
-    Add-Content `
-        -Path ($profile.AllUsersAllHosts) `
-        -Value '$ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;';
-    Add-Content `
-        -Path ($profile.AllUsersAllHosts) `
-        -Value '$ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;';
-    Install-VisualStudio `
-        -Components @(
-            'Component.Dotfuscator',
-            'Microsoft.Component.Azure.DataLake.Tools',
-            'Microsoft.Net.Component.4.5.2.TargetingPack',
-            'Microsoft.Net.Component.4.6.TargetingPack',
-            'Microsoft.Net.Component.4.6.1.TargetingPack',
-            'Microsoft.Net.Component.4.6.2.TargetingPack',
-            'Microsoft.Net.Component.4.7.TargetingPack',
-            'Microsoft.Net.Component.4.7.1.TargetingPack',
-            'Microsoft.Net.Component.4.7.2.TargetingPack',
-            'Microsoft.Net.Component.4.8.TargetingPack',
-            'Microsoft.Net.Component.4.8.1.SDK',
-            'Microsoft.Net.Component.4.8.1.TargetingPack',
-            'Microsoft.VisualStudio.Component.AspNet',
-            'Microsoft.VisualStudio.Component.AspNet45',
-            'Microsoft.VisualStudio.Component.Azure.ServiceFabric.Tools',
-            'Microsoft.VisualStudio.Component.AzureDevOps.OfficeIntegration',
-            'Microsoft.VisualStudio.Component.Debugger.JustInTime',
-            'Microsoft.VisualStudio.Component.DotNetModelBuilder',
-            'Microsoft.VisualStudio.Component.DslTools',
-            'Microsoft.VisualStudio.Component.EntityFramework',
-            'Microsoft.VisualStudio.Component.LinqToSql',
-            'Microsoft.VisualStudio.Component.PortableLibrary',
-            'Microsoft.VisualStudio.Component.SecurityIssueAnalysis',
-            'Microsoft.VisualStudio.Component.Sharepoint.Tools',
-            'Microsoft.VisualStudio.Component.SQL.SSDT',
-            'Microsoft.VisualStudio.Component.WebDeploy',
-            'Microsoft.VisualStudio.Component.Windows10SDK.20348',
-            'Microsoft.VisualStudio.Component.Windows11SDK.22621',
-            'Microsoft.VisualStudio.ComponentGroup.Azure.CloudServices',
-            'Microsoft.VisualStudio.ComponentGroup.Azure.ResourceManager.Tools',
-            'Microsoft.VisualStudio.ComponentGroup.Web.CloudTools',
-            'Microsoft.VisualStudio.Workload.Azure',
-            'Microsoft.VisualStudio.Workload.Data',
-            'Microsoft.VisualStudio.Workload.DataScience',
-            'Microsoft.VisualStudio.Workload.ManagedDesktop',
-            'Microsoft.VisualStudio.Workload.NativeCrossPlat',
-            'Microsoft.VisualStudio.Workload.NativeDesktop',
-            'Microsoft.VisualStudio.Workload.NativeMobile',
-            'Microsoft.VisualStudio.Workload.NetCrossPlat',
-            'Microsoft.VisualStudio.Workload.NetWeb',
-            'Microsoft.VisualStudio.Workload.Node',
-            'Microsoft.VisualStudio.Workload.Office',
-            'Microsoft.VisualStudio.Workload.Python',
-            'Microsoft.VisualStudio.Workload.Universal',
-            'Microsoft.VisualStudio.Workload.VisualStudioExtension',
-            'wasm.tools'
-        ) `
-        -Edition 'Enterprise' `
-        -LogFilePath $LogFilePath `
-        -Version '17';
-    Write-Log `
-        -Message 'Complete!' `
-        -Path $LogFilePath;
-}
-catch {
-    Write-Log `
-        -Message $_ `
-        -Path $LogFilePath;
-    Write-Log `
-        -Message 'Failed!' `
-        -Path $LogFilePath;
-
-    throw;
-}
+Set-StrictMode -Version 'Latest';
+Add-Content `
+    -Path ($profile.AllUsersAllHosts) `
+    -Value '$ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;';
+Add-Content `
+    -Path ($profile.AllUsersAllHosts) `
+    -Value '$ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;';
+Install-VisualStudio `
+    -Components @(
+        'Component.Dotfuscator',
+        'Microsoft.Component.Azure.DataLake.Tools',
+        'Microsoft.Net.Component.4.5.2.TargetingPack',
+        'Microsoft.Net.Component.4.6.TargetingPack',
+        'Microsoft.Net.Component.4.6.1.TargetingPack',
+        'Microsoft.Net.Component.4.6.2.TargetingPack',
+        'Microsoft.Net.Component.4.7.TargetingPack',
+        'Microsoft.Net.Component.4.7.1.TargetingPack',
+        'Microsoft.Net.Component.4.7.2.TargetingPack',
+        'Microsoft.Net.Component.4.8.TargetingPack',
+        'Microsoft.Net.Component.4.8.1.SDK',
+        'Microsoft.Net.Component.4.8.1.TargetingPack',
+        'Microsoft.VisualStudio.Component.AspNet',
+        'Microsoft.VisualStudio.Component.AspNet45',
+        'Microsoft.VisualStudio.Component.Azure.ServiceFabric.Tools',
+        'Microsoft.VisualStudio.Component.AzureDevOps.OfficeIntegration',
+        'Microsoft.VisualStudio.Component.Debugger.JustInTime',
+        'Microsoft.VisualStudio.Component.DotNetModelBuilder',
+        'Microsoft.VisualStudio.Component.DslTools',
+        'Microsoft.VisualStudio.Component.EntityFramework',
+        'Microsoft.VisualStudio.Component.LinqToSql',
+        'Microsoft.VisualStudio.Component.PortableLibrary',
+        'Microsoft.VisualStudio.Component.SecurityIssueAnalysis',
+        'Microsoft.VisualStudio.Component.Sharepoint.Tools',
+        'Microsoft.VisualStudio.Component.SQL.SSDT',
+        'Microsoft.VisualStudio.Component.WebDeploy',
+        'Microsoft.VisualStudio.Component.Windows10SDK.20348',
+        'Microsoft.VisualStudio.Component.Windows11SDK.22621',
+        'Microsoft.VisualStudio.ComponentGroup.Azure.CloudServices',
+        'Microsoft.VisualStudio.ComponentGroup.Azure.ResourceManager.Tools',
+        'Microsoft.VisualStudio.ComponentGroup.Web.CloudTools',
+        'Microsoft.VisualStudio.Workload.Azure',
+        'Microsoft.VisualStudio.Workload.Data',
+        'Microsoft.VisualStudio.Workload.DataScience',
+        'Microsoft.VisualStudio.Workload.ManagedDesktop',
+        'Microsoft.VisualStudio.Workload.NativeCrossPlat',
+        'Microsoft.VisualStudio.Workload.NativeDesktop',
+        'Microsoft.VisualStudio.Workload.NativeMobile',
+        'Microsoft.VisualStudio.Workload.NetCrossPlat',
+        'Microsoft.VisualStudio.Workload.NetWeb',
+        'Microsoft.VisualStudio.Workload.Node',
+        'Microsoft.VisualStudio.Workload.Office',
+        'Microsoft.VisualStudio.Workload.Python',
+        'Microsoft.VisualStudio.Workload.Universal',
+        'Microsoft.VisualStudio.Workload.VisualStudioExtension',
+        'wasm.tools'
+    ) `
+    -Edition 'Enterprise' `
+    -Version '17';

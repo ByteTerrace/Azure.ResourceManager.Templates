@@ -1,8 +1,5 @@
 [CmdletBinding()]
-param(
-    [Parameter(Mandatory = $true)]
-    [string]$LogFilePath
-);
+param();
 
 class DotNetSdkVersionsManifest {
     [Text.Json.Serialization.JsonPropertyName('latest-release')]
@@ -25,8 +22,6 @@ class GitHubActionsReleaseFile {
     [Text.Json.Serialization.JsonPropertyName('filename')]
     [string]$FileName;
     [string]$Platform;
-    [Text.Json.Serialization.JsonPropertyName('platform_version')]
-    [string]$PlatformVersion;
 }
 class GitHubActionsVersionsManifest {
     [GitHubActionsReleaseFile[]]$Files;
@@ -199,6 +194,21 @@ class NodeJsVersionsManifest {
     [string]$Version;
 }
 
+function Add-BillOfMaterialsEntry {
+    param(
+        [string]$Name,
+        [string]$Publisher,
+        [string]$SourceUri,
+        [string]$ValidationScript,
+        [string]$Version
+    );
+
+    $rs = [char]::ConvertFromUtf32(30);
+
+    Add-Content `
+        -Path ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, 'BillOfMaterials.log')) `
+        -Value "${Name}${rs}${Publisher}${rs}${SourceUri}${rs}${ValidationScript}${rs}${Version}";
+}
 function Add-WindowsMachinePath {
     param (
         [string]$Path
@@ -241,7 +251,7 @@ function Get-GitHubActionsToolPath {
     );
 
     return [IO.Path]::Combine(
-            (Get-Item -Path ([IO.Path]::Combine([IO.Path]::Combine((Get-WindowsMachineVariable -Expand -Name 'AGENT_TOOLSDIRECTORY'), $ToolName), $Version)) |
+            (Get-Item -Path ([IO.Path]::Combine([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, $ToolName), $Version)) |
                 Sort-Object -Descending { ([version]$_.name); } |
                 Select-Object -First 1).FullName,
             $Architecture
@@ -267,12 +277,14 @@ function Get-GitHubActionsVersionsManifest {
             $_.IsStable -and
             ($_.Version -like $Version)
         ); } |
-        Select-Object -ExpandProperty 'Files' |
+        Sort-Object -Descending { ([version]$_.Version); } |
+        Select-Object `
+            -ExpandProperty 'Files' `
+            -Property 'Version' |
         Where-Object { (
             ($Architecture -eq $_.Architecture) -and
             ($Platform -eq $_.Platform)
         ); } |
-        Sort-Object { ([version]$_.Version); } |
         Select-Object -First 1;
 }
 function Get-WindowsMachineVariable {
@@ -350,11 +362,20 @@ function Install-AzureCopy {
         [HttpService]$HttpService
     );
 
-    $azCopyPath = [IO.Path]::Combine((Get-WindowsMachineVariable -Expand -Name 'AGENT_TOOLSDIRECTORY'), 'azcopy');
+    $sourceUri = 'https://aka.ms/downloadazcopy-v10-windows';
+
+    Add-BillOfMaterialsEntry `
+        -Name 'AzCopy' `
+        -Publisher 'Microsoft' `
+        -SourceUri $sourceUri `
+        -ValidationScript '([version](azcopy --version).Split('' '')[2]).Major;' `
+        -Version '10';
+
+    $azCopyPath = [IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, 'azcopy');
     $installerFileName = "azcopy_windows_amd64.zip";
     $installerFilePath = $HttpService.DownloadFile(
-            ([IO.Path]::Combine((Get-Location), $installerFileName)),
-            'https://aka.ms/downloadazcopy-v10-windows'
+            ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, $installerFileName)),
+            $sourceUri
         );
 
     & "${Env:ProgramFiles}/7-Zip/7z.exe" `
@@ -362,7 +383,6 @@ function Install-AzureCopy {
         "-o${azCopyPath}" `
         -y |
         Out-Null;
-
     Start-Sleep -Seconds 3;
 
     if (Test-Path -Path $installerFilePath) {
@@ -378,14 +398,23 @@ function Install-BicepCli {
         [HttpService]$HttpService
     );
 
+    $sourceUri = 'https://github.com/Azure/bicep/releases/latest/download/bicep-win-x64.exe';
+
+    Add-BillOfMaterialsEntry `
+        -Name 'Bicep' `
+        -Publisher 'Microsoft' `
+        -SourceUri $sourceUri `
+        -ValidationScript '(bicep --version).Split('' '')[3];' `
+        -Version 'latest';
+
     $bicepPath = (New-Item `
         -Force `
         -ItemType 'Directory' `
-        -Path ([IO.Path]::Combine((Get-WindowsMachineVariable -Expand -Name 'AGENT_TOOLSDIRECTORY'), 'bicep'))).FullName;
+        -Path ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, 'bicep'))).FullName;
 
     $HttpService.DownloadFile(
             ([IO.Path]::Combine($bicepPath, 'bicep.exe')),
-            'https://github.com/Azure/bicep/releases/latest/download/bicep-win-x64.exe'
+            $sourceUri
         ) |
         Out-Null;
     Add-WindowsMachinePath -Path $bicepPath;
@@ -415,6 +444,12 @@ function Install-DockerCompose {
             }
         );
 
+    Add-BillOfMaterialsEntry `
+        -Name 'Docker Compose' `
+        -Publisher 'Docker' `
+        -SourceUri ($installerData.BrowserDownloadUrl) `
+        -ValidationScript '(docker compose version).Split('' '')[3].Substring(1);' `
+        -Version 'latest';
     $HttpService.DownloadFile(
             ([IO.Path]::Combine($cliPluginsPath, 'docker-compose.exe')),
             $installerData.BrowserDownloadUrl
@@ -442,6 +477,12 @@ function Install-DockerCredentialHelpers {
             }
         );
 
+    Add-BillOfMaterialsEntry `
+        -Name 'Docker Credential Helpers' `
+        -Publisher 'Docker' `
+        -SourceUri ($installerData.BrowserDownloadUrl) `
+        -ValidationScript '(docker-credential-wincred version).Split('' '')[2].Substring(1);' `
+        -Version 'latest';
     $HttpService.DownloadFile(
             ([IO.Path]::Combine("${Env:SystemRoot}/System32", 'docker-credential-wincred.exe')),
             $installerData.BrowserDownloadUrl
@@ -463,12 +504,21 @@ function Install-DockerTools {
             ).TagName.Substring(1);
     }
 
-    $installerFileName = "docker-${Version}.zip";
+    $sourceFileName = "docker-${Version}.zip";
+    $sourceUri = "https://download.docker.com/win/static/stable/x86_64/${sourceFileName}";
+
+    Add-BillOfMaterialsEntry `
+        -Name 'Docker Community Edition' `
+        -Publisher 'Docker' `
+        -SourceUri $sourceUri `
+        -ValidationScript '(docker --version).Split('' '')[2].Split('','')[0];' `
+        -Version 'latest';
+
     $installerFilePath = $HttpService.DownloadFile(
-            ([IO.Path]::Combine((Get-Location), $installerFileName)),
-            "https://download.docker.com/win/static/stable/x86_64/${installerFileName}"
+            ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, $sourceFileName)),
+            $sourceUri
         );
-        $installerFolderPath = [IO.Path]::Combine([IO.Path]::GetTempPath(), [IO.Path]::GetFileNameWithoutExtension($installerFilePath));
+    $installerFolderPath = ${Env:AGENT_TOOLSDIRECTORY};
 
     & "${Env:ProgramFiles}/7-Zip/7z.exe" `
         x $installerFilePath `
@@ -484,9 +534,9 @@ function Install-DockerTools {
             -Path $installerFilePath;
     }
 
-    $installerFileName = "install-docker-ce.ps1";
+    $installerFileName = 'install-docker-ce.ps1';
     $installerFilePath = $HttpService.DownloadFile(
-            ([IO.Path]::Combine((Get-Location), $installerFileName)),
+            ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, $installerFileName)),
             "https://raw.githubusercontent.com/microsoft/Windows-Containers/Main/helpful_tools/Install-DockerCE/${installerFileName}"
         );
 
@@ -494,7 +544,6 @@ function Install-DockerTools {
         -DockerDPath ((Get-Item -Path "${installerFolderPath}/docker/dockerd.exe").FullName) `
         -DockerPath ((Get-Item -Path "${installerFolderPath}/docker/docker.exe").FullName) |
         Out-Null;
-
     Start-Sleep -Seconds 3;
 
     if (Test-Path -Path $installerFilePath) {
@@ -508,7 +557,6 @@ function Install-DockerTools {
         -Path "${Env:SystemRoot}/SysWOW64/docker.exe" `
         -Target "${Env:SystemRoot}/System32/docker.exe" |
         Out-Null;
-
     Install-DockerCompose `
         -HttpService $httpService `
         -JsonSerializerOptions $jsonSerializerOptions;
@@ -524,7 +572,7 @@ function Install-DockerTools {
         'mcr.microsoft.com/windows/servercore:ltsc2022'
     ) | ForEach-Object {
             docker pull $_;
-        }
+        };
 }
 function Install-DotNetSdk {
     param(
@@ -564,10 +612,10 @@ function Install-DotNetTools {
     $dotNetToolsPath = (New-Item `
         -Force `
         -ItemType 'Directory' `
-        -Path ([IO.Path]::Combine((Get-WindowsMachineVariable -Expand -Name 'AGENT_TOOLSDIRECTORY'), 'dotnet'))).FullName;
+        -Path ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, 'dotnet'))).FullName;
     $installerFileName = 'dotnet-install.ps1';
     $installerFilePath = $HttpService.DownloadFile(
-            ([IO.Path]::Combine((Get-Location), $installerFileName)),
+            ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, $installerFileName)),
             "https://dot.net/v1/${installerFileName}"
         );
     $sdkDirectoryPath = ([IO.Path]::Combine(${Env:ProgramFiles}, 'dotnet'));
@@ -632,13 +680,22 @@ function Install-GitForWindows {
                 return $asset.Name.EndsWith('64-bit.exe');
             }
         );
+
+    Add-BillOfMaterialsEntry `
+        -Name 'Git' `
+        -Publisher 'Git for Windows' `
+        -SourceUri $installerData.BrowserDownloadUrl `
+        -ValidationScript '(git --version).Split('' '')[2];' `
+        -Version 'latest';
+
     $installerFilePath = $HttpService.DownloadFile(
-            ([IO.Path]::Combine((Get-Location), $installerData.Name)),
+            ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, $installerData.Name)),
             $installerData.BrowserDownloadUrl
         );
     $installerOutputPath = [IO.Path]::Combine(${Env:ProgramFiles}, 'Git');
     $process = Start-Process `
         -ArgumentList @(
+            '/ALLUSERS',
             '/CLOSEAPPLICATIONS',
             '/COMPONENTS=gitlfs',
             "/DIR=`"${installerOutputPath}`"",
@@ -672,8 +729,8 @@ function Install-GitForWindows {
         -Value 'Never';
     Update-WindowsVariables;
     git config --system --add safe.directory "*";
-    ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> "${installerOutputPath}/etc/ssh/ssh_known_hosts";
-    ssh-keyscan -t rsa ssh.dev.azure.com >> "${installerOutputPath}/etc/ssh/ssh_known_hosts";
+    ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> "${installerOutputPath}/etc/ssh/ssh_known_hosts" | Out-Null;
+    ssh-keyscan -t rsa ssh.dev.azure.com >> "${installerOutputPath}/etc/ssh/ssh_known_hosts" | Out-Null;
 }
 function Install-GitHubActionsTool {
     param(
@@ -681,6 +738,7 @@ function Install-GitHubActionsTool {
         [HttpService]$HttpService,
         [string]$Platform,
         [string]$ToolName,
+        [string]$ValidationScript,
         [string]$Version
     );
 
@@ -691,8 +749,16 @@ function Install-GitHubActionsTool {
         -Platform $Platform `
         -ToolName $ToolName `
         -Version $Version;
+
+    Add-BillOfMaterialsEntry `
+        -Name "${ToolName}-${Architecture}-${Platform}-$($installerData.Version)" `
+        -Publisher 'GitHub' `
+        -SourceUri ($installerData.DownloadUri) `
+        -ValidationScript "Push-Location -Path '${Env:AGENT_TOOLSDIRECTORY}/${ToolName}/$($installerData.Version)/${Architecture}'; try { ${ValidationScript} } finally { Pop-Location; }" `
+        -Version ($installerData.Version);
+
     $installerFilePath = $HttpService.DownloadFile(
-            ([IO.Path]::Combine((Get-Location), $installerData.FileName)),
+            ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, $installerData.FileName)),
             $installerData.DownloadUri
         );
     $installerFolderPath = [IO.Path]::Combine([IO.Path]::GetTempPath(), [IO.Path]::GetFileNameWithoutExtension($installerData.FileName));
@@ -729,6 +795,7 @@ function Install-GitHubActionsTools {
         @{
             Architectures = @( 'x64' );
             Name = 'Go';
+            ValidationScript = '(./bin/go.exe version).Split('' '')[2].Substring(2);';
             Versions = @(
                 '1.18.*',
                 '1.19.*',
@@ -738,6 +805,7 @@ function Install-GitHubActionsTools {
         @{
             Architectures = @( 'x64' );
             Name = 'Node';
+            ValidationScript = '(./node.exe --version).Substring(1);';
             Versions = @(
                 '14.*',
                 '16.*',
@@ -751,6 +819,7 @@ function Install-GitHubActionsTools {
             );
             DefaultArchitecture = 'x86';
             Name = 'Python';
+            ValidationScript = '(./python.exe --version).Split('' '')[1];';
             Versions = @(
                 '3.7.*',
                 '3.8.*',
@@ -771,7 +840,8 @@ function Install-GitHubActionsTools {
                         -Architecture $architecture `
                         -HttpService $HttpService `
                         -Platform 'win32' `
-                        -ToolName $tool.Name `
+                        -ToolName ($tool.Name) `
+                        -ValidationScript ($tool.ValidationScript) `
                         -Version $version;
                 }
             }
@@ -810,12 +880,20 @@ function Install-GoogleChrome {
         [HttpService]$HttpService
     );
 
-    $installerFileName = 'googlechromestandaloneenterprise64.msi';
-    $installerFilePath = $HttpService.DownloadFile(
-            ([IO.Path]::Combine((Get-Location), $installerFileName)),
-            "https://dl.google.com/tag/s/dl/chrome/install/${installerFileName}"
-        );
+    $sourceFileName = 'googlechromestandaloneenterprise64.msi';
+    $sourceUri = "https://dl.google.com/tag/s/dl/chrome/install/${sourceFileName}";
 
+    Add-BillOfMaterialsEntry `
+        -Name 'Chrome' `
+        -Publisher 'Google' `
+        -SourceUri $sourceUri `
+        -ValidationScript '(Get-Item -Path "${Env:ProgramFiles}/Google/Chrome/Application/chrome.exe").VersionInfo.ProductVersion;' `
+        -Version 'latest';
+
+    $installerFilePath = $HttpService.DownloadFile(
+            ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, $sourceFileName)),
+            $sourceUri
+        );
     $process = Start-Process `
         -ArgumentList @(
             '/i', "`"$installerFilePath`""
@@ -859,34 +937,32 @@ function Install-GoogleChrome {
 
     New-Item -Force -Path $googleChromeRegistryPath | Out-Null;
     New-Item -Force -Path $googleUpdateRegistryPath | Out-Null;
-
     @(
         @{
             Name = 'AutoUpdateCheckPeriodMinutes';
             Value = 0;
-        }
+        },
         @{
             Name = 'DisableAutoUpdateChecksCheckboxValue';
             Value = 1;
-        }
+        },
         @{
             Name = 'UpdateDefault';
             Value = 0;
-        }
+        },
         @{
             Name = 'Update{8A69D345-D564-463C-AFF1-A69D9E530F96}';
             Value = 0;
         }
     ) | ForEach-Object {
-        New-ItemProperty `
-            -Force `
-            -Path $googleUpdateRegistryPath `
-            -Name ($_.Name) `
-            -Type 'DWORD' `
-            -Value ($_.Value) |
-            Out-Null;
-    }
-
+            New-ItemProperty `
+                -Force `
+                -Path $googleUpdateRegistryPath `
+                -Name ($_.Name) `
+                -Type 'DWORD' `
+                -Value ($_.Value) |
+                Out-Null;
+        };
     New-ItemProperty `
         -Force `
         -Path $googleChromeRegistryPath `
@@ -910,10 +986,18 @@ function Install-MozillaFirefox {
             ).LatestVersion;
     }
 
-    $installerFileName = "Firefox_Windows_x64.exe";
+    $sourceUri = "https://download.mozilla.org/?lang=en-US&product=firefox-${Version}&os=win64";
+
+    Add-BillOfMaterialsEntry `
+            -Name 'Firefox' `
+            -Publisher 'Mozilla' `
+            -SourceUri $sourceUri `
+            -ValidationScript '(& "${Env:ProgramFiles}/Mozilla Firefox/firefox.exe" --version | more).Split('' '')[2];' `
+            -Version 'latest';
+
     $installerFilePath = $HttpService.DownloadFile(
-            ([IO.Path]::Combine((Get-Location), $installerFileName)),
-            "https://download.mozilla.org/?lang=en-US&product=firefox-${Version}&os=win64"
+            ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, 'Firefox_Windows_x64.exe')),
+            $sourceUri
         );
 
     $process = Start-Process `
@@ -979,10 +1063,18 @@ function Install-NodeJs {
             Select-Object -First 1).Version.Substring(1);
     }
 
-    $installerFileName = 'NodeJs_Windows_x64.msi';
+    $sourceUri = "https://nodejs.org/dist/v${Version}/node-v${Version}-x64.msi";
+
+    Add-BillOfMaterialsEntry `
+        -Name 'Node.js' `
+        -Publisher 'OpenJS Foundation' `
+        -SourceUri $sourceUri `
+        -ValidationScript '(node --version).Substring(1);' `
+        -Version 'latest';
+
     $installerFilePath = $HttpService.DownloadFile(
-            ([IO.Path]::Combine((Get-Location), $installerFileName)),
-            "https://nodejs.org/dist/v${Version}/node-v${Version}-x64.msi"
+            ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, 'NodeJs_Windows_x64.msi')),
+            $sourceUri
         );
 
     $process = Start-Process `
@@ -1045,8 +1137,16 @@ function Install-OpenSsl {
         } |
         Sort-Object -Descending { $_.Value.Version } |
         Select-Object -First 1;
+
+    Add-BillOfMaterialsEntry `
+            -Name 'OpenSSL' `
+            -Publisher 'Shining Light Productions' `
+            -SourceUri ($installerData.Value.Uri) `
+            -ValidationScript '(openssl version).Split('' '')[1];' `
+            -Version 'latest';
+
     $installerFilePath = $HttpService.DownloadFile(
-            ([IO.Path]::Combine((Get-Location), $installerData.Key)),
+            ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, $installerData.Key)),
             $installerData.Value.Uri
         );
     $installerOutputPath = [IO.Path]::Combine(${Env:ProgramFiles}, 'OpenSSL');
@@ -1106,10 +1206,19 @@ function Install-PostgresSql {
         [string]$Version
     );
 
-    $installerFileName = "postgresql-${Version}-windows-x64.exe";
+    $sourceFileName = "postgresql-${Version}-windows-x64.exe";
+    $sourceUri = "https://get.enterprisedb.com/postgresql/${sourceFileName}";
+
+    Add-BillOfMaterialsEntry `
+        -Name 'PostgreSQL' `
+        -Publisher 'EDB' `
+        -SourceUri $sourceUri `
+        -ValidationScript '(& "${Env:PGBIN}/psql" --version).Split('' '')[2];' `
+        -Version ($Version.Split('-')[0]);
+
     $installerFilePath = $HttpService.DownloadFile(
-            ([IO.Path]::Combine((Get-Location), $installerFileName)),
-            "https://get.enterprisedb.com/postgresql/${installerFileName}"
+            ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, $sourceFileName)),
+            $sourceUri
         );
     $process = Start-Process `
         -ArgumentList @(
@@ -1182,7 +1291,7 @@ function Install-VisualStudioExtension {
     );
 
     $extensionFilePath = $HttpService.DownloadFile(
-            ([IO.Path]::Combine((Get-Location), "${Name}.vsix")),
+            ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, "${Name}.vsix")),
             "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/${Publisher}/vsextensions/${Name}/${Version}/vspackage"
         );
     $process = Start-Process `
@@ -1366,14 +1475,18 @@ try {
     Install-GoogleChrome -HttpService $httpService;
     Install-MozillaFirefox `
         -HttpService $httpService `
+        -JsonSerializerOptions $jsonSerializerOptions `
         -Version 'latest';
     Install-NodeJs `
         -HttpService $httpService `
+        -JsonSerializerOptions $jsonSerializerOptions `
         -Version 'latest';
     Install-OpenSsl `
         -HttpService $httpService `
         -JsonSerializerOptions $jsonSerializerOptions;
-    Install-GitForWindows -HttpService $httpService;
+    Install-GitForWindows `
+        -HttpService $httpService `
+        -JsonSerializerOptions $jsonSerializerOptions;
     Install-PostgresSql `
         -HttpService $httpService `
         -Version '15.3-1';

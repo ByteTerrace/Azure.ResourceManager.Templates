@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$AgentToolsDirectoryPath
+    [Parameter(Mandatory = $false)]
+    [string]$AgentToolsDirectoryPath = ''
 );
 
 function Add-BillOfMaterialsEntry {
@@ -10,14 +10,15 @@ function Add-BillOfMaterialsEntry {
         [string]$Name,
         [string]$Publisher,
         [string]$SourceUri,
+        [string]$ValidationScript,
         [string]$Version
     );
 
     $rs = [char]::ConvertFromUtf32(30);
 
     Add-Content `
-        -Path ([IO.Path]::Combine(${AgentToolsDirectoryPath}, 'BillOfMaterials.log')) `
-        -Value "${Name}${rs}${Publisher}${rs}${SourceUri}${rs}${Version}";
+        -Path ([IO.Path]::Combine($AgentToolsDirectoryPath, 'BillOfMaterials.log')) `
+        -Value "${Name}${rs}${Publisher}${rs}${SourceUri}${rs}${ValidationScript}${rs}${Version}";
 }
 function Disable-Debuggers {
     New-ItemProperty `
@@ -172,7 +173,8 @@ function Install-AmazonWebServicesCli {
         -Name 'Amazon Web Services CLI' `
         -Publisher 'Amazon' `
         -SourceUri $sourceUri `
-        -Version 'Latest';
+        -ValidationScript '(aws --version).Split('' '')[0].Split(''/'')[1];' `
+        -Version 'latest';
 
     $installerFilePath = Get-File `
         -SourceUri $sourceUri `
@@ -213,7 +215,8 @@ function Install-AzureCli {
         -Name 'Azure CLI' `
         -Publisher 'Microsoft' `
         -SourceUri $sourceUri `
-        -Version 'Latest';
+        -ValidationScript 'az version --output ''tsv'' --query ''\"azure-cli\"'';' `
+        -Version 'latest';
 
     $installerFilePath = Get-File `
         -SourceUri $sourceUri `
@@ -276,7 +279,8 @@ function Install-GitHubCli {
         -Name 'GitHub CLI' `
         -Publisher 'GitHub' `
         -SourceUri $sourceUri `
-        -Version 'Latest';
+        -ValidationScript '(gh --version).Split('' '')[2];' `
+        -Version 'latest';
 
     $installerFilePath = Get-File `
         -SourceUri ((Invoke-RestMethod `
@@ -320,7 +324,8 @@ function Install-GoogleCloudCli {
         -Name 'Google Cloud CLI' `
         -Publisher 'Google' `
         -SourceUri $sourceUri `
-        -Version 'Latest';
+        -ValidationScript '(gcloud version).Split('' '')[3];' `
+        -Version 'latest';
 
     $installerFilePath = Get-File `
         -SourceUri $sourceUri `
@@ -383,6 +388,7 @@ function Install-PowerShell {
         -Name 'PowerShell' `
         -Publisher 'Microsoft' `
         -SourceUri $sourceUri `
+        -ValidationScript '$PSVersionTable.PSVersion;' `
         -Version $Version;
 
     $installerFilePath = Get-File `
@@ -454,6 +460,7 @@ function Install-7Zip {
         -Name '7-Zip' `
         -Publisher 'Igor Pavlov' `
         -SourceUri $sourceUri `
+        -ValidationScript '(& "${Env:ProgramFiles}/7-Zip/7z.exe" --help).Split('' '')[2];' `
         -Version $Version;
 
     $installerFilePath = Get-File `
@@ -601,11 +608,15 @@ function Write-Log {
     );
 
     Add-Content `
-        -Path ([IO.Path]::Combine(${AgentToolsDirectoryPath}, 'Install-DevOpsAgentSoftware.log')) `
+        -Path ([IO.Path]::Combine(${AgentToolsDirectoryPath}, 'InstallDevOpsAgentSoftwareMessages.log')) `
         -Value "[Install-DevOpsAgentSoftware0.ps1@$(Get-TimeMarker)] - ${Message}";
 }
 
 try {
+    if ([string]::IsNullOrEmpty($AgentToolsDirectoryPath)) {
+        $AgentToolsDirectoryPath = "${Env:SystemDrive}/DevOpsAgentTools";
+    }
+
     $AgentToolsDirectoryPath = (New-Item `
         -Force `
         -ItemType 'Directory' `
