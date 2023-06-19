@@ -50,6 +50,24 @@ function Disable-Debuggers {
         -Value '-' |
         Out-Null;
 }
+function Disable-InternetExplorerEnhancedSecurityConfiguration {
+    $adminKey = 'HKLM:/SOFTWARE/Microsoft/Active Setup/Installed Components/{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}';
+    $userKey = 'HKLM:/SOFTWARE/Microsoft/Active Setup/Installed Components/{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}';
+
+    Set-ItemProperty `
+        -Name 'IsInstalled' `
+        -Path $adminKey `
+        -Type 'DWORD' `
+        -Value 0;
+    Set-ItemProperty `
+        -Name 'IsInstalled' `
+        -Path $userKey `
+        -Type 'DWORD' `
+        -Value 0;
+    Stop-Process `
+        -Force `
+        -Name 'Explorer';
+}
 function Disable-NetworkDiscoverabilityPopup {
     New-Item `
         -Force `
@@ -639,6 +657,7 @@ try {
             [EnvironmentVariableTarget]::Machine
         );
     Disable-Debuggers;
+    Disable-InternetExplorerEnhancedSecurityConfiguration;
     Disable-NetworkDiscoverabilityPopup;
     Disable-ServerManagerPopup;
     Disable-UserAccessControl;

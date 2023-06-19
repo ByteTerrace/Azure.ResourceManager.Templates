@@ -1299,8 +1299,12 @@ function Install-VisualStudioExtension {
                 [Action[Net.Http.HttpResponseMessage]] {
                     param([Net.Http.HttpResponseMessage]$responseMessage);
 
-                    $htmlFile = New-Object -Com 'HTMLFile';
-                    $htmlFile.Write([Text.Encoding]::Unicode.GetBytes($responseMessage.Content.ReadAsStringAsync().GetAwaiter().GetResult()));
+                    $htmlFile = New-Object -ComObject 'HTMLFile';
+                    $htmlFile.Write([Text.Encoding]::Convert(
+                            [Text.Encoding]::UTF8,
+                            [Text.Encoding]::Unicode,
+                            $responseMessage.Content.ReadAsStream().ToArray()
+                        ));
                     $json = [Text.Json.JsonSerializer]::Deserialize(
                             ([string]$htmlFile.GetElementsByClassName('jiContent')[0].innerHtml),
                             [Collections.Generic.Dictionary[string,Text.Json.JsonElement]],
