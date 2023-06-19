@@ -792,6 +792,7 @@ function Install-GitHubActionsTools {
     $gitHubActionsTools = @(
         @{
             Architectures = @( 'x64' );
+            DefaultArchitecture = $null;
             Name = 'Go';
             ValidationScript = '(./bin/go.exe version).Split('' '')[2].Substring(2);';
             Versions = @(
@@ -802,6 +803,7 @@ function Install-GitHubActionsTools {
         },
         @{
             Architectures = @( 'x64' );
+            DefaultArchitecture = $null;
             Name = 'Node';
             ValidationScript = '(./node.exe --version).Substring(1);';
             Versions = @(
