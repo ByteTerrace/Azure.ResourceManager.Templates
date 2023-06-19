@@ -99,6 +99,8 @@ function Install-VisualStudio {
     }
 }
 
+Set-StrictMode -Version 'Latest';
+
 $ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
 $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
 [Net.ServicePointManager]::SecurityProtocol = (
@@ -106,7 +108,6 @@ $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue
         [Net.SecurityProtocolType]::Tls13
     );
 
-Set-StrictMode -Version 'Latest';
 Add-Content `
     -Path ($profile.AllUsersAllHosts) `
     -Value '$ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;';

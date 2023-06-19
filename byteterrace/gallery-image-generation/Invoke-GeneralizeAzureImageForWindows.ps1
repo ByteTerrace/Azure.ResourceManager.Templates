@@ -27,6 +27,8 @@ function Write-Log {
         -Value "[Invoke-GeneralizeAzureImageForWindows.ps1@$(Get-TimeMarker)] - ${Message}";
 }
 
+Set-StrictMode -Version 'Latest';
+
 try {
     $ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;
     $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
@@ -69,7 +71,6 @@ try {
         Write-Log `
             -Message $imageState `
             -Path $LogFilePath;
-
         Start-Sleep -Seconds $attemptDelayTimeInSeconds;
     }
 

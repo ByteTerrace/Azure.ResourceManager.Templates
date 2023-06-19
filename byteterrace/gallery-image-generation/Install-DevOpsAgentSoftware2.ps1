@@ -262,7 +262,6 @@ function Get-GitHubActionsVersionsManifest {
         [string]$Architecture,
         [HttpService]$HttpService,
         [Text.Json.JsonSerializerOptions]$JsonSerializerOptions,
-        [string]$LogFilePath,
         [string]$Platform,
         [string]$ToolName,
         [string]$Version
@@ -622,10 +621,10 @@ function Install-DotNetTools {
 
     Add-WindowsMachinePath -Path $dotNetToolsPath;
     Set-WindowsMachineVariable `
-        -Name 'DOTNET_ADD_GLOBAL_TOOLS_TO_PATH ' `
+        -Name 'DOTNET_ADD_GLOBAL_TOOLS_TO_PATH' `
         -Value '0';
     Set-WindowsMachineVariable `
-        -Name 'DOTNET_CLI_TELEMETRY_OPTOUT ' `
+        -Name 'DOTNET_CLI_TELEMETRY_OPTOUT' `
         -Value '1';
     Set-WindowsMachineVariable `
         -Name 'DOTNET_MULTILEVEL_LOOKUP' `
@@ -745,7 +744,6 @@ function Install-GitHubActionsTool {
     $installerData = Get-GitHubActionsVersionsManifest `
         -Architecture $Architecture `
         -HttpService $HttpService `
-        -LogFilePath $LogFilePath `
         -Platform $Platform `
         -ToolName $ToolName `
         -Version $Version;
@@ -1285,14 +1283,33 @@ function Install-PowerShellModules {
 function Install-VisualStudioExtension {
     param(
         [HttpService]$HttpService,
+        [Text.Json.JsonSerializerOptions]$JsonSerializerOptions,
         [string]$Name,
         [string]$Publisher,
-        [string]$Version
+        [string]$SourceUri
     );
 
+    if ([string]::IsNullOrEmpty($SourceUri)) {
+        $HttpService.Get(
+                [Action[Net.Http.HttpResponseMessage]] {
+                    param([Net.Http.HttpResponseMessage]$responseMessage);
+
+                    $htmlFile = New-Object -Com 'HTMLFile';
+                    $htmlFile.Write([Text.Encoding]::Unicode.GetBytes($responseMessage.Content.ReadAsStringAsync().GetAwaiter().GetResult()));
+                    $json = [Text.Json.JsonSerializer]::Deserialize(
+                            ([string]$htmlFile.GetElementsByClassName('jiContent')[0].innerHtml),
+                            [Collections.Generic.Dictionary[string,Text.Json.JsonElement]],
+                            $JsonSerializerOptions
+                        );
+                    ([ref]$SourceUri).Value = "$($json['AssetUri'].GetString())/$($json['ExtensionProperties'].GetProperty('Microsoft.VisualStudio.Services.Payload.FileName').GetString())";
+                },
+                "https://marketplace.visualstudio.com/items?itemName=${Publisher}.${Name}"
+            );
+    }
+
     $extensionFilePath = $HttpService.DownloadFile(
-            ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, "${Name}.vsix")),
-            "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/${Publisher}/vsextensions/${Name}/${Version}/vspackage"
+            ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, "${Publisher}.${Name}.vsix")),
+            $SourceUri
         );
     $process = Start-Process `
         -ArgumentList @(
@@ -1317,37 +1334,39 @@ function Install-VisualStudioExtension {
 }
 function Install-VisualStudioExtensions {
     param(
-        [HttpService]$HttpService
+        [HttpService]$HttpService,
+        [Text.Json.JsonSerializerOptions]$JsonSerializerOptions
     );
 
     @(
         @{
+            DownloadUri = 'https://download.microsoft.com/download/b/7/5/b75f1ed1-1e35-4f8d-b39f-77189c54ce01/Microsoft.DataTools.AnalysisServices.vsix';
             Name = 'MicrosoftAnalysisServicesModelingProjects2022';
             Publisher = 'ProBITools';
-            Version = '3.0.10';
         },
         @{
+            DownloadUri = 'https://download.microsoft.com/download/f/3/7/f37248df-84b3-4306-918f-2de56481299f/Microsoft.DataTools.ReportingServices.vsix';
             Name = 'MicrosoftReportProjectsforVisualStudio2022';
             Publisher = 'ProBITools';
-            Version = '3.0.7';
         },
         @{
+            DownloadUri = $null;
             Name = 'MicrosoftVisualStudio2022InstallerProjects';
             Publisher = 'VisualStudioClient';
-            Version = '2.0.0';
         },
         @{
+            DownloadUri = $null;
             Name = 'WixToolsetVisualStudio2022Extension';
             Publisher = 'WixToolset';
-            Version = '1.0.0.22';
         }
     ) |
         ForEach-Object {
             Install-VisualStudioExtension `
                 -HttpService $HttpService `
+                -JsonSerializerOptions $JsonSerializerOptions `
                 -Name $_.Name `
                 -Publisher $_.Publisher `
-                -Version $_.Version;
+                -SourceUri $_.DownloadUri;
         }
 }
 function Set-WindowsMachineVariable {
@@ -1444,6 +1463,8 @@ function Update-WindowsVariables {
     }
 }
 
+Set-StrictMode -Version 'Latest';
+
 [Net.Http.HttpClient]$httpClient = $null;
 
 try {
@@ -1492,7 +1513,9 @@ try {
         -Version '15.3-1';
     Install-PowerShellModules;
     Install-Pipx;
-    Install-VisualStudioExtensions -HttpService $httpService;
+    Install-VisualStudioExtensions `
+        -HttpService $httpService `
+        -JsonSerializerOptions $jsonSerializerOptions;
 }
 catch {
     if ($null -ne $httpClient) {

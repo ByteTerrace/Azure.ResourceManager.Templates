@@ -178,7 +178,7 @@ function Install-AmazonWebServicesCli {
 
     $installerFilePath = Get-File `
         -SourceUri $sourceUri `
-        -TargetPath ([IO.Path]::Combine((Get-Location), $sourceFileName));
+        -TargetPath ([IO.Path]::Combine($AgentToolsDirectoryPath, $sourceFileName));
 
     $process = Start-Process `
         -ArgumentList @(
@@ -220,7 +220,7 @@ function Install-AzureCli {
 
     $installerFilePath = Get-File `
         -SourceUri $sourceUri `
-        -TargetPath ([IO.Path]::Combine((Get-Location), 'azure-cli.msi'));
+        -TargetPath ([IO.Path]::Combine($AgentToolsDirectoryPath, 'azure-cli.msi'));
 
     New-Item `
         -Force `
@@ -288,7 +288,7 @@ function Install-GitHubCli {
             -Uri $sourceUri `
             -UseBasicParsing).assets.browser_download_url -match 'windows_amd64.msi' |
             Select-Object -First 1) `
-        -TargetPath ([IO.Path]::Combine((Get-Location), 'GitHubCli_Windows_Amd64.msi'));
+        -TargetPath ([IO.Path]::Combine($AgentToolsDirectoryPath, 'GitHubCli_Windows_Amd64.msi'));
 
     $process = Start-Process `
         -ArgumentList @(
@@ -329,7 +329,7 @@ function Install-GoogleCloudCli {
 
     $installerFilePath = Get-File `
         -SourceUri $sourceUri `
-        -TargetPath ([IO.Path]::Combine((Get-Location), $sourceFileName));
+        -TargetPath ([IO.Path]::Combine($AgentToolsDirectoryPath, $sourceFileName));
 
     $process = Start-Process `
         -ArgumentList @(
@@ -393,7 +393,7 @@ function Install-PowerShell {
 
     $installerFilePath = Get-File `
         -SourceUri $sourceUri `
-        -TargetPath ([IO.Path]::Combine((Get-Location), $sourceFileName));
+        -TargetPath ([IO.Path]::Combine($AgentToolsDirectoryPath, $sourceFileName));
 
     $process = Start-Process `
         -ArgumentList @(
@@ -465,7 +465,7 @@ function Install-7Zip {
 
     $installerFilePath = Get-File `
         -SourceUri $sourceUri `
-        -TargetPath ([IO.Path]::Combine((Get-Location), $sourceFileName));
+        -TargetPath ([IO.Path]::Combine($AgentToolsDirectoryPath, $sourceFileName));
 
     $process = Start-Process `
         -ArgumentList @( '/S' ) `
@@ -612,6 +612,8 @@ function Write-Log {
         -Value "[Install-DevOpsAgentSoftware0.ps1@$(Get-TimeMarker)] - ${Message}";
 }
 
+Set-StrictMode -Version 'Latest';
+
 try {
     if ([string]::IsNullOrEmpty($AgentToolsDirectoryPath)) {
         $AgentToolsDirectoryPath = "${Env:SystemDrive}/DevOpsAgentTools";
@@ -625,7 +627,6 @@ try {
     $ProgressPreference = [Management.Automation.ActionPreference]::SilentlyContinue;
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12;
 
-    Set-StrictMode -Version 'Latest';
     Add-Content `
         -Path ($profile.AllUsersAllHosts) `
         -Value '$ErrorActionPreference = [Management.Automation.ActionPreference]::Stop;';
