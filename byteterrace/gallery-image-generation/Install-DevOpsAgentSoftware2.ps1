@@ -793,6 +793,7 @@ function Install-GitHubActionsTools {
         @{
             Architectures = @( 'x64' );
             DefaultArchitecture = $null;
+            DefaultVersion = $null;
             Name = 'Go';
             ValidationScript = '(./bin/go.exe version).Split('' '')[2].Substring(2);';
             Versions = @(
@@ -804,6 +805,7 @@ function Install-GitHubActionsTools {
         @{
             Architectures = @( 'x64' );
             DefaultArchitecture = $null;
+            DefaultVersion = $null;
             Name = 'Node';
             ValidationScript = '(./node.exe --version).Substring(1);';
             Versions = @(
@@ -818,6 +820,7 @@ function Install-GitHubActionsTools {
                 'x86'
             );
             DefaultArchitecture = 'x86';
+            DefaultVersion = $null;
             Name = 'Python';
             ValidationScript = '(./python.exe --version).Split('' '')[1];';
             Versions = @(
@@ -845,7 +848,7 @@ function Install-GitHubActionsTools {
                         -Version $version;
                 }
             }
-        }
+        };
     $gitHubActionsTools |
         ForEach-Object {
             $architecture = $_.DefaultArchitecture;
@@ -872,7 +875,7 @@ function Install-GitHubActionsTools {
                 Add-WindowsMachinePath -Path $toolPath;
                 Add-WindowsMachinePath -Path "${toolPath}/Scripts";
             }
-        }
+        };
     Update-WindowsVariables;
 }
 function Install-GoogleChrome {
