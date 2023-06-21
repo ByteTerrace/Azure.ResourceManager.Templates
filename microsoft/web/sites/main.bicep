@@ -4,8 +4,8 @@ param name string
 param properties object
 param tags object = {}
 
-var applicationSettings = (properties.?applicationSettings ?? {})
-var connectionStrings = (properties.?connectionStrings ?? {})
+var applicationSettings = items(properties.?applicationSettings ?? {})
+var connectionStrings = items(properties.?connectionStrings ?? {})
 var crossOriginResourceSharing = (properties.?crossOriginResourceSharing ?? {})
 var functionExtension = (properties.?functionExtension ?? {})
 var healthCheck = (properties.?healthCheck ?? {})
@@ -73,12 +73,12 @@ var siteProperties = {
           }
         ] : [
       ])) : []),
-      map(items(applicationSettings), setting => {
+      map(applicationSettings, setting => {
         name: setting.key
         value: setting.value.value
       })
     )
-    connectionStrings: map(items(connectionStrings), connectionString => {
+    connectionStrings: map(connectionStrings, connectionString => {
       connectionString: connectionString.value.value
       name: connectionString.key
       type: connectionString.value.type
@@ -160,6 +160,15 @@ resource siteRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01
   }
   scope: site
 }]
+resource siteSlotConfigNamesConfig 'Microsoft.Web/sites/config@2022-09-01' = {
+  name: 'slotConfigNames'
+  parent: site
+  properties: {
+    appSettingNames: map(filter(applicationSettings, setting => (setting.value.?isStickinessEnabled ?? false)), setting => setting.key)
+    azureStorageConfigNames: null
+    connectionStringNames: map(filter(connectionStrings, string => (string.value.?isStickinessEnabled ?? false)), string => string.key)
+  }
+}
 resource siteWebConfig 'Microsoft.Web/sites/config@2022-09-01' = if (!isSlotNameNotEmpty) {
   name: 'web'
   parent: site

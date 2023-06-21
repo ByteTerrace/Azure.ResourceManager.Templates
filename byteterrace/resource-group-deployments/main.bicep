@@ -680,8 +680,15 @@ type userManagedIdentity = {
 }
 type webApplication = {
   applicationInsights: resourceReference?
-  applicationSettings: object?
-  connectionStrings: object?
+  applicationSettings: { *: {
+    isStickinessEnabled: bool?
+    value: string
+  } }?
+  connectionStrings: { *: {
+    isStickinessEnabled: bool?
+    type: string
+    value: string
+  } }?
   crossOriginResourceSharing: {
     allowedOrigins: string[]?
     isCredentialSupportEnabled: bool?
