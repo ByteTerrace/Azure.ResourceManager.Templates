@@ -24,18 +24,16 @@ resource inboundEndpoints 'Microsoft.Network/dnsResolvers/inboundEndpoints@2022-
   name: endpoint.key
   parent: dnsResolver
   properties: {
-    ipConfigurations: [
-      {
-        privateIpAddress: (endpoint.value.privateIpAddress.?value ?? null)
-        privateIpAllocationMethod: (contains(endpoint.value.privateIpAddress, 'value') ? 'Static' : 'Dynamic')
-        subnet: { id: inboundSubnetsRef[index].id }
-      }
-    ]
+    ipConfigurations: [{
+      privateIpAddress: (endpoint.value.?privateIpAddress ?? null)
+      privateIpAllocationMethod: (contains(endpoint.value, 'privateIpAddress') ? 'Static' : 'Dynamic')
+      subnet: { id: inboundSubnetsRef[index].id }
+    }]
   }
   tags: (endpoint.value.?tags ?? tags)
 }]
 resource inboundSubnetsRef 'Microsoft.Network/virtualNetworks/subnets@2022-11-01' existing = [for endpoint in endpoints.inbound: {
-  name: '${endpoint.value.privateIpAddress.subnet.name}'
+  name: endpoint.value.subnetName
   parent: virtualNetworkRef
 }]
 resource outboundEndpoints 'Microsoft.Network/dnsResolvers/outboundEndpoints@2022-07-01' = [for (endpoint, index) in endpoints.outbound: {
@@ -48,7 +46,7 @@ resource outboundEndpoints 'Microsoft.Network/dnsResolvers/outboundEndpoints@202
   tags: (endpoint.value.?tags ?? tags)
 }]
 resource outboundSubnetsRef 'Microsoft.Network/virtualNetworks/subnets@2022-11-01' existing = [for endpoint in endpoints.outbound: {
-  name: '${endpoint.value.subnet.name}'
+  name: endpoint.value.subnetName
   parent: virtualNetworkRef
 }]
 resource virtualNetworkRef 'Microsoft.Network/virtualNetworks@2022-11-01' existing = {

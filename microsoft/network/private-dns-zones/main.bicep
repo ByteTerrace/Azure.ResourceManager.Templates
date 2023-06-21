@@ -3,9 +3,9 @@ param name string
 param properties object
 param tags object = {}
 
-var linkedVirtualNetworks = items(properties.?virtualNetworks ?? {})
 var resourceGroupName = resourceGroup().name
 var subscriptionId = subscription().subscriptionId
+var virtualNetworks = items(properties.?virtualNetworks ?? {})
 
 resource aRecordEntries 'Microsoft.Network/privateDnsZones/A@2020-06-01' = [for record in items(properties.?aRecords ?? {}): {
   name: record.key
@@ -80,16 +80,16 @@ resource txtRecordEntries 'Microsoft.Network/privateDnsZones/TXT@2020-06-01' = [
     txtRecords: record.value.values
   }
 }]
-resource virtualNetworkLinks 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = [for (network, index) in linkedVirtualNetworks: {
+resource virtualNetworkLinks 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = [for (network, index) in virtualNetworks: {
   location: 'global'
-  name: guid(privateDnsZone.id, virtualNetworks[index].id)
+  name: guid(privateDnsZone.id, virtualNetworksRef[index].id)
   parent: privateDnsZone
   properties: {
     registrationEnabled: (network.value.?isAutomaticVmRegistrationEnabled ?? false)
-    virtualNetwork: { id: virtualNetworks[index].id }
+    virtualNetwork: { id: virtualNetworksRef[index].id }
   }
 }]
-resource virtualNetworks 'Microsoft.Network/virtualNetworks@2022-11-01' existing = [for network in linkedVirtualNetworks: {
+resource virtualNetworksRef 'Microsoft.Network/virtualNetworks@2022-11-01' existing = [for network in virtualNetworks: {
   name: network.key
   scope: resourceGroup((network.value.?subscriptionId ?? subscriptionId), (network.value.?resourceGroupName ?? resourceGroupName))
 }]

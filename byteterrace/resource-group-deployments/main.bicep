@@ -99,21 +99,15 @@ type diskEncryptionSet = {
 type dnsResolver = {
   inboundEndpoints: {
     *: {
-      privateIpAddress: {
-        subnet: {
-          name: string
-        }
-        value: string?
-      }
+      privateIpAddress: string?
+      subnetName: string
       tags: object?
     }
   }?
   location: string?
   outboundEndpoints: {
     *: {
-      subnet: {
-        name: string
-      }
+      subnetName: string
       tags: object?
     }
   }?
@@ -896,8 +890,8 @@ module dnsResolvers 'br/bytrc:microsoft/network/dns-resolvers:0.0.0' = [for (res
     location: (resolver.value.?location ?? deployment.location)
     name: resolver.key
     properties: {
-      inboundEndpoints: resolver.value.inboundEndpoints
-      outboundEndpoints: resolver.value.outboundEndpoints
+      inboundEndpoints: (resolver.value.?inboundEndpoints ?? null)
+      outboundEndpoints: (resolver.value.?outboundEndpoints ?? null)
       virtualNetwork: resolver.value.virtualNetwork
     }
     tags: (resolver.value.?tags ?? tags)
