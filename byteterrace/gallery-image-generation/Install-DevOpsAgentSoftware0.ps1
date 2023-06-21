@@ -225,7 +225,6 @@ function Install-AzureCli {
         [string]$AgentToolsDirectoryPath
     );
 
-    $extensionsPath = ([IO.Path]::Combine(${Env:CommonProgramFiles}, 'AzureCliExtensions'));
     $sourceUri = 'https://aka.ms/installazurecliwindows';
 
     Add-BillOfMaterialsEntry `
@@ -236,32 +235,19 @@ function Install-AzureCli {
         -ValidationScript 'az version --output ''tsv'' --query ''\"azure-cli\"'';' `
         -Version 'latest';
 
+    $extensionsPath = (New-Item `
+        -Force `
+        -ItemType 'Directory' `
+        -Path ([IO.Path]::Combine(${Env:CommonProgramFiles}, 'AzureCliExtensions'))).FullName;
     $installerFilePath = Get-File `
         -SourceUri $sourceUri `
         -TargetPath ([IO.Path]::Combine($AgentToolsDirectoryPath, 'azure-cli.msi'));
 
-    New-Item `
-        -Force `
-        -ItemType 'Directory' `
-        -Path $extensionsPath |
-        Out-Null;
     [Environment]::SetEnvironmentVariable(
             'AZURE_EXTENSION_DIR',
             $extensionsPath,
             [EnvironmentVariableTarget]::Machine
         );
-
-    $extensionsPathAcl = Get-Acl -Path $extensionsPath;
-    $extensionsPathAcl.SetAccessRule([Security.AccessControl.FileSystemAccessRule]::new(
-            'Users',
-            ([Security.AccessControl.FileSystemRights]::FullControl),
-            ([Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [Security.AccessControl.InheritanceFlags]::ObjectInherit),
-            ([Security.AccessControl.PropagationFlags]::None),
-            ([Security.AccessControl.AccessControlType]::Allow)
-        ));
-    Set-Acl `
-        -AclObject $extensionsPathAcl `
-        -Path $extensionsPath;
 
     $process = Start-Process `
         -ArgumentList @(

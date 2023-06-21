@@ -354,7 +354,20 @@ function Install-AzureCliExtensions {
             az extension add `
                 --name $_ `
                 --yes;
-        }
+        };
+
+    $extensionsPath = ${Env:AZURE_EXTENSION_DIR};
+    $extensionsPathAcl = Get-Acl -Path $extensionsPath;
+    $extensionsPathAcl.SetAccessRule([Security.AccessControl.FileSystemAccessRule]::new(
+            'Users',
+            ([Security.AccessControl.FileSystemRights]::FullControl),
+            ([Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [Security.AccessControl.InheritanceFlags]::ObjectInherit),
+            ([Security.AccessControl.PropagationFlags]::None),
+            ([Security.AccessControl.AccessControlType]::Allow)
+        ));
+    Set-Acl `
+        -AclObject $extensionsPathAcl `
+        -Path $extensionsPath;
 }
 function Install-AzureCopy {
     param(

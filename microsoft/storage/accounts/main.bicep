@@ -5,11 +5,13 @@ param properties object
 param tags object = {}
 
 var blobServicesProperties = {
+  containers: items(properties.?blobServices.?containers ?? {})
   isAnonymousAccessEnabled: false
   privateEndpoints: items(properties.?blobServices.?privateEndpoints ?? {})
 }
 var fileServicesProperties = {
   privateEndpoints: items(properties.?fileServices.?privateEndpoints ?? {})
+  shares: items(properties.?fileServices.?shares ?? {})
 }
 var firewallRules = (properties.?firewallRules ?? [])
 var identity = (properties.?identity ?? {})
@@ -113,6 +115,13 @@ resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2022-09-01
   parent: account
   properties: {}
 }
+resource blobServicesContainers 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-09-01' = [for container in blobServicesProperties.containers: {
+  name: container.key
+  parent: blobServices
+  properties: {
+    metadata: (container.value.?metadata ?? null)
+  }
+}]
 resource blobServicesPrivateEndpoints 'Microsoft.Network/privateEndpoints@2022-11-01' = [for (endpoint, index) in blobServicesProperties.privateEndpoints: {
   name: endpoint.key
   properties: {
@@ -153,6 +162,13 @@ resource fileServicesPrivateEndpoints 'Microsoft.Network/privateEndpoints@2022-1
 resource fileServicesPrivateEndpointsSubnetsRef 'Microsoft.Network/virtualNetworks/subnets@2022-11-01' existing = [for endpoint in queueServicesProperties.privateEndpoints: {
   name: '${endpoint.value.subnet.virtualNetworkName}/${endpoint.value.subnet.name}'
   scope: resourceGroup((endpoint.value.subnet.?subscriptionId ?? subscription().subscriptionId), (endpoint.value.subnet.?resourceGroupName ?? resourceGroup().name))
+}]
+resource fileServiceShares 'Microsoft.Storage/storageAccounts/fileServices/shares@2022-09-01' = [for share in blobServicesProperties.containers: {
+  name: share.key
+  parent: fileServices
+  properties: {
+    metadata: (share.value.?metadata ?? null)
+  }
 }]
 resource queueServices 'Microsoft.Storage/storageAccounts/queueServices@2022-09-01' = {
   name: 'default'

@@ -1,8 +1,14 @@
+type applicationInsightsComponent = {
+  location: string?
+  logAnalyticsWorkspace: resourceReference
+  tags: object?
+}
 type applicationSecurityGroup = {
   location: string?
   tags: object?
 }
 type applicationServiceEnvironment = {
+  identity: resourceIdentity?
   isInternalEncryptionEnabled: bool?
   isMinimalSslCipherSuiteConfigurationEnabled: bool?
   isZoneRedundancyEnabled: bool?
@@ -184,10 +190,58 @@ type networkSecurityGroup = {
   }?
   tags: object?
 }
+type privateDnsZone = {
+  aRecords: { *: {
+    ipAddresses: string[]
+    metadata: object?
+    timeToLiveInSeconds: int?
+  } }?
+  aaaaRecords: { *: {
+    ipAddresses: string[]
+    metadata: object?
+    timeToLiveInSeconds: int?
+  } }?
+  cnameRecords: { *: {
+    alias: string
+    metadata: object?
+    timeToLiveInSeconds: int?
+  } }?
+  mxRecords: { *: {
+    exchanges: string[]
+    metadata: object?
+    timeToLiveInSeconds: int?
+  } }?
+  ptrRecords: { *: {
+    domainNames: string[]
+    metadata: object?
+    timeToLiveInSeconds: int?
+  } }?
+  srvRecords: { *: {
+    metadata: object?
+    services: {
+      port: int
+      priority: int
+      target: string
+      weight: int
+    }[]?
+    timeToLiveInSeconds: int?
+  } }?
+  tags: object?
+  txtRecords: { *: {
+    metadata: object?
+    timeToLiveInSeconds: int?
+    values: string[]
+  } }?
+  virtualNetworks: { *: {
+    resourceGroupName: string?
+    subscriptionId: string?
+  } }?
+}
 type privateEndpoint = {
   subnet: subnetReference
 }
 type propertiesInfo = {
+  applicationInsightsComponents: { *: applicationInsightsComponent }?
   applicationSecurityGroups: { *: applicationSecurityGroup }?
   applicationServiceEnvironments: { *: applicationServiceEnvironment }?
   applicationServicePlans: { *: applicationServicePlan }?
@@ -201,6 +255,7 @@ type propertiesInfo = {
   natGateways: { *: natGateway }?
   networkInterfaces: { *: networkInterface }?
   networkSecurityGroups: { *: networkSecurityGroup }?
+  privateDnsZones: { *: privateDnsZone }?
   proximityPlacementGroups: { *: proximityPlacementGroup }?
   publicIpAddresses: { *: publicIpAddress }?
   publicIpPrefixes: { *: publicIpPrefix }?
@@ -277,11 +332,17 @@ type routeTable = {
 type storageAccount = {
   accessTier: ('Cool' | 'Hot' | 'Premium')
   blobServices: {
+    containers: { *: {
+      metadata: object?
+    } }?
     isAnonymousAccessEnabled: bool?
     privateEndpoints: { *: privateEndpoint }?
   }?
   fileServices: {
     privateEndpoints: { *: privateEndpoint }?
+    shares: { *: {
+      metadata: object?
+    } }?
   }?
   firewallRules: string[]?
   identity: resourceIdentity?
@@ -673,6 +734,17 @@ var deployment = {
 }
 var roleMap = toObject(items(loadJsonContent('../../roleMap.json')), role => role.key, role => subscriptionResourceId('Microsoft.Authorization/roleDefinitions', role.value))
 
+module applicationInsightsComponents 'br/bytrc:microsoft/insights/components:0.0.0' = [for (component, index) in items(properties.?applicationInsightsComponents ?? {}): if (!contains(exclude, 'applicationInsightsComponents') && (empty(include) || contains(include, 'applicationInsightsComponents'))) {
+  name: '${deployment.name}-aic-${padLeft(index, 3, '0')}'
+  params: {
+    location: (component.value.?location ?? deployment.location)
+    name: component.key
+    properties: {
+      logAnalyticsWorkspace: component.value.logAnalyticsWorkspace
+    }
+    tags: (component.value.?tags ?? tags)
+  }
+}]
 module applicationSecurityGroups 'br/bytrc:microsoft/network/application-security-groups:0.0.0' = [for (group, index) in items(properties.?applicationSecurityGroups ?? {}): if (!contains(exclude, 'applicationSecurityGroups') && (empty(include) || contains(include, 'applicationSecurityGroups'))) {
   name: '${deployment.name}-asg-${padLeft(index, 3, '0')}'
   params: {
@@ -688,6 +760,7 @@ module applicationServiceEnvironments 'br/bytrc:microsoft/web/hosting-environmen
     location: (environment.value.?location ?? deployment.location)
     name: environment.key
     properties: {
+      identity: (environment.value.?identity ?? null)
       isInternalEncryptionEnabled: (environment.value.?isInternalEncryptionEnabled ?? null)
       isMinimalSslCipherSuiteConfigurationEnabled: (environment.value.?isMinimalSslCipherSuiteConfigurationEnabled ?? null)
       isZoneRedundancyEnabled: (environment.value.?isZoneRedundancyEnabled ?? null)
@@ -917,6 +990,24 @@ module networkSecurityGroups 'br/bytrc:microsoft/network/network-security-groups
       securityRules: (group.value.?securityRules ?? null)
     }
     tags: (group.value.?tags ?? tags)
+  }
+}]
+module privateDnsZones 'br/bytrc:microsoft/network/private-dns-zones:0.0.0' = [for (zone, index) in items(properties.?privateDnsZones ?? {}): if (!contains(exclude, 'privateDnsZones') && (empty(include) || contains(include, 'privateDnsZones'))) {
+  dependsOn: [ virtualNetworks ]
+  name: '${deployment.name}-idns-${padLeft(index, 3, '0')}'
+  params: {
+    name: zone.key
+    properties: {
+      aRecords: (zone.value.?aRecords ?? null)
+      aaaaRecords: (zone.value.?aaaaRecords ?? null)
+      cnameRecords: (zone.value.?cnameRecords ?? null)
+      mxRecords: (zone.value.?mxRecords ?? null)
+      ptrRecords: (zone.value.?ptrRecords ?? null)
+      srvRecords: (zone.value.?srvRecords ?? null)
+      txtRecords: (zone.value.?txtRecords ?? null)
+      virtualNetworks: (zone.value.?virtualNetworks ?? null)
+    }
+    tags: (zone.value.?tags ?? tags)
   }
 }]
 module proximityPlacementGroups 'br/bytrc:microsoft/compute/proximity-placement-groups:0.0.0' = [for (group, index) in items(properties.?proximityPlacementGroups ?? {}): if (!contains(exclude, 'proximityPlacementGroups') && (empty(include) || contains(include, 'proximityPlacementGroups'))) {
@@ -1162,6 +1253,7 @@ module virtualNetworks 'br/bytrc:microsoft/network/virtual-networks:0.0.0' = [fo
 }]
 module webApplications 'br/bytrc:microsoft/web/sites:0.0.0' = [for (application, index) in filter(items(properties.?webApplications ?? {}), application => !contains(application.key, '/')): if (!contains(exclude, 'webApplications') && (empty(include) || contains(include, 'webApplications'))) {
   dependsOn: [
+    applicationInsightsComponents
     applicationServicePlans
     keyVaults
     userManagedIdentities
@@ -1203,6 +1295,7 @@ module webApplications 'br/bytrc:microsoft/web/sites:0.0.0' = [for (application,
 }]
 module webApplicationSlots 'br/bytrc:microsoft/web/sites:0.0.0' = [for (application, index) in filter(items(properties.?webApplications ?? {}), application => contains(application.key, '/')): if (!contains(exclude, 'webApplications') && (empty(include) || contains(include, 'webApplications'))) {
   dependsOn: [
+    applicationInsightsComponents
     applicationServicePlans
     keyVaults
     userManagedIdentities
