@@ -15,7 +15,6 @@ var fileServicesProperties = {
 }
 var firewallRules = (properties.?firewallRules ?? [])
 var identity = (properties.?identity ?? {})
-var isIdentityNotEmpty = !empty(identity)
 var isPublicNetworkAccessEnabled = (properties.?isPublicNetworkAccessEnabled ?? false)
 var isUserAssignedIdentitiesNotEmpty = !empty(userAssignedIdentities)
 var queueServicesProperties = {
@@ -38,18 +37,19 @@ var tableServicesProperties = {
   encryptionServiceKeyType: (properties.?tableServices.?encryptionServiceKeyType ?? 'Account')
   privateEndpoints: items(properties.?tableServices.?privateEndpoints ?? {})
 }
-var userAssignedIdentities = sort(map(range(0, length(identity.?userAssignedIdentities ?? [])), index => {
-  id: resourceId((identity.userAssignedIdentities[index].?subscriptionId ?? subscriptionId), (identity.userAssignedIdentities[index].?resourceGroupName ?? resourceGroupName), 'Microsoft.ManagedIdentity/userAssignedIdentities', identity.userAssignedIdentities[index].name)
+var userAssignedIdentities = items(identity.?userAssignedIdentities ?? {})
+var userAssignedIdentitiesWithResourceId = [for (identity, index) in userAssignedIdentities: {
   index: index
-  value: identity.userAssignedIdentities[index]
-}), (x, y) => (x.index < y.index))
+  isPrimary: (identity.value.?isPrimary ?? (1 == length(userAssignedIdentities)))
+  resourceId: userAssignedIdentitiesRef[index].id
+}]
 var virtualNetworkRules = (properties.?virtualNetworkRules ?? [])
 
 resource account 'Microsoft.Storage/storageAccounts@2022-09-01' = {
-  identity: (isIdentityNotEmpty ? {
-    type: ((isUserAssignedIdentitiesNotEmpty && !contains(identity, 'type')) ? 'UserAssigned' : identity.type)
-    userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty ? toObject(userAssignedIdentities, identity => identity.id, identity => {}) : null)
-  } : null)
+  identity: {
+    type: (identity.?type ?? (isUserAssignedIdentitiesNotEmpty ? 'UserAssigned' : 'None'))
+    userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty? toObject(userAssignedIdentitiesWithResourceId, identity => identity.resourceId, identity => {}) : null)
+  }
   kind: (properties.?kind ?? 'StorageV2')
   location: location
   name: name
@@ -215,6 +215,10 @@ resource tableServicesPrivateEndpoints 'Microsoft.Network/privateEndpoints@2022-
 resource tableServicesPrivateEndpointsSubnetsRef 'Microsoft.Network/virtualNetworks/subnets@2022-11-01' existing = [for endpoint in tableServicesProperties.privateEndpoints: {
   name: '${endpoint.value.subnet.virtualNetworkName}/${endpoint.value.subnet.name}'
   scope: resourceGroup((endpoint.value.subnet.?subscriptionId ?? subscription().subscriptionId), (endpoint.value.subnet.?resourceGroupName ?? resourceGroup().name))
+}]
+resource userAssignedIdentitiesRef 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = [for identity in userAssignedIdentities: {
+  name: identity.key
+  scope: resourceGroup((identity.value.?subscriptionId ?? subscriptionId), (identity.value.?resourceGroupName ?? resourceGroupName))
 }]
 resource virtualNetworkRulesSubnetsRef 'Microsoft.Network/virtualNetworks/subnets@2022-11-01' existing = [for rule in virtualNetworkRules: {
   name: '${rule.subnet.virtualNetworkName}/${rule.subnet.name}'

@@ -18,7 +18,6 @@ var isCapacityReservationGroupNotEmpty = !empty(properties.?capacityReservationG
 var isComputeGalleryNotEmpty = !empty(properties.?imageReference.?gallery ?? {})
 var isDiskEncryptionSetNotEmpty = !empty(properties.?diskEncryptionSet ?? {})
 var isGuestAgentEnabled = (properties.?isGuestAgentEnabled ?? true)
-var isIdentityNotEmpty = !empty(identity)
 var isLinux = ('linux' == toLower(properties.operatingSystem.type))
 var isProximityPlacementGroupNotEmpty = !empty(properties.?proximityPlacementGroup ?? {})
 var isSecureBootEnabled = (properties.?isSecureBootEnabled ?? true)
@@ -43,11 +42,12 @@ var roleAssignmentsTransform = map((properties.?roleAssignments ?? []), assignme
   roleDefinitionId: assignment.roleDefinitionId
 })
 var subscriptionId = subscription().subscriptionId
-var userAssignedIdentities = sort(map(range(0, length(identity.?userAssignedIdentities ?? [])), index => {
-  id: resourceId((identity.userAssignedIdentities[index].?subscriptionId ?? subscriptionId), (identity.userAssignedIdentities[index].?resourceGroupName ?? resourceGroupName), 'Microsoft.ManagedIdentity/userAssignedIdentities', identity.userAssignedIdentities[index].name)
+var userAssignedIdentities = items(identity.?userAssignedIdentities ?? {})
+var userAssignedIdentitiesWithResourceId = [for (identity, index) in userAssignedIdentities: {
   index: index
-  value: identity.userAssignedIdentities[index]
-}), (x, y) => (x.index < y.index))
+  isPrimary: (identity.value.?isPrimary ?? (1 == length(userAssignedIdentities)))
+  resourceId: userAssignedIdentitiesRef[index].id
+}]
 
 resource bootDiagnosticsStorageAccountRef 'Microsoft.Storage/storageAccounts@2022-09-01' existing = if (isBootDiagnosticsStorageAccountNotEmpty) {
   name: properties.bootDiagnostics.storageAccount.name
@@ -69,20 +69,15 @@ resource proximityPlacementGroupRef 'Microsoft.Compute/proximityPlacementGroups@
   name: properties.proximityPlacementGroup.name
   scope: resourceGroup((properties.proximityPlacementGroup.?subscriptionId ?? subscriptionId), (properties.proximityPlacementGroup.?resourceGroupName ?? resourceGroupName))
 }
-resource roleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in roleAssignmentsTransform: {
-  name: sys.guid(virtualMachineScaleSet.id, assignment.roleDefinitionId, (empty(assignment.principalId) ? any(assignment.resource).id : assignment.principalId))
-  properties: {
-    description: assignment.description
-    principalId: (empty(assignment.principalId) ? reference(any(assignment.resource).id, any(assignment.resource).apiVersion, 'Full')[(('microsoft.managedidentity/userassignedidentities' == toLower(any(assignment.resource).type)) ? 'properties' : 'identity')].principalId : assignment.principalId)
-    roleDefinitionId: assignment.roleDefinitionId
-  }
-  scope: virtualMachineScaleSet
+resource userAssignedIdentitiesRef 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = [for identity in userAssignedIdentities: {
+  name: identity.key
+  scope: resourceGroup((identity.value.?subscriptionId ?? subscriptionId), (identity.value.?resourceGroupName ?? resourceGroupName))
 }]
 resource virtualMachineScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2023-03-01' = {
-  identity: (isIdentityNotEmpty ? {
-    type: ((isUserAssignedIdentitiesNotEmpty && !contains(identity, 'type')) ? 'UserAssigned' : identity.type)
-    userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty ? toObject(userAssignedIdentities, identity => identity.id, identity => {}) : null)
-  } : null)
+  identity: {
+    type: (identity.?type ?? (isUserAssignedIdentitiesNotEmpty ? 'UserAssigned' : 'None'))
+    userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty? toObject(userAssignedIdentitiesWithResourceId, identity => identity.resourceId, identity => {}) : null)
+  }
   location: location
   name: name
   properties: {
@@ -229,3 +224,12 @@ resource virtualMachineScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2023-
   tags: tags
   zones: (properties.?availabilityZones ?? [])
 }
+resource virtualMachineScaleSetRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in roleAssignmentsTransform: {
+  name: sys.guid(virtualMachineScaleSet.id, assignment.roleDefinitionId, (empty(assignment.principalId) ? any(assignment.resource).id : assignment.principalId))
+  properties: {
+    description: assignment.description
+    principalId: (empty(assignment.principalId) ? reference(any(assignment.resource).id, any(assignment.resource).apiVersion, 'Full')[(('microsoft.managedidentity/userassignedidentities' == toLower(any(assignment.resource).type)) ? 'properties' : 'identity')].principalId : assignment.principalId)
+    roleDefinitionId: assignment.roleDefinitionId
+  }
+  scope: virtualMachineScaleSet
+}]

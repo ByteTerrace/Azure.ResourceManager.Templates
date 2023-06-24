@@ -17,7 +17,9 @@ var dnsResolversSubnet = {
   virtualNetworkName: virtualNetwork.name
 }
 var identity = {
-  userAssignedIdentities: [ userManagedIdentity ]
+  userAssignedIdentities: {
+    '${userManagedIdentity.name}': {}
+  }
 }
 var natGateway = {
   name: projectName
@@ -35,6 +37,9 @@ var publicIpAddressPrefix = {
   name: projectName
 }
 var routeTable = {
+  name: projectName
+}
+var sqlServer = {
   name: projectName
 }
 var storageAccount = {
@@ -89,12 +94,8 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
         '${dnsResolver.name}': {
           inboundEndpoints: {
             default: {
-              privateIpAddress: {
-                subnet: {
-                  name: dnsResolversSubnet.name
-                }
-                value: '172.16.128.5'
-              }
+              privateIpAddress: '172.16.128.5'
+              subnetName: dnsResolversSubnet.name
             }
           }
           virtualNetwork: virtualNetwork
@@ -172,6 +173,23 @@ module main 'br/bytrc:byteterrace/resource-group-deployments:0.0.0' = {
       }
       routeTables: {
         '${routeTable.name}': {}
+      }
+      sqlServers: {
+        '${sqlServer.name}': {
+          administrator: {
+            activeDirectoryPrincipal: {
+              id: '38eb40ba-c8c0-4ca9-8358-37f9395c64be'
+              name: 'kittoes@byteterrace.com'
+            }
+          }
+          databases: {}
+          elasticPools: {}
+          firewallRules: []
+          identity: identity
+          isPublicNetworkAccessEnabled: false
+          isRestrictOutboundNetworkAccessEnabled: true
+          virtualNetworkRules: []
+        }
       }
       storageAccounts: {
         '${storageAccount.name}': {

@@ -5,7 +5,6 @@ param properties object
 param tags object = {}
 
 var identity = (properties.?identity ?? {})
-var isIdentityNotEmpty = !empty(identity)
 var isUserAssignedIdentitiesNotEmpty = !empty(userAssignedIdentities)
 var resourceGroupName = resourceGroup().name
 var roleAssignmentsTransform = map((properties.?roleAssignments ?? []), assignment => {
@@ -19,18 +18,20 @@ var roleAssignmentsTransform = map((properties.?roleAssignments ?? []), assignme
   roleDefinitionId: assignment.roleDefinitionId
 })
 var subscriptionId = subscription().subscriptionId
-var userAssignedIdentities = sort(map(range(0, length(identity.?userAssignedIdentities ?? [])), index => {
-  id: resourceId((identity.userAssignedIdentities[index].?subscriptionId ?? subscriptionId), (identity.userAssignedIdentities[index].?resourceGroupName ?? resourceGroupName), 'Microsoft.ManagedIdentity/userAssignedIdentities', identity.userAssignedIdentities[index].name)
+var userAssignedIdentities = items(identity.?userAssignedIdentities ?? {})
+var userAssignedIdentitiesWithResourceId = [for (identity, index) in userAssignedIdentities: {
   index: index
-  value: identity.userAssignedIdentities[index]
-}), (x, y) => (x.index < y.index))
+  isPrimary: (identity.value.?isPrimary ?? (1 == length(userAssignedIdentities)))
+  resourceId: userAssignedIdentitiesRef[index].id
+}]
 
 resource hostingEnvironment 'Microsoft.Web/hostingEnvironments@2022-09-01' = {
-#disable-next-line BCP187 BCP321
-  identity: (isIdentityNotEmpty ? {
-    type: ((isUserAssignedIdentitiesNotEmpty && !contains(identity, 'type')) ? 'UserAssigned' : identity.type)
-    userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty ? toObject(userAssignedIdentities, identity => identity.id, identity => {}) : null)
-  } : null)
+  #disable-next-line BCP187
+  identity: {
+    type: (identity.?type ?? (isUserAssignedIdentitiesNotEmpty ? 'UserAssigned' : 'None'))
+    #disable-next-line BCP321
+    userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty? toObject(userAssignedIdentitiesWithResourceId, identity => identity.resourceId, identity => {}) : null)
+  }
   kind: 'ASEV3'
   location: location
   name: name
@@ -71,3 +72,7 @@ resource subnetRef 'Microsoft.Network/virtualNetworks/subnets@2022-11-01' existi
   name: '${properties.subnet.virtualNetworkName}/${properties.subnet.name}'
   scope: resourceGroup((properties.subnet.?subscriptionId ?? subscriptionId), (properties.subnet.?resourceGroupName ?? resourceGroupName))
 }
+resource userAssignedIdentitiesRef 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = [for identity in userAssignedIdentities: {
+  name: identity.key
+  scope: resourceGroup((identity.value.?subscriptionId ?? subscriptionId), (identity.value.?resourceGroupName ?? resourceGroupName))
+}]

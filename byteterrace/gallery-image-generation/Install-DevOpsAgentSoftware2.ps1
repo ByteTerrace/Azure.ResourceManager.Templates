@@ -171,6 +171,12 @@ class MozillaFirefoxVersionsManifest {
     [Text.Json.Serialization.JsonPropertyName('LATEST_FIREFOX_VERSION')]
     [string]$LatestVersion;
 }
+class NodeJsVersionsManifest {
+    [string[]]$Files;
+    [Text.Json.Serialization.JsonPropertyName('lts')]
+    [object]$LongTermSupport;
+    [string]$Version;
+}
 class OpenSslReleaseFile {
     [Text.Json.Serialization.JsonPropertyName('arch')]
     [string]$Architecture;
@@ -186,12 +192,6 @@ class OpenSslReleaseFile {
 }
 class OpenSslReleaseManifest {
     [Collections.Generic.Dictionary[string,[OpenSslReleaseFile]]]$Files;
-}
-class NodeJsVersionsManifest {
-    [string[]]$Files;
-    [Text.Json.Serialization.JsonPropertyName('lts')]
-    [object]$LongTermSupport;
-    [string]$Version;
 }
 
 function Add-BillOfMaterialsEntry {
@@ -216,7 +216,7 @@ function Add-WindowsMachinePath {
 
     Set-WindowsMachineVariable `
         -Name 'Path' `
-        -Value "$(Get-WindowsMachineVariable -Name 'Path');$((Get-Item -Path $Path).FullName)";
+        -Value "$(Get-WindowsMachineVariable -Name 'Path');$Path";
 }
 function Get-DotNetSdkVersionsManifest {
     param(
@@ -881,12 +881,12 @@ function Install-GitHubActionsTools {
                     Select-Object -First 1);
 
             if ('Go' -eq $toolName) {
-                Add-WindowsMachinePath -Path "${toolPath}/bin";
+                Add-WindowsMachinePath -Path ((Get-Item -Path "${toolPath}/bin").FullName);
             }
 
             if ('Python' -eq $toolName) {
                 Add-WindowsMachinePath -Path $toolPath;
-                Add-WindowsMachinePath -Path "${toolPath}/Scripts";
+                Add-WindowsMachinePath -Path ((Get-Item -Path "${toolPath}/Scripts").FullName);
             }
         };
     Update-WindowsVariables;
@@ -1272,6 +1272,7 @@ function Install-PostgresSql {
     Set-WindowsMachineVariable `
         -Name 'PGROOT' `
         -Value $pgSqlRoot;
+    Add-WindowsMachinePath -Path '%PGBIN%';
 
     $service = Get-Service -Name 'postgresql*';
     $service | Set-Service -StartupType ([ServiceProcess.ServiceStartMode]::Disabled);
@@ -1297,6 +1298,46 @@ function Install-PowerShellModules {
                 -Repository 'PSGallery' `
                 -Scope 'AllUsers';
         }
+}
+function Install-SqlServerDataTierApplicationFramework {
+    param(
+        [HttpService]$HttpService
+    );
+
+    $sourceUri = 'https://aka.ms/dacfx-msi';
+
+    Add-BillOfMaterialsEntry `
+        -Name 'Sql Server Data-Tier Application Framework' `
+        -Publisher 'Microsoft' `
+        -SourceUri $sourceUri `
+        -ValidationScript '& "$((Get-ChildItem -Path "${Env:ProgramFiles}/Microsoft SQL Server/*/*/bin/SqlPackage.exe" | Sort-Object -Descending { ([int]$_.Directory.Parent.Parent.Name); } | Select-Object -First 1).FullName)" -version;' `
+        -Version 'latest';
+
+    $installerFilePath = $HttpService.DownloadFile(
+            ([IO.Path]::Combine(${Env:AGENT_TOOLSDIRECTORY}, 'DacFramework.msi')),
+            $sourceUri
+        );
+
+    $process = Start-Process `
+        -ArgumentList @(
+            '/i', "`"$installerFilePath`""
+            '/quiet'
+        ) `
+        -FilePath 'msiexec.exe' `
+        -PassThru `
+        -Wait;
+
+    if (0 -ne $process.ExitCode) {
+        throw "Non-zero exit code returned by the process: $($process.ExitCode).";
+    }
+
+    Start-Sleep -Seconds 3;
+
+    if (Test-Path -Path $installerFilePath) {
+        Remove-Item `
+            -Force `
+            -Path $installerFilePath;
+    }
 }
 function Install-VisualStudioExtension {
     param(
@@ -1530,11 +1571,12 @@ try {
     Install-GitForWindows `
         -HttpService $httpService `
         -JsonSerializerOptions $jsonSerializerOptions;
+    Install-Pipx;
     Install-PostgresSql `
         -HttpService $httpService `
         -Version '15.3-1';
     Install-PowerShellModules;
-    Install-Pipx;
+    Install-SqlServerDataTierApplicationFramework -HttpService $httpService;
     Install-VisualStudioExtensions `
         -HttpService $httpService `
         -JsonSerializerOptions $jsonSerializerOptions;

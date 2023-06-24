@@ -201,7 +201,10 @@ type privateDnsZone = {
     timeToLiveInSeconds: int?
   } }?
   mxRecords: { *: {
-    exchanges: string[]
+    exchanges: {
+      domainName: string
+      preference: int
+    }[]
     metadata: object?
     timeToLiveInSeconds: int?
   } }?
@@ -251,9 +254,11 @@ type propertiesInfo = {
   networkSecurityGroups: { *: networkSecurityGroup }?
   privateDnsZones: { *: privateDnsZone }?
   proximityPlacementGroups: { *: proximityPlacementGroup }?
+  publicDnsZones: { *: publicDnsZone }?
   publicIpAddresses: { *: publicIpAddress }?
   publicIpPrefixes: { *: publicIpPrefix }?
   routeTables: { *: routeTable }?
+  sqlServers: { *: sqlServer }?
   storageAccounts: { *: storageAccount }?
   userManagedIdentities: { *: userManagedIdentity }?
   virtualMachines: { *: virtualMachine }?
@@ -264,6 +269,52 @@ type propertiesInfo = {
 type proximityPlacementGroup = {
   location: string?
   tags: object?
+}
+type publicDnsZone = {
+  aRecords: { *: {
+    ipAddresses: string[]
+    metadata: object?
+    timeToLiveInSeconds: int?
+  } }?
+  aaaaRecords: { *: {
+    ipAddresses: string[]
+    metadata: object?
+    timeToLiveInSeconds: int?
+  } }?
+  cnameRecords: { *: {
+    alias: string
+    metadata: object?
+    timeToLiveInSeconds: int?
+  } }?
+  mxRecords: { *: {
+    exchanges: {
+      domainName: string
+      preference: int
+    }[]
+    metadata: object?
+    timeToLiveInSeconds: int?
+  } }?
+  ptrRecords: { *: {
+    domainNames: string[]
+    metadata: object?
+    timeToLiveInSeconds: int?
+  } }?
+  srvRecords: { *: {
+    metadata: object?
+    services: {
+      port: int
+      priority: int
+      target: string
+      weight: int
+    }[]?
+    timeToLiveInSeconds: int?
+  } }?
+  tags: object?
+  txtRecords: { *: {
+    metadata: object?
+    timeToLiveInSeconds: int?
+    values: string[]
+  } }?
 }
 type publicIpAddress = {
   allocationMethod: ('Dynamic' | 'Static')?
@@ -298,8 +349,12 @@ type roleAssignment = {
   roleDefinitionName: string
 }
 type resourceIdentity = {
-  type: string?
-  userAssignedIdentities: resourceReference[]?
+  type: ('None'| 'SystemAssigned' | 'SystemAssigned,UserAssigned' | 'UserAssigned' )?
+  userAssignedIdentities: { *: {
+    isPrimary: bool?
+    resourceGroupName: string?
+    subscriptionId: string?
+  } }?
 }
 type resourceReference = {
   name: string?
@@ -322,6 +377,47 @@ type routeTable = {
     }
   }?
   tags: object?
+}
+type sqlServer = {
+  administrator: {
+    activeDirectoryPrincipal: {
+      id: string
+      name: string
+      tenantId: string?
+      type: ('Application' | 'Group' | 'User')?
+    }?
+    sqlLogin: {
+      name: string
+      password: string
+    }?
+  }
+  databases: { *: {
+    catalogCollation: string?
+    defaultCollation: string?
+    elasticPoolName: string?
+    isAzureHybridBenefitEnabled: bool?
+    isLedgerEnabled: bool?
+    isZoneRedundancyEnabled: bool?
+    maximumSizeInBytes: int?
+  } }?
+  elasticPools: { *: {
+    isAzureHybridBenefitEnabled: bool?
+    isZoneRedundancyEnabled: bool?
+    maximumSizeInBytes: int?
+    perDatabaseSettings: {
+      maximumCapacity: int?
+      minimumCapacity: int?
+    }?
+    sku: resourceSku
+  } }?
+  firewallRules: string[]?
+  identity: resourceIdentity?
+  isPublicNetworkAccessEnabled: bool?
+  isRestrictOutboundNetworkAccessEnabled: bool?
+  location: string?
+  roleAssignments: roleAssignment[]?
+  tags: object?
+  virtualNetworkRules: virtualNetworkRule[]?
 }
 type storageAccount = {
   accessTier: ('Cool' | 'Hot' | 'Premium')
@@ -755,7 +851,10 @@ module applicationSecurityGroups 'br/bytrc:microsoft/network/application-securit
   }
 }]
 module applicationServiceEnvironments 'br/bytrc:microsoft/web/hosting-environments:0.0.0' = [for (environment, index) in items(properties.?applicationServiceEnvironments ?? {}): if (!contains(exclude, 'applicationServiceEnvironments') && (empty(include) || contains(include, 'applicationServiceEnvironments'))) {
-  dependsOn: [ virtualNetworks ]
+  dependsOn: [
+    userManagedIdentities
+    virtualNetworks
+  ]
   name: '${deployment.name}-ase-${padLeft(index, 3, '0')}'
   params: {
     location: (environment.value.?location ?? deployment.location)
@@ -1019,6 +1118,23 @@ module proximityPlacementGroups 'br/bytrc:microsoft/compute/proximity-placement-
     tags: (group.value.?tags ?? tags)
   }
 }]
+module publicDnsZones 'br/bytrc:microsoft/network/public-dns-zones:0.0.0' = [for (zone, index) in items(properties.?publicDnsZones ?? {}): if (!contains(exclude, 'publicDnsZones') && (empty(include) || contains(include, 'publicDnsZones'))) {
+  dependsOn: [ virtualNetworks ]
+  name: '${deployment.name}-edns-${padLeft(index, 3, '0')}'
+  params: {
+    name: zone.key
+    properties: {
+      aRecords: (zone.value.?aRecords ?? null)
+      aaaaRecords: (zone.value.?aaaaRecords ?? null)
+      cnameRecords: (zone.value.?cnameRecords ?? null)
+      mxRecords: (zone.value.?mxRecords ?? null)
+      ptrRecords: (zone.value.?ptrRecords ?? null)
+      srvRecords: (zone.value.?srvRecords ?? null)
+      txtRecords: (zone.value.?txtRecords ?? null)
+    }
+    tags: (zone.value.?tags ?? tags)
+  }
+}]
 module publicIpAddresses 'br/bytrc:microsoft/network/public-ip-addresses:0.0.0' = [for (address, index) in items(properties.?publicIpAddresses ?? {}): if (!contains(exclude, 'publicIpAddresses') && (empty(include) || contains(include, 'publicIpAddresses'))) {
   dependsOn: [ publicIpPrefixes ]
   name: '${deployment.name}-pipa-${padLeft(index, 3, '0')}'
@@ -1074,6 +1190,31 @@ module routeTables 'br/bytrc:microsoft/network/route-tables:0.0.0' = [for (table
       routes: (table.value.?routes ?? null)
     }
     tags: (table.value.?tags ?? tags)
+  }
+}]
+module sqlServers 'br/bytrc:microsoft/sql/servers:0.0.0' = [for (server, index) in items(properties.?sqlServers ?? {}): if (!contains(exclude, 'sqlServers') && (empty(include) || contains(include, 'sqlServers'))) {
+  dependsOn: [
+    keyVaults
+    storageAccounts
+    userManagedIdentities
+    virtualNetworks
+  ]
+  name: '${deployment.name}-sql-${padLeft(index, 3, '0')}'
+  params: {
+    location: (server.value.?location ?? deployment.location)
+    name: server.key
+    properties: {
+      administrator: server.value.administrator
+      databases: (server.value.?databases ?? null)
+      elasticPools: (server.value.?elasticPools ?? null)
+      firewallRules: (server.value.?firewallRules ?? null)
+      identity: (server.value.?identity ?? null)
+      isPublicNetworkAccessEnabled: (server.value.?isPublicNetworkAccessEnabled ?? null)
+      isRestrictOutboundNetworkAccessEnabled: (server.value.?isRestrictOutboundNetworkAccessEnabled ?? null)
+      roleAssignments: (server.value.?roleAssignments ?? null)
+      virtualNetworkRules: (server.value.?virtualNetworkRules ?? null)
+    }
+    tags: (server.value.?tags ?? tags)
   }
 }]
 module storageAccounts 'br/bytrc:microsoft/storage/accounts:0.0.0' = [for (account, index) in items(properties.?storageAccounts ?? {}): if (!contains(exclude, 'storageAccounts') && (empty(include) || contains(include, 'storageAccounts'))) {

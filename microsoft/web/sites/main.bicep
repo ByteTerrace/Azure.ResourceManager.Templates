@@ -7,6 +7,7 @@ param tags object = {}
 var applicationSettings = items(properties.?applicationSettings ?? {})
 var connectionStrings = items(properties.?connectionStrings ?? {})
 var crossOriginResourceSharing = (properties.?crossOriginResourceSharing ?? {})
+var customDomains = items(properties.?customDomains ?? {})
 var functionExtension = (properties.?functionExtension ?? {})
 var healthCheck = (properties.?healthCheck ?? {})
 var identity = (properties.?identity ?? {})
@@ -14,7 +15,6 @@ var isApplicationInsightsNotEmpty = !empty(properties.?applicationInsights ?? {}
 var isDotNetFrameworkApp = startsWith(properties.frameworkVersion, 'dotnet')
 var isFunctionApplication = !empty(functionExtension)
 var isHealthCheckEnabled = (healthCheck.?isEnabled ?? !empty(healthCheck))
-var isIdentityNotEmpty = !empty(identity)
 var isNodeJsApp = startsWith(properties.frameworkVersion, 'node')
 var isSlotNameNotEmpty = !empty(properties.?slotName ?? '')
 var isSubnetNotEmpty = !empty(properties.?subnet ?? {})
@@ -32,10 +32,10 @@ var roleAssignmentsTransform = map((properties.?roleAssignments ?? []), assignme
   })
   roleDefinitionId: assignment.roleDefinitionId
 })
-var siteIdentity = (isIdentityNotEmpty ? {
-  type: ((isUserAssignedIdentitiesNotEmpty && !contains(identity, 'type')) ? 'UserAssigned' : identity.type)
-  userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty ? toObject(userAssignedIdentities, identity => identity.id, identity => {}) : null)
-} : null)
+var siteIdentity = {
+  type: (identity.?type ?? (isUserAssignedIdentitiesNotEmpty ? 'UserAssigned' : 'None'))
+  userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty? toObject(userAssignedIdentitiesWithResourceId, identity => identity.resourceId, identity => {}) : null)
+}
 var siteKind = '${(isFunctionApplication ? 'function' : '')}app'
 var siteProperties = {
   clientAffinityEnabled: (properties.?isClientAffinityEnabled ?? false)
@@ -106,11 +106,12 @@ var siteTags = union((isApplicationInsightsNotEmpty ? {
   'hidden-link: /app-insights-resource-id': applicationInsightsRef.id
 } : {}), tags)
 var subscriptionId = subscription().subscriptionId
-var userAssignedIdentities = sort(map(range(0, length(identity.?userAssignedIdentities ?? [])), index => {
-  id: resourceId((identity.userAssignedIdentities[index].?subscriptionId ?? subscriptionId), (identity.userAssignedIdentities[index].?resourceGroupName ?? resourceGroupName), 'Microsoft.ManagedIdentity/userAssignedIdentities', identity.userAssignedIdentities[index].name)
+var userAssignedIdentities = items(identity.?userAssignedIdentities ?? {})
+var userAssignedIdentitiesWithResourceId = [for (identity, index) in userAssignedIdentities: {
   index: index
-  value: identity.userAssignedIdentities[index]
-}), (x, y) => (x.index < y.index))
+  isPrimary: (identity.value.?isPrimary ?? (1 == length(userAssignedIdentities)))
+  resourceId: userAssignedIdentitiesRef[index].id
+}]
 var virtualApplications = (properties.?virtualApplications ?? {})
 
 resource applicationInsightsRef 'Microsoft.Insights/components@2020-02-02' existing = if (isApplicationInsightsNotEmpty) {
@@ -137,6 +138,15 @@ resource site 'Microsoft.Web/sites@2022-09-01' = if (!isSlotNameNotEmpty) {
   properties: siteProperties
   tags: siteTags
 }
+@batchSize(1)
+resource siteHostNameBindings 'Microsoft.Web/sites/hostNameBindings@2022-09-01' = [for domain in customDomains: if (!isSlotNameNotEmpty) {
+  name: domain.key
+  parent: site
+  properties: {
+    sslState: 'Disabled'
+    thumbprint: null
+  }
+}]
 resource sitePrivateEndpoints 'Microsoft.Network/privateEndpoints@2022-11-01' = [for (endpoint, index) in privateEndpoints: if (!isSlotNameNotEmpty) {
   name: endpoint.key
   properties: {
@@ -160,7 +170,7 @@ resource siteRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01
   }
   scope: site
 }]
-resource siteSlotConfigNamesConfig 'Microsoft.Web/sites/config@2022-09-01' = {
+resource siteSlotConfigNamesConfig 'Microsoft.Web/sites/config@2022-09-01' = if (!isSlotNameNotEmpty) {
   name: 'slotConfigNames'
   parent: site
   properties: {
@@ -192,6 +202,15 @@ resource slot 'Microsoft.Web/sites/slots@2022-09-01' = if (isSlotNameNotEmpty) {
   properties: siteProperties
   tags: siteTags
 }
+@batchSize(1)
+resource slotHostNameBindings 'Microsoft.Web/sites/slots/hostNameBindings@2022-09-01' = [for domain in customDomains: if (isSlotNameNotEmpty) {
+  name: domain.key
+  parent: slot
+  properties: {
+    sslState: 'Disabled'
+    thumbprint: null
+  }
+}]
 resource slotPrivateEndpoints 'Microsoft.Network/privateEndpoints@2022-11-01' = [for (endpoint, index) in privateEndpoints: if (isSlotNameNotEmpty) {
   name: endpoint.key
   properties: {
@@ -232,6 +251,10 @@ resource slotWebConfig 'Microsoft.Web/sites/slots/config@2022-09-01' = if (isSlo
     }))
   }
 }
+resource userAssignedIdentitiesRef 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = [for identity in userAssignedIdentities: {
+  name: identity.key
+  scope: resourceGroup((identity.value.?subscriptionId ?? subscriptionId), (identity.value.?resourceGroupName ?? resourceGroupName))
+}]
 resource virtualNetworkIntegrationSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-11-01' existing = if (isSubnetNotEmpty) {
   name: '${properties.subnet.virtualNetworkName}/${properties.subnet.name}'
   scope: resourceGroup((properties.subnet.?subscriptionId ?? subscription().subscriptionId), (properties.subnet.?resourceGroupName ?? resourceGroup().name))

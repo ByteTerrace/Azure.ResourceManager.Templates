@@ -23,7 +23,6 @@ var isComputeGalleryNotEmpty = !empty(properties.?imageReference.?gallery ?? {})
 var isDiskEncryptionSetNotEmpty = !empty(properties.?diskEncryptionSet ?? {})
 var isGuestAgentEnabled = (properties.?isGuestAgentEnabled ?? true)
 var isGuestAttestationEnabled = (properties.?isGuestAttestationEnabled ?? (isSecureBootEnabled && isVirtualTrustedPlatformModuleEnabled))
-var isIdentityNotEmpty = !empty(identity)
 var isLinux = ('linux' == toLower(properties.operatingSystem.type))
 var isProximityPlacementGroupNotEmpty = !empty(properties.?proximityPlacementGroup ?? {})
 var isSecureBootEnabled = (properties.?isSecureBootEnabled ?? true)
@@ -68,11 +67,12 @@ var scripts = sort(map(items(properties.?scripts ?? {}), script => {
   value: (script.value.?value ?? null)
 }), (x, y) => (x.key < y.key))
 var subscriptionId = subscription().subscriptionId
-var userAssignedIdentities = sort(map(range(0, length(identity.?userAssignedIdentities ?? [])), index => {
-  id: resourceId((identity.userAssignedIdentities[index].?subscriptionId ?? subscriptionId), (identity.userAssignedIdentities[index].?resourceGroupName ?? resourceGroupName), 'Microsoft.ManagedIdentity/userAssignedIdentities', identity.userAssignedIdentities[index].name)
+var userAssignedIdentities = items(identity.?userAssignedIdentities ?? {})
+var userAssignedIdentitiesWithResourceId = [for (identity, index) in userAssignedIdentities: {
   index: index
-  value: identity.userAssignedIdentities[index]
-}), (x, y) => (x.index < y.index))
+  isPrimary: (identity.value.?isPrimary ?? (1 == length(userAssignedIdentities)))
+  resourceId: userAssignedIdentitiesRef[index].id
+}]
 
 resource automaticShutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = if (isAutomaticShutdownNotEmpty) {
   location: location
@@ -140,7 +140,7 @@ resource keyVaultIntegration 'Microsoft.Compute/virtualMachines/extensions@2023-
     publisher: 'Microsoft.Azure.KeyVault'
     settings: {
       authenticationSettings: {
-        msiClientId: (isSystemAssignedIdentityEnabled ? systemAssignedIdentityRef.properties.clientId : (isUserAssignedIdentitiesNotEmpty ? userAssignedIdentitiesRef[0].properties.clientId : null))
+        msiClientId: (isUserAssignedIdentitiesNotEmpty ? userAssignedIdentitiesRef[any(first(filter(userAssignedIdentitiesWithResourceId, identity => identity.isPrimary))).index].properties.clientId: (isSystemAssignedIdentityEnabled ? systemAssignedIdentityRef.properties.clientId : null))
         msiEndpoint: 'http://169.254.169.254/metadata/identity/oauth2/token'
       }
       secretsManagementSettings: {
@@ -169,15 +169,6 @@ resource proximityPlacementGroupRef 'Microsoft.Compute/proximityPlacementGroups@
   name: properties.proximityPlacementGroup.name
   scope: resourceGroup((properties.proximityPlacementGroup.?subscriptionId ?? subscriptionId), (properties.proximityPlacementGroup.?resourceGroupName ?? resourceGroupName))
 }
-resource roleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in roleAssignmentsTransform: {
-  name: sys.guid(virtualMachine.id, assignment.roleDefinitionId, (empty(assignment.principalId) ? any(assignment.resource).id : assignment.principalId))
-  properties: {
-    description: assignment.description
-    principalId: (empty(assignment.principalId) ? reference(any(assignment.resource).id, any(assignment.resource).apiVersion, 'Full')[(('microsoft.managedidentity/userassignedidentities' == toLower(any(assignment.resource).type)) ? 'properties' : 'identity')].principalId : assignment.principalId)
-    roleDefinitionId: assignment.roleDefinitionId
-  }
-  scope: virtualMachine
-}]
 @batchSize(1)
 resource runCommands 'Microsoft.Compute/virtualMachines/runCommands@2023-03-01' = [for (script, index) in scripts: {
   dependsOn: [
@@ -233,14 +224,14 @@ resource systemAssignedIdentityRef 'Microsoft.ManagedIdentity/identities@2023-01
   scope: virtualMachine
 }
 resource userAssignedIdentitiesRef 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = [for identity in userAssignedIdentities: {
-  name: identity.value.name
+  name: identity.key
   scope: resourceGroup((identity.value.?subscriptionId ?? subscriptionId), (identity.value.?resourceGroupName ?? resourceGroupName))
 }]
 resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
-  identity: (isIdentityNotEmpty ? {
-    type: ((isUserAssignedIdentitiesNotEmpty && !contains(identity, 'type')) ? 'UserAssigned' : identity.type)
-    userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty ? toObject(userAssignedIdentities, identity => identity.id, identity => {}) : null)
-  } : null)
+  identity: {
+    type: (identity.?type ?? (isUserAssignedIdentitiesNotEmpty ? 'UserAssigned' : 'None'))
+    userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty? toObject(userAssignedIdentitiesWithResourceId, identity => identity.resourceId, identity => {}) : null)
+  }
   location: location
   name: name
   properties: {
@@ -296,7 +287,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
               primary: (configuration.value.?isPrimary ?? (1 == length(interface.value.ipConfigurations)))
               privateIPAddressVersion: (configuration.value.privateIpAddress.?version ?? 'IPv4')
               publicIPAddressConfiguration: (contains(configuration.value, 'publicIpAddress') ? {
-                name: configuration.value.publicIpAddress.name
+                name: 'default'
                 properties: {
                   deleteOption: 'Delete'
                   dnsSettings: (contains(configuration.value.publicIpAddress, 'domainNameLabel') ? {
@@ -398,6 +389,15 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
   tags: tags
   zones: (properties.?availabilityZones ?? null)
 }
+resource virtualMachineRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for assignment in roleAssignmentsTransform: {
+  name: sys.guid(virtualMachine.id, assignment.roleDefinitionId, (empty(assignment.principalId) ? any(assignment.resource).id : assignment.principalId))
+  properties: {
+    description: assignment.description
+    principalId: (empty(assignment.principalId) ? reference(any(assignment.resource).id, any(assignment.resource).apiVersion, 'Full')[(('microsoft.managedidentity/userassignedidentities' == toLower(any(assignment.resource).type)) ? 'properties' : 'identity')].principalId : assignment.principalId)
+    roleDefinitionId: assignment.roleDefinitionId
+  }
+  scope: virtualMachine
+}]
 resource virtualMachineScaleSetRef 'Microsoft.Compute/virtualMachineScaleSets@2023-03-01' existing = if (isVirtualMachineScaleSetNotEmpty) {
   name: properties.virtualMachineScaleSet.name
   scope: resourceGroup((properties.virtualMachineScaleSet.?subscriptionId ?? subscriptionId), (properties.virtualMachineScaleSet.?resourceGroupName ?? resourceGroupName))

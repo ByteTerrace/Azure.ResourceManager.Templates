@@ -11,7 +11,9 @@ resource aRecordEntries 'Microsoft.Network/privateDnsZones/A@2020-06-01' = [for 
   name: record.key
   parent: privateDnsZone
   properties: {
-    aRecords: [for address in record.value.ipAddresses: { ipv4Address: address } ]
+    aRecords: [for address in record.value.ipAddresses: {
+      ipv4Address: address
+    }]
     metadata: (record.value.?metadata ?? null)
     ttl: (record.value.?timeToLiveInSeconds ?? 10)
   }
@@ -20,7 +22,9 @@ resource aaaaRecordEntries 'Microsoft.Network/privateDnsZones/AAAA@2020-06-01' =
   name: record.key
   parent: privateDnsZone
   properties: {
-    aaaaRecords: record.value.ipAddresses
+    aaaaRecords: [for address in record.value.ipAddresses: {
+      ipv6Address: address
+    }]
     metadata: (record.value.?metadata ?? null)
     ttl: (record.value.?timeToLiveInSeconds ?? 10)
   }
@@ -29,7 +33,9 @@ resource cnameRecordEntries 'Microsoft.Network/privateDnsZones/CNAME@2020-06-01'
   name: record.key
   parent: privateDnsZone
   properties: {
-    cnameRecord: record.value.alias
+    cnameRecord: {
+      cname: record.value.alias
+    }
     metadata: (record.value.?metadata ?? null)
     ttl: (record.value.?timeToLiveInSeconds ?? 10)
   }
@@ -39,7 +45,10 @@ resource mxRecordEntries 'Microsoft.Network/privateDnsZones/MX@2020-06-01' = [fo
   parent: privateDnsZone
   properties: {
     metadata: (record.value.?metadata ?? null)
-    mxRecords: record.value.exchanges
+    mxRecords: [for exchange in record.value.exchanges: {
+      exchange: exchange.domainName
+      preference: exchange.preference
+    }]
     ttl: (record.value.?timeToLiveInSeconds ?? 10)
   }
 }]
@@ -53,7 +62,9 @@ resource ptrRecordEntries 'Microsoft.Network/privateDnsZones/PTR@2020-06-01' = [
   parent: privateDnsZone
   properties: {
     metadata: (record.value.?metadata ?? null)
-    ptrRecords: record.value.domainNames
+    ptrRecords: [for name in record.value.domainNames: {
+      ptrdname: name
+    }]
     ttl: (record.value.?timeToLiveInSeconds ?? 10)
   }
 }]
@@ -77,7 +88,9 @@ resource txtRecordEntries 'Microsoft.Network/privateDnsZones/TXT@2020-06-01' = [
   properties: {
     metadata: (record.value.?metadata ?? null)
     ttl: (record.value.?timeToLiveInSeconds ?? 10)
-    txtRecords: record.value.values
+    txtRecords: [for value in record.value.values: {
+      value: value
+    }]
   }
 }]
 resource virtualNetworkLinks 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = [for (network, index) in virtualNetworks: {

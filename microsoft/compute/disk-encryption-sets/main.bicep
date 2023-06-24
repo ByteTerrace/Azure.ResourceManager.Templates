@@ -5,20 +5,21 @@ param properties object
 param tags object = {}
 
 var identity = (properties.?identity ?? {})
-var isIdentityNotEmpty = !empty(properties.?identity ?? {})
 var isUserAssignedIdentitiesNotEmpty = !empty(userAssignedIdentities)
 var resourceGroupName = resourceGroup().name
 var subscriptionId = subscription().subscriptionId
-var userAssignedIdentities = sort(map(range(0, length(properties.?identity.?userAssignedIdentities ?? [])), index => {
-  id: resourceId((properties.identity.userAssignedIdentities[index].?subscriptionId ?? subscriptionId), (properties.identity.userAssignedIdentities[index].?resourceGroupName ?? resourceGroupName), 'Microsoft.ManagedIdentity/userAssignedIdentities', properties.identity.userAssignedIdentities[index].name)
+var userAssignedIdentities = items(identity.?userAssignedIdentities ?? {})
+var userAssignedIdentitiesWithResourceId = [for (identity, index) in userAssignedIdentities: {
   index: index
-}), (x, y) => (x.index < y.index))
+  isPrimary: (identity.value.?isPrimary ?? (1 == length(userAssignedIdentities)))
+  resourceId: userAssignedIdentitiesRef[index].id
+}]
 
 resource diskEncryptionSet 'Microsoft.Compute/diskEncryptionSets@2022-07-02' = {
-  identity: (isIdentityNotEmpty ? {
-    type: ((isUserAssignedIdentitiesNotEmpty && !contains(identity, 'type')) ? 'UserAssigned' : identity.type)
-    userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty ? toObject(userAssignedIdentities, identity => identity.id, identity => {}) : null)
-  } : null)
+  identity: {
+    type: (identity.?type ?? (isUserAssignedIdentitiesNotEmpty ? 'UserAssigned' : 'None'))
+    userAssignedIdentities: (isUserAssignedIdentitiesNotEmpty? toObject(userAssignedIdentitiesWithResourceId, identity => identity.resourceId, identity => {}) : null)
+  }
   location: location
   name: name
   properties: {
@@ -34,3 +35,7 @@ resource keyRef 'Microsoft.KeyVault/vaults/keys@2023-02-01' existing = {
   name: '${properties.keyVault.name}/${properties.keyName}'
   scope: resourceGroup((properties.keyVault.?subscriptionId ?? subscriptionId), (properties.keyVault.?resourceGroupName ?? resourceGroupName))
 }
+resource userAssignedIdentitiesRef 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = [for identity in userAssignedIdentities: {
+  name: identity.key
+  scope: resourceGroup((identity.value.?subscriptionId ?? subscriptionId), (identity.value.?resourceGroupName ?? resourceGroupName))
+}]
